@@ -1,0 +1,27 @@
+# vim: set filetype=py
+
+Import('dev source_path')
+
+env, target, sources = dev.prepare_build(source_path, 'adchpp')
+
+env.Append(CPPDEFINES = ['BUILDING_ADCHPP'])
+env.Append(CPPPATH = ['.'])
+
+if 'HAVE_DL' in env['CPPDEFINES']:
+    env.Append(LIBS = ['dl'])
+
+if 'HAVE_PTHREAD' in env['CPPDEFINES']:
+    env.Append(LIBS = ['pthread'])
+
+if env['PLATFORM'] == 'win32':
+    env.Append(LIBS = ['ws2_32', 'mswsock'])
+    
+ret = env.SharedLibrary(target, sources)
+
+import os.path
+dev.env.Append(LIBPATH = os.path.dirname(target))
+
+if env['PLATFORM'] != 'win32':
+    dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
+    
+Return('ret')

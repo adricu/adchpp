@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<ADCHubPlusPlus>
+	<Settings>
+<!-- Language file --> 
+		<!-- The strings in the language file is used when messages are sent out to the user by the hub -->
+		<LanguageFile type="string">Example.adchpp.xml</LanguageFile>
+
+<!-- Hub name and message of the day -->
+		<!-- This is the name of the hub as it should be reported to the clients during
+			 login and to the hub registration services. -->
+		<HubName type="string">ADCH++</HubName>
+
+		<!-- The nickname used by the server when reporting information to the clients.
+			 No $, | and space. -->
+		<HubNick type="string">ADCH++</HubNick>
+
+		<!-- Message of the day, the contents of this file are sent to the user when
+			 when he/she successfully connects... -->
+		<MotdFile type="string">motd.txt</MotdFile>
+
+<!-- Logging -->
+		<!-- Enable/disable logging -->
+		<Log type="int">1</Log>
+
+		<!-- Logging, when enabled, is done to this file. The filename is first passed
+			 through strftime with the current time (see any standard c library reference
+			 to find out what works...). There's not much logging done at all btw, but
+			 plugins can use the logs as well... -->
+		<LogFile type="string">logs/adchpp%Y%m.log</LogFile>
+
+<!-- Hub port -->
+		<!-- Probably one of the most important settings, the hub port where the hub
+			 should listen to connections. Please change this to avoid having all hubs
+			 on the same port, which facilates hub blocking. -->
+		<ServerPort type="int">2780</ServerPort>
+
+<!-- Maximum users -->
+		<!-- The maximum number of users that should be allowed into the hub at any time, 
+			 0 = disable -->
+		<MaxUsers type="int">0</MaxUsers>
+		
+<!-- Redirection settings -->
+		<!-- The server to redirect to (if enabled) when full -->
+		<RedirectServer>adc://wza.digitalbrains.com:1416</RedirectServer>
+		<!-- Enable/disable redirect when full -->
+		<RedirectFull>0</RedirectFull>
+
+<!-- Flood protection -->
+
+<!-- Advanced connection settings (don't change unless you at least think you know what you're doing) -->
+		<!-- Maximum send size, changes how much data is sent at most to a single user per
+			 call to the socket api. Experiment with this, lower settings might be more fair
+			 in the distribution of available bandwidth at the cost of network/cpu efficiency.
+			 Don't set below 256, 0 = disable. Experiment with this, it has many strange effects! -->
+		<MaxSendSize type="int">4096</MaxSendSize>
+
+		<!-- Another performance option. Enabling it will reduce the amount of memory used by dc++,
+			 as data will be sent directly instead of buffering it (if possible). This is a good
+			 thing, unless you've got a lot of users (say...400+), then you'll save both cpu and
+			 bandwidth by disabling this feature, but memory consumption will go up a little bit. 
+			 * Doesn't work in current releases * -->
+		<DirectWrite type="int">0</DirectWrite>
+
+		<!-- Because of the way the protocol works, a malicious user could send a 
+			 command that would make the hub take all available memory on the
+			 computer and crash it. Setting a limit here will fix this but also
+			 limit the length of chat messages and pm:s people can send to each
+			 other. If you set this too small, ADCH++ will stop working at all.
+			 Users sending more than this will be disconnected. -->
+		<MaxRecvSize type="int">16384</MaxRecvSize>
+		
+		<!-- Milliseconds before a user is disconnected when his/her outgoing buffer
+			 becomes larger than MaxRecvSize (outgoing buffer overflow). -->
+		<OverflowTimeout type="int">60000</OverflowTimeout>
+
+		<!-- Try to keep slow users from overflowing by not sending searches to them
+			 when they're in the overflow state -->
+		<KeepSlowUsers type="int">1</KeepSlowUsers>
+
+		<!-- The minimum time in ms that data should be buffered before sending it (the hub will always
+			 lag this much if direct writing is disabled). This is best used in conjunction with
+			 direct writing disabled. Setting it to a reasonable value will save you bandwidth and
+			 cpu because all sends during this period will be joined into one packet. Don't 
+			 set below 50, 0 = disable. Highly recommended to keep enabled. -->
+		<WriteTimeout type="int">200</WriteTimeout>
+
+		<!-- Buffer size, this is the minimum buffer size that is initially assigned to
+			 each user. Larger buffer = more memory usage / user, less = a little bit
+			 slower performance if the user sends more than these many bytes at a time
+			 (in a chat message for instance...). Don't set to lower than 256. -->
+		<BufferSize type="int">512</BufferSize>
+		
+		<!-- Timeout (ms) before ADCH++ stops trying to empty its send buffer for a user
+			 (to send a kick message for example), and disconnects him/her. -->
+		<DisconnectTimeout>10000</DisconnectTimeout>
+
+		<!-- Maximum sockets per thread, experiment with this. * Linux only * -->
+		<SocketsPerThread>250</SocketsPerThread>
+
+	</Settings>
+
+	<!-- Instead of scripts, ADCH++ uses plugins. Plugins can do the same work
+		 as scripts, are more difficult to write, but when it comes to performance,
+		 the difference between the two is absurd. This way, it's also possible to
+		 write a script plugin, enabling people to choose their own script language,
+		 if someone's written a script plugin for it. You must specify the path to your
+		 plugins in linux!!! -->
+	<!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"-->
+	<Plugins>
+		<!-- This plugins provides a few op commands to play around with. Type +help in the main
+			 chat when logged in as an op to see what you can do -->
+		<!--Plugin>OpCom</Plugin-->
+		<!-- This plugins provides the LUA Scripting language. It also uses (relative to ADCH++ anyway)
+			 quite a lot of resources, so only enable it if you absolutely have to... -->
+		<!--Plugin>LuaScript</Plugin-->
+	</Plugins>
+</ADCHubPlusPlus>

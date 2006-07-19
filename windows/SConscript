@@ -1,0 +1,16 @@
+# vim: set filetype=py
+
+Import('dev source_path')
+env, target, sources = dev.prepare_build(source_path, 'adchppd')
+
+conf = Configure(env)
+if conf.CheckLib('dbghelp', 'InitSymbolPath'):
+    env.Append(LIBS = ['dbghelp'])
+env = conf.Finish()
+
+env.Append(CPPPATH = ['.', '#'])
+env.Append(LIBS = ['adchpp', 'advapi32'])
+
+ret = env.Program(target, sources)
+
+Return('ret')

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Language Name="Example Language" Author="arnetheduck" Version="2.0" Revision="1">
+	<Strings>
+		<String Name="B">B</String>
+		<String Name="BadIp">Your client's IP is incorrectly configured, and you will therefore be disconnected. Either you have to enter the correct one in the IP field in your client settings or try passive mode. Your current ip is: </String>
+		<String Name="CidTaken">CID taken</String>
+		<String Name="DiskFull">Disk full?</String>
+		<String Name="EnterPassword">Please send your password</String>
+		<String Name="Flooding">You're flooding. Adios.</String>
+		<String Name="Gb">GiB</String>
+		<String Name="HubFull">Hub is currently full</String>
+		<String Name="IpUnallowed">You're connecting from an IP that's not allowed (banned) on this hub. If you feel this is wrong, you can always try contacting the owner of the hub.</String>
+		<String Name="Kb">KiB</String>
+		<String Name="Mb">MiB</String>
+		<String Name="NickInvalid">Your nick contains invalid characters. Adios.</String>
+		<String Name="NickTaken">Your nick is already taken, please select another one</String>
+		<String Name="NickTooLong">Your nick is %d characters too long</String>
+		<String Name="NotConnected">Not connected</String>
+		<String Name="PermissionDenied">Permission denied</String>
+		<String Name="PermBanned">You're permanently banned from this hub. Go away.</String>
+		<String Name="PermBannedReason">You're permanently banned from this hub because: </String>
+		<String Name="ShareSizeNotMet">Share size requirement not met, you need to share %s more.</String>
+		<String Name="Tb">TiB</String>
+		<String Name="TempBanned">You're banned from this hub (time left: %s).</String>
+		<String Name="TempBannedReason">You're banned from this hub (time left: %s) because: </String>
+		<String Name="UnableToCreateThread">Unable to create thread</String>
+	</Strings>
+</Language>

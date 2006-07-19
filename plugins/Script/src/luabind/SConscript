@@ -1,0 +1,5 @@
+Import('dev source_path')
+
+ret = dev.build('src/')
+
+Return('ret')

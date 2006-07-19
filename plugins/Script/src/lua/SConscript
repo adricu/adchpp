@@ -1,0 +1,6 @@
+Import('dev source_path')
+env, target, sources = dev.prepare_build(source_path, 'lua', '*.c')
+
+ret = sources
+
+Return('ret')
