@@ -59,7 +59,7 @@ public:
 	static void sleep(u_int32_t millis) { ::Sleep(millis); }
 	static void yield() { ::Sleep(0); }
 
-#elif definied(HAVE_PTHREAD)
+#elif defined(HAVE_PTHREAD)
 
 	enum Priority {
 		LOW = 1,

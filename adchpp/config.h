@@ -109,6 +109,10 @@ typedef unsigned long long u_int64_t;
 # else
 #  define DLL __declspec(dllimport)
 # endif // DLLEXPORT
+#else
+# ifdef BUILDING_ADCHPP
+#  define DLL __attribute__ ((visibility("default")))
+# endif
 #endif
 
 #ifdef _MSC_VER

@@ -22,6 +22,16 @@
 #include "Util.h"
 #include "Exception.h"
 
+#ifndef _WIN32
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netdb.h>
+#include <fcntl.h>
+#endif
+
 namespace adchpp {
 	
 #ifdef _WIN32
@@ -39,13 +49,6 @@ typedef int socklen_t;
 typedef SOCKET socket_t;
 
 #else
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
-#include <fcntl.h>
 
 typedef int socket_t;
 #define SOCKET_ERROR -1
@@ -80,8 +83,6 @@ private:
 	static string errorToString(int aError) throw();
 };
 
-class ServerSocket;
-
 class Socket
 {
 public:
@@ -106,7 +107,7 @@ public:
 	virtual void bind(short aPort) throw(SocketException);
 	virtual void connect(const string& aIp, short aPort) throw(SocketException);
 	void connect(const string& aIp, const string& aPort) throw(SocketException) { connect(aIp, (short)Util::toInt(aPort)); }
-	virtual void accept(const ServerSocket& aSocket) throw(SocketException);
+	virtual void accept(const Socket& aSocket) throw(SocketException);
 	virtual void write(const char* aBuffer, size_t aLen) throw(SocketException);
 	void write(const string& aData) throw(SocketException) { write(aData.data(), aData.length()); }
 	virtual int writeNB(const char* aBuffer, size_t aLen) throw(SocketException);
@@ -114,6 +115,8 @@ public:
 	virtual void writeTo(const string& aIp, short aPort, const char* aBuffer, size_t aLen) throw(SocketException);
 	void writeTo(const string& aIp, short aPort, const string& aData) throw(SocketException) { writeTo(aIp, aPort, aData.data(), aData.length()); }
 	virtual void disconnect() throw();
+
+	void listen(short aPort) throw(SocketException);
 
 	void shutdown() { ::shutdown(sock, 1); }
 	

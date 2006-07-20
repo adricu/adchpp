@@ -21,7 +21,6 @@
 
 #include "Thread.h"
 #include "Semaphores.h"
-#include "ServerSocket.h"
 #include "Mutex.h"
 
 namespace adchpp {

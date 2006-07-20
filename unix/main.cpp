@@ -16,14 +16,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "../adchpp/stdinc.h"
-#include "../adchpp/common.h"
+#include <adchpp/stdinc.h>
+#include <adchpp/common.h>
 
-#include "../adchpp/LogManager.h"
-#include "../adchpp/Util.h"
-#include "../adchpp/version.h"
+#include <adchpp/LogManager.h>
+#include <adchpp/Util.h>
+#include <adchpp/version.h>
 
 #include <signal.h>
+
+using namespace adchpp;
 
 static const string modName = "adchpp";
 

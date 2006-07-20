@@ -21,8 +21,6 @@
 
 #include "Socket.h"
 
-#include "ServerSocket.h"
-
 namespace adchpp {
 	
 string SocketException::errorToString(int aError) throw() {
@@ -67,7 +65,35 @@ void Socket::bind(short aPort) throw (SocketException){
     checksockerr(::bind(sock, (sockaddr *)&sock_addr, sizeof(sock_addr)));
 }
 
-void Socket::accept(const ServerSocket& aSocket) throw(SocketException){
+void Socket::listen(short aPort) throw(SocketException) {
+	disconnect();
+	
+	sockaddr_in tcpaddr;
+#ifdef _WIN32
+	sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+#else
+	sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#endif
+	int x = 1;
+	::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(int));
+	
+	if(sock == (socket_t)-1) {
+		throw SocketException(errno);
+	}
+
+	tcpaddr.sin_family = AF_INET;
+	tcpaddr.sin_port = htons(aPort);
+	tcpaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	
+	if(::bind(sock, (sockaddr *)&tcpaddr, sizeof(tcpaddr)) == SOCKET_ERROR) {
+		throw SocketException(errno);
+	}
+	if(::listen(sock, SOMAXCONN) == SOCKET_ERROR) {
+		throw SocketException(errno);
+	}
+}
+
+void Socket::accept(const Socket& aSocket) throw(SocketException){
 	if(sock != INVALID_SOCKET) {
 		Socket::disconnect();
 	}
@@ -75,7 +101,7 @@ void Socket::accept(const ServerSocket& aSocket) throw(SocketException){
 	sockaddr_in sock_addr;
 	socklen_t sz = sizeof(sock_addr);
 
-	checksockerr(sock=::accept(aSocket.getSocket(), (sockaddr*)&sock_addr, &sz));
+	checksockerr(sock=::accept(aSocket.sock, (sockaddr*)&sock_addr, &sz));
 }
 
 /**
@@ -224,6 +250,45 @@ void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t
  * @throw SocketException Select or the connection attempt failed.
  */
 int Socket::wait(u_int32_t millis, int waitFor) throw(SocketException) {
+#ifdef HAVE_POLL_H
+	struct pollfd fd;
+	fd.fd = sock;
+	fd.events = 0;
+	if(waitFor & WAIT_READ || waitFor & WAIT_CONNECT) {
+		fd.events |= POLLIN;
+	}
+	if(waifFor & WAIT_WRITE) {
+		fd.events |= POLLOUT;
+	}
+	
+	int result = poll(&fd, 1, millis));
+	if(result == 1) {
+		if(fd.revents & POLLERR) {
+			int y = 0;
+			socklen_t z = sizeof(y);
+			checksockerr(getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&y, &z));
+			if(y != 0) {
+				throw SocketException(y);
+			}
+			// Should never happen
+			throw SocketException("Unknown socket error");
+		}			
+
+		int ret = 0;
+		if(fr.revents & POLLIN) {
+			ret |= waitFor & (WAIT_READ | WAIT_CONNECT);
+		}
+		if(fd.revents & POLLOUT) {
+			ret |= WAIT_WRITE;
+		}
+		return ret;
+	} else if(result == -1) {
+		throw SocketException(errno);
+	}
+	
+	return 0;
+#else
+	
 	timeval tv;
 	fd_set rfd, wfd, efd;
 	fd_set *rfdp = NULL, *wfdp = NULL;
@@ -250,8 +315,8 @@ int Socket::wait(u_int32_t millis, int waitFor) throw(SocketException) {
 
 		if(y != 0)
 			throw SocketException(y);
-		// No errors! We're connected (?)...
-		return WAIT_CONNECT;
+		// Should never happen
+		throw SocketException("Unknown socket error");
 	}
 
 	if(waitFor & WAIT_READ) {
@@ -277,6 +342,7 @@ int Socket::wait(u_int32_t millis, int waitFor) throw(SocketException) {
 	}
 
 	return waitFor;
+#endif
 }
 
 string Socket::resolve(const string& aDns) {
@@ -311,6 +377,7 @@ string Socket::getLocalIp() throw() {
 	}
 	return Util::emptyString;
 }
+
 int Socket::getLocalPort() throw() {
 	sockaddr_in sock_addr;
 	socklen_t len = sizeof(sock_addr);

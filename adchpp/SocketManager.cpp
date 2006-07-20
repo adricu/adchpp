@@ -28,7 +28,6 @@
 #include "Semaphores.h"
 #include "ManagedSocket.h"
 #include "Thread.h"
-#include "ServerSocket.h"
 
 #ifdef _WIN32
 #include <MSWSock.h>
@@ -492,7 +491,7 @@ private:
 	}
 	
 	CompletionPort port;
-	ServerSocket srv;
+	Socket srv;
 	
 	WSABUF wsabuf;
 	bool stop;
@@ -711,10 +710,14 @@ private:
 	
 	void accept() throw() {
 		while(true) {
-			if(!srv.isReady()) {
+			try {
+				if(srv.wait(Socket::WAIT_CONNECT, 0) != Socket::WAIT_CONNECT) {
+					return;
+				}
+			} catch(const SocketException&) {
+				LOGDT(SocketManager::className, "Server socket failed");
 				return;
 			}
-			
 			ManagedSocket* ms = new ManagedSocket();
 			try {
 				ms->sock.accept(srv);
@@ -851,7 +854,7 @@ private:
 	}
 	
 	EPoll poller;
-	ServerSocket srv;
+	Socket srv;
 	
 	bool stop;
 

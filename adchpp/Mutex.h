@@ -60,7 +60,7 @@ public:
 	typedef ScopedLock<RecursiveMutex> Lock;
 private:
 	pthread_mutex_t mtx;
-}
+};
 
 class FastMutex : private boost::noncopyable {
 public:
@@ -79,7 +79,7 @@ public:
 
 private:
 	pthread_mutex_t mtx;
-}
+};
 
 #else
 #error No mutex found
