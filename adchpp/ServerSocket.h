@@ -41,7 +41,10 @@ public:
 		}
 	}
 
+#ifdef HAVE_SYS_POLL_H
 	bool isReady() const;
+#endif
+
 	socket_t getSocket() const { return sock; }
 private:
 	// No copies

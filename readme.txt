@@ -9,12 +9,16 @@ ADCH++ is a high-performance hub for the ADC network.
 
 Win2k/XP/2k3 (may run on NT4 with a fresh service pack as well...don't know).
 or
-Linux 2.6
+Linux 2.6.x
 
 A network card with a correctly configured TCP/IP stack.
 A computer that can run the above mentioned OS.
 An administrator/root account (to install as service / run on port < 1024 on unix).
 A brain (to read the readme and setup)
+gcc 3.4+ (linux or mingw) or msvc 7.1+
+stlport (on mingw, http://sf.net/projects/stlport, unzip in adchpp root)
+boost (http://www.boost.org)
+scons (http://www.scons.org)
 
 ** Important!! The hub will _NOT_ run on Win9x/ME. **
 
@@ -32,6 +36,13 @@ On the client side, I've only tested with DC++.
 -- Where to find more info --
 
 Try http://adchpp.sf.net/ or http://dcpp.net/forum/.
+
+-- Send in patches --
+I'll gladly accept patches, but in order to avoid future licensing issues, I ask you to
+give me copyright over any submitted code. Make sure that the code doesn't break support
+for any of the platforms supported and that it looks more or less like the rest of the 
+code (indent, names etc).
+Please use patches agains latest svn trunk (i e svn diff).
 
 -- Donate money --
 

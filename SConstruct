@@ -88,6 +88,8 @@ if conf.CheckCHeader('asm/bitops.h'):
     conf.env.Append(CPPDEFINES='HAVE_ASM_BITOPS_H')
 if conf.CheckCHeader('sys/epoll.h'):
     conf.env.Append(CPPDEFINES='HAVE_SYS_EPOLL_H')
+if conf.CheckCHeader('sys/poll.h'):
+    conf.env.Append(CPPDEFINES='HAVE_SYS_POLL_H')
 if conf.CheckLib('dl', 'dlopen'):
     conf.env.Append(CPPDEFINES='HAVE_DL')
 if conf.CheckLib('pthread', 'pthread_create'):

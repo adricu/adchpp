@@ -21,8 +21,6 @@
 
 #include "ServerSocket.h"
 
-#include <sys/poll.h>
-
 #define MAX_CONNECTIONS SOMAXCONN
 
 void ServerSocket::listen(short aPort) throw(SocketException) {
@@ -53,9 +51,13 @@ void ServerSocket::listen(short aPort) throw(SocketException) {
 	}
 }
 
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+
 bool ServerSocket::isReady() const {
 	struct pollfd pfd = { 0 };
 	pfd.fd = sock;
 	pfd.events = POLLIN;
 	return poll(&pfd, 1, 0) != 0;
 }
+#endif
