@@ -9,14 +9,7 @@
 		<!-- This is the name of the hub as it should be reported to the clients during
 			 login and to the hub registration services. -->
 		<HubName type="string">ADCH++</HubName>
-
-		<!-- The nickname used by the server when reporting information to the clients.
-			 No $, | and space. -->
-		<HubNick type="string">ADCH++</HubNick>
-
-		<!-- Message of the day, the contents of this file are sent to the user when
-			 when he/she successfully connects... -->
-		<MotdFile type="string">motd.txt</MotdFile>
+		<Description>ADCH++ Test hub</Description>
 
 <!-- Logging -->
 		<!-- Enable/disable logging -->
@@ -46,29 +39,19 @@
 		<RedirectFull>0</RedirectFull>
 
 <!-- Flood protection -->
+		<FloodAdd>1</FloodAdd>
+		<FloodThreshold>25</FloodThreshold>
 
 <!-- Advanced connection settings (don't change unless you at least think you know what you're doing) -->
 		<!-- Maximum send size, changes how much data is sent at most to a single user per
 			 call to the socket api. Experiment with this, lower settings might be more fair
 			 in the distribution of available bandwidth at the cost of network/cpu efficiency.
 			 Don't set below 256, 0 = disable. Experiment with this, it has many strange effects! -->
-		<MaxSendSize type="int">4096</MaxSendSize>
+		<MaxSendSize type="int">1400</MaxSendSize>
 
-		<!-- Another performance option. Enabling it will reduce the amount of memory used by dc++,
-			 as data will be sent directly instead of buffering it (if possible). This is a good
-			 thing, unless you've got a lot of users (say...400+), then you'll save both cpu and
-			 bandwidth by disabling this feature, but memory consumption will go up a little bit. 
-			 * Doesn't work in current releases * -->
-		<DirectWrite type="int">0</DirectWrite>
-
-		<!-- Because of the way the protocol works, a malicious user could send a 
-			 command that would make the hub take all available memory on the
-			 computer and crash it. Setting a limit here will fix this but also
-			 limit the length of chat messages and pm:s people can send to each
-			 other. If you set this too small, ADCH++ will stop working at all.
-			 Users sending more than this will be disconnected. -->
-		<MaxRecvSize type="int">16384</MaxRecvSize>
-		
+		<MaxBufferSize type="int">16384</MaxBufferSize>
+		<BufferSize type="int">256</BufferSize>
+		<MaxCommandSize type="int">16384</MaxCommandSize>
 		<!-- Milliseconds before a user is disconnected when his/her outgoing buffer
 			 becomes larger than MaxRecvSize (outgoing buffer overflow). -->
 		<OverflowTimeout type="int">60000</OverflowTimeout>
@@ -76,13 +59,6 @@
 		<!-- Try to keep slow users from overflowing by not sending searches to them
 			 when they're in the overflow state -->
 		<KeepSlowUsers type="int">1</KeepSlowUsers>
-
-		<!-- The minimum time in ms that data should be buffered before sending it (the hub will always
-			 lag this much if direct writing is disabled). This is best used in conjunction with
-			 direct writing disabled. Setting it to a reasonable value will save you bandwidth and
-			 cpu because all sends during this period will be joined into one packet. Don't 
-			 set below 50, 0 = disable. Highly recommended to keep enabled. -->
-		<WriteTimeout type="int">200</WriteTimeout>
 
 		<!-- Buffer size, this is the minimum buffer size that is initially assigned to
 			 each user. Larger buffer = more memory usage / user, less = a little bit
@@ -93,10 +69,7 @@
 		<!-- Timeout (ms) before ADCH++ stops trying to empty its send buffer for a user
 			 (to send a kick message for example), and disconnects him/her. -->
 		<DisconnectTimeout>10000</DisconnectTimeout>
-
-		<!-- Maximum sockets per thread, experiment with this. * Linux only * -->
-		<SocketsPerThread>250</SocketsPerThread>
-
+		<LoginTimeout>30</LoginTimeout>
 	</Settings>
 
 	<!-- Instead of scripts, ADCH++ uses plugins. Plugins can do the same work
@@ -107,11 +80,7 @@
 		 plugins in linux!!! -->
 	<!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"-->
 	<Plugins>
-		<!-- This plugins provides a few op commands to play around with. Type +help in the main
-			 chat when logged in as an op to see what you can do -->
-		<!--Plugin>OpCom</Plugin-->
-		<!-- This plugins provides the LUA Scripting language. It also uses (relative to ADCH++ anyway)
-			 quite a lot of resources, so only enable it if you absolutely have to... -->
-		<!--Plugin>LuaScript</Plugin-->
+		<!-- This plugins provides the scripting support. -->
+		<Plugin>Script</Plugin>
 	</Plugins>
 </ADCHubPlusPlus>

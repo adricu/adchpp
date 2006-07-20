@@ -36,7 +36,7 @@ const string SettingsManager::settingTags[] =
 	"LanguageFile", "RedirectServer",
 	"SENTRY", 
 	// Ints
-	"ServerPort", "WriteTimeout", "Log", "MaxUsers", "KeepSlowUsers", 
+	"ServerPort", "Log", "MaxUsers", "KeepSlowUsers", 
 	"MaxSendSize", "MaxBufferSize", "BufferSize", "MaxCommandSize", "RedirectFull",
 	"OverflowTimeout", "DisconnectTimeout", "FloodAdd", "FloodThreshold", 
 	"LoginTimeout",
@@ -56,17 +56,17 @@ SettingsManager::SettingsManager() throw() {
 	set(DESCRIPTION, FULLVERSIONSTRING);
 	// set(LANGUAGE_FILE, "Example.adchpp.xml");
 	// set(REDIRECT_SERVER, "");
-	set(SERVER_PORT, 1411);
-	set(MAX_SEND_SIZE, 1400);
-	set(MAX_USERS, 0);
+	set(SERVER_PORT, 2780);
 	set(LOG, 1);
+	set(MAX_USERS, 0);
+	set(KEEP_SLOW_USERS, 0);
+	set(MAX_SEND_SIZE, 1400);
 	set(MAX_BUFFER_SIZE, 16384);
-	set(WRITE_TIMEOUT, 200);
 	set(BUFFER_SIZE, 256);
+	set(MAX_COMMAND_SIZE, 16384);
 	set(REDIRECT_FULL, 0);
 	set(OVERFLOW_TIMEOUT, 60*1000);
 	set(DISCONNECT_TIMEOUT, 5*1000);
-	set(KEEP_SLOW_USERS, false);
 	set(FLOOD_ADD, 1);
 	set(FLOOD_THRESHOLD, 25);
 	set(LOGIN_TIMEOUT, 30);

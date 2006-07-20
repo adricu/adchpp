@@ -58,6 +58,7 @@ if env['PLATFORM'] == 'win32':
 if 'mingw' in env['TOOLS']:
     env.Append(CPPPATH = ['#/STLport/stlport/'])
     env.Append(LIBPATH = ['#/STLport/lib/'])
+    gcc_link_flags['common'].append("-Wl,--enable-runtime-pseudo-reloc")
     if mode == 'debug':
         env.Append(LIBS = ['stlportg.5.0'])
     else:

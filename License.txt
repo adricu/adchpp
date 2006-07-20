@@ -1,4 +1,4 @@
-DC++
+adchpp
 Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
 
 Here follows the full text of the GPL-2:

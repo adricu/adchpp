@@ -82,7 +82,7 @@ void Client::onData(const vector<u_int8_t>& data) throw() {
 			return;
 	}
 
-	if(line.size() > (size_t)SETTING(MAX_COMMAND_SIZE)) {
+	if(SETTING(MAX_COMMAND_SIZE) > 0 && line.size() > (size_t)SETTING(MAX_COMMAND_SIZE)) {
 		Util::stats.disconOverflowIn++;
 		disconnect();
 		return;
