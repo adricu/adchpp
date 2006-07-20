@@ -19,13 +19,11 @@
 #ifndef FILE_H
 #define FILE_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Exception.h"
 #include "Util.h"
 #include "ResourceManager.h"
+
+namespace adchpp {
 
 #ifndef _WIN32
 #include <sys/stat.h>
@@ -178,5 +176,7 @@ private:
 #endif
 
 };
+
+}
 
 #endif // FILE_H

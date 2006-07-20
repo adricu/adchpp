@@ -68,14 +68,12 @@
 #ifndef PLUGINMANAGER_H
 #define PLUGINMANAGER_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
 #include "Singleton.h"
 #include "version.h"
-
 #include "Signal.h"
 
+namespace adchpp {
+	
 class SimpleXML;
 
 #ifdef _WIN32
@@ -254,5 +252,7 @@ private:
 	
 	void onLoad(const SimpleXML& xml) throw();
 };
+
+}
 
 #endif // PLUGINMANAGER_H

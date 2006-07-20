@@ -21,6 +21,8 @@
 
 #include "ServerSocket.h"
 
+namespace adchpp {
+	
 #define MAX_CONNECTIONS SOMAXCONN
 
 void ServerSocket::listen(short aPort) throw(SocketException) {
@@ -61,3 +63,5 @@ bool ServerSocket::isReady() const {
 	return poll(&pfd, 1, 0) != 0;
 }
 #endif
+
+}

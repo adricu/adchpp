@@ -21,10 +21,8 @@
 
 #include "Singleton.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+namespace adchpp {
+	
 /**
  * This class takes care of internationalization, providing the correct strings.
  */
@@ -53,5 +51,7 @@ private:
 
 #define STRING(x) ResourceManager::getInstance()->getString(ResourceManager::x)
 #define CSTRING(x) ResourceManager::getInstance()->getString(ResourceManager::x).c_str()
+
+}
 
 #endif // RESOURCEMANAGER_H

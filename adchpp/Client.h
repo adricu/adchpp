@@ -19,10 +19,6 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "ManagedSocket.h"
 
 #include "FastAlloc.h"
@@ -30,6 +26,8 @@
 #include "AdcCommand.h"
 #include "CID.h"
 #include "SettingsManager.h"
+
+namespace adchpp {
 
 /**
  * The client represents one connection to a user.
@@ -193,5 +191,7 @@ private:
 	void onData(const ByteVector&) throw();
 	void onFailed() throw();
 };
+
+}
 
 #endif // CLIENT_H

@@ -21,6 +21,8 @@
 
 #include "Thread.h"
 
+namespace adchpp {
+	
 
 #ifdef _WIN32
 
@@ -64,3 +66,5 @@ void Thread::join() throw() {
 }
 
 #endif
+}
+	

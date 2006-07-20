@@ -19,10 +19,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+namespace adchpp {
+	
 // Remove this line if hashes are not available in your stl
 #define HAVE_HASH 1
 
@@ -130,5 +128,7 @@ typedef unsigned long long u_int64_t;
 # endif
 
 #endif // _MSC_VER
+
+}
 
 #endif // CONFIG_H

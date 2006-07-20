@@ -23,6 +23,8 @@
 
 #include "ServerSocket.h"
 
+namespace adchpp {
+	
 string SocketException::errorToString(int aError) throw() {
 	return Util::translateError(aError);
 }
@@ -325,4 +327,6 @@ void Socket::disconnect() throw() {
 	}
 
 	sock = INVALID_SOCKET;
+}
+
 }

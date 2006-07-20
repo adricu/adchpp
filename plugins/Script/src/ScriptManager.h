@@ -39,12 +39,13 @@
 #endif
 
 STANDARD_EXCEPTION(ScriptException);
-
-class SimpleXML;
 class Engine;
 
+namespace adchpp {
+class SimpleXML;
 class Client;
 class AdcCommand;
+}
 
 class ScriptManager : public Plugin, public Singleton<ScriptManager> {
 public:

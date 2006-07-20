@@ -22,9 +22,7 @@
 #include "ResourceManager.h"
 #include "Pool.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+namespace adchpp { 
 
 /** Evaluates op(pair<T1, T2>.first, compareTo) */
 template<class T1, class T2, class op = equal_to<T1> >
@@ -423,5 +421,7 @@ public:
 private:
 	DLL static string cfgPath;
 };
+
+}
 
 #endif // UTIL_H

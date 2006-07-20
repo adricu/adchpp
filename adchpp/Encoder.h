@@ -19,10 +19,8 @@
 #ifndef _ENCODER
 #define _ENCODER
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+namespace adchpp {
+	
 class Encoder
 {
 public:
@@ -37,5 +35,7 @@ public:
 	DLL static const char base32Alphabet[32];
 private:
 };
+
+}
 
 #endif // _ENCODER

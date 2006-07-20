@@ -31,6 +31,12 @@
 #include "ServerSocket.h"
 
 #ifdef _WIN32
+#include <MSWSock.h>
+#endif
+
+namespace adchpp {
+
+#ifdef _WIN32
 
 #define ACCEPT_BUF_SIZE ((sizeof(SOCKADDR_IN)+16)*2)
 
@@ -879,7 +885,7 @@ int SocketManager::run() {
 	while(true) {
 		processSem.wait();
 		{
-			FastLock l(processCS);
+			FastMutex::Lock l(processCS);
 			workQueue.swap(processQueue);
 		}
 		for(ProcessQueue::iterator i = workQueue.begin(); i != workQueue.end(); ++i) {
@@ -912,7 +918,7 @@ void SocketManager::addDeref(ManagedSocket* ms) throw() {
 }
 
 void SocketManager::addJob(const Callback& callback) throw() { 
-	FastLock l(processCS);
+	FastMutex::Lock l(processCS);
 
 	processQueue.push_back(callback);
 	processSem.signal(); 
@@ -926,4 +932,6 @@ void SocketManager::shutdown() {
 	
 	delete writer;
 	writer = 0;
+}
+
 }

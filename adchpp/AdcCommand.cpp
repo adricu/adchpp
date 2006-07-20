@@ -21,6 +21,8 @@
 
 #include "AdcCommand.h"
 
+namespace adchpp {
+	
 const u_int32_t AdcCommand::HUB_SID = 0x41414141;
 
 AdcCommand::AdcCommand() : cmdInt(0), str(0), from(0), type(0) { }
@@ -53,7 +55,7 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 	
 	type = aLine[0];
 	
-	if(!(type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_FEATURE || type == TYPE_HUB)) {
+	if(!(type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE || type == TYPE_HUB)) {
 		throw ParseException("Invalid type");
 	}
 	
@@ -87,13 +89,22 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 		case ' ': 
 			// New parameter...
 			{
-				if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_FEATURE) && !fromSet) {
+				if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) && !fromSet) {
+					if(cur.length() != 4) {
+						throw ParseException("Invalid SID length");
+					}
 					from = toSID(cur);
 					fromSet = true;
 				} else if(type == TYPE_FEATURE && !featureSet) {
+					if(cur.length() % 5 != 0) {
+						throw ParseException("Invalid feature length");
+					}
                     features = cur;
 					featureSet = true;
-				} else if(type == TYPE_DIRECT && !toSet) {
+				} else if((type == TYPE_DIRECT || type == TYPE_ECHO) && !toSet) {
+					if(cur.length() != 4) {
+						throw ParseException("Invalid SID length");
+					}
 					to = toSID(cur);
 					toSet = true;
 				} else {
@@ -108,18 +119,39 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 		++i;
 	}
 	if(!cur.empty()) {
-		if((type == TYPE_BROADCAST || type == TYPE_FEATURE) && !fromSet) {
+		if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) && !fromSet) {
+			if(cur.length() != 4) {
+				throw ParseException("Invalid SID length");
+			}
 			from = toSID(cur);
 			fromSet = true;
-		} else if(type == TYPE_DIRECT && !toSet) {
-			to = toSID(cur);
-			toSet = true;
 		} else if(type == TYPE_FEATURE && !featureSet) {
+			if(cur.length() % 5 != 0) {
+				throw ParseException("Invalid feature length");
+			}
 			features = cur;
 			featureSet = true;
+		} else if((type == TYPE_DIRECT || type == TYPE_ECHO) && !toSet) {
+			if(cur.length() != 4) {
+				throw ParseException("Invalid SID length");
+			}
+			to = toSID(cur);
+			toSet = true;
 		} else {
 			parameters.push_back(cur);
 		}
+	}
+	
+	if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) && !fromSet) {
+		throw ParseException("Missing from_sid");
+	}
+	
+	if(type == TYPE_FEATURE && !featureSet) {
+		throw ParseException("Missing feature");
+	}
+	
+	if((type == TYPE_DIRECT || type == TYPE_ECHO) && !toSet) {
+		throw ParseException("Missing to_sid");
 	}
 }
 
@@ -188,4 +220,6 @@ bool AdcCommand::hasFlag(const char* name, size_t start) const {
 		}
 	}
 	return false;
+}
+
 }

@@ -19,15 +19,13 @@
 #ifndef FASTALLOC_H
 #define FASTALLOC_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "Mutex.h"
 
-#include "CriticalSection.h"
-
+namespace adchpp {
+	
 #ifndef _DEBUG
 struct FastAllocBase {
-	DLL static FastCriticalSection cs;
+	DLL static FastMutex mtx;
 };
 
 /** 
@@ -62,7 +60,7 @@ struct FastAlloc : public FastAllocBase {
 private:
 
 	static void* allocate() {
-		FastLock l(cs);
+		FastMutex::Lock l(mtx);
 		if(freeList == NULL) {
 			grow();
 		}
@@ -72,7 +70,7 @@ private:
 	}
 
 	static void deallocate(void* p) {
-		FastLock l(cs);
+		FastMutex::Lock l(mtx);
 		*(void**)p = freeList;
 		freeList = p;
 	}
@@ -96,5 +94,7 @@ template<class T> void* FastAlloc<T>::freeList = 0;
 #else
 template<class T> struct FastAlloc { };
 #endif
+
+}
 
 #endif // FASTALLOC_H

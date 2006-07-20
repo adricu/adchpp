@@ -19,10 +19,8 @@
 #ifndef SINGLETON_H
 #define SINGLETON_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+namespace adchpp {
+	
 /**
  * Plugins instantiating this class must provide the instance variable manually because
  * of DLL linking issues on mingw (otherwise each DLL gets their own instanse).
@@ -54,5 +52,7 @@ private:
 	Singleton& operator=(const Singleton&);
 
 };
+
+}
 
 #endif // SINGLETON_H

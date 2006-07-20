@@ -25,6 +25,8 @@
 
 static const string modName = "adchpp";
 
+using namespace adchpp;
+
 #define LOGERROR(func) LOGDT(modName, func " failed: " + Util::translateError(GetLastError()))
 #define PRINTERROR(func) fprintf(stderr, func " failed: 0x%x, %s", GetLastError(), Util::translateError(GetLastError()).c_str())
 

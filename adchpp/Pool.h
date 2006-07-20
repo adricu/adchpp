@@ -19,8 +19,10 @@
 #ifndef POOL_H_
 #define POOL_H_
 
-#include "CriticalSection.h"
+#include "Mutex.h"
 
+namespace adchpp {
+	
 template<class T>
 struct PoolDummy {
 	void operator()(T&) { }
@@ -76,20 +78,22 @@ public:
 	void operator =(T* rhs) { put(rhs); }
 
 	T* get() {
-		FastLock l(cs);
+		FastMutex::Lock l(mtx);
 		return pool.get();
 	}
 	void put(T* obj) {
-		FastLock l(cs);
+		FastMutex::Lock l(mtx);
 		pool.put(obj);
 	}
 	
 private:
 	Pool(const Pool&);
 	Pool& operator=(const Pool&);
-	FastCriticalSection cs;
+	FastMutex mtx;
 	
 	SimplePool<T, Clear> pool;
 };
+
+}
 
 #endif //POOL_H_

@@ -19,12 +19,10 @@
 #ifndef SERVERSOCKET_H
 #define SERVERSOCKET_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Socket.h"
 
+namespace adchpp {
+	
 class ServerSocket {
 public:
 	void listen(short aPort) throw(SocketException);
@@ -53,5 +51,7 @@ private:
 
 	socket_t sock;
 };
+
+}
 
 #endif // SERVERSOCKET_H

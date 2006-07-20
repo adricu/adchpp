@@ -27,6 +27,8 @@
 #include "File.h"
 #include "SettingsManager.h"
 
+namespace adchpp {
+	
 const char compileTime[] = __DATE__ " " __TIME__;
 
 void adchppStartup() {
@@ -99,3 +101,5 @@ void logAssert(const char* file, int line, const char* exp) {
 	}
 }
 //#endif // _DEBUG
+
+}

@@ -19,14 +19,12 @@
 #ifndef MANAGEDSOCKET_H
 #define MANAGEDSOCKET_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Socket.h"
-#include "CriticalSection.h"
+#include "Mutex.h"
 #include "Signal.h"
 
+namespace adchpp {
+	
 class SocketManager;
 class Writer;
 
@@ -49,8 +47,8 @@ public:
 	DLL void fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
 	
 	/** Locks the write buffer for all sockets */
-	static void lock() { outbufCS.enter(); }
-	static void unlock() { outbufCS.leave(); }
+	static void lock() { outbufCS.lock(); }
+	static void unlock() { outbufCS.unlock(); }
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
 	DLL void disconnect() throw();
@@ -119,7 +117,9 @@ private:
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
 
-	DLL static CriticalSection outbufCS;
+	DLL static FastMutex outbufCS;
 };
+
+}
 
 #endif // MANAGEDSOCKET_H

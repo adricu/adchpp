@@ -26,7 +26,9 @@
 #include "PluginManager.h"
 #include "SettingsManager.h"
 
-CriticalSection ManagedSocket::outbufCS;
+namespace adchpp {
+	
+FastMutex ManagedSocket::outbufCS;
 
 ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0), refCount(1)
 #ifdef _WIN32
@@ -51,7 +53,7 @@ ManagedSocket::~ManagedSocket() throw() {
 
 void ManagedSocket::write(const char* buf, size_t len) throw() {
 	{
-		Lock l(outbufCS);
+		FastMutex::Lock l(outbufCS);
 		fastWrite(buf, len);
 	}
 	SocketManager::getInstance()->addWriter(this);
@@ -83,7 +85,7 @@ ByteVector* ManagedSocket::prepareWrite() {
 	ByteVector* buffer = 0;
 
 	{
-		Lock l(outbufCS);
+		FastMutex::Lock l(outbufCS);
 
 		if(outBuf == 0) {
 			return 0;
@@ -106,7 +108,7 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 
 	Util::stats.totalUp += written;
 
-	Lock l(outbufCS);
+		FastMutex::Lock l(outbufCS);
 	
 	if(written == buf->size()) {
 		// Everything written, good...
@@ -155,4 +157,6 @@ void ManagedSocket::processData(ByteVector* buf) throw() {
 void ManagedSocket::processFail() throw() {
 	failedHandler();
 	SocketManager::getInstance()->addDeref(this);
+}
+
 }

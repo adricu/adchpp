@@ -1,6 +1,9 @@
 #include "stdinc.h"
 #include "common.h"
 #include "ResourceManager.h"
+namespace adchpp {
+	
+
 string ResourceManager::strings[] = {
 "B", 
 "Your client's IP is incorrectly configured, and you will therefore be disconnected. Either you have to enter the correct one in the IP field in your client settings or try passive mode. Your current ip is: ", 
@@ -51,3 +54,4 @@ string ResourceManager::names[] = {
 "TempBannedReason", 
 "UnableToCreateThread", 
 };
+}

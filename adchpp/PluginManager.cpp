@@ -31,6 +31,8 @@
 #include "dlfcn.h"
 #endif
 
+namespace adchpp {
+	
 PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 
@@ -133,4 +135,6 @@ void PluginManager::shutdown() {
 	for(PluginList::reverse_iterator i = active.rbegin(); i != active.rend(); ++i)
 		PM_UNLOAD_LIBRARY(i->handle);
 #endif
+}
+
 }

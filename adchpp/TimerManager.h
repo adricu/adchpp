@@ -21,9 +21,7 @@
 
 #include "Singleton.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+namespace adchpp { 
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -75,5 +73,7 @@ private:
 #endif // WIN32
 
 #define GET_TIME() TimerManager::getTime()
+
+}
 
 #endif // TIMERMANAGER_H

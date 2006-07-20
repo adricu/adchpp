@@ -26,6 +26,7 @@ varname = "";
 names = "";
 
 prolog = "";
+epilog = "";
 
 example = '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n';
 example += '<Language Name="Example Language" Author="arnetheduck" Version=' + version + ' Revision="1">\n'
@@ -45,6 +46,8 @@ for x in file("adchpp/StringDefs.h", "r"):
         varname = x[11:].strip();
     elif x.startswith("// @Prolog: "):
         prolog += x[12:];
+    elif x.startswith("// @Epilog: "):
+		epilog += x[12:];
     elif len(x) >= 5:
         match = lre.match(x);
         if match is not None:
@@ -57,5 +60,5 @@ for x in file("adchpp/StringDefs.h", "r"):
 example += '\t</Strings>\n';
 example += '</Language>\n';
 
-file('adchpp/StringDefs.cpp', 'w').write(prolog + varstr + " = {\n" + strings + "};\n" + varname + " = {\n" + names + "};\n");
+file('adchpp/StringDefs.cpp', 'w').write(prolog + varstr + " = {\n" + strings + "};\n" + varname + " = {\n" + names + "};\n" + epilog);
 file('etc/Example.adchpp.xml', 'w').write(example);

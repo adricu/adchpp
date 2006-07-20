@@ -22,10 +22,6 @@
 #include "Util.h"
 #include "FastAlloc.h"
 
-#ifndef _DEBUG
-FastCriticalSection FastAllocBase::cs;
-#endif
-
 #include <locale.h>
 #ifndef _WIN32
 #include <sys/socket.h>
@@ -35,9 +31,17 @@ FastCriticalSection FastAllocBase::cs;
 #include <sys/utsname.h>
 #include <ctype.h>
 
+#endif
+
+namespace adchpp {
+	
+#ifndef _DEBUG
+FastCriticalSection FastAllocBase::cs;
+#endif
+
+#ifndef _WIN32
 string Util::appName;
 string Util::appPath;
-
 #endif
 
 Util::Stats Util::stats;
@@ -311,4 +315,6 @@ u_int32_t Util::rand() {
 	y ^= TEMPERING_SHIFT_L(y);
 
 	return y; 
+}
+
 }

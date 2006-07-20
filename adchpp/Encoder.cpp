@@ -21,6 +21,8 @@
 
 #include "Encoder.h"
 
+namespace adchpp {
+	
 const int8_t Encoder::base32Table[256] = {
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
@@ -106,4 +108,6 @@ void Encoder::fromBase32(const char* src, u_int8_t* dst, size_t len) {
 			dst[offset] |= tmp << (8 - index);
 		}
 	}
+}
+
 }

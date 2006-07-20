@@ -19,13 +19,11 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Util.h"
 #include "Exception.h"
 
+namespace adchpp {
+	
 #ifdef _WIN32
 // Berkely constants converted to the windows equivs...
 #	define EWOULDBLOCK             WSAEWOULDBLOCK
@@ -155,5 +153,7 @@ private:
 	Socket& operator=(const Socket&);
 
 };
+
+}
 
 #endif // _SOCKET_H

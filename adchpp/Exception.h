@@ -19,10 +19,8 @@
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+namespace adchpp {
+	
 class Exception : public exception
 {
 public:
@@ -54,5 +52,7 @@ public:\
 	virtual ~name() throw() { } \
 }
 #endif
+
+}
 
 #endif // EXCEPTION_H

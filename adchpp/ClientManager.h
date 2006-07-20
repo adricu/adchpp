@@ -19,15 +19,13 @@
 #ifndef CLIENTMANAGER_H
 #define CLIENTMANAGER_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Util.h"
 #include "CID.h"
 #include "AdcCommand.h"
 #include "Signal.h"
 
+namespace adchpp {
+	
 class ManagedSocket;
 class Client;
 
@@ -225,5 +223,7 @@ private:
 	SignalState signalState_;
 	SignalDisconnected signalDisconnected_;
 };
+
+}
 
 #endif // CLIENTMANAGER_H

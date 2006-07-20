@@ -21,6 +21,8 @@
 
 #include "File.h"
 
+namespace adchpp {
+	
 string File::read(u_int32_t len) throw(FileException) {
 	string tmp;
 	tmp.resize(len);
@@ -127,3 +129,5 @@ int64_t File::getSize(const string& aFileName) {
 }
 
 #endif // _WIN32
+
+}

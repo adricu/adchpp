@@ -19,12 +19,10 @@
 #ifndef SETTINGSMANAGER_H
 #define SETTINGSMANAGER_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Util.h"
 #include "Signal.h"
+
+namespace adchpp {
 
 class SimpleXML;
 
@@ -137,5 +135,7 @@ private:
 // Shorthand accessor macros
 #define SETTING(k) (SettingsManager::getInstance()->get(SettingsManager::k))
 #define BOOLSETTING(k) (SettingsManager::getInstance()->getBool(SettingsManager::k))
+
+}
 
 #endif // SETTINGSMANAGER_H

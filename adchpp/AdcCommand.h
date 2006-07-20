@@ -22,6 +22,8 @@
 #include "Exception.h"
 #include "Util.h"
 
+namespace adchpp {
+	
 STANDARD_EXCEPTION(ParseException);
 
 class AdcCommand {
@@ -67,6 +69,7 @@ public:
 
 	static const char TYPE_BROADCAST = 'B';
 	static const char TYPE_DIRECT = 'D';
+	static const char TYPE_ECHO = 'E';
 	static const char TYPE_FEATURE = 'F';
 	static const char TYPE_INFO = 'I';
 	static const char TYPE_HUB = 'H';
@@ -193,5 +196,7 @@ public:
 		}
 	}
 };
+
+}
 
 #endif // ADC_COMMAND_H

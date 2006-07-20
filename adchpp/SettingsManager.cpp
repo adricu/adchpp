@@ -26,6 +26,8 @@
 #include "LogManager.h"
 #include "version.h"
 
+namespace adchpp {
+	
 SettingsManager* SettingsManager::instance = 0;
 const string SettingsManager::className = "SettingsManager";
 
@@ -151,4 +153,6 @@ void SettingsManager::load(const string& aFileName)
 	} catch(const Exception& e) {
 		printf("SettingsManager: Unable to load adchpp.xml, using defaults: %s\n", e.getError().c_str());
 	}
+}
+
 }

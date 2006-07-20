@@ -24,6 +24,8 @@
 #include "ClientManager.h"
 #include "TimerManager.h"
 
+namespace adchpp {
+	
 Client* Client::create(u_int32_t sid) throw() {
 	return new Client(sid);
 }
@@ -174,4 +176,6 @@ bool Client::isFlooding(time_t addSeconds) {
 void Client::onFailed() throw() {
 	ClientManager::getInstance()->onFailed(*this);
 	delete this;
+}
+
 }

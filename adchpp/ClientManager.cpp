@@ -30,6 +30,8 @@
 #include "Encoder.h"
 #include "version.h"
 
+namespace adchpp {
+	
 ClientManager* ClientManager::instance = 0;
 const string ClientManager::className = "ClientManager";
 
@@ -484,4 +486,6 @@ void ClientManager::shutdown() {
 
 void ClientManager::onFailed(Client& c) throw() {
 	removeClient(c);
+}
+
 }

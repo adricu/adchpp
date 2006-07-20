@@ -88,6 +88,7 @@
 #include <functional>
 
 #include <boost/function.hpp>
+#include <boost/utility.hpp>
 
 // Use maps if hash_maps aren't available
 #ifdef HAVE_HASH

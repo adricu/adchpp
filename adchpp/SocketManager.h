@@ -19,15 +19,13 @@
 #ifndef SOCKETMANAGER_H
 #define SOCKETMANAGER_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Thread.h"
 #include "Semaphores.h"
 #include "ServerSocket.h"
-#include "AtomicInt.h"
+#include "Mutex.h"
 
+namespace adchpp {
+	
 class ManagedSocket;
 class Writer;
 
@@ -72,7 +70,7 @@ private:
 private:
 	typedef vector<Callback> ProcessQueue;
 
-	FastCriticalSection processCS;
+	FastMutex processCS;
 	
 	ProcessQueue processQueue;
 	ProcessQueue workQueue;
@@ -88,8 +86,8 @@ private:
 
 	SocketManager();
 	virtual ~SocketManager();
-	
-	
 };
+
+}
 
 #endif // SOCKETMANAGER_H

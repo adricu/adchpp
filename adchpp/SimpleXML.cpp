@@ -21,6 +21,8 @@
 
 #include "SimpleXML.h"
 
+namespace adchpp {
+	
 SimpleXML::SimpleXML(int numAttribs) : attribs(numAttribs), found(false) { 
 	root = current = new Tag("BOGUSROOT", Util::emptyString, NULL); 
 }
@@ -341,4 +343,6 @@ void SimpleXML::fromXML(const string& aXML) throw(SimpleXMLException) {
 	
 	current = root;
 	resetCurrentChild();
+}
+
 }

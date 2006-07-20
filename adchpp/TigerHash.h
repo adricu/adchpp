@@ -19,9 +19,7 @@
 #ifndef _TIGER_HASH
 #define _TIGER_HASH
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+namespace adchpp { 
 
 class TigerHash {
 public:
@@ -56,5 +54,7 @@ private:
 
 	void tigerCompress(const u_int64_t* data, u_int64_t state[3]);
 };
+
+}
 
 #endif // _TIGER_HASH

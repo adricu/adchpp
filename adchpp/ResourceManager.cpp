@@ -25,6 +25,8 @@
 #include "File.h"
 #include "LogManager.h"
 
+namespace adchpp {
+	
 ResourceManager* ResourceManager::instance = 0;
 const string ResourceManager::className = "ResourceManager";
 
@@ -57,4 +59,6 @@ void ResourceManager::loadLanguage(const string& aFile) {
 	} catch(const Exception& e) {
 		LOGDT(className, "Failed to load language file: " + e.getError());
 	}
+}
+
 }

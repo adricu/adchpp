@@ -1,6 +1,7 @@
 // @Prolog: #include "stdinc.h"
 // @Prolog: #include "common.h"
 // @Prolog: #include "ResourceManager.h"
+// @Prolog: namespace adchpp {
 
 // @Strings: string ResourceManager::strings[]
 // @Names: string ResourceManager::names[]
@@ -31,3 +32,5 @@ enum Strings { // @DontAdd
 	UNABLE_TO_CREATE_THREAD, // "Unable to create thread"
 	LAST			// @DontAdd
 };
+
+// @Epilog: }

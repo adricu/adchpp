@@ -19,13 +19,11 @@
 #ifndef SIMPLEXML_H
 #define SIMPLEXML_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include "Exception.h"
 #include "Util.h"
 
+namespace adchpp {
+	
 STANDARD_EXCEPTION(SimpleXMLException);
 
 /**
@@ -188,5 +186,7 @@ private:
 	int attribs;
 	mutable bool found;
 };
+
+}
 
 #endif // SIMPLEXML_H

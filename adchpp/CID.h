@@ -21,6 +21,8 @@
 
 #include "Encoder.h"
 
+namespace adchpp {
+	
 class CID {
 public:
 	enum { SIZE = 192 / 8 };
@@ -57,5 +59,7 @@ public:
 private:
 	u_int8_t cid[SIZE];
 };
+
+}
 
 #endif

@@ -18,9 +18,12 @@
 
 #ifndef SIGNAL_H
 #define SIGNAL_H
+
 #include <boost/function.hpp>
 #include <boost/type_traits.hpp>
 
+namespace adchpp {
+	
 template<typename F>
 struct Signal {
 	typedef boost::function<F> Slot;
@@ -109,5 +112,7 @@ private:
 	ManagedConnection(const ManagedConnection&);
 	ManagedConnection& operator=(const ManagedConnection&);
 };
+
+}
 
 #endif // SIGNAL_H

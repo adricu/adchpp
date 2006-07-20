@@ -22,6 +22,7 @@
 #include <adchpp/stdinc.h>
 #include <adchpp/common.h>
 
+using namespace adchpp;
 typedef map<string, string> ParameterMap;
 
 #endif //ACCESS_STDINC_H

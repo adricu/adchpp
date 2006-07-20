@@ -40,10 +40,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+namespace adchpp {
+	
 extern DLL const char compileTime[];
 //DLL extern void logAssert(const char* file, int line, const char* exp);
 
@@ -121,6 +119,9 @@ DLL void adchppStartup2(void (*f)());
 /** Shuts down the adchpp hub library (doh!). */
 DLL void adchppShutdown(void (*f)());
 
+}
+
 #include <boost/bind.hpp>
+
 
 #endif // COMMON_H

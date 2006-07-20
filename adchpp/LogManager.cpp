@@ -24,6 +24,8 @@
 #include "File.h"
 #include "SettingsManager.h"
 
+namespace adchpp {
+	
 LogManager* LogManager::instance = 0;
 
 void LogManager::logDateTime(const string& area, const string& msg) throw() 
@@ -43,7 +45,7 @@ void LogManager::dolog(const string& msg) throw() {
 	dcdebug("Logging: %s\n", msg.c_str());
 	if(SETTING(LOG)) {
 		string logFile = Util::formatTime(Util::concatPath(Util::getCfgPath(), SETTING(LOG_FILE)));
-		FastLock l(cs);
+		FastMutex::Lock l(mtx);
 		try {
 			File f(logFile, File::WRITE, File::OPEN | File::CREATE);
 			f.setEndPos(0);
@@ -62,4 +64,6 @@ void LogManager::dolog(const string& msg) throw() {
 			dcdebug("LogManager::log2: %s\n", ee.getError().c_str());
 		}
 	}
+}
+
 }

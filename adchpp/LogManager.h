@@ -19,12 +19,10 @@
 #ifndef LOGMANAGER_H
 #define LOGMANAGER_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#include "Mutex.h"
 
-#include "CriticalSection.h"
-
+namespace adchpp {
+	
 /**
  * Log writing utilities.
  */
@@ -51,7 +49,7 @@ public:
 private:
 	friend class Singleton<LogManager>;
 	static DLL LogManager* instance;
-	FastCriticalSection cs;
+	FastMutex mtx;
 
 	LogManager() throw() { }
 	virtual ~LogManager() throw() { }
@@ -61,5 +59,7 @@ private:
 
 #define LOG(area, msg) LogManager::getInstance()->log(area, msg)
 #define LOGDT(area, msg) LogManager::getInstance()->logDateTime(area, msg)
+
+}
 
 #endif // LOGMANAGER_H

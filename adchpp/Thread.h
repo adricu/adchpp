@@ -19,10 +19,6 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #ifndef _WIN32
 # include <pthread.h>
 # include <sched.h>
@@ -31,6 +27,9 @@
 
 #include "Exception.h"
 #include "ResourceManager.h"
+
+namespace adchpp { 
+
 STANDARD_EXCEPTION(ThreadException);
 
 class Thread  
@@ -103,5 +102,7 @@ private:
 	}
 #endif
 };
+
+}
 
 #endif // THREAD_H
