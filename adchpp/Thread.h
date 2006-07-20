@@ -59,7 +59,7 @@ public:
 	static void sleep(u_int32_t millis) { ::Sleep(millis); }
 	static void yield() { ::Sleep(0); }
 
-#else //_WIN32
+#elif definied(HAVE_PTHREAD)
 
 	enum Priority {
 		LOW = 1,
@@ -78,8 +78,10 @@ public:
 	
 	static void sleep(u_int32_t millis) { ::usleep(millis*1000); }
 	static void yield() { ::sched_yield(); }
-	
-#endif //_WIN32
+
+#else
+#error No threading support found
+#endif
 
 protected:
 	virtual int run() = 0;

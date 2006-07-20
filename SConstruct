@@ -85,10 +85,6 @@ env.SetOption('max_drift', 60*10)
 
 conf = Configure(env)
 
-if conf.CheckCHeader('asm/atomic.h'):
-    conf.env.Append(CPPDEFINES='HAVE_ASM_ATOMIC_H')
-if conf.CheckCHeader('asm/bitops.h'):
-    conf.env.Append(CPPDEFINES='HAVE_ASM_BITOPS_H')
 if conf.CheckCHeader('sys/epoll.h'):
     conf.env.Append(CPPDEFINES='HAVE_SYS_EPOLL_H')
 if conf.CheckCHeader('sys/poll.h'):
