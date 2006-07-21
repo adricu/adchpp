@@ -21,7 +21,7 @@
 
 namespace adchpp {
 	
-class Exception : public exception
+class DLL Exception : public exception
 {
 public:
 	Exception() { }
@@ -36,7 +36,7 @@ protected:
 
 #ifdef _DEBUG
 
-#define STANDARD_EXCEPTION(name) class name : public Exception { \
+#define STANDARD_EXCEPTION(name) class DLL name : public Exception { \
 public:\
 	name() throw() : Exception(#name) { } \
 	name(const string& aError) throw() : Exception(#name ": " + aError) { } \
@@ -45,7 +45,7 @@ public:\
 
 #else // _DEBUG
 
-#define STANDARD_EXCEPTION(name) class name : public Exception { \
+#define STANDARD_EXCEPTION(name) class DLL name : public Exception { \
 public:\
 	name() throw() : Exception() { } \
 	name(const string& aError) throw() : Exception(aError) { } \

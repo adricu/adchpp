@@ -56,7 +56,7 @@ if env['PLATFORM'] == 'win32':
     env.Append(CPPPATH = [r'c:\Boost\include\boost-1_33_1'])
 else:
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
-	gcc_link_flags['common'].append('-fvisibility=hidden')
+	gcc_flags['common'].append('-fvisibility=hidden')
 
 if 'mingw' in env['TOOLS']:
     env.Append(CPPPATH = ['#/STLport/stlport/'])

@@ -22,6 +22,7 @@
 #include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
 #include <adchpp/version.h>
+#include <adchpp/File.h>
 
 #include <signal.h>
 
@@ -213,7 +214,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(!pidFileName.empty()) {
-		pidFileName = Util::concatPath(Util::getCfgPath(), pidFileName);
+		pidFileName = File::makeAbsolutePath(Util::getCfgPath(), pidFileName);
 		pidFile = fopen(pidFileName.c_str(), "w");
 		if(pidFile == NULL) {
 			fprintf(stderr, "Can't open %s for writing\n", pidFileName.c_str());

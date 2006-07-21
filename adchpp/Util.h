@@ -141,8 +141,8 @@ public:
 	}
 
 #else // WIN32
-	static string appPath;
-	static string appName;
+	DLL static string appPath;
+	DLL static string appName;
 
 	static void setApp(const string app) {
 		string::size_type i = app.rfind('/');

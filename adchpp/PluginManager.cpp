@@ -72,7 +72,7 @@ bool PluginManager::loadPlugin(const string& file) {
 	plugin_t h;
 
 #ifndef _WIN32
-	if(!Util::isAbsolutePath(file)) {
+	if(!File::isAbsolutePath(file)) {
 		h = PM_LOAD_LIBRARY((pluginPath + file).c_str());
 	} else {
 		h = PM_LOAD_LIBRARY(file.c_str());

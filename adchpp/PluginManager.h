@@ -118,7 +118,7 @@ public:
  * so that the pluginmanager can determine if this plugin should
  * be loaded or not
  */
-typedef PLUGIN_API double (*PLUGIN_GET_VERSION)();
+typedef double (*PLUGIN_GET_VERSION)();
 
 /**
  * PLUGIN_API void pluginLoad()
@@ -131,16 +131,16 @@ typedef PLUGIN_API double (*PLUGIN_GET_VERSION)();
  * value is not 0 here.
  * @see pluginUnload
  */
-typedef PLUGIN_API int (*PLUGIN_LOAD)();
+typedef int (*PLUGIN_LOAD)();
 
 /**
  * PLUGIN_API void pluginUnload()
  * Called when the hub is shutting down
  * @see pluginLoad
  */
-typedef PLUGIN_API void (*PLUGIN_UNLOAD)();
+typedef void (*PLUGIN_UNLOAD)();
 
-class PluginManager : public Singleton<PluginManager>
+class DLL PluginManager : public Singleton<PluginManager>
 {
 public:
 	typedef HASH_MAP<string, Plugin*> Registry;

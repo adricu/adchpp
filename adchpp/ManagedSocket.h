@@ -57,13 +57,14 @@ public:
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
 	typedef boost::function<void()> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
+
+	socket_t getSocket() { return sock.getSocket(); }
 private:
 
 	ManagedSocket() throw();
 	~ManagedSocket() throw();
 	
 	// Functions for Writer (called from Writer thread)
-	socket_t getSocket() { return sock.getSocket(); }
 	ByteVector* prepareWrite();
 	bool completeWrite(ByteVector* buf, size_t written) throw();
 	bool completeRead(ByteVector* buf) throw();

@@ -33,13 +33,15 @@
 #include <MSWSock.h>
 #endif
 
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
+
 namespace adchpp {
 
 #ifdef _WIN32
 
 #define ACCEPT_BUF_SIZE ((sizeof(SOCKADDR_IN)+16)*2)
-
-#include <MSWSock.h>
 
 struct MSOverlapped : OVERLAPPED {
 	enum Types {
@@ -537,7 +539,7 @@ struct EPoll {
 	bool associate(int fd) {
 		epoll_event ev = { 0, 0 };
 		ev.data.fd = fd;
-		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+		ev.events = EPOLLIN;
 		return epoll_ctl(poll_fd, EPOLL_CTL_ADD, fd, &ev) == 0;
 	}
 	
@@ -623,6 +625,7 @@ private:
 		
 		try {
 			srv.listen(SETTING(SERVER_PORT));
+			srv.setBlocking(false);
 		} catch(const SocketException& e) {
 			LOGDT(SocketManager::className, "Unable to create server socket: " + e.getError());
 			return false;
@@ -655,7 +658,6 @@ private:
 			if(!poller.get(events)) {
 				LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
 			}
-
 			for(std::vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
 				epoll_event& ev = *i;
 				if(ev.data.fd == srv.getSocket()) {
@@ -709,48 +711,37 @@ private:
 	}
 	
 	void accept() throw() {
-		while(true) {
-			try {
-				if(srv.wait(Socket::WAIT_CONNECT, 0) != Socket::WAIT_CONNECT) {
-					return;
-				}
-			} catch(const SocketException&) {
-				LOGDT(SocketManager::className, "Server socket failed");
-				return;
-			}
-			ManagedSocket* ms = new ManagedSocket();
-			try {
-				ms->sock.accept(srv);
-						
-				if(!poller.associate(ms)) {
-					LOGDT(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
-					ms->deref();
-					return;
-				}
-				//ms->setIp(inet_ntoa(remote->sin_addr));
-		
-				// Job thread gets a reference here...
-				ms->ref();
-	
-				active.insert(ms);
-	
-				ClientManager::getInstance()->incomingConnection(ms);
-				SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processIncoming, ms));
-			
-				read(ms);
-			} catch (const SocketException& e) {
-				LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
-	
+		ManagedSocket* ms = new ManagedSocket();
+		try {
+			ms->sock.accept(srv);
+					
+			if(!poller.associate(ms)) {
+				LOGDT(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
 				ms->deref();
 				return;
 			}
+			//ms->setIp(inet_ntoa(remote->sin_addr));
+	
+			// Job thread gets a reference here...
+			ms->ref();
+
+			active.insert(ms);
+
+			ClientManager::getInstance()->incomingConnection(ms);
+			SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processIncoming, ms));
+		
+			read(ms);
+		} catch (const SocketException& e) {
+			LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
+
+			ms->deref();
+			return;
 		}
 	}
 	
 	void read(ManagedSocket* ms) throw() {
 		if(stop)
 			return;
-			
 		while(true) {
 			// Read until we can read no more
 			ByteVector* readBuf = Util::freeBuf;
@@ -772,7 +763,6 @@ private:
 				return;
 			}
 			readBuf->resize(bytes);
-			
 			ms->completeRead(readBuf);
 		}
 	}
