@@ -44,7 +44,7 @@ void LogManager::logDateTime(const string& area, const string& msg) throw()
 void LogManager::dolog(const string& msg) throw() {
 	dcdebug("Logging: %s\n", msg.c_str());
 	if(SETTING(LOG)) {
-		string logFile = Util::formatTime(Util::concatPath(Util::getCfgPath(), SETTING(LOG_FILE)));
+		string logFile = Util::formatTime(File::makeAbsolutePath(Util::getCfgPath(), SETTING(LOG_FILE)));
 		FastMutex::Lock l(mtx);
 		try {
 			File f(logFile, File::WRITE, File::OPEN | File::CREATE);
@@ -55,7 +55,7 @@ void LogManager::dolog(const string& msg) throw() {
 			dcdebug("LogManager::log: %s\n", e.getError().c_str());
 		}
 		try {
-			Util::ensureDirectory(logFile);
+			File::ensureDirectory(logFile);
 
 			File f(logFile, File::WRITE, File::OPEN | File::CREATE);
 			f.setEndPos(0);

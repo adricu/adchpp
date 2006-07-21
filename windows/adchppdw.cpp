@@ -17,11 +17,11 @@
  */
  
 #include "stdinc.h"
-#include "../adchpp/common.h"
-#include "../adchpp/Semaphores.h"
-#include "../adchpp/LogManager.h"
-#include "../adchpp/File.h"
-#include "../adchpp/version.h"
+#include <adchpp/common.h>
+#include <adchpp/Semaphores.h>
+#include <adchpp/LogManager.h>
+#include <adchpp/File.h>
+#include <adchpp/version.h>
 
 static const string modName = "adchpp";
 
@@ -32,7 +32,7 @@ using namespace adchpp;
 
 #ifdef _MSC_VER
 #include "ExtendedTrace.h"
-CriticalSection cs;
+RecursiveMutex cs;
 enum { DEBUG_BUFSIZE = 8192 };
 static char guard[DEBUG_BUFSIZE];
 static int recursion = 0;
@@ -45,7 +45,7 @@ static char buf[DEBUG_BUFSIZE];
 
 LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
 {
-	Lock l(cs);
+	RecursiveMutex::Lock l(cs);
 
 	if(recursion++ > 30)
 		exit(-1);
@@ -352,7 +352,7 @@ int CDECL main(int argc, char* argv[]) {
 			if(cfg.empty()) {
 				printf("-c <directory>\n");
 			}
-			if(!Util::isAbsolutePath(cfg)) {
+			if(!File::isAbsolutePath(cfg)) {
 				printf("Config dir must be an absolute path\n");
 				return 2;
 			}

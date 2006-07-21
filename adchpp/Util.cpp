@@ -189,6 +189,39 @@ string Util::formatTime(const string& msg, time_t t /* = time(NULL) */) {
 	return result;
 }
 
+string Util::translateError(int aError) {
+#ifdef _WIN32
+	LPVOID lpMsgBuf;
+	::FormatMessage( 
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		FORMAT_MESSAGE_FROM_SYSTEM | 
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		aError,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR) &lpMsgBuf,
+		0,
+		NULL 
+	);
+
+#ifdef _UNICODE
+	string tmp = Util::toAcp((LPCTSTR)lpMsgBuf);
+#else
+	string tmp = (LPCTSTR)lpMsgBuf;
+#endif		
+		// Free the buffer.
+	LocalFree( lpMsgBuf );
+#else // WIN32
+	string tmp = strerror(aError);
+#endif // WIN32
+	string::size_type i = 0;
+
+	while( (i = tmp.find_first_of("\r\n", i)) != string::npos) {
+		tmp.erase(i, 1);
+	}
+	return tmp;
+}
+
 string Util::getOsVersion() {
 #ifdef _WIN32
 	string os;

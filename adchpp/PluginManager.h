@@ -78,27 +78,23 @@ class SimpleXML;
 
 #ifdef _WIN32
 
-#define PLUGIN_EXT _T(".dll")
-
-#define PLUGIN_API __declspec(dllexport) __cdecl
+#ifdef BUILDING_ADCHPP
+#define PLUGIN_API 
+#else
+#define PLUGIN_API __declspec(dllexport)
+#endif
 
 typedef HMODULE plugin_t;
-#define PM_LOAD_LIBRARY(filename) ::LoadLibrary(filename)
-#define PM_UNLOAD_LIBRARY(lib) ::FreeLibrary(lib)
-#define PM_GET_ADDRESS(lib, name) ::GetProcAddress(lib, name)
-#define PM_GET_ERROR_STRING() Util::translateError(GetLastError())
 
 #else // WIN32
 
-#define PLUGIN_EXT ".so"
-
+#ifdef BUILDING_ADCHPP
 #define PLUGIN_API
+#else
+#define PLUGIN_API __attribute__ ((visibility("default")))
+#endif
 
 typedef void* plugin_t;
-#define PM_LOAD_LIBRARY(filename) ::dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)
-#define PM_UNLOAD_LIBRARY(lib) ::dlclose(lib)
-#define PM_GET_ADDRESS(lib, name) ::dlsym(lib, name)
-#define PM_GET_ERROR_STRING() ::dlerror()
 
 #endif // WIN32
 
@@ -116,16 +112,13 @@ public:
 	virtual int getVersion() = 0;
 };
 
-#ifndef CALLBACK
-#define CALLBACK
-#endif
 /**
  * PLUGIN_API double pluginGetVersion()
  * This function should just return the constant PLUGINVERSIONFLOAT
  * so that the pluginmanager can determine if this plugin should
  * be loaded or not
  */
-typedef double (CALLBACK *PLUGIN_GET_VERSION)();
+typedef PLUGIN_API double (*PLUGIN_GET_VERSION)();
 
 /**
  * PLUGIN_API void pluginLoad()
@@ -138,14 +131,14 @@ typedef double (CALLBACK *PLUGIN_GET_VERSION)();
  * value is not 0 here.
  * @see pluginUnload
  */
-typedef int (CALLBACK *PLUGIN_LOAD)();
+typedef PLUGIN_API int (*PLUGIN_LOAD)();
 
 /**
  * PLUGIN_API void pluginUnload()
  * Called when the hub is shutting down
  * @see pluginLoad
  */
-typedef void (CALLBACK *PLUGIN_UNLOAD)();
+typedef PLUGIN_API void (*PLUGIN_UNLOAD)();
 
 class PluginManager : public Singleton<PluginManager>
 {

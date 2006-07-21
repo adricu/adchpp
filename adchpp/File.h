@@ -23,12 +23,12 @@
 #include "Util.h"
 #include "ResourceManager.h"
 
-namespace adchpp {
-
 #ifndef _WIN32
 #include <sys/stat.h>
 #include <fcntl.h>
 #endif
+
+namespace adchpp {
 
 STANDARD_EXCEPTION(FileException);
 
@@ -52,6 +52,18 @@ public:
 	DLL static int64_t getSize(const string& aFileName);
 
 	DLL string read(u_int32_t len) throw(FileException);
+	
+	/** Returns the directory part of the full path */
+	DLL static string getFilePath(const string& name) throw();
+	/** Returns the filename part of the full path */
+	DLL static string getFileName(const string& name) throw();
+	DLL static bool isAbsolutePath(const string& name) throw();
+	
+	static string makeAbsolutePath(string const& path, string const& filename) {
+		return isAbsolutePath(filename) ? filename : path + filename;
+	}
+
+	DLL static void ensureDirectory(const string& aFile) throw();
 	
 #ifdef _WIN32
 	void close() {

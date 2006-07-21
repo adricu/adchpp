@@ -28,11 +28,6 @@ namespace adchpp {
 class SocketManager;
 class Writer;
 
-#ifdef HAVE_SYS_EPOLL_H
-#include <sys/epoll.h>
-class EPoll;
-#endif
-
 /**
  * An asynchronous socket managed by SocketManager.
  */
@@ -55,8 +50,6 @@ public:
 
 	const string& getIp() const { return ip; }
 	void setIp(const string& ip_) { ip = ip_; }
-	
-	bool isOpen() { return sock; }
 	
 	typedef boost::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
@@ -89,9 +82,6 @@ private:
 	ManagedSocket& operator=(const ManagedSocket&);
 
 	friend class Writer;
-#ifdef HAVE_SYS_EPOLL_H
-	friend class EPoll;
-#endif
 
 	Socket sock;
 	/** Output buffer, for storing data that's waiting to be transmitted */
@@ -109,8 +99,6 @@ private:
 	ByteVector* writeBuf;
 	/** WSABUF for data being sent */
 	WSABUF wsabuf;
-#else
-	struct epoll_event epoll;
 #endif
 
 	ConnectedHandler connectedHandler;

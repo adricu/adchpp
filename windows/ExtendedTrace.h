@@ -26,7 +26,10 @@
 #define EXTENDEDTRACEINITIALIZE( IniSymbolPath )	InitSymInfo( IniSymbolPath )
 #define EXTENDEDTRACEUNINITIALIZE()			         UninitSymInfo()
 #define STACKTRACE2(file, eip, esp, ebp) StackTrace(GetCurrentThread(), _T(""), file, eip, esp, ebp)
+namespace adchpp {
 class File;
+}
+using namespace adchpp;
 
 BOOL InitSymInfo( PCSTR );
 BOOL UninitSymInfo();

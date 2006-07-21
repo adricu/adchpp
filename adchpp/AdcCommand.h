@@ -23,7 +23,7 @@
 #include "Util.h"
 
 namespace adchpp {
-	
+
 STANDARD_EXCEPTION(ParseException);
 
 class AdcCommand {
@@ -97,7 +97,7 @@ public:
 	C(CMD, 'C','M','D');
 #undef C
 
-	DLL static const u_int32_t HUB_SID;		// AAAA in base32
+	enum { HUB_SID = 0x41414141 };
 
 	DLL AdcCommand();
 	DLL explicit AdcCommand(Severity sev, Error err, const string& desc, char aType = TYPE_INFO);
@@ -138,8 +138,9 @@ public:
 	bool operator==(u_int32_t aCmd) const { return cmdInt == aCmd; }
 
 	DLL static string escape(const string& s);
-	void setTo(u_int32_t aTo) { to = aTo; }
+
 	u_int32_t getTo() const { return to; }
+	void setTo(u_int32_t aTo) { to = aTo; }
 	u_int32_t getFrom() const { return from; }
 	void setFrom(u_int32_t aFrom) { from = aFrom; }
 

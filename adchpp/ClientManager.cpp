@@ -48,17 +48,19 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 			ManagedSocket::unlock();
 			SocketManager::getInstance()->addAllWriters();
 			break;
-		case AdcCommand::TYPE_DIRECT:
+		case AdcCommand::TYPE_DIRECT: // Fallthrough
+		case AdcCommand::TYPE_ECHO:
 			{
 				ClientIter i = clients.find(cmd.getTo());
 				if(i != clients.end()) {
 					i->second->send(txt);
-					i = clients.find(cmd.getFrom());
-					if(i != clients.end()) {
-						i->second->send(txt);
+					if(COMPATIBILITY || cmd.getType() == AdcCommand::TYPE_ECHO) {
+						i = clients.find(cmd.getFrom());
+						if(i != clients.end()) {
+							i->second->send(txt);
+						}
 					}
 				}
-
 			}
 			break;
 	}
@@ -101,7 +103,6 @@ void ClientManager::updateCache() throw() {
 bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
 	time_t add = ((cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_FEATURE) ? 1 : 0) * SETTING(FLOOD_ADD);
 	if(c.isFlooding(add)) {
-		Util::stats.disconFlooding++;
 		c.disconnect();
 		return true;
 	}
@@ -136,7 +137,6 @@ void ClientManager::onConnected(Client& c) throw() {
 		Client* cc = logins.front().first;
 
 		dcdebug("ClientManager: Login timeout in state %d\n", cc->getState());
-		Util::stats.disconTimeout++;
 		cc->disconnect();
 		logins.pop_front();
 	}
@@ -288,6 +288,12 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 			c.disconnect();
 			return false;
 		}
+		
+		if(strtmp.size() != CID::BASE32_SIZE || spid.size() != CID::BASE32_SIZE) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid CID/PID length"));
+			c.disconnect();
+			return false;
+		}			
 		
 		CID cid(strtmp);
 		CID pid(spid);

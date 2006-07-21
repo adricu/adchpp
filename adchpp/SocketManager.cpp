@@ -507,7 +507,7 @@ private:
 	SocketSet disconnecting;
 };
 
-#else // _WIN32
+#elif defined(HAVE_SYS_EPOLL_H)
 
 struct EPoll {
 	EPoll() : poll_fd(-1) { 
@@ -867,6 +867,8 @@ private:
 	SocketSet disconnecting;
 };
 
+#else
+#error No socket implementation for your platform
 #endif // _WIN32
 	
 SocketManager::SocketManager() : writer(0) { 

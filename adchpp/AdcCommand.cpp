@@ -23,8 +23,6 @@
 
 namespace adchpp {
 	
-const u_int32_t AdcCommand::HUB_SID = 0x41414141;
-
 AdcCommand::AdcCommand() : cmdInt(0), str(0), from(0), type(0) { }
 
 AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), str(&tmp), from(HUB_SID), type(aType) {
@@ -174,7 +172,7 @@ const string& AdcCommand::toString() const {
 		tmp += features;
 	}
 
-	if(type == TYPE_DIRECT) {
+	if(type == TYPE_DIRECT || type == TYPE_ECHO) {
 		tmp += ' ';
 		appendSID(tmp, to);
 	}

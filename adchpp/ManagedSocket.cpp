@@ -108,7 +108,7 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 
 	Util::stats.totalUp += written;
 
-		FastMutex::Lock l(outbufCS);
+	FastMutex::Lock l(outbufCS);
 	
 	if(written == buf->size()) {
 		// Everything written, good...

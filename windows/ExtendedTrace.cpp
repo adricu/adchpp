@@ -19,8 +19,8 @@
 
 #if defined(_MSC_VER)
 
-#include "../adchpp/common.h"
-#include "../adchpp/File.h"
+#include <adchpp/common.h>
+#include <adchpp/File.h>
 
 #include <tchar.h>
 #include <DbgHelp.h>

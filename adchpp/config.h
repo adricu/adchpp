@@ -27,6 +27,9 @@ namespace adchpp {
 // This enables stlport's debug mode (and slows it down to a crawl...)
 //# define _STLP_DEBUG 1
 
+// Set to zero to disable some old DC++ compatibility code
+#define COMPATIBILITY 1
+
 // --- Shouldn't have to change anything under here...
 
 #ifndef _REENTRANT
@@ -89,18 +92,6 @@ typedef unsigned long long u_int64_t;
 #define _LL(x) x##ll
 #define _ULL(x) x##ull
 #define I64_FMT "%lld"
-#endif
-
-#ifdef _WIN32
-
-# define PATH_SEPARATOR '\\'
-# define PATH_SEPARATOR_STR "\\"
-
-#else
-
-# define PATH_SEPARATOR '/'
-# define PATH_SEPARATOR_STR "/"
-
 #endif
 
 #ifdef _WIN32

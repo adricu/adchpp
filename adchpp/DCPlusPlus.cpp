@@ -52,7 +52,7 @@ void adchppStartup() {
 
 void adchppStartup2(void (*f)()) {
 	if(!SETTING(LANGUAGE_FILE).empty()) {
-		if(Util::isAbsolutePath(SETTING(LANGUAGE_FILE))) {
+		if(File::isAbsolutePath(SETTING(LANGUAGE_FILE))) {
 			ResourceManager::getInstance()->loadLanguage(SETTING(LANGUAGE_FILE));
 		} else {
 			ResourceManager::getInstance()->loadLanguage(Util::getCfgPath() + SETTING(LANGUAGE_FILE));

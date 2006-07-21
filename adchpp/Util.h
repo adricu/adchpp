@@ -111,33 +111,6 @@ public:
 	struct Stats {
 		int64_t totalUp;			///< Total bytes uploaded
 		int64_t totalDown;			///< Total bytes downloaded
-		int64_t usersValidated;		///< Users let into the hub
-		int64_t usersDisconnected;	///< Users disconnected (including the ones denied access)
-		int64_t disconMinShare;		///< Users disconnected because of share limits
-		int64_t disconPlugin;		///< Users disconnected by a plugin (plugins must increase this count whenever they disconnect a user)
-		int64_t disconLength;		///< Description or nick name too long
-		int64_t disconBan;			///< Users disconnected because they were banned
-		int64_t disconEarlySearch;	///< Search before fully logged in
-		int64_t disconBadNick;		///< Invalid characters in nick
-		int64_t disconBadData;		///< Protocol violations (sending from bad nicks / ips)
-		int64_t disconFlooding;		///< Flood filter activated
-		int64_t disconOverflowIn;	///< Buffer overflow (client sent a very long command)
-		int64_t disconOverflowOut;	///< Buffer overflow (client didn't receive data fast enough)
-		int64_t disconFull;			///< Hub full
-		int64_t disconNickTaken;	///< Nick busy
-		int64_t disconTimeout;		///< Login timeout
-		int64_t disconBadPassword;	///< Wrong password supplied
-		int64_t disconBadIp;		///< Unallowed ip connection attempt
-		int64_t disconUnreg;		///< Unregistered users not allowed
-		int64_t kicks;				///< Users kicked
-		int64_t redirects;			///< Users redirected
-		int64_t passiveSearches;	///< Passive searches
-		int64_t activeSearches;		///< Active searches
-		int64_t passiveResults;		///< Passive search results
-		int64_t myInfos;			///< Number of $MyINFO received
-		int64_t getInfos;			///< Number of $GetINFO received
-		int64_t messages;			///< Chat messages
-		int64_t privateMessages;	///< Private messages
 		u_int32_t startTime;		///< The time the hub was started
 	};
 
@@ -148,42 +121,6 @@ public:
 	DLL static string getOsVersion();
 	DLL static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
 	DLL static string formatTime(const string& msg, time_t t = time(NULL));
-	
-	static bool isAbsolutePath(const string& path) {
-#ifdef _WIN32
-		/* windows filenames are horribly fscked up..
-		 * 
-		 * G:\Documents and Settings\walter>"echo.exe" hoi hoi > "/winnt\blah.txt"
-		 *
-		 * G:\Documents and Settings\walter>cat.exe "\winnt/blah.txt"
-		 * hoi hoi
-		 */
-		return (path.length() >= 3 && path[1] == _T(':') && (path[2] == _T('\\') || path[2] == _T('/'))) ||
-			(path.length() >= 1 && (path[0] == _T('\\') || path[0] == _T('/')));
-#else
-		return path.length() >= 1 && path[0] == '/';
-#endif
-	}
-	static string concatPath(string const& path, string const& filename) {
-		return isAbsolutePath(filename) ? filename : path + filename;
-	}
-	static void ensureDirectory(const string& aFile)
-	{
-		string::size_type start = 0;
-		
-		while( (start = aFile.find_first_of(_T("\\/"), start)) != string::npos) {
-#ifdef _WIN32
-			if(!CreateDirectory(aFile.substr(0, start+1).c_str(), NULL)) {
-				dcdebug("Util::ensureDirectory failed: 0x%x, %s", GetLastError(), Util::translateError(GetLastError()).c_str());
-			}
-#else
-			if(mkdir(aFile.substr(0, start+1).c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0 && errno != EEXIST) {
-				dcdebug("Util::ensureDirectory failed: 0x%x, %s", errno, Util::translateError(errno).c_str());
-			}
-#endif
-			start++;
-		}
-	}
 	
 	static const string& getCfgPath() { return cfgPath; }
 	static void setCfgPath(const string& path) { cfgPath = path; }
@@ -222,39 +159,8 @@ public:
 	}
 #endif // WIN32
 
-	static string translateError(int aError) {
-#ifdef _WIN32
-		LPVOID lpMsgBuf;
-		FormatMessage( 
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-			FORMAT_MESSAGE_FROM_SYSTEM | 
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			aError,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			(LPTSTR) &lpMsgBuf,
-			0,
-			NULL 
-			);
-
-#ifdef _UNICODE
-		string tmp = Util::toAcp((LPCTSTR)lpMsgBuf);
-#else
-		string tmp = (LPCTSTR)lpMsgBuf;
-#endif		
-		// Free the buffer.
-		LocalFree( lpMsgBuf );
-#else // WIN32
-		string tmp = strerror(aError);
-#endif // WIN32
-		string::size_type i = 0;
-
-		while( (i = tmp.find_first_of("\r\n", i)) != string::npos) {
-			tmp.erase(i, 1);
-		}
-		return tmp;
-	}
-
+	DLL static string translateError(int aError);
+	
 	static string toAcp(const wstring& wString) {
 		if(wString.empty())
 			return Util::emptyString;
@@ -293,15 +199,6 @@ public:
 	}
 	static wstring& toUnicode(wstring& aString) {
 		return aString;
-	}
-
-	static string getFilePath(const string& path) {
-		string::size_type i = path.rfind(PATH_SEPARATOR);
-		return (i != string::npos) ? path.substr(0, i) : path;
-	}
-	static string getFileName(const string& path) {
-		string::size_type i = path.rfind(PATH_SEPARATOR);
-		return (i != string::npos) ? path.substr(i + 1) : path;
 	}
 
 	static string formatBytes(const string& aString) { return formatBytes(toInt64(aString)); }

@@ -26,9 +26,28 @@
 #include "LogManager.h"
 #include "SocketManager.h"
 #include "version.h"
+#include "File.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#define PLUGIN_EXT _T(".dll")
+
+#define PM_LOAD_LIBRARY(filename) ::LoadLibrary(filename)
+#define PM_UNLOAD_LIBRARY(lib) ::FreeLibrary(lib)
+#define PM_GET_ADDRESS(lib, name) ::GetProcAddress(lib, name)
+#define PM_GET_ERROR_STRING() Util::translateError(GetLastError())
+
+#else
+
 #include "dlfcn.h"
+
+#define PLUGIN_EXT ".so"
+
+#define PM_LOAD_LIBRARY(filename) ::dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)
+#define PM_UNLOAD_LIBRARY(lib) ::dlclose(lib)
+#define PM_GET_ADDRESS(lib, name) ::dlsym(lib, name)
+#define PM_GET_ERROR_STRING() ::dlerror()
+
 #endif
 
 namespace adchpp {
@@ -59,7 +78,7 @@ bool PluginManager::loadPlugin(const string& file) {
 		h = PM_LOAD_LIBRARY(file.c_str());
 	}
 #else
-	if(!Util::isAbsolutePath(file)) {
+	if(!File::isAbsolutePath(file)) {
 		h = LoadLibraryEx((pluginPath + file).c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES);
 	} else {
 		h = LoadLibraryEx(file.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES);
@@ -78,7 +97,7 @@ bool PluginManager::loadPlugin(const string& file) {
 #ifdef _WIN32
 			// Reload plugin with references resolved...
 			FreeLibrary(h);
-			if(!Util::isAbsolutePath(file)) {
+			if(!File::isAbsolutePath(file)) {
 				h = PM_LOAD_LIBRARY((pluginPath + file).c_str());
 			} else {
 				h = PM_LOAD_LIBRARY(file.c_str());

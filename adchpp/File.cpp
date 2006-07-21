@@ -88,6 +88,30 @@ int64_t File::getSize(const string& aFileName) {
 	}
 }
 
+string File::getFilePath(const string& path) throw() {
+	string::size_type i = path.find_last_of("\\/");
+	return (i != string::npos) ? path.substr(0, i) : path;
+}
+
+string File::getFileName(const string& path) throw() {
+	string::size_type i = path.find_last_of("\\/");
+	return (i != string::npos) ? path.substr(i + 1) : path;
+}
+
+bool File::isAbsolutePath(const string& path) throw() {
+	return (path.length() >= 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) ||
+		(path.length() >= 1 && (path[0] == '\\' || path[0] == '/'));
+}
+
+void File::ensureDirectory(const string& aFile) throw() {
+	string::size_type start = 0;
+	
+	while( (start = aFile.find_first_of("\\/", start)) != string::npos) {
+		::CreateDirectory(aFile.substr(0, start+1).c_str(), NULL);
+		start++;
+	}
+}
+
 #else // _WIN32
 
 File::File(const string& aFileName, int access, int mode) throw(FileException) {
@@ -128,6 +152,28 @@ int64_t File::getSize(const string& aFileName) {
 	return s.st_size;
 }
 
-#endif // _WIN32
+string File::getFilePath(const string& path) throw() {
+	string::size_type i = path.rfind('/');
+	return (i != string::npos) ? path.substr(0, i) : path;
+}
+
+string File::getFileName(const string& path) throw() {
+	string::size_type i = path.rfind('/');
+	return (i != string::npos) ? path.substr(i + 1) : path;
+}
+
+bool File::isAbsolutePath(const string& path) throw() {
+	return path.length() >= 1 && path[0] == '/';
+}
+
+void File::ensureDirectory(const string& aFile) throw() {
+	string::size_type start = 0;
+	
+	while( (start = aFile.find('/', start)) != string::npos) {
+		::mkdir(aFile.substr(0, start+1).c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+		start++;
+	}
+}
+#endif
 
 }

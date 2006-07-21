@@ -26,10 +26,13 @@ namespace adchpp {
 class CID {
 public:
 	enum { SIZE = 192 / 8 };
+	enum { BASE32_SIZE = 39 };
 
 	struct Hash {
-		static const size_t bucket_size = 4;
-		static const size_t min_buckets = 8;
+#if _MSC_VER >= 1300 
+		static const size_t bucket_size = 4; 
+		static const size_t min_buckets = 8; 
+#endif 
 		size_t operator()(const CID& c) const { return c.toHash(); }
 		bool operator()(const CID& a, const CID& b) const { return a < b; }
 	};
