@@ -16,23 +16,23 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _ENCODER
-#define _ENCODER
+#ifndef ADCHPP_ENCODER_H
+#define ADCHPP_ENCODER_H
 
 namespace adchpp {
 	
 class Encoder
 {
 public:
-	DLL static string& toBase32(const u_int8_t* src, size_t len, string& tgt);
-	static string toBase32(const u_int8_t* src, size_t len) {
+	ADCHPP_DLL static string& toBase32(const uint8_t* src, size_t len, string& tgt);
+	static string toBase32(const uint8_t* src, size_t len) {
 		string tmp;
 		return toBase32(src, len, tmp);
 	}
-	DLL static void fromBase32(const char* src, u_int8_t* dst, size_t len);
+	ADCHPP_DLL static void fromBase32(const char* src, uint8_t* dst, size_t len);
 
-	DLL static const int8_t base32Table[256];
-	DLL static const char base32Alphabet[32];
+	ADCHPP_DLL static const int8_t base32Table[256];
+	ADCHPP_DLL static const char base32Alphabet[32];
 private:
 };
 

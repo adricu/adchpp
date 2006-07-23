@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "Socket.h"
 
@@ -130,7 +129,7 @@ void Socket::connect(const string& aAddr, short aPort) throw(SocketException) {
         if (host == NULL) {
             throw SocketException(errno);
         }
-        serv_addr.sin_addr.s_addr = *((u_int32_t*)host->h_addr);
+        serv_addr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
     }
 
     if(::connect(sock,(sockaddr*)&serv_addr,sizeof(serv_addr)) == SOCKET_ERROR) {
@@ -232,7 +231,7 @@ void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t
 		if (host == NULL) {
 			throw SocketException(errno);
 		}
-		serv_addr.sin_addr.s_addr = *((u_int32_t*)host->h_addr);
+		serv_addr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
 	}
 
 	int i = ::sendto(sock, aBuffer, (int)aLen, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
@@ -249,7 +248,7 @@ void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t
  * @return WAIT_*** ored together of the current state.
  * @throw SocketException Select or the connection attempt failed.
  */
-int Socket::wait(u_int32_t millis, int waitFor) throw(SocketException) {
+int Socket::wait(uint32_t millis, int waitFor) throw(SocketException) {
 #ifdef HAVE_POLL_H
 	struct pollfd fd;
 	fd.fd = sock;
@@ -359,7 +358,7 @@ string Socket::resolve(const string& aDns) {
 		if (host == NULL) {
 			return Util::emptyString;
 		}
-		sock_addr.sin_addr.s_addr = *((u_int32_t*)host->h_addr);
+		sock_addr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
 		return inet_ntoa(sock_addr.sin_addr);
 	} else {
 		return aDns;

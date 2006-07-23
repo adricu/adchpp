@@ -16,10 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "Encoder.h"
+#include "common.h"
 
 namespace adchpp {
 	
@@ -49,16 +49,16 @@ const char Encoder::base32Alphabet[32] = {
 	'Y', 'Z', '2', '3', '4', '5', '6', '7'
 };
 
-string& Encoder::toBase32(const u_int8_t* src, size_t len, string& dst) {
+string& Encoder::toBase32(const uint8_t* src, size_t len, string& dst) {
 	// Code snagged from the bitzi bitcollider
 	size_t i, index;
-	u_int8_t word;
+	uint8_t word;
 	dst.reserve(((len * 8) / 5) + 1);
 
 	for(i = 0, index = 0; i < len;) {
 		/* Is the current word going to span a byte boundary? */
 		if (index > 3) {
-			word = (u_int8_t)(src[i] & (0xFF >> index));
+			word = (uint8_t)(src[i] & (0xFF >> index));
 			index = (index + 5) % 8;
 			word <<= index;
 			if ((i + 1) < len)
@@ -66,7 +66,7 @@ string& Encoder::toBase32(const u_int8_t* src, size_t len, string& dst) {
 
 			i++;
 		} else {
-			word = (u_int8_t)(src[i] >> (8 - (index + 5))) & 0x1F;
+			word = (uint8_t)(src[i] >> (8 - (index + 5))) & 0x1F;
 			index = (index + 5) % 8;
 			if (index == 0)
 				i++;
@@ -78,7 +78,7 @@ string& Encoder::toBase32(const u_int8_t* src, size_t len, string& dst) {
 	return dst;
 }
 
-void Encoder::fromBase32(const char* src, u_int8_t* dst, size_t len) {
+void Encoder::fromBase32(const char* src, uint8_t* dst, size_t len) {
 	size_t i, index, offset;
 
 	memset(dst, 0, len);

@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef ADC_COMMAND_H
-#define ADC_COMMAND_H
+#ifndef ADCHPP_ADC_COMMAND_H
+#define ADCHPP_ADC_COMMAND_H
 
+#include "common.h"
 #include "Exception.h"
 #include "Util.h"
 
@@ -28,7 +29,7 @@ STANDARD_EXCEPTION(ParseException);
 
 class AdcCommand {
 public:
-	template<u_int32_t T>
+	template<uint32_t T>
 	struct Type {
 		enum { CMD = T };
 	};
@@ -75,7 +76,7 @@ public:
 	static const char TYPE_HUB = 'H';
 
 	// Known commands...
-#define C(n, a, b, c) static const u_int32_t CMD_##n = (((u_int32_t)a) | (((u_int32_t)b)<<8) | (((u_int32_t)c)<<16)); typedef Type<CMD_##n> n
+#define C(n, a, b, c) static const uint32_t CMD_##n = (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); typedef Type<CMD_##n> n
 	// Base commands
 	C(SUP, 'S','U','P');
 	C(STA, 'S','T','A');
@@ -99,20 +100,20 @@ public:
 
 	enum { HUB_SID = 0x41414141 };
 
-	DLL AdcCommand();
-	DLL explicit AdcCommand(Severity sev, Error err, const string& desc, char aType = TYPE_INFO);
-	explicit AdcCommand(u_int32_t cmd, char aType = TYPE_INFO, u_int32_t aFrom = HUB_SID) : cmdInt(cmd), str(&tmp), from(aFrom), type(aType) { }
+	ADCHPP_DLL AdcCommand();
+	ADCHPP_DLL explicit AdcCommand(Severity sev, Error err, const string& desc, char aType = TYPE_INFO);
+	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), str(&tmp), from(aFrom), type(aType) { }
 	explicit AdcCommand(const string& aLine) throw(ParseException) : cmdInt(0), str(&aLine), type(0) { parse(aLine); }
 	AdcCommand(const AdcCommand& rhs) : parameters(rhs.parameters), cmdInt(rhs.cmdInt), str(&tmp), from(rhs.from), to(rhs.to), type(rhs.type) { }
 
-	DLL void parse(const string& aLine) throw(ParseException);
-	u_int32_t getCommand() const { return cmdInt; }
+	ADCHPP_DLL void parse(const string& aLine) throw(ParseException);
+	uint32_t getCommand() const { return cmdInt; }
 	char getType() const { return type; }
 
 	StringList& getParameters() { return parameters; }
 	const StringList& getParameters() const { return parameters; }
 
-	DLL const string& toString() const;
+	ADCHPP_DLL const string& toString() const;
 	void resetString() { tmp.clear(); str = &tmp; }
 
 	AdcCommand& addParam(const string& name, const string& value) {
@@ -129,24 +130,24 @@ public:
 	}
 
 	/** Return a named parameter where the name is a two-letter code */
-	DLL bool getParam(const char* name, size_t start, string& ret) const;
-	DLL bool delParam(const char* name, size_t start);
+	ADCHPP_DLL bool getParam(const char* name, size_t start, string& ret) const;
+	ADCHPP_DLL bool delParam(const char* name, size_t start);
 	
-	DLL bool hasFlag(const char* name, size_t start) const;
-	static u_int16_t toCode(const char* x) { return *((u_int16_t*)x); }
+	ADCHPP_DLL bool hasFlag(const char* name, size_t start) const;
+	static uint16_t toCode(const char* x) { return *((uint16_t*)x); }
 
-	bool operator==(u_int32_t aCmd) const { return cmdInt == aCmd; }
+	bool operator==(uint32_t aCmd) const { return cmdInt == aCmd; }
 
-	DLL static string escape(const string& s);
+	ADCHPP_DLL static string escape(const string& s);
 
-	u_int32_t getTo() const { return to; }
-	void setTo(u_int32_t aTo) { to = aTo; }
-	u_int32_t getFrom() const { return from; }
-	void setFrom(u_int32_t aFrom) { from = aFrom; }
+	uint32_t getTo() const { return to; }
+	void setTo(uint32_t aTo) { to = aTo; }
+	uint32_t getFrom() const { return from; }
+	void setFrom(uint32_t aFrom) { from = aFrom; }
 
-	static u_int32_t toSID(const string& aSID) { return *reinterpret_cast<const u_int32_t*>(aSID.data()); }
-	static string fromSID(const u_int32_t aSID) { return string(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
-	static void appendSID(string& str, u_int32_t aSID) { str.append(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
+	static uint32_t toSID(const string& aSID) { return *reinterpret_cast<const uint32_t*>(aSID.data()); }
+	static string fromSID(const uint32_t aSID) { return string(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
+	static void appendSID(string& str, uint32_t aSID) { str.append(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
 private:
 	AdcCommand& operator=(const AdcCommand&);
 
@@ -154,14 +155,14 @@ private:
 	string features;
 	union {
 		char cmdChar[4];
-		u_int8_t cmd[4];
-		u_int32_t cmdInt;
+		uint8_t cmd[4];
+		uint32_t cmdInt;
 	};
 	const string* str;
 	mutable string tmp;
 
-	u_int32_t from;
-	u_int32_t to;
+	uint32_t from;
+	uint32_t to;
 	char type;
 };
 

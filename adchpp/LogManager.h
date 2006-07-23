@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef LOGMANAGER_H
-#define LOGMANAGER_H
+#ifndef ADCHPP_LOGMANAGER_H
+#define ADCHPP_LOGMANAGER_H
 
 #include "Mutex.h"
 
@@ -45,16 +45,16 @@ public:
 	 * Same as log, but prepends the current date and time.
 	 * @see log
 	 */	 
-	DLL void logDateTime(const string& area, const string& msg) throw();
+	ADCHPP_DLL void logDateTime(const string& area, const string& msg) throw();
 private:
 	friend class Singleton<LogManager>;
-	static DLL LogManager* instance;
+	ADCHPP_DLL static LogManager* instance;
 	FastMutex mtx;
 
 	LogManager() throw() { }
 	virtual ~LogManager() throw() { }
 	
-	DLL void dolog(const string& msg) throw();
+	ADCHPP_DLL void dolog(const string& msg) throw();
 };
 
 #define LOG(area, msg) LogManager::getInstance()->log(area, msg)

@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _TIGER_HASH
-#define _TIGER_HASH
+#ifndef ADCHPP_TIGER_HASH_H
+#define ADCHPP_TIGER_HASH_H
 
 namespace adchpp { 
 
@@ -36,23 +36,23 @@ public:
 	}
 
 	/** Calculates the Tiger hash of the data. */
-	DLL void update(const void* data, size_t len);
+	ADCHPP_DLL void update(const void* data, size_t len);
 	/** Call once all data has been processed. */
-	DLL u_int8_t* finalize();
+	ADCHPP_DLL uint8_t* finalize();
 
-	u_int8_t* getResult() { return (u_int8_t*) res; }
+	uint8_t* getResult() { return (uint8_t*) res; }
 private:
 	enum { BLOCK_SIZE = 512/8 };
 	/** 512 bit blocks for the compress function */
-	u_int8_t tmp[512/8];
+	uint8_t tmp[512/8];
 	/** State / final hash value */
-	u_int64_t res[3];
+	uint64_t res[3];
 	/** Total number of bytes compressed */
-	u_int64_t pos;
+	uint64_t pos;
 	/** S boxes */
-	static u_int64_t table[];
+	static uint64_t table[];
 
-	void tigerCompress(const u_int64_t* data, u_int64_t state[3]);
+	void tigerCompress(const uint64_t* data, uint64_t state[3]);
 };
 
 }

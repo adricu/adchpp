@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef TIMERMANAGER_H
-#define TIMERMANAGER_H
+#ifndef ADCHPP_TIMERMANAGER_H
+#define ADCHPP_TIMERMANAGER_H
 
 #include "Singleton.h"
 
@@ -31,12 +31,12 @@ class TimerManager : public Singleton<TimerManager>
 {
 public:
 #ifdef _WIN32
-	static u_int32_t getTick() { 
+	static uint32_t getTick() { 
 		return GetTickCount(); 
 	}
 
 #else
-	u_int32_t getTick() {
+	uint32_t getTick() {
 		timeval tv2;
 		gettimeofday(&tv2, NULL);
 		return (time_t)((tv2.tv_sec - tv.tv_sec) * 1000 ) + ( (tv2.tv_usec - tv.tv_usec) / 1000);
@@ -50,7 +50,7 @@ public:
 private:
 
 	friend class Singleton<TimerManager>;
-	static DLL TimerManager* instance;
+	ADCHPP_DLL static TimerManager* instance;
 	
 	TimerManager() throw() { 
 #ifndef _WIN32

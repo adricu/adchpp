@@ -16,17 +16,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "File.h"
 
 namespace adchpp {
 	
-string File::read(u_int32_t len) throw(FileException) {
+string File::read(uint32_t len) throw(FileException) {
 	string tmp;
 	tmp.resize(len);
-	u_int32_t x = read(&tmp[0], len);
+	uint32_t x = read(&tmp[0], len);
 	tmp.resize(x);
 	return tmp;
 }

@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef CLIENTMANAGER_H
-#define CLIENTMANAGER_H
+#ifndef ADCHPP_CLIENTMANAGER_H
+#define ADCHPP_CLIENTMANAGER_H
 
 #include "Util.h"
 #include "CID.h"
@@ -41,22 +41,22 @@ public:
 		DONT_SEND = 1 << 1
 	};
 	
-	typedef HASH_MAP<u_int32_t, Client*> ClientMap;
+	typedef HASH_MAP<uint32_t, Client*> ClientMap;
 	typedef ClientMap::iterator ClientIter;
 	
 	/**
 	 * Adds a string to the supports being sent out (useful for protocol extension plugins).
 	 */
-	DLL void addSupports(const string& str) throw();
-	DLL void removeSupports(const string& str) throw();
+	ADCHPP_DLL void addSupports(const string& str) throw();
+	ADCHPP_DLL void removeSupports(const string& str) throw();
 
-	DLL void updateCache() throw();
+	ADCHPP_DLL void updateCache() throw();
 	
-	DLL u_int32_t getSID(const string& nick) const throw();
-	DLL u_int32_t getSID(const CID& cid) const throw();
+	ADCHPP_DLL uint32_t getSID(const string& nick) const throw();
+	ADCHPP_DLL uint32_t getSID(const CID& cid) const throw();
 	
 	/** @return The client associated with a certain SID, NULL if not found */
-	Client* getClient(const u_int32_t& aSid) throw() {
+	Client* getClient(const uint32_t& aSid) throw() {
 		ClientIter i = clients.find(aSid);
 		return (i == clients.end()) ? 0 : i->second;
 	}
@@ -69,16 +69,16 @@ public:
 	/**
 	 * Send a command to the clients according to its type
 	 */
-	DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
-	DLL void sendToAll(const AdcCommand& cmd) throw();
-	DLL void sendTo(const AdcCommand& cmd, const u_int32_t& to) throw();
+	ADCHPP_DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
+	ADCHPP_DLL void sendToAll(const AdcCommand& cmd) throw();
+	ADCHPP_DLL void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
 	/**
 	 * Calling this function will increase the flood-counter and kick/ban the user
 	 * if the counter exceeds the setting. 
 	 * @return True if the user was flooding and was kicked, false otherwise.
 	 */
-	DLL bool checkFlooding(Client& c, const AdcCommand&) throw();
+	ADCHPP_DLL bool checkFlooding(Client& c, const AdcCommand&) throw();
 	
 	/**
 	 * Enter IDENTIFY state.
@@ -86,7 +86,7 @@ public:
 	 *
 	 * @param sendData Send ISUP & IINF.
 	 */
-	DLL void enterIdentify(Client& c, bool sendData) throw();
+	ADCHPP_DLL void enterIdentify(Client& c, bool sendData) throw();
 
 	/**
 	 * Enter VERIFY state. Call this if you stop
@@ -95,7 +95,7 @@ public:
 	 * @param sendData Send GPA.
 	 * @return The random data that was sent to the client (if sendData was true, undefined otherwise).
 	 */
-	DLL vector<u_int8_t> enterVerify(Client& c, bool sendData) throw();
+	ADCHPP_DLL vector<uint8_t> enterVerify(Client& c, bool sendData) throw();
 
 	/**
 	 * Enter NORMAL state. Call this if you stop an INF of a password-less
@@ -106,38 +106,38 @@ public:
 	 *                   for password)
 	 * @return false if the client was disconnected
 	 */
-	DLL bool enterNormal(Client& c, bool sendData, bool sendOwnInf) throw();
+	ADCHPP_DLL bool enterNormal(Client& c, bool sendData, bool sendOwnInf) throw();
 
 	/**
 	 * Do all SUP verifications and update client data. Call if you stop SUP but still want the default processing.
 	 */
-	DLL bool verifySUP(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifySUP(Client& c, AdcCommand& cmd) throw();
 	
 	/**
 	 * Do all INF verifications and update client data. Call if you stop INF but still want the default processing.
 	 */
-	DLL bool verifyINF(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyINF(Client& c, AdcCommand& cmd) throw();
 	
 	/**
 	 * Verify nick on INF (check that its not a dupe etc...)
 	 * @return false if the client was disconnected
 	 */
-	DLL bool verifyNick(Client& c, const AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyNick(Client& c, const AdcCommand& cmd) throw();
 	
 	/**
 	 * Verify password
 	 */
-	DLL bool verifyPassword(Client& c, const string& password, const vector<u_int8_t>& salt, const string& suppliedHash);
+	ADCHPP_DLL bool verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt, const string& suppliedHash);
 
 	/**
 	 * Verify that IP is correct and replace any zero addresses.
 	 */
-	DLL bool verifyIp(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyIp(Client& c, AdcCommand& cmd) throw();
 
-	DLL bool verifyCID(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyCID(Client& c, AdcCommand& cmd) throw();
 	
 	/** Verify the number of connected clients */
-	DLL bool verifyUsers(Client& c) throw();
+	ADCHPP_DLL bool verifyUsers(Client& c) throw();
 
 	/**
 	 * The SocketManager calls this when a new connection has been accepted.
@@ -175,9 +175,9 @@ private:
 	deque<pair<Client*, time_t> > logins;
 
 	ClientMap clients;
-	typedef HASH_MAP<string, u_int32_t> NickMap;
+	typedef HASH_MAP<string, uint32_t> NickMap;
 	NickMap nicks;
-	typedef HASH_MAP_X(CID, u_int32_t, CID::Hash, equal_to<CID>, less<CID>) CIDMap;
+	typedef HASH_MAP_X(CID, uint32_t, CID::Hash, equal_to<CID>, less<CID>) CIDMap;
 	CIDMap cids;
 
 	// Temporary string to use whenever a temporary string is needed (to avoid (de)allocating memory all the time...)
@@ -192,14 +192,14 @@ private:
 	} strings;
 
 	friend class Singleton<ClientManager>;
-	static DLL ClientManager* instance;
+	ADCHPP_DLL static ClientManager* instance;
 	
 	friend class CommandHandler<ClientManager>;
 	ClientManager() throw() {
 		supports.push_back("BASE");
 	}
 
-	u_int32_t makeSID();
+	uint32_t makeSID();
 
 	void removeLogins(Client& c) throw();
 	void removeClient(Client& c) throw();

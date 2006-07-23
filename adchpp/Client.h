@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef ADCHPP_CLIENT_H
+#define ADCHPP_CLIENT_H
 
+#include "common.h"
 #include "ManagedSocket.h"
 
 #include "FastAlloc.h"
@@ -62,11 +63,11 @@ public:
 		FLAG_OK_IP = 0x100
 	};
 
-	DLL static Client* create(u_int32_t sid) throw();
-	DLL void deleteThis() throw();
+	ADCHPP_DLL static Client* create(uint32_t sid) throw();
+	ADCHPP_DLL void deleteThis() throw();
 
 	const StringList& getSupportList() const throw() { return supportList; }
-	bool supports(const string& feat) { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
+	bool supports(const string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
 
 	void send(const char* command, size_t len) throw() {
 		dcassert(socket != NULL);
@@ -98,39 +99,31 @@ public:
 	 * Set data mode for aBytes bytes.
 	 * May only be called from on(ClientListener::Command...).
 	 */
-	void setDataMode(boost::function<void (const u_int8_t*, size_t)> handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
+	void setDataMode(boost::function<void (const uint8_t*, size_t)> handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
 	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
-	bool getChangedFields(AdcCommand& cmd) {
-		for(InfIter i = changed.begin(); i != changed.end(); ++i) 
-			cmd.addParam(string((char*)&i->first, 2));
-		return !changed.empty();
-	}
-	bool getAllFields(AdcCommand& cmd) {
-		for(InfIter i = info.begin(); i != info.end(); ++i) 
-			cmd.addParam(string((char*)&i->first, 2), i->second);
-		return !info.empty();
-	}
+	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
+	ADCHPP_DLL bool getAllFields(AdcCommand& cmd) const throw();
 
 	void resetChanged() { changed.clear(); }
 
-	const string& getField(const char* name) const { InfMap::const_iterator i = info.find(*(u_int16_t*)name); return i == info.end() ? Util::emptyString : i->second; }
-	void setField(const char* name, const string& value) { 
+	const string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(*(uint16_t*)name); return i == info.end() ? Util::emptyString : i->second; }
+	void setField(const char* name, const string& value) throw() { 
 		if(value.empty()) {
-			info.erase(*(u_int16_t*)name);
+			info.erase(*(uint16_t*)name);
 		} else {
-			info[*(u_int16_t*)name] = value; 
+			info[*(uint16_t*)name] = value; 
 		}
-		changed[*(u_int16_t*)name] = value;
+		changed[*(uint16_t*)name] = value;
 	}
 
-	DLL void updateFields(const AdcCommand& cmd) throw();
-	DLL void updateSupports(const AdcCommand& cmd) throw();
+	ADCHPP_DLL void updateFields(const AdcCommand& cmd) throw();
+	ADCHPP_DLL void updateSupports(const AdcCommand& cmd) throw();
 
-	bool isUdpActive() { return info.find(*(u_int16_t*)"U4") != info.end(); }
-	bool isTcpActive() { return info.find(*(u_int16_t*)"I4") != info.end(); }
+	bool isUdpActive() const { return info.find(*(uint16_t*)"U4") != info.end(); }
+	bool isTcpActive() const { return info.find(*(uint16_t*)"I4") != info.end(); }
 
-	DLL bool isFlooding(time_t addSeconds);
+	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 	
 	/**
 	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
@@ -142,20 +135,20 @@ public:
 	 * @param data Data to store, this can be pretty much anything
 	 * @return Old value if any was associated with the plugin already, NULL otherwise
 	 */ 
-	DLL void* setPSD(int id, void* data) throw();
+	ADCHPP_DLL void* setPSD(int id, void* data) throw();
 	/**
 	 * @param id Plugin id
 	 * @return Value stored, NULL if none found
 	 */
-	DLL void* getPSD(int id) throw();
+	ADCHPP_DLL void* getPSD(int id) throw();
 	
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
-	u_int32_t getSID() const { return sid; }
+	uint32_t getSID() const { return sid; }
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
 
-	Client(u_int32_t aSID) throw();
+	Client(uint32_t aSID) throw();
 	virtual ~Client() throw() { }
 
 private:
@@ -167,14 +160,14 @@ private:
 	typedef vector<PSDPair> PSDList;
 	typedef PSDList::iterator PSDIter;
 
-	typedef HASH_MAP<u_int16_t, string> InfMap;
+	typedef HASH_MAP<uint16_t, string> InfMap;
 	typedef InfMap::iterator InfIter;
 
 	InfMap info;
 	InfMap changed;
 
 	CID cid;
-	u_int32_t sid;
+	uint32_t sid;
 	State state;
 	bool disconnecting;
 	
@@ -185,7 +178,7 @@ private:
 	
 	time_t floodTimer;
 	
-	boost::function<void (const u_int8_t*, size_t)> dataHandler;
+	boost::function<void (const uint8_t*, size_t)> dataHandler;
 	
 	void onConnected() throw();
 	void onData(const ByteVector&) throw();

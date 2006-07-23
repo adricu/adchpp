@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef FASTALLOC_H
-#define FASTALLOC_H
+#ifndef ADCHPP_FASTALLOC_H
+#define ADCHPP_FASTALLOC_H
 
 #include "Mutex.h"
 
@@ -25,7 +25,7 @@ namespace adchpp {
 	
 #ifndef _DEBUG
 struct FastAllocBase {
-	DLL static FastMutex mtx;
+ADCHPP_DLL static FastMutex mtx;
 };
 
 /** 
@@ -54,7 +54,7 @@ struct FastAlloc : public FastAllocBase {
 		if (s != sizeof(T)) {
 			::operator delete(m);
 		} else if(m != NULL) {
-			deallocate((u_int8_t*)m);
+			deallocate((uint8_t*)m);
 		}
 	}
 private:
@@ -81,8 +81,8 @@ private:
 		dcassert(sizeof(T) >= sizeof(void*));
 		// We want to grow by approximately 128kb at a time...
 		size_t items = ((128*1024 + sizeof(T) - 1)/sizeof(T));
-		freeList = new u_int8_t[sizeof(T)*items];
-		u_int8_t* tmp = (u_int8_t*)freeList;
+		freeList = new uint8_t[sizeof(T)*items];
+		uint8_t* tmp = (uint8_t*)freeList;
 		for(size_t i = 0; i < items - 1; i++) {
 			*(void**)tmp = tmp + sizeof(T);
 			tmp += sizeof(T);

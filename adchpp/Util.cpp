@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "Util.h"
 #include "FastAlloc.h"
@@ -316,7 +315,7 @@ static void sgenrand(unsigned long seed) {
 		mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
 }
 
-u_int32_t Util::rand() {
+uint32_t Util::rand() {
 	unsigned long y;
 	static unsigned long mag01[2]={0x0, MATRIX_A};
 	/* mag01[x] = x * MATRIX_A  for x=0,1 */

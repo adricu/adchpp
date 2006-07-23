@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "ManagedSocket.h"
 
@@ -67,7 +66,7 @@ void ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = fal
 		outBuf = Util::freeBuf;
 	}
 	
-	if(outBuf->size() + len > (u_int32_t)SETTING(MAX_BUFFER_SIZE)) {
+	if(outBuf->size() + len > (uint32_t)SETTING(MAX_BUFFER_SIZE)) {
 		if(lowPrio && SETTING(KEEP_SLOW_USERS)) {
 			return;
 		} else if(overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {

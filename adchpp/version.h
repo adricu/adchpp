@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef ADCHPP_VERSION_H
+#define ADCHPP_VERSION_H
 
 #if _MSC_VER > 1000
 #pragma once

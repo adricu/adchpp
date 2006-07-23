@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SOCKETMANAGER_H
-#define SOCKETMANAGER_H
+#ifndef ADCHPP_SOCKETMANAGER_H
+#define ADCHPP_SOCKETMANAGER_H
 
 #include "Thread.h"
 #include "Semaphores.h"
@@ -50,7 +50,7 @@ class Writer;
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
 	typedef boost::function<void()> Callback;
-	DLL void addJob(const Callback& callback) throw();
+	ADCHPP_DLL void addJob(const Callback& callback) throw();
 
 	void startup() throw(ThreadException) { start(); }
 	void shutdown();
@@ -81,7 +81,7 @@ private:
 	static const string className;
 
 	friend class Singleton<SocketManager>;
-	static DLL SocketManager* instance;
+	ADCHPP_DLL static SocketManager* instance;
 
 	SocketManager();
 	virtual ~SocketManager();

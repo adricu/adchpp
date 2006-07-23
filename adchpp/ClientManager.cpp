@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "ClientManager.h"
 
@@ -76,7 +75,7 @@ void ClientManager::sendToAll(const AdcCommand& cmd) throw() {
 	SocketManager::getInstance()->addAllWriters();
 }
 
-void ClientManager::sendTo(const AdcCommand& cmd, const u_int32_t& to) throw() {
+void ClientManager::sendTo(const AdcCommand& cmd, const uint32_t& to) throw() {
 	ClientIter i = clients.find(to);
 	if(i != clients.end()) {
 		i->second->send(cmd.toString());
@@ -115,10 +114,10 @@ void ClientManager::incomingConnection(ManagedSocket* ms) throw() {
 	c->setSocket(ms);
 }
 
-u_int32_t ClientManager::makeSID() {
+uint32_t ClientManager::makeSID() {
 	while(true) {
 		union {
-			u_int32_t sid;
+			uint32_t sid;
 			char chars[4];
 		} sid;
 		sid.chars[0] = Encoder::base32Alphabet[Util::rand(sizeof(Encoder::base32Alphabet))];
@@ -219,12 +218,12 @@ bool ClientManager::verifyINF(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::verifyPassword(Client& c, const string& password, const vector<u_int8_t>& salt, const string& suppliedHash) {
+bool ClientManager::verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt, const string& suppliedHash) {
 	TigerHash tiger;
 	tiger.update(c.getCID().data(), CID::SIZE);
 	tiger.update(&password[0], password.size());
 	tiger.update(&salt[0], salt.size());
-	u_int8_t tmp[TigerHash::HASH_SIZE];
+	uint8_t tmp[TigerHash::HASH_SIZE];
 	Encoder::fromBase32(suppliedHash.c_str(), tmp, TigerHash::HASH_SIZE);
 	if(memcmp(tiger.finalize(), tmp, TigerHash::HASH_SIZE) == 0)
 		return true;
@@ -317,7 +316,7 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 
 	if(cmd.getParam("NI", 0, strtmp)) {
 		for(string::size_type i = 0; i < strtmp.length(); ++i) {
-			if((u_int8_t)strtmp[i] < 33) {
+			if((uint8_t)strtmp[i] < 33) {
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, STRING(NICK_INVALID)));
 				c.disconnect();
 				return false;
@@ -368,14 +367,14 @@ void ClientManager::enterIdentify(Client& c, bool sendData) throw() {
 	c.setState(Client::STATE_IDENTIFY);
 }
 
-vector<u_int8_t> ClientManager::enterVerify(Client& c, bool sendData) throw() {
+vector<uint8_t> ClientManager::enterVerify(Client& c, bool sendData) throw() {
 	dcassert(c.getState() == Client::STATE_IDENTIFY);
 	dcdebug("%s entering VERIFY\n", AdcCommand::fromSID(c.getSID()).c_str());
-	vector<u_int8_t> challenge;
+	vector<uint8_t> challenge;
 	if(sendData) {
 		for(int i = 0; i < 32/4; ++i) {
-			u_int32_t r = Util::rand();
-			challenge.insert(challenge.end(), (u_int8_t*)&r, 4 + (u_int8_t*)&r);
+			uint32_t r = Util::rand();
+			challenge.insert(challenge.end(), (uint8_t*)&r, 4 + (uint8_t*)&r);
 		}
 		c.send(AdcCommand(AdcCommand::CMD_GPA).addParam(Encoder::toBase32(&challenge[0], challenge.size())));
 	}
@@ -476,12 +475,12 @@ void ClientManager::removeSupports(const string& str) throw() {
 	}
 }
 
-u_int32_t ClientManager::getSID(const string& aNick) const throw() {
+uint32_t ClientManager::getSID(const string& aNick) const throw() {
 	NickMap::const_iterator i = nicks.find(aNick);
 	return (i == nicks.end()) ? 0 : i->second;
 }
 
-u_int32_t ClientManager::getSID(const CID& cid) const throw() {
+uint32_t ClientManager::getSID(const CID& cid) const throw() {
 	CIDMap::const_iterator i = cids.find(cid);
 	return (i == cids.end()) ? 0 : i->second;	
 }

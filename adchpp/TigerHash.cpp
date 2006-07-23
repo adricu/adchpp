@@ -16,10 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "TigerHash.h"
+#include "common.h"
 
 namespace adchpp {
 	
@@ -38,14 +38,14 @@ namespace adchpp {
 
 #define round(a,b,c,x,mul) \
 	c ^= x; \
-	a -= t1[(u_int8_t)(c)] ^ \
-	t2[(u_int8_t)(((u_int32_t)(c))>>(2*8))] ^ \
-	t3[(u_int8_t)((c)>>(4*8))] ^ \
-	t4[(u_int8_t)(((u_int32_t)((c)>>(4*8)))>>(2*8))] ; \
-	b += t4[(u_int8_t)(((u_int32_t)(c))>>(1*8))] ^ \
-	t3[(u_int8_t)(((u_int32_t)(c))>>(3*8))] ^ \
-	t2[(u_int8_t)(((u_int32_t)((c)>>(4*8)))>>(1*8))] ^ \
-	t1[(u_int8_t)(((u_int32_t)((c)>>(4*8)))>>(3*8))]; \
+	a -= t1[(uint8_t)(c)] ^ \
+	t2[(uint8_t)(((uint32_t)(c))>>(2*8))] ^ \
+	t3[(uint8_t)((c)>>(4*8))] ^ \
+	t4[(uint8_t)(((uint32_t)((c)>>(4*8)))>>(2*8))] ; \
+	b += t4[(uint8_t)(((uint32_t)(c))>>(1*8))] ^ \
+	t3[(uint8_t)(((uint32_t)(c))>>(3*8))] ^ \
+	t2[(uint8_t)(((uint32_t)((c)>>(4*8)))>>(1*8))] ^ \
+	t1[(uint8_t)(((uint32_t)((c)>>(4*8)))>>(3*8))]; \
 	b *= mul;
 
 #define pass(a,b,c,mul) \
@@ -91,9 +91,9 @@ namespace adchpp {
 
 #define tiger_compress_macro(str, state) \
 { \
-	register u_int64_t a, b, c, tmpa; \
-	u_int64_t aa, bb, cc; \
-	register u_int64_t x0, x1, x2, x3, x4, x5, x6, x7; \
+	register uint64_t a, b, c, tmpa; \
+	uint64_t aa, bb, cc; \
+	register uint64_t x0, x1, x2, x3, x4, x5, x6, x7; \
 	int pass_no; \
 	\
 	a = state[0]; \
@@ -111,13 +111,13 @@ namespace adchpp {
 }
 
 /* The compress function is a function. Requires smaller cache?    */
-void TigerHash::tigerCompress(const u_int64_t *str, u_int64_t state[3]) {
-	tiger_compress_macro(((const u_int64_t*)str), ((u_int64_t*)state));
+void TigerHash::tigerCompress(const uint64_t *str, uint64_t state[3]) {
+	tiger_compress_macro(((const uint64_t*)str), ((uint64_t*)state));
 }
 
 void TigerHash::update(const void* data, size_t length) {
-	size_t tmppos = (u_int32_t)(pos & BLOCK_SIZE-1);
-	const u_int8_t* str = (const u_int8_t*)data;
+	size_t tmppos = (uint32_t)(pos & BLOCK_SIZE-1);
+	const uint8_t* str = (const uint8_t*)data;
 	// First empty tmp buffer if possible
 	if(tmppos > 0) {
 		size_t n = min(length, BLOCK_SIZE-tmppos);
@@ -127,7 +127,7 @@ void TigerHash::update(const void* data, size_t length) {
 		length -= n;
 
 		if((tmppos + n) == BLOCK_SIZE) {
-			tigerCompress((u_int64_t*)tmp, res);
+			tigerCompress((uint64_t*)tmp, res);
 			tmppos = 0;
 		}
 	}
@@ -137,7 +137,7 @@ void TigerHash::update(const void* data, size_t length) {
 
 	// Process the bulk of data
 	while(length>=BLOCK_SIZE) {
-		tigerCompress((u_int64_t*)str, res);
+		tigerCompress((uint64_t*)str, res);
 		str += BLOCK_SIZE;
 		pos += BLOCK_SIZE;
 		length -= BLOCK_SIZE;
@@ -148,27 +148,27 @@ void TigerHash::update(const void* data, size_t length) {
 	pos += length;
 }
 
-u_int8_t* TigerHash::finalize() {
+uint8_t* TigerHash::finalize() {
 	size_t tmppos = (size_t)(pos & BLOCK_SIZE-1);
 	// Tmp buffer always has at least one pos, otherwise it would have
 	// been processed in update()
 
 	tmp[tmppos++] = 0x01;
 
-	if(tmppos > (BLOCK_SIZE - sizeof(u_int64_t))) {
+	if(tmppos > (BLOCK_SIZE - sizeof(uint64_t))) {
 		memset(tmp + tmppos, 0, BLOCK_SIZE - tmppos);
-		tigerCompress(((u_int64_t*)tmp), res);
+		tigerCompress(((uint64_t*)tmp), res);
 		memset(tmp, 0, BLOCK_SIZE);
 	} else {
-		memset(tmp + tmppos, 0, BLOCK_SIZE - tmppos - sizeof(u_int64_t));
+		memset(tmp + tmppos, 0, BLOCK_SIZE - tmppos - sizeof(uint64_t));
 	}
 
-	((u_int64_t*)(&(tmp[56])))[0] = pos<<3;
-	tigerCompress((u_int64_t*)tmp, res);
+	((uint64_t*)(&(tmp[56])))[0] = pos<<3;
+	tigerCompress((uint64_t*)tmp, res);
 	return getResult();
 }
 
-u_int64_t TigerHash::table[4*256] = {
+uint64_t TigerHash::table[4*256] = {
 	_ULL(0x02AAB17CF7E90C5E)   /*    0 */,    _ULL(0xAC424B03E243A8EC)   /*    1 */,
 		_ULL(0x72CD5BE30DD5FCD3)   /*    2 */,    _ULL(0x6D019B93F6F97F3A)   /*    3 */,
 		_ULL(0xCD9978FFD21F9193)   /*    4 */,    _ULL(0x7573A1C9708029E2)   /*    5 */,

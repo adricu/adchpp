@@ -1,5 +1,4 @@
-// @Prolog: #include "stdinc.h"
-// @Prolog: #include "common.h"
+// @Prolog: #include "adchpp.h"
 // @Prolog: #include "ResourceManager.h"
 // @Prolog: namespace adchpp {
 

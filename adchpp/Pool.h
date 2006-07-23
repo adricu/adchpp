@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef POOL_H_
-#define POOL_H_
+#ifndef ADCHPP_POOL_H
+#define ADCHPP_POOL_H
 
 #include "Mutex.h"
 

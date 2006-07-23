@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SIGNAL_H
-#define SIGNAL_H
+#ifndef ADCHPP_SIGNAL_H
+#define ADCHPP_SIGNAL_H
 
 #include <boost/function.hpp>
 #include <boost/type_traits.hpp>

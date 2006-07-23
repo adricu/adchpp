@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef ADCHPP_UTIL_H
+#define ADCHPP_UTIL_H
 
 #include "ResourceManager.h"
 #include "Pool.h"
@@ -111,16 +111,16 @@ public:
 	struct Stats {
 		int64_t totalUp;			///< Total bytes uploaded
 		int64_t totalDown;			///< Total bytes downloaded
-		u_int32_t startTime;		///< The time the hub was started
+		uint32_t startTime;		///< The time the hub was started
 	};
 
-	DLL static Stats stats;
-	DLL static string emptyString;
+	ADCHPP_DLL static Stats stats;
+	ADCHPP_DLL static string emptyString;
 
 	static void initialize();
-	DLL static string getOsVersion();
-	DLL static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
-	DLL static string formatTime(const string& msg, time_t t = time(NULL));
+	ADCHPP_DLL static string getOsVersion();
+	ADCHPP_DLL static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
+	ADCHPP_DLL static string formatTime(const string& msg, time_t t = time(NULL));
 	
 	static const string& getCfgPath() { return cfgPath; }
 	static void setCfgPath(const string& path) { cfgPath = path; }
@@ -159,11 +159,11 @@ public:
 	}
 #endif // WIN32
 
-	DLL static string translateError(int aError);
+	ADCHPP_DLL static string translateError(int aError);
 	
 	static string toAcp(const wstring& wString) {
 		if(wString.empty())
-			return Util::emptyString;
+			return emptyString;
 
 		string str;
 
@@ -203,10 +203,10 @@ public:
 
 	static string formatBytes(const string& aString) { return formatBytes(toInt64(aString)); }
 
-	DLL static string getShortTimeString();
-	DLL static string getTimeString();
+	ADCHPP_DLL static string getShortTimeString();
+	ADCHPP_DLL static string getTimeString();
 		
-	DLL static string formatBytes(int64_t aBytes);
+	ADCHPP_DLL static string formatBytes(int64_t aBytes);
 
 	static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0) {
 		string::size_type i = 0;
@@ -302,21 +302,21 @@ public:
 	}
 
 	/** Avoid this! Use the one of a connected socket instead... */
-	DLL static string getLocalIp();
+	ADCHPP_DLL static string getLocalIp();
 
 	struct Clear {
 		void operator()(ByteVector& x) { x.clear(); }
 	};
 	/** Pool of free buffers */
-	static DLL Pool<ByteVector, Clear> freeBuf;
+	ADCHPP_DLL static Pool<ByteVector, Clear> freeBuf;
 
-	static DLL u_int32_t rand();
-	static u_int32_t rand(u_int32_t high) { return rand() % high; }
-	static u_int32_t rand(u_int32_t low, u_int32_t high) { return rand(high-low) + low; }
+	ADCHPP_DLL static uint32_t rand();
+	static uint32_t rand(uint32_t high) { return rand() % high; }
+	static uint32_t rand(uint32_t low, uint32_t high) { return rand(high-low) + low; }
 	static double randd() { return ((double)rand()) / ((double)0xffffffff); }
 
 private:
-	DLL static string cfgPath;
+	ADCHPP_DLL static string cfgPath;
 };
 
 }

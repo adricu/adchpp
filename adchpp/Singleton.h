@@ -16,14 +16,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SINGLETON_H
-#define SINGLETON_H
+#ifndef ADCHPP_SINGLETON_H
+#define ADCHPP_SINGLETON_H
+
+#include "common.h"
 
 namespace adchpp {
 	
 /**
+ * @bug
  * Plugins instantiating this class must provide the instance variable manually because
- * of DLL linking issues on mingw (otherwise each DLL gets their own instanse).
+ * of DLL linking issues on mingw (otherwise it seems each DLL gets their own instance).
  */
 template<typename T>
 class Singleton {

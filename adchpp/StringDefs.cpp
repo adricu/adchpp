@@ -1,5 +1,4 @@
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 #include "ResourceManager.h"
 namespace adchpp {
 	

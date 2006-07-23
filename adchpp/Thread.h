@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef THREAD_H
-#define THREAD_H
+#ifndef ADCHPP_THREAD_H
+#define ADCHPP_THREAD_H
 
 #ifndef _WIN32
 # include <pthread.h>
@@ -36,8 +36,8 @@ class Thread
 {
 public:
 
-	DLL void start() throw(ThreadException);
-	DLL void join() throw();
+	ADCHPP_DLL void start() throw(ThreadException);
+	ADCHPP_DLL void join() throw();
 
 #ifdef _WIN32
 	enum Priority {
@@ -56,7 +56,7 @@ public:
 	
 	bool isRunning() throw() { return (threadHandle != NULL); }
 
-	static void sleep(u_int32_t millis) { ::Sleep(millis); }
+	static void sleep(uint32_t millis) { ::Sleep(millis); }
 	static void yield() { ::Sleep(0); }
 
 #elif defined(HAVE_PTHREAD)
@@ -76,7 +76,7 @@ public:
 	void setThreadPriority(Priority p) { setpriority(PRIO_PROCESS, 0, p); }
 	bool isRunning() { return (t != 0); }
 	
-	static void sleep(u_int32_t millis) { ::usleep(millis*1000); }
+	static void sleep(uint32_t millis) { ::usleep(millis*1000); }
 	static void yield() { ::sched_yield(); }
 
 #else

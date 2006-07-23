@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SOCKET_H
-#define SOCKET_H
+#ifndef ADCHPP_SOCKET_H
+#define ADCHPP_SOCKET_H
 
 #include "Util.h"
 #include "Exception.h"
@@ -121,7 +121,7 @@ public:
 	void shutdown() { ::shutdown(sock, 1); }
 	
 	int read(void* aBuffer, size_t aBufLen) throw(SocketException); 
-	int wait(u_int32_t millis, int waitFor) throw(SocketException);
+	int wait(uint32_t millis, int waitFor) throw(SocketException);
 	
 	static string resolve(const string& aDns);
 	

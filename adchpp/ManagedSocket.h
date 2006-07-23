@@ -16,9 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef MANAGEDSOCKET_H
-#define MANAGEDSOCKET_H
+#ifndef ADCHPP_MANAGEDSOCKET_H
+#define ADCHPP_MANAGEDSOCKET_H
 
+#include "common.h"
 #include "Socket.h"
 #include "Mutex.h"
 #include "Signal.h"
@@ -36,17 +37,17 @@ public:
 	void create() throw(SocketException) { sock.create(); }
 
 	/** Asynchronous write */
-	DLL void write(const char* buf, size_t len) throw();
+	ADCHPP_DLL void write(const char* buf, size_t len) throw();
 	
 	/** Asynchronous write, assumes that buffers are locked */
-	DLL void fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
+	ADCHPP_DLL void fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
 	
 	/** Locks the write buffer for all sockets */
 	static void lock() { outbufCS.lock(); }
 	static void unlock() { outbufCS.unlock(); }
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
-	DLL void disconnect() throw();
+	ADCHPP_DLL void disconnect() throw();
 
 	const string& getIp() const { return ip; }
 	void setIp(const string& ip_) { ip = ip_; }
@@ -88,11 +89,11 @@ private:
 	/** Output buffer, for storing data that's waiting to be transmitted */
 	ByteVector* outBuf;
 	/** Overflow timer, the buffer is allowed to overflow for 1 minute, then disconnect */
-	u_int32_t overFlow;
+	uint32_t overFlow;
 	/** Disconnection scheduled for this socket */
-	u_int32_t disc;
+	uint32_t disc;
 	/** Reference count, one for each thread that uses the instance */
-	u_int32_t refCount;
+	uint32_t refCount;
 
 	string ip;
 #ifdef _WIN32
@@ -106,7 +107,7 @@ private:
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
 
-	DLL static FastMutex outbufCS;
+	ADCHPP_DLL static FastMutex outbufCS;
 };
 
 }

@@ -24,7 +24,7 @@
  * of two things, you got it from me (Jacek Sieka) directly, or you're not allowed 
  * to use it.
  * 
- * There's a rather powerful plugin API about which you can find some general
+ * There's a plugin API about which you can find some general
  * information on the @ref PluginAPI page.
  *
  * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
@@ -37,17 +37,17 @@
  * licensing.
  */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef ADCHPP_COMMON_H
+#define ADCHPP_COMMON_H
 
 namespace adchpp {
 	
-extern DLL const char compileTime[];
-//DLL extern void logAssert(const char* file, int line, const char* exp);
+extern ADCHPP_DLL const char compileTime[];
+// ADCHPP_DLL extern void logAssert(const char* file, int line, const char* exp);
 
 #ifdef _DEBUG
 
-extern DLL void logAssert(const char* file, int line, const char* exp);
+extern ADCHPP_DLL void logAssert(const char* file, int line, const char* exp);
 
 inline void CDECL debugTrace(const char* format, ...)
 {
@@ -100,24 +100,21 @@ typedef vector<wstring> WStringList;
 typedef WStringList::iterator WStringIter;
 typedef WStringList::const_iterator WStringIterC;
 
-typedef vector<u_int8_t> ByteVector;
+typedef vector<uint8_t> ByteVector;
 typedef ByteVector::iterator ByteIter;
 
 /** 
  * First startup phase, this _must_ be done asap as nothing 
  * will work before it, relatively fast.
- */
-DLL void adchppStartup();
+ */ADCHPP_DLL void adchppStartup();
 
 /** 
  * Second startup phase, this can take quite some time as plugins and 
  * dynamic data are loaded.
  * @param f Unless NULL, this function is called after each step in the initialization
- */
-DLL void adchppStartup2(void (*f)());
+ */ADCHPP_DLL void adchppStartup2(void (*f)());
 
-/** Shuts down the adchpp hub library (doh!). */
-DLL void adchppShutdown(void (*f)());
+/** Shuts down the adchpp hub library (doh!). */ADCHPP_DLL void adchppShutdown(void (*f)());
 
 }
 

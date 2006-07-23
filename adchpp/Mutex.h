@@ -1,5 +1,5 @@
-#ifndef MUTEX_H_
-#define MUTEX_H_
+#ifndef ADCHPP_MUTEX_H_
+#define ADCHPP_MUTEX_H_
 
 #include "Thread.h"
 

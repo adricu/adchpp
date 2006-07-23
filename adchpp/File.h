@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef FILE_H
-#define FILE_H
+#ifndef ADCHPP_FILE_H
+#define ADCHPP_FILE_H
 
 #include "Exception.h"
 #include "Util.h"
@@ -46,24 +46,24 @@ public:
 		TRUNCATE = 0x04
 	};
 
-	DLL File(const string& aFileName, int access, int mode = OPEN) throw(FileException);
+	ADCHPP_DLL File(const string& aFileName, int access, int mode = OPEN) throw(FileException);
 
-	DLL int64_t getSize();
-	DLL static int64_t getSize(const string& aFileName);
+	ADCHPP_DLL int64_t getSize();
+	ADCHPP_DLL static int64_t getSize(const string& aFileName);
 
-	DLL string read(u_int32_t len) throw(FileException);
+	ADCHPP_DLL string read(uint32_t len) throw(FileException);
 	
 	/** Returns the directory part of the full path */
-	DLL static string getFilePath(const string& name) throw();
+	ADCHPP_DLL static string getFilePath(const string& name) throw();
 	/** Returns the filename part of the full path */
-	DLL static string getFileName(const string& name) throw();
-	DLL static bool isAbsolutePath(const string& name) throw();
+	ADCHPP_DLL static string getFileName(const string& name) throw();
+	ADCHPP_DLL static bool isAbsolutePath(const string& name) throw();
 	
 	static string makeAbsolutePath(string const& path, string const& filename) {
 		return isAbsolutePath(filename) ? filename : path + filename;
 	}
 
-	DLL static void ensureDirectory(const string& aFile) throw();
+	ADCHPP_DLL static void ensureDirectory(const string& aFile) throw();
 	
 #ifdef _WIN32
 	void close() {
@@ -94,7 +94,7 @@ public:
 		::SetFilePointer(h, (DWORD)(pos & 0xffffffff), &x, FILE_CURRENT);
 	}
 	
-	u_int32_t read(void* buf, u_int32_t len) throw(FileException) {
+	uint32_t read(void* buf, uint32_t len) throw(FileException) {
 		DWORD x;
 		if(!::ReadFile(h, buf, len, &x, NULL)) {
 			throw(FileException(Util::translateError(GetLastError())));
@@ -137,14 +137,14 @@ public:
 	void setEndPos(int64_t pos) { lseek(h, (off_t)pos, SEEK_END); };
 	void movePos(int64_t pos) { lseek(h, (off_t)pos, SEEK_CUR); };
 
-	u_int32_t read(void* buf, u_int32_t len) throw(FileException) {
+	uint32_t read(void* buf, uint32_t len) throw(FileException) {
 		ssize_t x = ::read(h, buf, (size_t)len);
 		if(x == -1)
 			throw FileException(Util::translateError(errno));
-		return (u_int32_t)x;
+		return (uint32_t)x;
 	}
 	
-	void write(const void* buf, u_int32_t len) throw(FileException) {
+	void write(const void* buf, uint32_t len) throw(FileException) {
 		ssize_t x;
 		x = ::write(h, buf, len);
 		if(x == -1)
@@ -170,7 +170,7 @@ public:
 
 	string read() throw(FileException) {
 		setPos(0);
-		return read((u_int32_t)getSize());
+		return read((uint32_t)getSize());
 	}
 
 	void write(const string& aString) throw(FileException) {

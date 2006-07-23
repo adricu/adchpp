@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SEMAPHORES_H
-#define SEMAPHORES_H
+#ifndef ADCHPP_SEMAPHORES_H
+#define ADCHPP_SEMAPHORES_H
 
 namespace adchpp {
 	
@@ -42,7 +42,7 @@ public:
 		RESULT_TIMEOUT,
 		RESULT_MESSAGE
 	};
-	Results waitMsg(u_int32_t millis = INFINITE) throw() { 
+	Results waitMsg(uint32_t millis = INFINITE) throw() { 
 		switch(MsgWaitForMultipleObjects(1, &h, FALSE, millis, QS_ALLEVENTS)) {
 		case WAIT_TIMEOUT: return RESULT_TIMEOUT;
 		case WAIT_OBJECT_0: return RESULT_OK;
@@ -53,7 +53,7 @@ public:
 		return RESULT_TIMEOUT;
 #endif
 	};
-	bool wait(u_int32_t millis = INFINITE) throw() { return WaitForSingleObject(h, millis) == WAIT_OBJECT_0; };
+	bool wait(uint32_t millis = INFINITE) throw() { return WaitForSingleObject(h, millis) == WAIT_OBJECT_0; };
 	
 	~Semaphore() throw() {
 		CloseHandle(h);
@@ -67,9 +67,9 @@ public:
 	~Semaphore() throw() { sem_destroy(&sem); };
 	void signal() throw() { sem_post(&sem); };
 	bool wait() throw() { sem_wait(&sem); return true; };
-	bool wait(u_int32_t millis) throw() {
+	bool wait(uint32_t millis) throw() {
 		/** @todo This is an ugly poll...it seems like there's no sem_timedwait... */
-		u_int32_t w = 0;
+		uint32_t w = 0;
 		while(w < millis) {
 			if(sem_trywait(&sem) == 0)
 				return true;

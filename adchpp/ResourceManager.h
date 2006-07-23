@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef RESOURCEMANAGER_H
-#define RESOURCEMANAGER_H
+#ifndef ADCHPP_RESOURCEMANAGER_H
+#define ADCHPP_RESOURCEMANAGER_H
 
 #include "Singleton.h"
 
@@ -38,12 +38,12 @@ private:
 
 	friend class Singleton<ResourceManager>;
 	
-	static DLL ResourceManager* instance;
+	ADCHPP_DLL static ResourceManager* instance;
 	
 	ResourceManager() throw() { }
 	virtual ~ResourceManager() throw() { }
 	
-	DLL static string strings[LAST];
+	ADCHPP_DLL static string strings[LAST];
 	static string names[LAST];
 
 	static const string className;

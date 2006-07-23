@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef ADCHPP_CONFIG_H
+#define ADCHPP_CONFIG_H
 
 namespace adchpp {
 	
@@ -63,20 +63,13 @@ typedef signed short int16_t;
 typedef signed long int32_t;
 typedef signed __int64 int64_t;
 
-typedef unsigned char u_int8_t;
-typedef unsigned short u_int16_t;
-typedef unsigned long u_int32_t;
-typedef unsigned __int64 u_int64_t;
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned long uint32_t;
+typedef unsigned __int64 uint64_t;
 
 # endif
 
-#else
-#ifdef _WIN32
-typedef unsigned char u_int8_t;
-typedef unsigned short u_int16_t;
-typedef unsigned long u_int32_t;
-typedef unsigned long long u_int64_t;
-#endif
 #endif
 
 
@@ -96,12 +89,12 @@ typedef unsigned long long u_int64_t;
 
 #ifdef _WIN32
 # ifdef BUILDING_ADCHPP
-#  define DLL __declspec(dllexport)
+#  define ADCHPP_DLL __declspec(dllexport)
 # else
-#  define DLL __declspec(dllimport)
+#  define ADCHPP_DLL __declspec(dllimport)
 # endif // DLLEXPORT
 #else
-# define DLL __attribute__ ((visibility("default")))
+# define ADCHPP_DLL __attribute__ ((visibility("default")))
 #endif
 
 #ifdef _MSC_VER
@@ -116,8 +109,8 @@ typedef unsigned long long u_int64_t;
 #  define CDECL
 # endif
 
-# ifndef DLL
-#  define DLL
+# ifndef ADCHPP_DLL
+#  define ADCHPP_DLL
 # endif
 
 #endif // _MSC_VER

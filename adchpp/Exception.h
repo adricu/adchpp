@@ -16,12 +16,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef EXCEPTION_H
-#define EXCEPTION_H
+#ifndef ADCHPP_EXCEPTION_H
+#define ADCHPP_EXCEPTION_H
+
+#include "common.h"
 
 namespace adchpp {
 	
-class DLL Exception : public exception
+class ADCHPP_DLL Exception : public exception
 {
 public:
 	Exception() { }
@@ -36,7 +38,7 @@ protected:
 
 #ifdef _DEBUG
 
-#define STANDARD_EXCEPTION(name) class DLL name : public Exception { \
+#define STANDARD_EXCEPTION(name) class ADCHPP_DLL name : public Exception { \
 public:\
 	name() throw() : Exception(#name) { } \
 	name(const string& aError) throw() : Exception(#name ": " + aError) { } \
@@ -45,7 +47,7 @@ public:\
 
 #else // _DEBUG
 
-#define STANDARD_EXCEPTION(name) class DLL name : public Exception { \
+#define STANDARD_EXCEPTION(name) class ADCHPP_DLL name : public Exception { \
 public:\
 	name() throw() : Exception() { } \
 	name(const string& aError) throw() : Exception(aError) { } \

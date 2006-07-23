@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "Client.h"
 
@@ -26,11 +25,11 @@
 
 namespace adchpp {
 	
-Client* Client::create(u_int32_t sid) throw() {
+Client* Client::create(uint32_t sid) throw() {
 	return new Client(sid);
 }
 
-Client::Client(u_int32_t aSID) throw() : sid(aSID), state(STATE_PROTOCOL), disconnecting(false), socket(0), dataBytes(0), floodTimer(0) { 
+Client::Client(uint32_t aSID) throw() : sid(aSID), state(STATE_PROTOCOL), disconnecting(false), socket(0), dataBytes(0), floodTimer(0) { 
 
 }
 
@@ -71,7 +70,7 @@ void* Client::getPSD(int id) throw() {
 		return 0;
 }
 
-void Client::onData(const vector<u_int8_t>& data) throw() {
+void Client::onData(const vector<uint8_t>& data) throw() {
 	dcdebug("In (%d): %.*s\n", data.size(), data.size(), &data[0]);
 	
 	size_t i = 0;
@@ -131,6 +130,17 @@ void Client::onData(const vector<u_int8_t>& data) throw() {
 		line.clear();
 	}
 }	
+
+bool Client::getChangedFields(AdcCommand& cmd) const throw() {
+	for(InfMap::const_iterator i = changed.begin(); i != changed.end(); ++i) 
+		cmd.addParam(string((char*)&i->first, 2));
+	return !changed.empty();
+}
+bool Client::getAllFields(AdcCommand& cmd) const throw() {
+	for(InfMap::const_iterator i = info.begin(); i != info.end(); ++i) 
+		cmd.addParam(string((char*)&i->first, 2), i->second);
+	return !info.empty();
+}
 
 void Client::updateFields(const AdcCommand& cmd) throw() {
 	dcassert(cmd.getCommand() == AdcCommand::CMD_INF);

@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SIMPLEXML_H
-#define SIMPLEXML_H
+#ifndef ADCHPP_SIMPLEXML_H
+#define ADCHPP_SIMPLEXML_H
 
 #include "Exception.h"
 #include "Util.h"
@@ -33,10 +33,10 @@ STANDARD_EXCEPTION(SimpleXMLException);
 class SimpleXML  
 {
 public:
-	DLL SimpleXML(int numAttribs = 0);
-	DLL ~SimpleXML();
+	ADCHPP_DLL SimpleXML(int numAttribs = 0);
+	ADCHPP_DLL ~SimpleXML();
 	
-	DLL void addTag(const string& aName, const string& aData = Util::emptyString) throw(SimpleXMLException);
+	ADCHPP_DLL void addTag(const string& aName, const string& aData = Util::emptyString) throw(SimpleXMLException);
 	void addTag(const string& aName, int aData) throw(SimpleXMLException) {
 		addTag(aName, Util::toString(aData));
 	}
@@ -49,7 +49,7 @@ public:
 		addAttrib(aName, Util::toString(aData));
 	}
 
-	DLL void addAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
+	ADCHPP_DLL void addAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
 	void addAttrib(const string& aName, bool aData) throw(SimpleXMLException) {	
 		addAttrib(aName, string(aData ? "1" : "0"));
 	}
@@ -58,7 +58,7 @@ public:
     void addChildAttrib(const string& aName, const T& aData) throw(SimpleXMLException) {	
 		addChildAttrib(aName, Util::toString(aData));
 	}
-	DLL void addChildAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
+	ADCHPP_DLL void addChildAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
 	void addChildAttrib(const string& aName, bool aData) throw(SimpleXMLException) {	
 		addChildAttrib(aName, string(aData ? "1" : "0"));
 	}
@@ -68,8 +68,8 @@ public:
 		return current->data;
 	}
 	
-	DLL void stepIn() const throw(SimpleXMLException);
-	DLL void stepOut() const throw(SimpleXMLException);
+	ADCHPP_DLL void stepIn() const throw(SimpleXMLException);
+	ADCHPP_DLL void stepOut() const throw(SimpleXMLException);
 	
 	void resetCurrentChild() const throw() {
 		found = false;
@@ -77,7 +77,7 @@ public:
 		currentChild = current->children.begin();
 	}
 
-	DLL bool findChild(const string& aName) const throw();
+	ADCHPP_DLL bool findChild(const string& aName) const throw();
 
 	const string& getChildData() const throw(SimpleXMLException) {
 		checkChildSelected();
@@ -104,10 +104,10 @@ public:
 		return (tmp.size() > 0) && tmp[0] == '1';
 	}
 	
-	DLL void fromXML(const string& aXML) throw(SimpleXMLException);
+	ADCHPP_DLL void fromXML(const string& aXML) throw(SimpleXMLException);
 	string toXML() { return (!root->children.empty()) ? root->children[0]->toXML(0) : Util::emptyString; }
 	
-	DLL static void escape(string& aString, bool aAttrib, bool aLoading = false);
+	ADCHPP_DLL static void escape(string& aString, bool aAttrib, bool aLoading = false);
 	/** 
 	 * This is a heurestic for whether escape needs to be called or not. The results are
  	 * only guaranteed for false, i e sometimes true might be returned even though escape
@@ -156,7 +156,7 @@ private:
 			AttribIter i = find_if(attribs.begin(), attribs.end(), CompareFirst<string,string>(aName));
 			return (i == attribs.end()) ? aDefault : i->second; 
 		}
-		DLL string toXML(int indent);
+		ADCHPP_DLL string toXML(int indent);
 		
 		string::size_type fromXML(const string& tmp, string::size_type start, int aa, bool isRoot = false) throw(SimpleXMLException);
 		string::size_type loadAttribs(const string& tmp, string::size_type start) throw(SimpleXMLException);

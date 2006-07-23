@@ -24,7 +24,7 @@
  * plugins that change or add to ADCH++'s behaviour. Most plugins will need
  * PluginManager.h, ClientManager. and Client.h included to work, even though the 
  * other header files are available as well (they're more likely to change in future 
- * versions though). You can use any method that is declared as DLL or is inline, the 
+ * versions though). You can use any method that is declared asADCHPP_DLLor is inline, the 
  * others are meant to be internal to ADCH++, very likely to change/disappear and will
  * generate link errors (when compiling under windows anyway). When starting a plugin
  * project I strongly recommend that you take one of the existing plugins and modify
@@ -65,8 +65,8 @@
  * careful though, the Attention event might be raised by other plugins).
  */
 
-#ifndef PLUGINMANAGER_H
-#define PLUGINMANAGER_H
+#ifndef ADCHPP_PLUGINMANAGER_H
+#define ADCHPP_PLUGINMANAGER_H
 
 #include "Singleton.h"
 #include "version.h"
@@ -140,7 +140,7 @@ typedef int (*PLUGIN_LOAD)();
  */
 typedef void (*PLUGIN_UNLOAD)();
 
-class DLL PluginManager : public Singleton<PluginManager>
+class ADCHPP_DLL PluginManager : public Singleton<PluginManager>
 {
 public:
 	typedef HASH_MAP<string, Plugin*> Registry;
@@ -224,7 +224,7 @@ private:
 	};
 
 	friend class Singleton<PluginManager>;
-	static DLL PluginManager* instance;
+	ADCHPP_DLL static PluginManager* instance;
 
 	typedef vector<PluginInfo> PluginList;
 	typedef PluginList::iterator PluginIter;

@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "stdinc.h"
-#include "common.h"
+#include "adchpp.h"
 
 #include "SocketManager.h"
 
@@ -474,10 +473,10 @@ private:
 	}
 	
 	void checkDisconnects() throw() {
-		u_int32_t now = GET_TICK();
+		uint32_t now = GET_TICK();
 		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
 			ManagedSocket* ms = *i;
-			if(ms->disc + (u_int32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
+			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
 				ms->close();
 			}
 		}
@@ -827,10 +826,10 @@ private:
 	}
 	
 	void checkDisconnects() throw() {
-		u_int32_t now = GET_TICK();
+		uint32_t now = GET_TICK();
 		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
 			ManagedSocket* ms = *i;
-			if(ms->disc + (u_int32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
+			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
 				failRead(ms);
 			}
 		}

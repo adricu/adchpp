@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SETTINGSMANAGER_H
-#define SETTINGSMANAGER_H
+#ifndef ADCHPP_SETTINGSMANAGER_H
+#define ADCHPP_SETTINGSMANAGER_H
 
 #include "Util.h"
 #include "Signal.h"
@@ -58,7 +58,7 @@ public:
 	 * @param type Type of setting (use this to actually get the setting later on
 	 * @return True if the setting was found, false otherwise.
 	 */
-	DLL bool getType(const char* name, int& n, int& type);
+	ADCHPP_DLL bool getType(const char* name, int& n, int& type);
 	/**
 	 * Get the XML name of a setting
 	 * @param n Setting identifier
@@ -115,7 +115,7 @@ public:
 	SignalLoad& signalLoad() { return signalLoad_; }
 private:
 	friend class Singleton<SettingsManager>;
-	static DLL SettingsManager* instance;
+	ADCHPP_DLL static SettingsManager* instance;
 	
 	SettingsManager() throw();
 	virtual ~SettingsManager() throw() { }
