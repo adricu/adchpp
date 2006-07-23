@@ -1,0 +1,24 @@
+Import('dev source_path')
+
+env = dev.env.Copy()
+
+targets = []
+
+# Try to build extension
+
+env.Append(SWIGFLAGS=['-c++','-python'])
+f = env.CFile(target=dev.get_target(source_path, 'python_wrap.cxx'), source='python.i')
+env.SideEffect('pyadchpp.py', f)
+env.Depends('python.i', 'adchpp.i')
+
+import distutils.sysconfig
+
+env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
+if '_DEBUG' in env['CPPDEFINES']:
+	env['CPPDEFINES'].remove('_DEBUG')
+env.Append(LIBPATH=['c:/python24/libs'])
+env.Append(LIBS=['python24', 'adchpp'])
+pyd = env.SharedLibrary(dev.get_target(source_path, '_pyadchpp'), [f])
+targets.append(pyd)
+
+Return('targets')

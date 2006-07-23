@@ -37,11 +37,8 @@ namespace adchpp {
 #ifdef _WIN32
 // Berkely constants converted to the windows equivs...
 #	define EWOULDBLOCK             WSAEWOULDBLOCK
-#	ifdef errno
-#		undef errno
-#	endif
 
-#	define errno ::WSAGetLastError()
+#	define socket_errno ::WSAGetLastError()
 #	define checksocket(x) if((x) == INVALID_SOCKET) { throw SocketException(::WSAGetLastError()); }
 #	define checkrecv(x) if((x) == SOCKET_ERROR) { int a = ::WSAGetLastError(); if(a == EWOULDBLOCK) return -1; else throw SocketException(a); }
 #	define checksockerr(x) if((x) == SOCKET_ERROR) { throw SocketException(::WSAGetLastError()); }
@@ -50,6 +47,7 @@ typedef SOCKET socket_t;
 
 #else
 
+#define socket_errno errno
 typedef int socket_t;
 #define SOCKET_ERROR -1
 #define INVALID_SOCKET -1

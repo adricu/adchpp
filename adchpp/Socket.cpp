@@ -77,7 +77,7 @@ void Socket::listen(short aPort) throw(SocketException) {
 	::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(int));
 	
 	if(sock == (socket_t)-1) {
-		throw SocketException(errno);
+		throw SocketException(socket_errno);
 	}
 
 	tcpaddr.sin_family = AF_INET;
@@ -85,10 +85,10 @@ void Socket::listen(short aPort) throw(SocketException) {
 	tcpaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	
 	if(::bind(sock, (sockaddr *)&tcpaddr, sizeof(tcpaddr)) == SOCKET_ERROR) {
-		throw SocketException(errno);
+		throw SocketException(socket_errno);
 	}
 	if(::listen(sock, SOMAXCONN) == SOCKET_ERROR) {
-		throw SocketException(errno);
+		throw SocketException(socket_errno);
 	}
 }
 
@@ -127,14 +127,14 @@ void Socket::connect(const string& aAddr, short aPort) throw(SocketException) {
     if (serv_addr.sin_addr.s_addr == INADDR_NONE) {   /* server address is a name or invalid */
         host = gethostbyname(aAddr.c_str());
         if (host == NULL) {
-            throw SocketException(errno);
+            throw SocketException(socket_errno);
         }
         serv_addr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
     }
 
     if(::connect(sock,(sockaddr*)&serv_addr,sizeof(serv_addr)) == SOCKET_ERROR) {
 		// EWOULDBLOCK is ok, the attempt is still being made, and FD_CONNECT will be signaled...
-		if(errno != EWOULDBLOCK) {
+		if(socket_errno != EWOULDBLOCK) {
 			checksockerr(SOCKET_ERROR);
 		} 
 	}
@@ -187,7 +187,7 @@ int Socket::writeNB(const char* aBuffer, size_t aLen) throw(SocketException) {
 
 	int i = ::send(sock, aBuffer, (int)aLen, MSG_NOSIGNAL | MSG_DONTWAIT);
 	if(i == SOCKET_ERROR) {
-		if(errno == EWOULDBLOCK) {
+		if(socket_errno == EWOULDBLOCK) {
 			return 0;
 		}
 		checksockerr(i);
@@ -229,7 +229,7 @@ void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t
 	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {   /* server address is a name or invalid */
 		host = gethostbyname(aIp.c_str());
 		if (host == NULL) {
-			throw SocketException(errno);
+			throw SocketException(socket_errno);
 		}
 		serv_addr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
 	}
@@ -282,7 +282,7 @@ int Socket::wait(uint32_t millis, int waitFor) throw(SocketException) {
 		}
 		return ret;
 	} else if(result == -1) {
-		throw SocketException(errno);
+		throw SocketException(socket_errno);
 	}
 	
 	return 0;

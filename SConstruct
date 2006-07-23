@@ -46,7 +46,7 @@ if mode not in gcc_flags:
     print "Unknown mode, exiting"
     Exit(1)
 
-toolset = [tools]
+toolset = [tools, 'swig']
 
 env = Environment(tools = toolset, ENV=os.environ)
     
@@ -99,12 +99,15 @@ env = conf.Finish()
 
 dev = Dev(mode, tools, env)
 
-dev.build('adchpp/')
+dev.adchpp = dev.build('adchpp/')
 
 if env['PLATFORM'] == 'win32' or env['PLATFORM'] == 'cygwin':
     dev.build('windows/')
 else:
     dev.build('unix/')
+
+# Library wrappers
+dev.build('swig/')
 
 # Plugins
 dev.build('plugins/Script/')
