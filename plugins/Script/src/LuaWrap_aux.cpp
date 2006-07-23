@@ -41,7 +41,7 @@ string getCommandString(const AdcCommand* cmd) {
 
 struct LuaAdcCommand : public AdcCommand, public wrap_base {
 	LuaAdcCommand() { }
-	LuaAdcCommand(u_int32_t a) : AdcCommand(a) { }
+	LuaAdcCommand(uint32_t a) : AdcCommand(a) { }
 	LuaAdcCommand(const LuaAdcCommand& rhs) : AdcCommand(rhs), wrap_base(rhs) { }
 	
 	~LuaAdcCommand() throw() { }
@@ -61,7 +61,7 @@ void LuaWrap::wrap_aux(lua_State* L) {
 	[	
 		class_<AdcCommand, LuaAdcCommand >("AdcCommand")
 			.def(constructor<>())
-			.def(constructor<u_int32_t>())
+			.def(constructor<uint32_t>())
 			.def("addParam", (AdcCommand& (AdcCommand::*)(const string&))&AdcCommand::addParam, return_reference_to(_1))
 			.def("addParam", (AdcCommand& (AdcCommand::*)(const string&, const string&))&AdcCommand::addParam, return_reference_to(_1))
 			.def("delParam", &AdcCommand::delParam)

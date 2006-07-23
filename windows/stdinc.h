@@ -16,10 +16,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#if !defined(AFX_STDINC_H__65559042_5D04_44EF_9ECF_E0A7FA6E1348__INCLUDED_)
-#define AFX_STDINC_H__65559042_5D04_44EF_9ECF_E0A7FA6E1348__INCLUDED_
+#ifndef STDINC_H
+#define STDINC_H
 
-#include "../adchpp/stdinc.h"
+#include <adchpp/adchpp.h>
 
-
-#endif // !defined(AFX_STDINC_H__65559042_5D04_44EF_9ECF_E0A7FA6E1348__INCLUDED_)
+#endif 

@@ -19,7 +19,7 @@
 #ifndef SCRIPT_STDINC_H
 #define SCRIPT_STDINC_H
 
-#include <adchpp/stdinc.h>
+#include <adchpp/adchpp.h>
 #include <adchpp/common.h>
 
 using namespace adchpp;

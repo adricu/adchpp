@@ -24,7 +24,7 @@
  * plugins that change or add to ADCH++'s behaviour. Most plugins will need
  * PluginManager.h, ClientManager. and Client.h included to work, even though the 
  * other header files are available as well (they're more likely to change in future 
- * versions though). You can use any method that is declared asADCHPP_DLLor is inline, the 
+ * versions though). You can use any method that is declared as DLL or is inline, the 
  * others are meant to be internal to ADCH++, very likely to change/disappear and will
  * generate link errors (when compiling under windows anyway). When starting a plugin
  * project I strongly recommend that you take one of the existing plugins and modify

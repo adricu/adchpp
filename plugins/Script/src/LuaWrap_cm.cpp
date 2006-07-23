@@ -122,16 +122,16 @@ struct SignalDisconnectedHandler : public LuaSignalHandler<SignalDisconnectedHan
 
 
 string ClientManager_enterVerify(ClientManager*, Client& c, bool sendData) {
-	vector<u_int8_t> data = ClientManager::getInstance()->enterVerify(c, sendData);
+	vector<uint8_t> data = ClientManager::getInstance()->enterVerify(c, sendData);
 	return string((const char*)&data[0], data.size());
 }
 
 bool ClientManager_verifyPassword(ClientManager*, Client& c, const string& password, const string& salt, const string& sentHash) {
-	return ClientManager::getInstance()->verifyPassword(c, password, vector<u_int8_t>((u_int8_t*)&salt[0], (u_int8_t*)(&salt[0] + salt.size())), sentHash);
+	return ClientManager::getInstance()->verifyPassword(c, password, vector<uint8_t>((uint8_t*)&salt[0], (uint8_t*)(&salt[0] + salt.size())), sentHash);
 }
 
 Client* ClientManager_getClientByCID(ClientManager*, const std::string& cid) {
-	u_int32_t sid = ClientManager::getInstance()->getSID(CID(cid));
+	uint32_t sid = ClientManager::getInstance()->getSID(CID(cid));
 	if(sid == 0) {
 		return 0;
 	}
@@ -139,14 +139,14 @@ Client* ClientManager_getClientByCID(ClientManager*, const std::string& cid) {
 }
 
 Client* ClientManager_getClientByNick(ClientManager*, const std::string& nick) {
-	u_int32_t sid = ClientManager::getInstance()->getSID(nick);
+	uint32_t sid = ClientManager::getInstance()->getSID(nick);
 	if(sid == 0) {
 		return 0;
 	}
 	return ClientManager::getInstance()->getClient(sid);
 }
 
-u_int32_t ClientManager_getSIDByCID(const string& cid) {
+uint32_t ClientManager_getSIDByCID(const string& cid) {
 	return ClientManager::getInstance()->getSID(CID(cid));
 }
 
@@ -167,7 +167,7 @@ void LuaWrap::wrap_cm(lua_State* L) {
 			.def("enterIdentify", &ClientManager::enterIdentify)
 			.def("enterVerify", &ClientManager_enterVerify)
 			.def("enterNormal", &ClientManager::enterNormal)
-			.def("getSIDByNick", (u_int32_t (ClientManager::*)(const string&) const)&ClientManager::getSID)
+			.def("getSIDByNick", (uint32_t (ClientManager::*)(const string&) const)&ClientManager::getSID)
 			.def("getSIDByCID", &ClientManager_getSIDByCID)
 			.def("getClientBySID", &ClientManager::getClient)
 			.def("getClientByNick", &ClientManager_getClientByNick)
