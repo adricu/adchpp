@@ -1,6 +1,5 @@
 %module rbadchpp
-
-%{
+%runtime%{
 // ruby pollution
 #undef connect
 #undef bind

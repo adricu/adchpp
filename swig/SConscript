@@ -14,7 +14,10 @@ def runCommand(cmd):
 		return ""
 
 def getRbConf(name):
-	return runCommand("ruby -rmkmf -e \"print Config.expand('\$(" + name + ")')\"")
+	if dev.env['PLATFORM'] == 'win32':
+		return runCommand("ruby -rmkmf -e \"print Config.expand('$(" + name + ")')\"")
+	else:
+		return runCommand("ruby -rmkmf -e \"print Config.expand('\$(" + name + ")')\"")
 
 def buildRbModule():
 	if not runCommand("ruby -v"):
@@ -37,6 +40,7 @@ def buildRbModule():
 	if not incdir:
 		print "Ruby archdir not found"
 		return
+	print "archdir: ", incdir
 	soname = getRbConf("RUBY_SO_NAME")
 	if not soname:
 		print "Ruby RUBY_SO_NAME not found"

@@ -23,9 +23,10 @@
 #include <adchpp/File.h>
 #include <adchpp/version.h>
 
-static const string modName = "adchpp";
 
 using namespace adchpp;
+
+static const string modName = "adchpp";
 
 #define LOGERROR(func) LOGDT(modName, func " failed: " + Util::translateError(GetLastError()))
 #define PRINTERROR(func) fprintf(stderr, func " failed: 0x%x, %s", GetLastError(), Util::translateError(GetLastError()).c_str())
@@ -184,14 +185,14 @@ static void removeService(const TCHAR* name) {
 	CloseServiceHandle(scm);
 }
 
-static void init() {
+static void init(const string& configPath) {
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 	EXTENDEDTRACEINITIALIZE( Util::getAppPath().c_str() );
 	SetUnhandledExceptionFilter(&DCUnhandledExceptionFilter);
 #endif
 	
-	adchppStartup();
+	initConfig(configPath);
 
 	if(asService)
 		LOGDT(modName, FULLVERSIONSTRING " started as a service");
@@ -206,7 +207,7 @@ static void f2() {
 static void uninit() {
 	LOGDT(modName, FULLVERSIONSTRING " shut down");
 	printf("Shutting down.");
-	adchppShutdown(&f2);
+	shutdown(&f2);
 #if defined(_MSC_VER) && defined(_DEBUG)
 	EXTENDEDTRACEUNINITIALIZE();
 #endif
@@ -262,7 +263,7 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 	}
 
 	try {
-		adchppStartup2(&f);		
+		startup(&f);		
 	} catch(const Exception& e) {
 		LOGDT(modName, "ADCH++ startup failed because: " + e.getError());
 		
@@ -288,8 +289,8 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 	SetServiceStatus(ssh, &ss);
 }
 
-static void runService(const TCHAR* name) {
-	init();
+static void runService(const TCHAR* name, const string& configPath) {
+	init(configPath);
 
     SERVICE_TABLE_ENTRY   DispatchTable[] = { 
 		{ (LPTSTR)name, &serviceStart }, 
@@ -301,13 +302,13 @@ static void runService(const TCHAR* name) {
     }
 }
 
-static void runConsole() {
+static void runConsole(const string& configPath) {
 	asService = false;
 	printf("Starting");
-	init();
+	init(configPath);
 	printf(".");
 	try {
-		adchppStartup2(&f2);
+		startup(&f2);
 	} catch(const Exception& e) {
 		printf("\n\nFATAL: Can't start ADCH++: %s\n", e.getError().c_str());
 		uninit();
@@ -328,7 +329,7 @@ int CDECL wmain(int argc, wchar_t* argv[]) {
 int CDECL main(int argc, char* argv[]) {
 #endif
 
-	Util::setCfgPath(Util::getAppPath() + _T("config\\"));
+	string configPath = Util::getAppPath() + _T("config\\");
 	
 	int task = 0;
 
@@ -359,7 +360,7 @@ int CDECL main(int argc, char* argv[]) {
 			if(cfg[cfg.length() - 1] != _T('\\')) {
 				cfg += '\\';
 			}
-			Util::setCfgPath(cfg);
+			configPath = cfg;
 		} else if(_tcscmp(argv[i], _T("-i")) == 0) {
 			if(i + 1 == argc) {
 				printf("You must specify a service name");
@@ -387,8 +388,8 @@ int CDECL main(int argc, char* argv[]) {
 	}
 	
 	switch(task) {
-		case 0: runConsole(); break;
-		case 1: runService(name); break;
+		case 0: runConsole(configPath); break;
+		case 1: runService(name, configPath); break;
 		case 2: installService(name); break;
 		case 3: removeService(name); break;
 	}
