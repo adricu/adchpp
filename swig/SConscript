@@ -71,7 +71,10 @@ def buildPyModule():
 	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
 	if '_DEBUG' in env['CPPDEFINES']:
 		env['CPPDEFINES'].remove('_DEBUG')
-	
+	if '/MDd' in env['CCFLAGS']:
+		env['CCFLAGS'].remove('/MDd')
+		env['CCFLAGS'].append('/MD')
+		
 	if env['PLATFORM'] == 'win32':
 		env.Append(LIBPATH=['c:/python24/libs'])
 		env.Append(LIBS=['python24', 'adchpp'])

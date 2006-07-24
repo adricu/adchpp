@@ -40,14 +40,14 @@ struct Signal {
 		Signal<F>* signal;
 		typename SlotList::iterator connection;
 	};		
-	
+	/*
 	void operator()() {
 		typename SlotList::iterator end = slots.end();
 		for(typename SlotList::iterator i = slots.begin(); i != end; ) {
 			(*i++)();
 		}
 	}
-	
+	*/
 	template<typename T0>
 	void operator()(T0& t0) {
 		typename SlotList::iterator end = slots.end();
