@@ -84,6 +84,15 @@ env.SourceCode('.', None)
 env.SetOption('implicit_cache', '1')
 env.SetOption('max_drift', 60*10)
 
+import SCons.Scanner
+SWIGScanner = SCons.Scanner.ClassicCPP(
+	"SWIGScan",
+	".i",
+	"CPPPATH",
+	'^[ \t]*[%,#][ \t]*(?:include|import)[ \t]*(<|")([^>"]+)(>|")'
+)
+env.Append(SCANNERS=[SWIGScanner])
+
 conf = Configure(env)
 
 if conf.CheckCHeader('sys/epoll.h'):

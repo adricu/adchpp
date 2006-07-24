@@ -104,21 +104,17 @@ typedef vector<uint8_t> ByteVector;
 typedef ByteVector::iterator ByteIter;
 
 /** 
- * First startup phase, this _must_ be done asap as nothing 
- * will work before it, relatively fast.
- */ADCHPP_DLL void adchppStartup();
+ * Initialize configuration, must be called before startup
+ */ADCHPP_DLL void initConfig(const string& path);
 
 /** 
  * Second startup phase, this can take quite some time as plugins and 
  * dynamic data are loaded.
  * @param f Unless NULL, this function is called after each step in the initialization
- */ADCHPP_DLL void adchppStartup2(void (*f)());
+ */ADCHPP_DLL void startup(void (*f)());
 
-/** Shuts down the adchpp hub library (doh!). */ADCHPP_DLL void adchppShutdown(void (*f)());
+/** Shuts down the adchpp hub library (doh!). */ADCHPP_DLL void shutdown(void (*f)());
 
 }
-
-#include <boost/bind.hpp>
-
 
 #endif // COMMON_H

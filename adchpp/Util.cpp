@@ -51,9 +51,11 @@ Pool<ByteVector, Util::Clear> Util::freeBuf;
 
 static void sgenrand(unsigned long seed);
 
-void Util::initialize() {
+void Util::initialize(const string& configPath) {
 	setlocale(LC_ALL, "");
 	sgenrand((unsigned long)time(NULL));
+	
+	setCfgPath(configPath);
 }
 
 /**

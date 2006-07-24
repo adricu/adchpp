@@ -10,16 +10,20 @@
 
 %include "std_string.i"
 %include "std_vector.i"
+using namespace std;
 
 %inline%{
-void adchppStartup2() {
-	adchpp::adchppStartup2(0);
+void startup() {
+	adchpp::startup(0);
+}
+void shutdown() {
+	adchpp::shutdown(0);
 }
 %}
 
 namespace adchpp {
-	
-void adchppStartup();
+
+void initConfig(const std::string& configPath);
 
 typedef std::vector<std::string> StringList;
 
@@ -50,6 +54,29 @@ struct ManagedConnection {
 	
 	~ManagedConnection();
 	typename Sig::Connection connection;
+};
+
+class CID {
+public:
+	enum { SIZE = 192 / 8 };
+	enum { BASE32_SIZE = 39 };
+
+	CID();
+	explicit CID(const uint8_t* data);
+	explicit CID(const string& base32);
+
+	bool operator==(const CID& rhs) const;
+	bool operator<(const CID& rhs) const;
+
+	string toBase32() const;
+	//string& toBase32(string& tmp) const;
+
+	size_t toHash() const;
+	const uint8_t* data() const;
+
+	bool isZero() const;
+	static CID generate();
+
 };
 
 %nodefaultctor Client;

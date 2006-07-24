@@ -25,6 +25,8 @@
 #include "PluginManager.h"
 #include "SettingsManager.h"
 
+#include <boost/bind.hpp>
+
 namespace adchpp {
 	
 FastMutex ManagedSocket::outbufCS;

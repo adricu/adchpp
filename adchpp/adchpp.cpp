@@ -30,13 +30,13 @@ namespace adchpp {
 	
 const char compileTime[] = __DATE__ " " __TIME__;
 
-void adchppStartup() {
+void initConfig(const string& configPath) {
 #ifdef _WIN32
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
-	Util::initialize();
+	Util::initialize(configPath);
 
 	ResourceManager::newInstance();
 	SettingsManager::newInstance();
@@ -49,7 +49,7 @@ void adchppStartup() {
 	SettingsManager::getInstance()->load();
 }
 
-void adchppStartup2(void (*f)()) {
+void startup(void (*f)()) {
 	if(!SETTING(LANGUAGE_FILE).empty()) {
 		if(File::isAbsolutePath(SETTING(LANGUAGE_FILE))) {
 			ResourceManager::getInstance()->loadLanguage(SETTING(LANGUAGE_FILE));
@@ -67,7 +67,7 @@ void adchppStartup2(void (*f)()) {
 	PluginManager::getInstance()->load();
 }
 
-void adchppShutdown(void (*f)()) {
+void shutdown(void (*f)()) {
 	PluginManager::getInstance()->shutdown();
 	if(f) f();
 	ClientManager::getInstance()->shutdown();

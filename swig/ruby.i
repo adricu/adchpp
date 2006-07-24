@@ -1,4 +1,4 @@
-%module adchpp
+%module rbadchpp
 
 %{
 // ruby pollution

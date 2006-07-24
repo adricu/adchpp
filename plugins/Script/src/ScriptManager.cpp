@@ -22,6 +22,7 @@
 #include "Engine.h"
 #include "LuaEngine.h"
 
+#include <boost/bind.hpp>
 #include <adchpp/SimpleXML.h>
 #include <adchpp/File.h>
 #include <adchpp/TimerManager.h>

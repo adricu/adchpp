@@ -28,6 +28,8 @@
 #include "ManagedSocket.h"
 #include "Thread.h"
 
+#include <boost/bind.hpp>
+
 #ifdef _WIN32
 #include <MSWSock.h>
 #endif

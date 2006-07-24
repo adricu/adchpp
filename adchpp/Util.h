@@ -117,7 +117,7 @@ public:
 	ADCHPP_DLL static Stats stats;
 	ADCHPP_DLL static string emptyString;
 
-	static void initialize();
+	static void initialize(const string& configPath);
 	ADCHPP_DLL static string getOsVersion();
 	ADCHPP_DLL static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
 	ADCHPP_DLL static string formatTime(const string& msg, time_t t = time(NULL));
@@ -141,8 +141,8 @@ public:
 	}
 
 #else // WIN32
-	DLL static string appPath;
-	DLL static string appName;
+	ADCHPP_DLL static string appPath;
+	ADCHPP_DLL static string appName;
 
 	static void setApp(const string app) {
 		string::size_type i = app.rfind('/');

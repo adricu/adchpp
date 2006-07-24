@@ -27,6 +27,8 @@
 #include "version.h"
 #include "File.h"
 
+#include <boost/bind.hpp>
+
 #ifdef _WIN32
 
 #define PLUGIN_EXT _T(".dll")

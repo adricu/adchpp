@@ -23,6 +23,8 @@
 #include "ClientManager.h"
 #include "TimerManager.h"
 
+#include <boost/bind.hpp>
+
 namespace adchpp {
 	
 Client* Client::create(uint32_t sid) throw() {

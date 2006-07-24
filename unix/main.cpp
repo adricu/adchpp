@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <adchpp/stdinc.h>
+#include <adchpp/adchpp.h>
 #include <adchpp/common.h>
 
 #include <adchpp/LogManager.h>
@@ -68,7 +68,7 @@ static void uninit() {
 	LOGDT(modName, FULLVERSIONSTRING " shut down");
 	if(!asdaemon)
 		printf("Shutting down.");
-	adchppShutdown(&f2);
+	shutdown(&f2);
 	if(!asdaemon)
 		printf(".\n");
 
@@ -112,12 +112,12 @@ static void daemonize() {
 
 #include <sys/wait.h>
 
-static void runDaemon() {
-	adchppStartup();
+static void runDaemon(const string& configPath) {
+	initConfig(configPath);
 	daemonize();
 	init();
 	try {
-		adchppStartup2(&f2);
+		startup(&f2);
 	} catch(const Exception& e) {
 		LOGDT(modName, "Failed to load in stage 2");
 		uninit();
@@ -135,14 +135,14 @@ static void runDaemon() {
 	uninit();
 }
 
-static void runConsole() {
+static void runConsole(const string& configPath) {
 	printf("Starting");
 	init();
-	adchppStartup();
+	initConfig(configPath);
 	LOGDT(modName, FULLVERSIONSTRING " starting from console");
 	printf(".");
 	try {
-		adchppStartup2(&f2);
+		startup(&f2);
 	} catch(const Exception& e) {
 		printf("\n\nFATAL: Can't start ADCH++: %s\n", e.getError().c_str());
 		uninit();
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	Util::setApp(path == NULL ? argv[0] : path);
-	Util::setCfgPath("/etc/adchpp/");
+	string configPath = "/etc/adchpp/";
 
 	for(int i = 1; i < argc; i++) {
 		if(strcmp(argv[i], "-d") == 0) {
@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
 			if(cfg[cfg.length() - 1] != '/') {
 				cfg+='/';
 			}
-			Util::setCfgPath(cfg);
+			configPath = cfg;
 		} else if(strcmp(argv[i], "-p") == 0) {
 			if((i+1) == argc) {
 				fprintf(stderr, "-p <pid-file>\n");
@@ -223,8 +223,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(asdaemon) {
-		runDaemon();
+		runDaemon(configPath);
 	} else {
-		runConsole();
+		runConsole(configPath);
 	}
 }

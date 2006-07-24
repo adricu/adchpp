@@ -90,17 +90,19 @@
 #endif // HAVE_HASH
 
 #ifdef _STLPORT_VERSION
+namespace adchpp {
 using namespace std;
+}
 #include <hash_set>
 #include <hash_map>
 
 #elif defined(__GLIBCPP__) || defined(__GLIBCXX__)  // Using GNU C++ library?
 #include <ext/hash_set>
 #include <ext/hash_map>
-                                                                                
+namespace adchpp {                                                                
 using namespace std;
 using namespace __gnu_cxx;
-                                                                                
+}                                                              
 // GNU C++ library doesn't have hash(std::string) or hash(long long int)
 namespace __gnu_cxx {
 	template<> struct hash<std::string> {
@@ -115,9 +117,10 @@ namespace __gnu_cxx {
 
 #include <hash_set>
 #include <hash_map>
+namespace adchpp {
 using namespace std;
 using namespace stdext;
-
+}
 #endif // __GLIBCPP__
 
 #ifdef _UNICODE
