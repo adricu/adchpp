@@ -6,6 +6,8 @@
 #include <adchpp/Signal.h>
 #include <adchpp/Client.h>
 
+using namespace adchpp;
+
 %}
 
 %include "std_string.i"

@@ -62,7 +62,7 @@ typedef int socket_t;
 #endif
 #endif
 
-class SocketException : public Exception {
+class ADCHPP_VISIBLE SocketException : public Exception {
 public:
 #ifdef _DEBUG
 	SocketException(const string& aError) throw() : Exception("SocketException: " + aError) { }

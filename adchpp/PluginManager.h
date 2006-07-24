@@ -140,7 +140,7 @@ typedef int (*PLUGIN_LOAD)();
  */
 typedef void (*PLUGIN_UNLOAD)();
 
-class ADCHPP_DLL PluginManager : public Singleton<PluginManager>
+class PluginManager : public Singleton<PluginManager>
 {
 public:
 	typedef HASH_MAP<string, Plugin*> Registry;

@@ -56,8 +56,6 @@ namespace adchpp {
 # pragma warning(disable: 4710) // function not inlined
 # pragma warning(disable: 4503) // decorated name length exceeded, name was truncated
 
-# if _MSC_VER == 1200 || _MSC_VER == 1300 || _MSC_VER == 1310
-
 typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed long int32_t;
@@ -68,10 +66,7 @@ typedef unsigned short uint16_t;
 typedef unsigned long uint32_t;
 typedef unsigned __int64 uint64_t;
 
-# endif
-
 #endif
-
 
 #if defined(_MSC_VER)
 #define _LL(x) x##ll
@@ -88,6 +83,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #ifdef _WIN32
+# define ADCHPP_VISIBLE
 # ifdef BUILDING_ADCHPP
 #  define ADCHPP_DLL __declspec(dllexport)
 # else
@@ -95,25 +91,8 @@ typedef unsigned __int64 uint64_t;
 # endif // DLLEXPORT
 #else
 # define ADCHPP_DLL __attribute__ ((visibility("default")))
+# define ADCHPP_VISIBLE __attribute__ ((visibility("default")))
 #endif
-
-#ifdef _MSC_VER
-
-# ifndef CDECL
-#  define CDECL _cdecl
-# endif
-
-#else // _MSC_VER
-
-# ifndef CDECL
-#  define CDECL
-# endif
-
-# ifndef ADCHPP_DLL
-#  define ADCHPP_DLL
-# endif
-
-#endif // _MSC_VER
 
 }
 

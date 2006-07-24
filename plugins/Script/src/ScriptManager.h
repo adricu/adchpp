@@ -26,7 +26,6 @@
 #include <adchpp/Exception.h>
 #include <adchpp/Singleton.h>
 #include <adchpp/ClientManager.h>
-#include <adchpp/PluginManager.h>
 
 #ifdef _WIN32
 # ifdef ACCESS_EXPORT
@@ -47,7 +46,7 @@ class Client;
 class AdcCommand;
 }
 
-class ScriptManager : public Plugin, public Singleton<ScriptManager> {
+class ScriptManager : public Singleton<ScriptManager> {
 public:
 	ScriptManager();
 	virtual ~ScriptManager();
