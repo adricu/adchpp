@@ -49,7 +49,7 @@ extern ADCHPP_DLL const char compileTime[];
 
 extern ADCHPP_DLL void logAssert(const char* file, int line, const char* exp);
 
-inline void CDECL debugTrace(const char* format, ...)
+inline void debugTrace(const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);

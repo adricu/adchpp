@@ -48,6 +48,9 @@ struct Signal {
 	template<typename T0, typename T1, typename T2>
 	void operator()(T0& t0, T1& t1, T2& t2);
 	
+	template<typename T>
+	void connect(T f);
+	
 	~Signal() { }
 };
 
@@ -227,12 +230,16 @@ public:
 	//virtual ~ClientManager() throw() { }
 };
 
-//%template(SignalConnected) Signal<void (Client&)>;
-//%extend Signal<void (Client&)> {
-//	%template(__call__) operator()<Client&>;
-//}
+%template(SignalClient) Signal<void (Client&)>;
+%extend Signal<void (Client&)> {
+	%template(__call__) operator()<Client>;
+	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
+	%template(connect) connect<boost::function<void (Client&)> >;
+}
 }
 
 %inline%{
+namespace adchpp {
 	ClientManager* getCM() { return ClientManager::getInstance(); }
+}
 %}
