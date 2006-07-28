@@ -31,7 +31,7 @@ namespace adchpp {
 	class Client;
 }
 
-%template(TClientList) std::vector<Client*>;
+%template(TClientList) std::vector<adchpp::Client*>;
 %template(TStringList) std::vector<std::string>;
 
 typedef std::vector<std::string> StringList;
