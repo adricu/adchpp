@@ -182,7 +182,7 @@ void Socket::write(const char* aBuffer, size_t aLen) throw(SocketException) {
  * @throw SocketExcpetion Send failed.
  */
 int Socket::writeNB(const char* aBuffer, size_t aLen) throw(SocketException) {
-//	dcdebug("Writing %db: %.100s\n", aLen, aBuffer);
+	dcdebug("Writing %db: %.100s\n", aLen, aBuffer);
 	dcassert(aLen > 0);
 
 	int i = ::send(sock, aBuffer, (int)aLen, MSG_NOSIGNAL | MSG_DONTWAIT);

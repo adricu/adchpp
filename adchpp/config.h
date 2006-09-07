@@ -83,6 +83,18 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #ifdef _WIN32
+
+# ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0500
+# endif
+# ifndef WINVER
+#  define WINVER 0x0500
+# endif
+
+# ifndef WIN32
+#  define WIN32 1
+# endif
+
 # define ADCHPP_VISIBLE
 # ifdef BUILDING_ADCHPP
 #  define ADCHPP_DLL __declspec(dllexport)

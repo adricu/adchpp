@@ -207,11 +207,13 @@ private:
 				}
 				if(overlapped->type == MSOverlapped::READ_DONE) {
 					failRead(ms);
+					pool.put(overlapped);
 					continue;
 				}
 				
 				if(overlapped->type == MSOverlapped::WRITE_DONE) {
 					failWrite(ms);
+					pool.put(overlapped);
 					continue;
 				}
 				
@@ -267,7 +269,7 @@ private:
 		if(stop)
 			return;
 		
-		if(accepting.size() < PREPARED_SOCKETS / 2) {
+		if(accepting.size() > PREPARED_SOCKETS / 2) {
 			return;
 		}
 		
@@ -296,9 +298,9 @@ private:
 			MSOverlapped* overlapped = pool.get();
 			overlapped->type = MSOverlapped::ACCEPT;
 			overlapped->ms = ms;
-						
+
 			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), &(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
-				if(::WSAGetLastError() != WSA_IO_PENDING) {
+				if(::WSAGetLastError() != ERROR_IO_PENDING) {
 					if(!stop) {
 						LOGDT(SocketManager::className, "Failed accepting connection: " + Util::translateError(GetLastError()));
 					}
@@ -335,7 +337,6 @@ private:
 		ms->completeAccept();
 		
 		prepareRead(ms);
-
 		// Prepare a new socket to replace this one...
 		prepareAccept();	
 	}
@@ -359,7 +360,7 @@ private:
 		overlapped->type = MSOverlapped::READ_DONE;
 		overlapped->ms = ms;
 		
-		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, overlapped, 0) != 0) {
+		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
 			int error = ::WSAGetLastError();
 			if(error != WSA_IO_PENDING) {
 				dcdebug("Error preparing read: %s\n", Util::translateError(error).c_str());
@@ -398,7 +399,6 @@ private:
 		}
 		
 		readBuf->resize(bytes);
-		
 		ms->completeRead(readBuf);
 		
 		prepareRead(ms);
@@ -435,7 +435,7 @@ private:
 		overlapped->ms = ms;	// For debugging, not actually used
 		
 		DWORD x = 0;
-		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, overlapped, 0) != 0) {
+		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
 			if(::WSAGetLastError() != WSA_IO_PENDING) {
 				failWrite(ms);
 				pool.put(overlapped);
@@ -938,7 +938,7 @@ void SocketManager::shutdown() {
 	addJob(Callback());
 	join();
 	
-	writer = auto_ptr<Writer>();
+	writer.release();
 }
 
 }
