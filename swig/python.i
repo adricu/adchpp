@@ -44,7 +44,8 @@ struct PyHandle {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(1));
 		
-		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&t), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 0, swig::from(&t));
+//		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&t), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
 		PyHandle ret(PyObject_Call(obj, args, 0));
 	}
 	

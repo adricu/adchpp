@@ -61,7 +61,7 @@ def buildRbModule():
 def buildPyModule():
 	env = dev.env.Copy()
 	
-	env.Append(SWIGFLAGS=['-c++','-Wall','-python'])
+	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python'])
 	f = env.CFile(target=dev.get_target(source_path, 'python_wrap.cxx'), source='python.i')
 	
 	env.SideEffect(dev.get_target(source_path, 'pyadchpp.py'), f)
@@ -85,6 +85,6 @@ def buildPyModule():
 						SHLIBPREFIX='')
 	targets.append(pyd)
 
-buildRbModule()
+# buildRbModule() - needs threading sorted out
 buildPyModule()
 Return('targets')

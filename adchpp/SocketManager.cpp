@@ -60,18 +60,18 @@ struct MSOverlapped : OVERLAPPED {
 	MSOverlapped() { memset(this, 0, sizeof(*this)); }
 	MSOverlapped(Types type_) { memset(this, 0, sizeof(*this)); type = type_; }
 	
-} OVERLAPPED_READ_DONE(MSOverlapped::READ_DONE), OVERLAPPED_WRITE_WAITING(MSOverlapped::WRITE_WAITING),
-	OVERLAPPED_WRITE_ALL(MSOverlapped::WRITE_ALL), OVERLAPPED_DISCONNECT(MSOverlapped::DISCONNECT),
-	OVERLAPPED_DEREF(MSOverlapped::DEREF), OVERLAPPED_SHUTDOWN(MSOverlapped::SHUTDOWN);
+} OVERLAPPED_WRITE_WAITING(MSOverlapped::WRITE_WAITING), OVERLAPPED_WRITE_ALL(MSOverlapped::WRITE_ALL), 
+  OVERLAPPED_DISCONNECT(MSOverlapped::DISCONNECT), OVERLAPPED_DEREF(MSOverlapped::DEREF), 
+  OVERLAPPED_SHUTDOWN(MSOverlapped::SHUTDOWN);
 
 class CompletionPort {
 public:
 	CompletionPort() : handle(INVALID_HANDLE_VALUE) { 
-	
 	}
+	
 	~CompletionPort() { 
 		if(handle != INVALID_HANDLE_VALUE) 
-			CloseHandle(handle); 
+			::CloseHandle(handle); 
 	}
 	
 	bool create() {
@@ -98,11 +98,9 @@ private:
 
 class Writer : public Thread {
 public:
-	static const size_t INITIAL_SOCKETS = 32;
+	static const size_t PREPARED_SOCKETS = 32;
 	
 	Writer() : stop(false) {
-		wsabuf.len = 0;
-		wsabuf.buf = 0;		
 	}
 	
 	void addWriter(ManagedSocket* ms) {
@@ -179,9 +177,7 @@ private:
 			return 2;
 		}
 		
-		for(size_t i = 0; i < INITIAL_SOCKETS; ++i) {
-			prepareAccept();
-		}
+		prepareAccept();
 		
 		DWORD bytes = 0;
 		MSOverlapped* overlapped = 0;
@@ -233,6 +229,7 @@ private:
 				}
 				case MSOverlapped::READ_DONE: {
 					handleReadDone(ms);
+					pool.put(overlapped);
 					break;
 				}
 				case MSOverlapped::WRITE_DONE: {
@@ -270,10 +267,21 @@ private:
 		if(stop)
 			return;
 		
-		ManagedSocket* ms = new ManagedSocket();
-		try {
-			ms->create();
-			
+		if(accepting.size() < PREPARED_SOCKETS / 2) {
+			return;
+		}
+		
+		while(accepting.size() < PREPARED_SOCKETS) {
+			ManagedSocket* ms = new ManagedSocket();
+			try {
+				ms->create();
+			} catch (const SocketException& e) {
+				LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
+	
+				ms->deref();
+				return;
+			}
+				
 			if(!port.associate(ms->getSocket(), ms)) {
 				LOGDT(SocketManager::className, "Unable to associate IO Completion port: " + Util::translateError(::GetLastError()));
 				ms->deref();
@@ -281,8 +289,8 @@ private:
 			}
 
 			DWORD x = 0;
+
 			ms->writeBuf = Util::freeBuf;
-				
 			ms->writeBuf->resize(ACCEPT_BUF_SIZE);
 			
 			MSOverlapped* overlapped = pool.get();
@@ -302,11 +310,6 @@ private:
 			}
 			
 			accepting.insert(ms);
-		} catch (const SocketException& e) {
-			LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
-
-			ms->deref();
-			return;
 		}
 	}
 
@@ -328,7 +331,8 @@ private:
 		active.insert(ms);
 
 		ClientManager::getInstance()->incomingConnection(ms);
-		SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processIncoming, ms));
+
+		ms->completeAccept();
 		
 		prepareRead(ms);
 
@@ -349,8 +353,13 @@ private:
 			
 		DWORD x = 0;
 		DWORD flags = 0;
+		WSABUF wsabuf = { 0, 0 };
 		
-		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, &OVERLAPPED_READ_DONE, 0) != 0) {
+		MSOverlapped* overlapped = pool.get();
+		overlapped->type = MSOverlapped::READ_DONE;
+		overlapped->ms = ms;
+		
+		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, overlapped, 0) != 0) {
 			int error = ::WSAGetLastError();
 			if(error != WSA_IO_PENDING) {
 				dcdebug("Error preparing read: %s\n", Util::translateError(error).c_str());
@@ -397,8 +406,9 @@ private:
 	
 	void failRead(ManagedSocket* ms) throw() {
 		active.erase(ms);
-		SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processFail, ms));
 		
+		ms->failSocket();
+				
 		ms->deref();
 	}
 	
@@ -419,6 +429,7 @@ private:
 		ms->ref();
 		ms->wsabuf.len = ms->writeBuf->size();
 		ms->wsabuf.buf = reinterpret_cast<char*>(&(*ms->writeBuf)[0]);
+
 		MSOverlapped* overlapped = pool.get();
 		overlapped->type = MSOverlapped::WRITE_DONE;
 		overlapped->ms = ms;	// For debugging, not actually used
@@ -427,6 +438,7 @@ private:
 		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, overlapped, 0) != 0) {
 			if(::WSAGetLastError() != WSA_IO_PENDING) {
 				failWrite(ms);
+				pool.put(overlapped);
 			}
 		}
 		return true;
@@ -496,7 +508,6 @@ private:
 	CompletionPort port;
 	Socket srv;
 	
-	WSABUF wsabuf;
 	bool stop;
 	
 	SimplePool<MSOverlapped> pool;
@@ -729,7 +740,8 @@ private:
 			active.insert(ms);
 
 			ClientManager::getInstance()->incomingConnection(ms);
-			SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processIncoming, ms));
+			
+			ms->completeAccept(); 
 		
 			read(ms);
 		} catch (const SocketException& e) {
@@ -773,7 +785,9 @@ private:
 			return;
 		}
 		active.erase(ms);
-		SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processFail, ms));
+		
+		ms->failSocket();
+		
 		ms->close();
 		ms->deref();
 	}
@@ -862,12 +876,10 @@ private:
 #error No socket implementation for your platform
 #endif // _WIN32
 	
-SocketManager::SocketManager() : writer(0) { 
-	writer = new Writer(); 
+SocketManager::SocketManager() : writer(new Writer()) { 
 }
 
 SocketManager::~SocketManager() {
-	delete writer;
 }
 
 SocketManager* SocketManager::instance = 0;
@@ -926,8 +938,7 @@ void SocketManager::shutdown() {
 	addJob(Callback());
 	join();
 	
-	delete writer;
-	writer = 0;
+	writer = auto_ptr<Writer>();
 }
 
 }

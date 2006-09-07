@@ -19,10 +19,17 @@ gcc 3.4+ (linux or mingw) or msvc 7.1+
 stlport (on mingw, http://sf.net/projects/stlport, unzip in adchpp root)
 boost (http://www.boost.org)
 scons (http://www.scons.org)
+swig 1.3.29+
 
 ** Important!! The hub will _NOT_ run on Win9x/ME. **
 
 On the client side, I've only tested with DC++.
+
+-- Building --
+Install boost, swig and scons. Ensure that your compiler is available in the PATH.
+To build with gcc (*nix, mingw), run "scons" in the adchpp
+root folder. To build with msvc (windows), run "scons tools=default" in the adchpp 
+root folder. To build build a release build, add "mode=release" to the build line.
 
 -- Command line options --
 

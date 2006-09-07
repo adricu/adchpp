@@ -67,11 +67,14 @@ private:
 	
 	// Functions for Writer (called from Writer thread)
 	ByteVector* prepareWrite();
+	void completeAccept() throw();
 	bool completeWrite(ByteVector* buf, size_t written) throw();
 	bool completeRead(ByteVector* buf) throw();
+	void failSocket() throw();
+	
 	void close() { ::shutdown(getSocket(), SD_SEND); sock.disconnect(); }
 	
-	// Functions processing data
+	// Functions processing events
 	void processIncoming() throw();
 	void processData(ByteVector* buf) throw();
 	void processFail() throw();

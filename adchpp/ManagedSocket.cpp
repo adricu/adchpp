@@ -137,6 +137,14 @@ bool ManagedSocket::completeRead(ByteVector* buf) throw() {
 	return true;
 }
 
+void ManagedSocket::completeAccept() throw() {
+	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processIncoming, this));
+}
+
+void ManagedSocket::failSocket() throw() {
+	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processFail, this));
+}
+
 void ManagedSocket::disconnect() throw() {
 	if(disc) {
 		return;

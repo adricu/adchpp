@@ -28,25 +28,6 @@ namespace adchpp {
 class ManagedSocket;
 class Writer;
 
-/**
- * The SocketManager takes care of a set of sockets, and makes sure that data is
- * read, written and so on in a fairly correct and just fashion. All Listeners calls
- * from the SocketManager come from one thread only, and this is the thread that should 
- * be used whenever calling any of the ADCH++ functions.
- *
- * The Manager (main thread) is responsible for:
- * * Processing incoming connection message
- * * Processing line messages
- * * Processing fail message
- *
- * The Writer is responsible for:
- * * Writing data
- * * Reading data
- * * Disconnecting the socket
- * * Sending a fail message if read/write fails for some reason
- *
- */
-
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
 	typedef boost::function<void()> Callback;
@@ -66,7 +47,6 @@ private:
 	
 	virtual int run();
 
-private:
 	typedef vector<Callback> ProcessQueue;
 
 	FastMutex processCS;
@@ -76,7 +56,7 @@ private:
 
 	Semaphore processSem;
 
-	Writer* writer;
+	auto_ptr<Writer> writer;
 
 	static const string className;
 
