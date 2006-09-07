@@ -19,8 +19,6 @@
 #ifndef LUACOMMON_H_
 #define LUACOMMON_H_
 
-#include <luabind/luabind.hpp>
-
 namespace {
 	
 template<typename T>
@@ -32,15 +30,16 @@ struct pointer_wrapper {
 	T* t;
 };
 }
-
 namespace luabind {
+	template<typename T>
+	pointer_wrapper<const T>*
+	get_const_holder(pointer_wrapper<T>*) { return 0; }
 	template<typename T>
 	T* get_pointer(pointer_wrapper<T>& p) {
 		return (T*)p;
 	}
-	template<typename T>
-	pointer_wrapper<const T>*
-	get_const_holder(pointer_wrapper<T>*) { return 0; }
 }
+
+#include <luabind/luabind.hpp>
 
 #endif /*LUACOMMON_H_*/
