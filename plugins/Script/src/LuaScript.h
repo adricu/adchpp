@@ -20,7 +20,6 @@
 #define LUASCRIPT_H_
 
 #include "Script.h"
-#include "LuaWrap.h"
 
 struct lua_State;
 class Engine;
@@ -38,7 +37,6 @@ public:
 private:
 
 	lua_State* l;
-	LuaWrap wrapper;
 	string filename;
 };
 

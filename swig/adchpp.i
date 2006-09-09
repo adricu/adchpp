@@ -16,6 +16,8 @@ using namespace adchpp;
 %include "std_vector.i"
 %include "std_except.i"
 
+using namespace std;
+
 %inline%{
 void startup() {
 	adchpp::startup(0);
@@ -38,12 +40,6 @@ typedef std::vector<std::string> StringList;
 %inline%{
 typedef std::vector<adchpp::Client*> ClientList;
 %}
-
-%inline {
-void fx(lua_State* state) {
-	
-}	
-}
 
 namespace adchpp {
 
@@ -233,6 +229,12 @@ public:
 	static string fromSID(const uint32_t aSID);
 	static void appendSID(string& str, uint32_t aSID);
 };
+%extend AdcCommand {
+	string getCommandString() {
+		int cmd = self->getCommand();
+		return string(reinterpret_cast<const char*>(&cmd), 3);
+	}
+}
 
 class Client {
 public:
@@ -264,7 +266,7 @@ public:
 	//void send(const char* command, size_t len) throw();
 	//void send(const AdcCommand& cmd) throw();
 	void send(const string& command) throw();
-	void send(const char* command) throw();
+	//void send(const char* command) throw();
 
 	void disconnect() throw();
 	//ManagedSocket* getSocket() throw() { return socket; }
@@ -384,6 +386,74 @@ public:
 	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
 	%template(connect) connect<boost::function<void (Client&)> >;
 }
+%template(SignalClientAdcCommand) Signal<void (Client&, AdcCommand&)>;
+%extend Signal<void (Client&, AdcCommand&)> {
+	%template(__call__) operator()<Client, AdcCommand>;
+	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
+	%template(connect) connect<boost::function<void (Client&, AdcCommand&) > >;
+}
+%template(SignalClientAdcCommandInt) Signal<void (Client&, AdcCommand&, int&)>;
+%extend Signal<void (Client&, AdcCommand&, int&)> {
+	//%template(__call__) operator()<Client, AdcCommand, int>;
+	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
+	%template(connect) connect<boost::function<void (Client&, AdcCommand&, int&) > >;
+}
+
+class Util  
+{
+public:
+/*	struct Stats {
+		int64_t totalUp;			///< Total bytes uploaded
+		int64_t totalDown;			///< Total bytes downloaded
+		uint32_t startTime;		///< The time the hub was started
+	};
+
+	static Stats stats;
+*/
+	static string emptyString;
+
+//	static void initialize(const string& configPath);
+	static string getOsVersion();
+	static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
+	static string formatTime(const string& msg, time_t t = time(NULL));
+	
+	static const string& getCfgPath();
+	static void setCfgPath(const string& path);
+
+	static string getAppPath();
+	static string getAppName();
+
+	static string translateError(int aError);
+	
+	static string toAcp(const wstring& wString);
+	static const string& toAcp(const string& wString);
+
+	static wstring toUnicode(const string& aString);
+	static const wstring& toUnicode(const wstring& aString);
+
+	static string formatBytes(const string& aString);
+
+	static string getShortTimeString();
+	static string getTimeString();
+		
+	static string formatBytes(int64_t aBytes);
+
+	static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0);
+
+	static string formatSeconds(int64_t aSec);
+	
+
+	/** Avoid this! Use the one of a connected socket instead... */
+	static string getLocalIp();
+
+	static uint32_t rand();
+	static uint32_t rand(uint32_t high);
+	static uint32_t rand(uint32_t low, uint32_t high);
+	static double randd();
+
+};
+
+
 }
 
 %inline%{

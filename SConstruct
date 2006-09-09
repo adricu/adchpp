@@ -3,7 +3,7 @@
 from build_util import Dev
 
 gcc_flags = {
-             'common': ['-g3', '-Wall', '-Wextra', '-pipe', '-fvisibility=hidden'],
+             'common': ['-g3', '-Wall', '-Wextra', '-pipe'],
              'debug': [], 
              'release' : ['-O3']
              }
@@ -56,7 +56,8 @@ if env['PLATFORM'] == 'win32':
     env.Append(CPPPATH = [r'c:\Boost\include\boost-1_33_1'])
 else:
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
-
+	env.Append(CCFLAGS=['-fvisibility=hidden'])
+	
 if 'mingw' in env['TOOLS']:
     env.Append(CPPPATH = ['#/STLport/stlport/'])
     env.Append(LIBPATH = ['#/STLport/lib/'])
@@ -121,4 +122,4 @@ dev.build('lua/')
 dev.build('swig/')
 
 # Plugins
-#dev.build('plugins/Script/')
+dev.build('plugins/Script/')

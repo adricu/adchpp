@@ -43,7 +43,6 @@ const string LuaScript::className = "LuaScript";
 LuaScript::LuaScript(Engine* engine) : Script(engine), l(0) {
 	l = lua_open();
 	luaL_openlibs(l);
-	wrapper.wrap(l);
 }
 
 LuaScript::~LuaScript() {
