@@ -3,7 +3,7 @@
 from build_util import Dev
 
 gcc_flags = {
-             'common': ['-g3', '-Wall', '-Wextra', '-pipe'],
+             'common': ['-g3', '-Wall', '-Wextra', '-pipe', '-fvisibility=hidden'],
              'debug': [], 
              'release' : ['-O3']
              }
@@ -15,7 +15,7 @@ msvc_flags = {
               }
 
 gcc_link_flags = {
-                  'common' : ['-g'],
+                  'common' : ['-g', '-Wl,--no-undefined'],
                   'debug' : [],
                   'release' : []                
                 }
@@ -56,7 +56,6 @@ if env['PLATFORM'] == 'win32':
     env.Append(CPPPATH = [r'c:\Boost\include\boost-1_33_1'])
 else:
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
-	gcc_flags['common'].append('-fvisibility=hidden')
 
 if 'mingw' in env['TOOLS']:
     env.Append(CPPPATH = ['#/STLport/stlport/'])
@@ -115,8 +114,11 @@ if env['PLATFORM'] == 'win32' or env['PLATFORM'] == 'cygwin':
 else:
     dev.build('unix/')
 
+# Lua for plugins & swig
+dev.build('lua/')
+
 # Library wrappers
 dev.build('swig/')
 
 # Plugins
-dev.build('plugins/Script/')
+#dev.build('plugins/Script/')

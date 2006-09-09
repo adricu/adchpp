@@ -1,0 +1,16 @@
+Import('dev source_path')
+
+env, target, sources = dev.prepare_build(source_path, 'alua', 'all.c')
+
+if env['PLATFORM'] == 'win32':
+	env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
+else:
+	env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
+
+env.Append(LIBS=['m', 'dl'])	
+
+env['CCFLAGS'].remove('-fvisibility=hidden')
+
+ret = env.SharedLibrary(target, sources)
+
+Return('ret')

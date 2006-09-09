@@ -39,6 +39,12 @@ typedef std::vector<std::string> StringList;
 typedef std::vector<adchpp::Client*> ClientList;
 %}
 
+%inline {
+void fx(lua_State* state) {
+	
+}	
+}
+
 namespace adchpp {
 
 void initConfig(const std::string& configPath);

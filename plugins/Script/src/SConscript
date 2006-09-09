@@ -3,22 +3,8 @@ Import('dev source_path')
 env, target, sources = dev.prepare_build(source_path, 'Script')
 env['SHLIBPREFIX'] = ''
 
-conf = Configure(env)
-if not conf.CheckLib(library = 'lua', header = 'lauxlib.h', symbol = 'luaL_openlibs', autoadd=True):
-    env.Append(CPPPATH = ['lua'])
-    lua_lib = dev.build('lua/')
-    sources.append(lua_lib)
-
-if not conf.CheckCHeader('luabind.hpp'):
-    env.Append(CPPPATH = ['luabind/'])
-    luabind_lib = dev.build('luabind/')
-    sources.append(luabind_lib)
-env = conf.Finish()
-
-env.Append(CPPDEFINES = ['LUABIND_MAX_BASES=2'])
-
-env.Append(CPPPATH = ['.', '#'])
-env.Append(LIBS = ['adchpp'])
+env.Append(CPPPATH = ['#/lua/', '.', '#'])
+env.Append(LIBS = ['adchpp', 'alua'])
 
 ret = env.SharedLibrary(target, sources)
 

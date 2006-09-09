@@ -57,7 +57,6 @@ def buildRbModule():
 						SHLIBPREFIX='')
 	targets.append(rb)
 
-
 def buildPyModule():
 	env = dev.env.Copy()
 	
@@ -85,6 +84,39 @@ def buildPyModule():
 						SHLIBPREFIX='')
 	targets.append(pyd)
 
+def buildLuaModule():
+	env = dev.env.Copy()
+	
+	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
+	f = env.CFile(target=dev.get_target(source_path, 'lua_wrap.cxx'), source='lua.i')
+	
+	import distutils.sysconfig
+	
+	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
+	if '_DEBUG' in env['CPPDEFINES']:
+		env['CPPDEFINES'].remove('_DEBUG')
+	if '/MDd' in env['CCFLAGS']:
+		env['CCFLAGS'].remove('/MDd')
+		env['CCFLAGS'].append('/MD')
+
+	env.Append(LIBS=['adchpp', 'alua'])
+	
+	# We assume the lua from the script plugin will be used...
+	
+	env.Append(CPPPATH=['#/lua/'])
+
+	if env['PLATFORM'] == 'win32':
+		env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
+	else:
+		env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
+
+	luadchpp = env.SharedLibrary(dev.get_target(source_path, 'luadchpp'), [f],
+						SHLIBPREFIX='')
+	targets.append(luadchpp)
+
 # buildRbModule() - needs threading sorted out
-buildPyModule()
+#buildPyModule()
+
+buildLuaModule()
+
 Return('targets')
