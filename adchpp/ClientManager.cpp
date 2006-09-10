@@ -95,7 +95,7 @@ void ClientManager::updateCache() throw() {
 		.addParam("HU1")
 		.addParam("HI1")
 		.addParam("DE", SETTING(DESCRIPTION))
-		.addParam("VE", APPNAME " " VERSIONSTRING "-" BUILDSTRING)
+		.addParam("VE", versionString)
 		.toString();
 }
 

@@ -118,7 +118,7 @@ public:
  * so that the pluginmanager can determine if this plugin should
  * be loaded or not
  */
-typedef double (*PLUGIN_GET_VERSION)();
+typedef int (*PLUGIN_GET_VERSION)();
 
 /**
  * PLUGIN_API void pluginLoad()

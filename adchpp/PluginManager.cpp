@@ -94,7 +94,7 @@ bool PluginManager::loadPlugin(const string& file) {
 	PLUGIN_GET_VERSION v = (PLUGIN_GET_VERSION)PM_GET_ADDRESS(h, "pluginGetVersion");
 	if(v != NULL) {
 		double ver = v();
-		if(ver == PLUGINVERSIONFLOAT) {
+		if(ver == PLUGINVERSION) {
 #ifdef _WIN32
 			// Reload plugin with references resolved...
 			FreeLibrary(h);

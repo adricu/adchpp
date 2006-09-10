@@ -51,10 +51,10 @@ SettingsManager::SettingsManager() throw() {
 	memset(intSettings, 0, sizeof(intSettings));
 	memset(int64Settings, 0, sizeof(int64Settings));
 
-	set(HUB_NAME, APPNAME "v" VERSIONSTRING);
+	set(HUB_NAME, appName);
 	// set(SERVER_IP, "");
 	set(LOG_FILE, "logs/adchpp%Y%m.log");
-	set(DESCRIPTION, FULLVERSIONSTRING);
+	set(DESCRIPTION, versionString);
 	// set(LANGUAGE_FILE, "Example.adchpp.xml");
 	// set(REDIRECT_SERVER, "");
 	set(SERVER_PORT, 2780);

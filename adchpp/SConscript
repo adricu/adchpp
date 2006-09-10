@@ -38,7 +38,10 @@ if 'HAVE_PTHREAD' in env['CPPDEFINES']:
 if env['PLATFORM'] == 'win32':
     env.Append(LIBS = ['ws2_32', 'mswsock'])
 
-env.Append(CPPDEFINES=['ADCHPP_REVISION=' + getRevision()])
+for i, source in enumerate(sources):
+	if source.find("version.cpp") != -1:
+		rev = ['ADCHPP_REVISION=' + getRevision()]
+		sources[i] = env.SharedObject(source, CPPDEFINES=env['CPPDEFINES'] + rev)
 
 ret = env.SharedLibrary(target, sources)
 

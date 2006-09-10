@@ -195,9 +195,9 @@ static void init(const string& configPath) {
 	initConfig(configPath);
 
 	if(asService)
-		LOGDT(modName, FULLVERSIONSTRING " started as a service");
+		LOGDT(modName, versionString + " started as a service");
 	else
-		LOGDT(modName, FULLVERSIONSTRING " started from console");
+		LOGDT(modName, versionString + " started from console");
 }
 
 static void f2() {
@@ -205,7 +205,7 @@ static void f2() {
 }
 
 static void uninit() {
-	LOGDT(modName, FULLVERSIONSTRING " shut down");
+	LOGDT(modName, versionString + " shut down");
 	printf("Shutting down.");
 	shutdown(&f2);
 #if defined(_MSC_VER) && defined(_DEBUG)
@@ -314,7 +314,7 @@ static void runConsole(const string& configPath) {
 		uninit();
 		return;
 	}
-	printf(".\n" APPNAME " v" VERSIONSTRING " running, press any key to exit...\n");
+	printf(".\n%s running, press any key to exit...\n", versionString.c_str());
 	getc(stdin);
 	uninit();
 }
@@ -363,7 +363,7 @@ int CDECL main(int argc, char* argv[]) {
 			configPath = cfg;
 		} else if(_tcscmp(argv[i], _T("-i")) == 0) {
 			if(i + 1 == argc) {
-				printf("You must specify a service name");
+				printf("You must specify a service name\n");
 				return 4;
 			}
 			i++;
@@ -371,14 +371,14 @@ int CDECL main(int argc, char* argv[]) {
 			task = 2;
 		} else if(_tcscmp(argv[i], _T("-u")) == 0) {
 			if(i + 1 == argc) {
-				printf("You must specify a service name");
+				printf("You must specify a service name\n");
 				return 4;
 			}
 			i++;
 			name = argv[i];
 			task = 3;
 		} else if(_tcscmp(argv[i], _T("-v")) == 0) {
-			printf(FULLVERSIONSTRING " compiled on " __DATE__ " " __TIME__);
+			printf("%s compiled on " __DATE__ " " __TIME__ "\n", versionString.c_str());
 			return 0;
 		} else {
 			printf("Invalid parameter: %s\n", argv[i]);

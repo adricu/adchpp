@@ -19,25 +19,13 @@
 #ifndef ADCHPP_VERSION_H
 #define ADCHPP_VERSION_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+namespace adchpp {
+	ADCHPP_DLL extern string appName;
+	ADCHPP_DLL extern string versionString;
+	ADCHPP_DLL extern float versionFloat;
+}
 
-#define xstrver(s) strver(s)
-#define strver(s) #s
-
-#define APPNAME "ADCH++"
-#define VERSIONSTRING "2.0." xstrver(ADCHPP_REVISION)
-#define VERSIONFLOAT 2.0
-#define PLUGINVERSIONSTRING "2.0"
-#define PLUGINVERSIONFLOAT 2.0
-
-#ifdef _DEBUG
-#define BUILDSTRING "Debug"
-#else
-#define BUILDSTRING "Release"
-#endif
-
-#define FULLVERSIONSTRING APPNAME " v" VERSIONSTRING "-" BUILDSTRING " (Plugin API v" PLUGINVERSIONSTRING ")"
+// This should be updated whenever the plugin API changes
+#define PLUGINVERSION 1
 
 #endif // VERSION_H
