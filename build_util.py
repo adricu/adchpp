@@ -30,3 +30,4 @@ class Dev:
 			local_env = self.env
 		full_path = local_env.Dir('.').path + '/' + source_path	
 		return local_env.SConscript(source_path + 'SConscript', exports={'dev' : self, 'source_path' : full_path })
+

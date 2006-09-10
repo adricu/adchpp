@@ -1,5 +1,27 @@
 # vim: set filetype=py
 
+from os import popen4
+import re
+
+def getRevision():
+	cmd = 'svn info -R "' + env.Dir("#").abspath + '"'
+	stdin, stdout = popen4(cmd)
+	stdin.close()
+	maxver = 0
+	matcher = re.compile(ur'Revision: (\d+)')
+	for line in stdout.readlines():
+		match = matcher.match(line)
+		if not match:
+			continue
+		ver = int(match.group(1))
+		if ver > maxver:
+			maxver = ver
+	
+	stdout.close()
+	print "Building revision " + str(maxver)
+	
+	return str(maxver)
+ 
 Import('dev source_path')
 
 env, target, sources = dev.prepare_build(source_path, 'adchpp')
@@ -15,7 +37,9 @@ if 'HAVE_PTHREAD' in env['CPPDEFINES']:
 
 if env['PLATFORM'] == 'win32':
     env.Append(LIBS = ['ws2_32', 'mswsock'])
-    
+
+env.Append(CPPDEFINES=['ADCHPP_REVISION=' + getRevision()])
+
 ret = env.SharedLibrary(target, sources)
 
 import os.path
@@ -23,5 +47,6 @@ dev.env.Append(LIBPATH = os.path.dirname(target))
 
 if env['PLATFORM'] != 'win32':
     dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
-    
+   
+
 Return('ret')

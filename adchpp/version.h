@@ -23,8 +23,11 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#define xstrver(s) strver(s)
+#define strver(s) #s
+
 #define APPNAME "ADCH++"
-#define VERSIONSTRING "2.0"
+#define VERSIONSTRING "2.0." xstrver(ADCHPP_REVISION)
 #define VERSIONFLOAT 2.0
 #define PLUGINVERSIONSTRING "2.0"
 #define PLUGINVERSIONFLOAT 2.0
