@@ -162,8 +162,6 @@ public:
 	SignalState& signalState() { return signalState_; }
 	SignalDisconnected& signalDisconnected() { return signalDisconnected_; }
 
-	virtual ~ClientManager() throw() { }
-	
 private:
 	friend class Client;
 	
@@ -195,9 +193,6 @@ private:
 	ADCHPP_DLL static ClientManager* instance;
 	
 	friend class CommandHandler<ClientManager>;
-	ClientManager() throw() {
-		supports.push_back("BASE");
-	}
 
 	uint32_t makeSID();
 
@@ -222,6 +217,13 @@ private:
 	SignalSend signalSend_;
 	SignalState signalState_;
 	SignalDisconnected signalDisconnected_;
+
+	ClientManager() throw() {
+		supports.push_back("BASE");
+	}
+
+	virtual ~ClientManager() throw() { }
+
 };
 
 }

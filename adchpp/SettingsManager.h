@@ -120,7 +120,7 @@ private:
 	SettingsManager() throw();
 	virtual ~SettingsManager() throw() { }
 
-	static const string settingTags[SETTINGS_LAST+1];
+	ADCHPP_DLL static const string settingTags[SETTINGS_LAST+1];
 
 	static const string className;
 

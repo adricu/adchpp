@@ -6,6 +6,9 @@
 #include <adchpp/Signal.h>
 #include <adchpp/Client.h>
 #include <adchpp/ClientManager.h>
+#include <adchpp/LogManager.h>
+#include <adchpp/SettingsManager.h>
+#include <adchpp/SimpleXML.h>
 #include <adchpp/Exception.h>
 
 using namespace adchpp;
@@ -28,6 +31,10 @@ void shutdown() {
 %}
 
 %nodefaultctor;
+%nodefaultdtor ClientManager;
+%nodefaultdtor LogManager;
+%nodefaultdtor SettingsManager;
+
 
 namespace adchpp {
 	class Client;
@@ -307,6 +314,13 @@ public:
 	//virtual ~Client() throw() { }
 };
 
+class LogManager
+{
+public:
+	void log(const string& area, const string& msg) throw();
+	void logDateTime(const string& area, const string& msg) throw();
+};
+
 class ClientManager 
 {
 public:
@@ -379,24 +393,102 @@ public:
 	//virtual ~ClientManager() throw() { }
 };
 
+class SimpleXML  
+{
+public:
+	SimpleXML(int numAttribs = 0);
+	~SimpleXML();
+	
+	void addTag(const string& aName, const string& aData = Util::emptyString) throw(SimpleXMLException);
+	void addAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
+	void addChildAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
+
+	const string& getData() const;
+	void stepIn() const throw(SimpleXMLException);
+	void stepOut() const throw(SimpleXMLException);
+	
+	void resetCurrentChild() const throw();
+	bool findChild(const string& aName) const throw();
+
+	const string& getChildData() const throw(SimpleXMLException);
+
+	const string& getChildAttrib(const string& aName, const string& aDefault = Util::emptyString) const throw(SimpleXMLException);
+
+	int getIntChildAttrib(const string& aName) throw(SimpleXMLException);
+	int64_t getLongLongChildAttrib(const string& aName) throw(SimpleXMLException);
+	bool getBoolChildAttrib(const string& aName) throw(SimpleXMLException);
+	void fromXML(const string& aXML) throw(SimpleXMLException);
+	string toXML();
+	
+	static void escape(string& aString, bool aAttrib, bool aLoading = false);
+	/** 
+	 * This is a heurestic for whether escape needs to be called or not. The results are
+ 	 * only guaranteed for false, i e sometimes true might be returned even though escape
+	 * was not needed...
+	 */
+	static bool needsEscape(const string& aString, bool aAttrib, bool aLoading = false);
+};
+
+class SettingsManager
+{
+public:
+	enum Types {
+		TYPE_STRING,
+		TYPE_INT,
+		TYPE_INT64
+	};
+
+	enum StrSetting { STR_FIRST,
+		HUB_NAME = STR_FIRST, SERVER_IP, LOG_FILE, DESCRIPTION,
+		LANGUAGE_FILE, REDIRECT_SERVER,
+		STR_LAST };
+
+	enum IntSetting { INT_FIRST = STR_LAST + 1,
+		SERVER_PORT = INT_FIRST, LOG, MAX_USERS, KEEP_SLOW_USERS, 
+		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE, REDIRECT_FULL,
+		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD, 
+		LOGIN_TIMEOUT,
+		INT_LAST };
+
+	enum Int64Setting { INT64_FIRST = INT_LAST + 1,
+		INT64_LAST = INT64_FIRST, SETTINGS_LAST = INT64_LAST };
+
+	//bool getType(const char* name, int& n, int& type);
+	const string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
+
+	const string& get(StrSetting key) const;
+	int get(IntSetting key) const;
+	int64_t get(Int64Setting key) const;
+
+	bool getBool(IntSetting key) const;
+	
+	void set(StrSetting key, string const& value);
+	void set(IntSetting key, int value);
+	
+	void set(Int64Setting key, int64_t value);
+	void set(Int64Setting key, int value);
+	
+	void set(IntSetting key, bool value);
+
+	typedef Signal<void (const SimpleXML&)> SignalLoad;
+	SignalLoad& signalLoad();
+};
 
 %template(SignalClient) Signal<void (Client&)>;
 %extend Signal<void (Client&)> {
-	%template(__call__) operator()<Client>;
-	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
 	%template(connect) connect<boost::function<void (Client&)> >;
 }
 %template(SignalClientAdcCommand) Signal<void (Client&, AdcCommand&)>;
 %extend Signal<void (Client&, AdcCommand&)> {
-	%template(__call__) operator()<Client, AdcCommand>;
-	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
 	%template(connect) connect<boost::function<void (Client&, AdcCommand&) > >;
 }
 %template(SignalClientAdcCommandInt) Signal<void (Client&, AdcCommand&, int&)>;
 %extend Signal<void (Client&, AdcCommand&, int&)> {
-	//%template(__call__) operator()<Client, AdcCommand, int>;
-	//void xconn(const boost::function<void (Client&)> c) { self->connect(c); }
 	%template(connect) connect<boost::function<void (Client&, AdcCommand&, int&) > >;
+}
+%template(SignalSimpleXML) Signal<void (const SimpleXML&)>;
+%extend Signal<void (const SimpleXML&)> {
+	%template(connect) connect<boost::function<void (const SimpleXML&)> >;
 }
 
 class Util  
@@ -459,5 +551,7 @@ public:
 %inline%{
 namespace adchpp {
 	ClientManager* getCM() { return ClientManager::getInstance(); }
+	LogManager* getLM() { return LogManager::getInstance(); }
+	SettingsManager* getSM() { return SettingsManager::getInstance(); }
 }
 %}
