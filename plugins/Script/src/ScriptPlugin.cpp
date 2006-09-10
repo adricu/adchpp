@@ -30,7 +30,7 @@ BOOL APIENTRY DllMain(HANDLE /*hModule */, DWORD /* reason*/, LPVOID /*lpReserve
 #endif
 
 extern "C" {
-double PLUGIN_API pluginGetVersion() { return PLUGINVERSION; }
+int PLUGIN_API pluginGetVersion() { return PLUGINVERSION; }
 
 int PLUGIN_API pluginLoad() {
 	ScriptManager::newInstance();

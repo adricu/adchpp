@@ -129,7 +129,7 @@ public:
 	ADCHPP_DLL static string getAppName();
 	
 #ifndef _WIN32
-	ADCHPP_DLL static void setApp(const string& app)
+	ADCHPP_DLL static void setApp(const string& app);
 	static string appPath;
 	static string appName;
 	

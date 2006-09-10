@@ -65,7 +65,7 @@ static void f2() {
 }
 
 static void uninit() {
-	LOGDT(modName, FULLVERSIONSTRING " shut down");
+	LOGDT(modName, versionString + " shut down");
 	if(!asdaemon)
 		printf("Shutting down.");
 	shutdown(&f2);
@@ -123,7 +123,7 @@ static void runDaemon(const string& configPath) {
 		uninit();
 		return;
 	}
-	LOGDT(modName, FULLVERSIONSTRING " started as a daemon");
+	LOGDT(modName, versionString + " started as a daemon");
 	// Now what?
 	int x = 0;
 	sigset_t st;
@@ -139,7 +139,7 @@ static void runConsole(const string& configPath) {
 	printf("Starting");
 	init();
 	initConfig(configPath);
-	LOGDT(modName, FULLVERSIONSTRING " starting from console");
+	LOGDT(modName, versionString + " starting from console");
 	printf(".");
 	try {
 		startup(&f2);
@@ -150,7 +150,7 @@ static void runConsole(const string& configPath) {
 	}
 
 
-	printf(".\n" FULLVERSIONSTRING " running, press ctrl-c to exit...\n");
+	printf(".\n%s running, press ctrl-c to exit...\n", versionString.c_str());
 	int x = 0;
 	sigset_t st;
 	sigemptyset(&st);
@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
 		if(strcmp(argv[i], "-d") == 0) {
 			asdaemon = true;
 		} else if(strcmp(argv[i], "-v") == 0) {
-			printf(FULLVERSIONSTRING "\n");
+			printf("%s\n", versionString.c_str());
 			return 0;
 		} else if(strcmp(argv[i], "-c") == 0) {
 			if((i + 1) == argc) {
