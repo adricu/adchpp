@@ -124,82 +124,26 @@ public:
 	
 	static const string& getCfgPath() { return cfgPath; }
 	static void setCfgPath(const string& path) { cfgPath = path; }
-#ifdef _WIN32
-	static string getAppPath() {
-		string tmp(MAX_PATH + 1, '\0');
-		tmp.resize(GetModuleFileName(NULL, &tmp[0], MAX_PATH));
-		string::size_type i = tmp.rfind('\\');
-		if(i != string::npos)
-			tmp.erase(i+1);
-		return tmp;
-	}
-
-	static string getAppName() {
-		string tmp(MAX_PATH + 1, _T('\0'));
-		tmp.resize(GetModuleFileName(NULL, &tmp[0], MAX_PATH));
-		return tmp;
-	}
-
-#else // WIN32
-	ADCHPP_DLL static string appPath;
-	ADCHPP_DLL static string appName;
-
-	static void setApp(const string app) {
-		string::size_type i = app.rfind('/');
-		if(i != string::npos) {
-			appPath = app.substr(0, i+1);
-			appName = app;
-		}
-	}
-	static string getAppPath() {
-		return appPath;
-	}
-	static string getAppName() {
-		return appName;
-	}
-#endif // WIN32
+	
+	ADCHPP_DLL static string getAppPath();
+	ADCHPP_DLL static string getAppName();
+	
+#ifndef _WIN32
+	ADCHPP_DLL static void setApp(const string& app)
+	static string appPath;
+	static string appName;
+	
+#endif
 
 	ADCHPP_DLL static string translateError(int aError);
 	
-	static string toAcp(const wstring& wString) {
-		if(wString.empty())
-			return emptyString;
+	ADCHPP_DLL static string toAcp(const wstring& wString);
+	static const string& toAcp(const string& wString) { return wString; }
+	static string& toAcp(string& wString) { return wString; }
 
-		string str;
-
-#ifdef _WIN32
-		str.resize(WideCharToMultiByte(CP_ACP, 0, wString.c_str(), (int)wString.length(), NULL, 0, NULL, NULL));
-		WideCharToMultiByte(CP_ACP, 0, wString.c_str(), (int)wString.length(), &str[0], (int)str.length(), NULL, NULL);
-#else
-		str.resize(wcstombs(NULL, wString.c_str(), 0)+ 1);
-		wcstombs(&str[0], wString.c_str(), str.size());
-#endif
-		while(!str.empty() && str[str.length() - 1] == 0)
-			str.erase(str.length()-1);
-		return str;
-	}
-	static const string& toAcp(const string& wString) {
-		return wString;
-	}
-	static string& toAcp(string& wString) {
-		return wString;
-	}
-
-	static wstring toUnicode(const string& aString) {
-		wstring tmp(aString.length(), L'\0');
-#ifdef _WIN32
-		tmp.resize(MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, aString.c_str(), (int)aString.length(), &tmp[0], (int)tmp.length()));
-#else
-		tmp.resize(mbstowcs(&tmp[0], aString.c_str(), tmp.length()));
-#endif
-		return tmp;
-	}
-	static const wstring& toUnicode(const wstring& aString) {
-		return aString;
-	}
-	static wstring& toUnicode(wstring& aString) {
-		return aString;
-	}
+	ADCHPP_DLL static wstring toUnicode(const string& aString);
+	static const wstring& toUnicode(const wstring& aString) { return aString; }
+	static wstring& toUnicode(wstring& aString) { return aString; }
 
 	static string formatBytes(const string& aString) { return formatBytes(toInt64(aString)); }
 
@@ -208,16 +152,8 @@ public:
 		
 	ADCHPP_DLL static string formatBytes(int64_t aBytes);
 
-	static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0) {
-		string::size_type i = 0;
-		while( (i=str.find_first_of(sep, j)) != string::npos ) {
-			lst.push_back(str.substr(j, i-j));
-			j = i + 1;
-		}
-		if(j <= str.size())
-			lst.push_back(str.substr(j, str.size()-j));
-	}
-
+	ADCHPP_DLL static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0);
+	
 	static string formatSeconds(int64_t aSec) {
 		char buf[64];
 		sprintf(buf, "%01d:%02d:%02d:%02d", (int)(aSec / (24*60*60)), (int)((aSec / (60*60)) % 24), (int)((aSec / 60) % 60), (int)(aSec % 60));

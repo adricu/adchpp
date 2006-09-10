@@ -99,6 +99,76 @@ void Util::decodeUrl(const string& url, string& aServer, short& aPort, string& a
 	// Only the server should be left now...
 	aServer = url.substr(i, k-i);
 }
+string Util::toAcp(const wstring& wString) {
+	if(wString.empty())
+		return emptyString;
+
+	string str;
+
+#ifdef _WIN32
+	str.resize(WideCharToMultiByte(CP_ACP, 0, wString.c_str(), (int)wString.length(), NULL, 0, NULL, NULL));
+	WideCharToMultiByte(CP_ACP, 0, wString.c_str(), (int)wString.length(), &str[0], (int)str.length(), NULL, NULL);
+#else
+	str.resize(wcstombs(NULL, wString.c_str(), 0)+ 1);
+	wcstombs(&str[0], wString.c_str(), str.size());
+#endif
+	while(!str.empty() && str[str.length() - 1] == 0)
+		str.erase(str.length()-1);
+	return str;
+}
+
+wstring Util::toUnicode(const string& aString) {
+	wstring tmp(aString.length(), L'\0');
+#ifdef _WIN32
+	tmp.resize(MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, aString.c_str(), (int)aString.length(), &tmp[0], (int)tmp.length()));
+#else
+	tmp.resize(mbstowcs(&tmp[0], aString.c_str(), tmp.length()));
+#endif
+	return tmp;
+}
+
+void Util::tokenize(StringList& lst, const string& str, char sep, string::size_type j) {
+	string::size_type i = 0;
+	while( (i=str.find_first_of(sep, j)) != string::npos ) {
+		lst.push_back(str.substr(j, i-j));
+		j = i + 1;
+	}
+	if(j <= str.size())
+		lst.push_back(str.substr(j, str.size()-j));
+}
+
+#ifdef _WIN32
+string Util::getAppPath() {
+	string tmp(MAX_PATH + 1, '\0');
+	tmp.resize(GetModuleFileName(NULL, &tmp[0], MAX_PATH));
+	string::size_type i = tmp.rfind('\\');
+	if(i != string::npos)
+		tmp.erase(i+1);
+	return tmp;
+}
+
+string Util::getAppName() {
+	string tmp(MAX_PATH + 1, _T('\0'));
+	tmp.resize(GetModuleFileName(NULL, &tmp[0], MAX_PATH));
+	return tmp;
+}
+
+#else // WIN32
+
+void Util::setApp(const string& app) {
+	string::size_type i = app.rfind('/');
+	if(i != string::npos) {
+		appPath = app.substr(0, i+1);
+		appName = app;
+	}
+}
+string Util::getAppPath() {
+	return appPath;
+}
+string Util::getAppName() {
+	return appName;
+}
+#endif // WIN32
 
 string Util::getLocalIp() {
 	string tmp;
