@@ -456,19 +456,42 @@ public:
 	//bool getType(const char* name, int& n, int& type);
 	const string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
 
-	const string& get(StrSetting key) const;
-	int get(IntSetting key) const;
-	int64_t get(Int64Setting key) const;
+%extend {
+	const string& getString(StrSetting key) {
+		return self->get(key);
+	}
+	int getInt(IntSetting key) {
+		return self->get(key);
+	}
+	int64_t getInt64(Int64Setting key) {
+		return self->get(key);
+	}
+	//const string& get(StrSetting key) const;
+	//int get(IntSetting key) const;
+	//int64_t get(Int64Setting key) const;
 
+
+	void setString(StrSetting key, string const& value) {
+		self->set(key, value);
+	}
+	void setInt(IntSetting key, int value) {
+		self->set(key, value);
+	}
+	
+	void setInt64(Int64Setting key, int64_t value) {
+		self->set(key, value);
+	}
+	void setInt64(Int64Setting key, int value) {
+		self->set(key, value);
+	}
+	
+	void setInt(IntSetting key, bool value) {
+		self->set(key, value);
+	}
+
+}
 	bool getBool(IntSetting key) const;
 	
-	void set(StrSetting key, string const& value);
-	void set(IntSetting key, int value);
-	
-	void set(Int64Setting key, int64_t value);
-	void set(Int64Setting key, int value);
-	
-	void set(IntSetting key, bool value);
 
 	typedef Signal<void (const SimpleXML&)> SignalLoad;
 	SignalLoad& signalLoad();

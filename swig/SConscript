@@ -1,6 +1,7 @@
 Import('dev source_path')
 
 targets = []
+build_path = dev.get_build_path(source_path)
 
 def runCommand(cmd):
 	import os
@@ -27,7 +28,7 @@ def buildRbModule():
 	env = dev.env.Copy()
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby'])
-	f = env.CFile(target=dev.get_target(source_path, 'ruby_wrap.cxx'), source='ruby.i')
+	f = env.CFile(target=dev.get_build_path(source_path) + 'ruby_wrap.cxx', source='ruby.i')
 	
 	import distutils.sysconfig
 	
@@ -61,10 +62,11 @@ def buildPyModule():
 	env = dev.env.Copy()
 	
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python'])
-	f = env.CFile(target=dev.get_target(source_path, 'python_wrap.cxx'), source='python.i')
+	f = env.CFile(target=build_path + 'python_wrap.cxx', source='python.i')
 	
-	env.SideEffect(dev.get_target(source_path, 'pyadchpp.py'), f)
-	
+	pyfile = build_path + 'pyadchpp.py'
+	targetfile = dev.get_target(source_path, 'pyadchpp.py')
+	env.Command(targetfile, pyfile, Move('$TARGET', '$SOURCE'))
 	import distutils.sysconfig
 	
 	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
@@ -88,7 +90,7 @@ def buildLuaModule():
 	env = dev.env.Copy()
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
-	f = env.CFile(target=dev.get_target(source_path, 'lua_wrap.cxx'), source='lua.i')
+	f = env.CFile(build_path + 'lua_wrap.cxx', source='lua.i')
 	
 	import distutils.sysconfig
 	
@@ -115,7 +117,7 @@ def buildLuaModule():
 	targets.append(luadchpp)
 
 # buildRbModule() - needs threading sorted out
-#buildPyModule()
+buildPyModule()
 
 buildLuaModule()
 
