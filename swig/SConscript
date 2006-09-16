@@ -62,11 +62,11 @@ def buildPyModule():
 	env = dev.env.Copy()
 	
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python'])
-	f = env.CFile(target=build_path + 'python_wrap.cxx', source='python.i')
-	
+	f = env.CXXFile(target=build_path + 'python_wrap.cxx', source='python.i')
 	pyfile = build_path + 'pyadchpp.py'
+	env.SideEffect(pyfile, 'python.i')
 	targetfile = dev.get_target(source_path, 'pyadchpp.py')
-	env.Command(targetfile, pyfile, Move('$TARGET', '$SOURCE'))
+	env.Command(targetfile, pyfile, Copy('$TARGET', '$SOURCE'))
 	import distutils.sysconfig
 	
 	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])

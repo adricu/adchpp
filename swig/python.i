@@ -8,6 +8,18 @@
 %typemap(in) boost::function<void (adchpp::Client&)> {
 	$1 = PyHandle($input);
 }
+%typemap(in) boost::function<void (adchpp::Client&, adchpp::AdcCommand&)> {
+	$1 = PyHandle($input);
+}
+%typemap(in) boost::function<void (adchpp::Client&, int)> {
+	$1 = PyHandle($input);
+}
+%typemap(in) boost::function<void (adchpp::Client&, const std::string&)> {
+	$1 = PyHandle($input);
+}
+%typemap(in) boost::function<void (adchpp::Client&, adchpp::AdcCommand&, int&)> {
+	$1 = PyHandle($input);
+}
 
 %include "adchpp.i"
 
@@ -40,15 +52,55 @@ struct PyHandle {
 		PyHandle ret(PyObject_Call(obj, PyTuple_New(0), 0));
 	}
 	
-	void operator()(Client& t) {
+	void operator()(adchpp::Client& c) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(1));
 		
-		PyTuple_SetItem(args, 0, swig::from(&t));
-//		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&t), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyHandle ret(PyObject_Call(obj, args, 0));
+	}
+
+	void operator()(adchpp::Client& c, const std::string& str) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(2));
+		
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 1, PyString_FromString(str.c_str()));
+		
 		PyHandle ret(PyObject_Call(obj, args, 0));
 	}
 	
+	void operator()(adchpp::Client& c, int i) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(2));
+		
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 1, PyInt_FromLong(i));
+		
+		PyHandle ret(PyObject_Call(obj, args, 0));
+	}
+
+	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(2));
+		
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
+		
+		PyHandle ret(PyObject_Call(obj, args, 0));
+	}
+
+	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd, int& i) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(3));
+		
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
+		PyTuple_SetItem(args, 2, PyInt_FromLong(i));
+		
+		PyHandle ret(PyObject_Call(obj, args, 0));
+	}
+
 private:
 	PyObject* obj;
 };
