@@ -10,6 +10,7 @@
 #include <adchpp/SettingsManager.h>
 #include <adchpp/SimpleXML.h>
 #include <adchpp/Exception.h>
+#include <adchpp/PluginManager.h>
 
 using namespace adchpp;
 
@@ -34,7 +35,7 @@ void shutdown() {
 %nodefaultdtor ClientManager;
 %nodefaultdtor LogManager;
 %nodefaultdtor SettingsManager;
-
+%nodefaultdtor PluginManager;
 
 namespace adchpp {
 	class Client;
@@ -48,6 +49,13 @@ typedef std::vector<std::string> StringList;
 typedef std::vector<adchpp::Client*> ClientList;
 %}
 
+namespace boost {
+template<typename T>
+class shared_ptr {
+public:
+	T* operator->();	
+};
+}
 namespace adchpp {
 
 void initConfig(const std::string& configPath);
@@ -77,14 +85,14 @@ struct Signal {
 
 template<typename Sig>
 struct ManagedConnection {
-	ManagedConnection();
-	ManagedConnection(const typename Sig::Connection& conn);
-	
+	ManagedConnection(Sig* signal_, const typename Sig::SlotList::iterator& iter_);
 	~ManagedConnection();
-	typename Sig::Connection connection;
+	
+	void disconnect();
+	void release();
 };
 
-class Exception : public std::exception
+class Exception : public exception
 {
 public:
 	Exception();
@@ -470,7 +478,6 @@ public:
 	//int get(IntSetting key) const;
 	//int64_t get(Int64Setting key) const;
 
-
 	void setString(StrSetting key, string const& value) {
 		self->set(key, value);
 	}
@@ -492,27 +499,59 @@ public:
 }
 	bool getBool(IntSetting key) const;
 	
-
 	typedef Signal<void (const SimpleXML&)> SignalLoad;
 	SignalLoad& signalLoad();
 };
 
-%template(SignalClient) Signal<void (Client&)>;
+%template(SignalC) Signal<void (Client&)>;
+%template(SignalCA) Signal<void (Client&, AdcCommand&)>;
+%template(SignalCAI) Signal<void (Client&, AdcCommand&, int&)>;
+%template(SignalS) Signal<void (const SimpleXML&)>;
+
+%template(ManagedC) boost::shared_ptr<ManagedConnection<Signal<void (Client&)> > >;
+%template(ManagedCAI) boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
+%template(ManagedCS) boost::shared_ptr<ManagedConnection<Signal<void (Client&, const string&)> > >;
+%template(ManagedCI) boost::shared_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
+
 %extend Signal<void (Client&)> {
-	%template(connect) connect<boost::function<void (Client&)> >;
+	boost::shared_ptr<ManagedConnection<Signal<void (Client&)> > > connect(boost::function<void (Client&)> f) {
+		return manage(self, self->connect(f));
+	}
 }
-%template(SignalClientAdcCommand) Signal<void (Client&, AdcCommand&)>;
+
 %extend Signal<void (Client&, AdcCommand&)> {
-	%template(connect) connect<boost::function<void (Client&, AdcCommand&) > >;
+	boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > > connect(boost::function<void (Client&, AdcCommand&)> f) {
+		return manage(self, self->connect(f));
+	}
 }
-%template(SignalClientAdcCommandInt) Signal<void (Client&, AdcCommand&, int&)>;
 %extend Signal<void (Client&, AdcCommand&, int&)> {
-	%template(connect) connect<boost::function<void (Client&, AdcCommand&, int&) > >;
+	boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(boost::function<void (Client&, AdcCommand&, int&)> f) {
+		return manage(self, self->connect(f));
+	}
 }
-%template(SignalSimpleXML) Signal<void (const SimpleXML&)>;
-%extend Signal<void (const SimpleXML&)> {
-	%template(connect) connect<boost::function<void (const SimpleXML&)> >;
+%extend Signal<void (Client&, string&)> {
+	boost::shared_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(boost::function<void (Client&, string&)> f) {
+		return manage(self, self->connect(f));
+	}
 }
+
+class PluginManager 
+{
+public:
+	//typedef HASH_MAP<string, Plugin*> Registry;
+	//typedef Registry::iterator RegistryIter;
+
+	const StringList& getPluginList() const;
+	const string& getPluginPath() const;
+	//int getPluginId() { return pluginIds++; }
+
+	//bool registerPlugin(const string& name, Plugin* ptr);
+	//bool unregisterPlugin(const string& name);
+	//Plugin* getPlugin(const string& name);
+	//const Registry& getPlugins();
+	//void load();
+	//void shutdown();
+};
 
 class Util  
 {
@@ -576,5 +615,6 @@ namespace adchpp {
 	ClientManager* getCM() { return ClientManager::getInstance(); }
 	LogManager* getLM() { return LogManager::getInstance(); }
 	SettingsManager* getSM() { return SettingsManager::getInstance(); }
+	PluginManager* getPM() { return PluginManager::getInstance(); }
 }
 %}

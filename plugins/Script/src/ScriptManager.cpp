@@ -38,8 +38,8 @@ const string ScriptManager::className = "ScriptManager";
 
 ScriptManager::ScriptManager() {
 	LOGDT(className, "Starting");
-	
-	receiveConn = ClientManager::getInstance()->signalReceive().connect(boost::bind(&ScriptManager::onReceive, this, _1, _2, _3));
+	ClientManager::SignalReceive& sig = ClientManager::getInstance()->signalReceive();
+	receiveConn = manage(&sig, sig.connect(boost::bind(&ScriptManager::onReceive, this, _1, _2, _3)));
 	
 	load();
 }

@@ -59,6 +59,7 @@
 
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
+#include <boost/shared_ptr.hpp>
 
 // Use maps if hash_maps aren't available
 #ifdef HAVE_HASH

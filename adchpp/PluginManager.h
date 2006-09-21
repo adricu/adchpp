@@ -206,10 +206,8 @@ public:
 	/** @internal */
 	void shutdown();
 
-public:
-	virtual ~PluginManager() throw();
-
 private:
+	virtual ~PluginManager() throw();
 
 	class PluginInfo {
 	public:

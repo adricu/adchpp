@@ -28,26 +28,8 @@ template<typename F>
 struct Signal {
 	typedef boost::function<F> Slot;
 	typedef list<Slot> SlotList;
-	struct Connection {
-		Connection() : signal(0) { }
-		Connection(const Connection& rhs) : signal(rhs.signal), connection(rhs.connection) { }
-		Connection& operator=(const Connection& rhs) { signal = rhs.signal; connection = rhs.connection; return *this; }
-		Connection(Signal<F>* sig, const typename SlotList::iterator& iter) : signal(sig), connection(iter) { } 
-		void disconnect() { if(signal) { signal->disconnect(connection); signal = 0; } }
-		
-		operator bool() { return (bool)signal; }
-		
-		Signal<F>* signal;
-		typename SlotList::iterator connection;
-	};		
-	/*
-	void operator()() {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end; ) {
-			(*i++)();
-		}
-	}
-	*/
+	typedef typename SlotList::iterator Connection;
+	
 	template<typename T0>
 	void operator()(T0& t0) {
 		typename SlotList::iterator end = slots.end();
@@ -89,10 +71,8 @@ struct Signal {
 	}
 	
 	template<typename T>
-	Connection connect(const T& f) { return Connection(this, slots.insert(slots.end(), f)); }
-	void disconnect(const typename SlotList::iterator& i) { 
-		slots.erase(i);
-	}
+	Connection connect(const T& f) { return slots.insert(slots.end(), f); }
+	void disconnect(const Connection& i) { slots.erase(i); }
 	
 	~Signal() { }
 private:
@@ -101,18 +81,35 @@ private:
 
 template<typename Sig>
 struct ManagedConnection {
-	ManagedConnection() { }
-	ManagedConnection(const typename Sig::Connection& conn) : connection(conn) { }
+	ManagedConnection(Sig* signal_, const typename Sig::Connection& iter_) : signal(signal_), iter(iter_) { 
+	}
 	
-	ManagedConnection& operator=(const typename Sig::Connection& rhs) { if(connection) connection.disconnect(); connection = rhs; return *this; }
+	void disconnect() {
+		if(signal) {
+			signal->disconnect(iter);
+			signal = 0;
+		}
+	}
 	
-	~ManagedConnection() { if(connection) connection.disconnect(); }
-	typename Sig::Connection connection;
+	void release() {
+		signal = 0;
+	}
+	
+	~ManagedConnection() {
+		disconnect();
+	}
 private:
-	ManagedConnection(const ManagedConnection&);
-	ManagedConnection& operator=(const ManagedConnection&);
+	ManagedConnection(const ManagedConnection& rhs);
+	ManagedConnection& operator=(const ManagedConnection& rhs);
+	
+	Sig* signal;
+	typename Sig::SlotList::iterator iter;
 };
 
+template<typename Sig>
+boost::shared_ptr<ManagedConnection<Sig> > manage(Sig* signal, const typename Sig::SlotList::iterator& iter) {
+	return boost::shared_ptr<ManagedConnection<Sig> >(new ManagedConnection<Sig>(signal, iter));
+}
 }
 
 #endif // SIGNAL_H
