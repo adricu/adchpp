@@ -92,7 +92,7 @@ struct ManagedConnection {
 	void release();
 };
 
-class Exception : public exception
+class Exception : public std::exception
 {
 public:
 	Exception();

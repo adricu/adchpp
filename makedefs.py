@@ -18,7 +18,7 @@ def makename(oldname):
 	return name;
 
 	
-version = re.search("VERSIONSTRING (\S+)", file("adchpp/version.h").read()).group(1)
+version = re.search("VERSIONFLOAT (\S+)", file("adchpp/version.cpp").read()).group(1)
 
 varstr = "";
 strings = "";

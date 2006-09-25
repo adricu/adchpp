@@ -61,7 +61,7 @@ def buildRbModule():
 def buildPyModule():
 	env = dev.env.Copy()
 	
-	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python'])
+	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O'])
 	f = env.CXXFile(target=build_path + 'python_wrap.cxx', source='python.i')
 	pyfile = build_path + 'pyadchpp.py'
 	env.SideEffect(pyfile, 'python.i')

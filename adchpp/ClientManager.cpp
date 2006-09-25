@@ -81,7 +81,6 @@ void ClientManager::sendTo(const AdcCommand& cmd, const uint32_t& to) throw() {
 		i->second->send(cmd.toString());
 	}
 }
-static const string newLine = "\r\n";
 
 void ClientManager::updateCache() throw() {
 	// Update static strings...

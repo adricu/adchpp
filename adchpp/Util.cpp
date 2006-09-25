@@ -35,7 +35,7 @@
 namespace adchpp {
 	
 #ifndef _DEBUG
-FastCriticalSection FastAllocBase::cs;
+FastMutex FastAllocBase::mtx;
 #endif
 
 #ifndef _WIN32

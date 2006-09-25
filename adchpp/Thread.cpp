@@ -19,6 +19,7 @@
 #include "adchpp.h"
 
 #include "Thread.h"
+#include "Util.h"
 
 namespace adchpp {
 	
@@ -28,7 +29,7 @@ namespace adchpp {
 void Thread::start() throw(ThreadException) {
 	DWORD threadId = 0;
 	if( (threadHandle = ::CreateThread(NULL, 0, &starter, this, 0, &threadId)) == NULL) {
-		throw ThreadException(STRING(UNABLE_TO_CREATE_THREAD));
+		throw ThreadException(Util::translateError(::GetLastError()));
 	}
 }
 
@@ -49,8 +50,9 @@ void Thread::start() throw(ThreadException) {
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	if(pthread_create(&t, &attr, &starter, this) != 0) {
-		throw ThreadException(STRING(UNABLE_TO_CREATE_THREAD));
+	int result = pthread_create(&t, &attr, &starter, this);
+	if(result != 0) {
+		throw ThreadException(Util::translateError(result));
 	}
 	pthread_attr_destroy(&attr);
 }

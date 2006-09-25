@@ -26,7 +26,6 @@
 #endif
 
 #include "Exception.h"
-#include "ResourceManager.h"
 
 namespace adchpp { 
 

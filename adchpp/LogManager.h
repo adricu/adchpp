@@ -19,6 +19,7 @@
 #ifndef ADCHPP_LOGMANAGER_H
 #define ADCHPP_LOGMANAGER_H
 
+#include "Singleton.h"
 #include "Mutex.h"
 
 namespace adchpp {

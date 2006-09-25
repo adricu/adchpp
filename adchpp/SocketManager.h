@@ -22,6 +22,7 @@
 #include "Thread.h"
 #include "Semaphores.h"
 #include "Mutex.h"
+#include "Singleton.h"
 
 namespace adchpp {
 	
