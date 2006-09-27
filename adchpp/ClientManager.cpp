@@ -152,6 +152,18 @@ void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
 		return;
 	}
 	
+	if(!(
+		cmd.getType() == AdcCommand::TYPE_BROADCAST || 
+		cmd.getType() == AdcCommand::TYPE_DIRECT || 
+		cmd.getType() == AdcCommand::TYPE_ECHO || 
+		cmd.getType() == AdcCommand::TYPE_FEATURE || 
+		cmd.getType() == AdcCommand::TYPE_HUB)) 
+	{
+		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid command type"));
+		c.disconnect();
+		return;
+	}
+	
 	if(!(override & DONT_DISPATCH)) {
 		if(!dispatch(c, cmd)) {
 			return;
@@ -241,17 +253,19 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const vect
 }
 
 bool ClientManager::handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw() {
+	if(c.getState() != Client::STATE_IDENTIFY && c.getState() != Client::STATE_NORMAL) {
+		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
+		c.disconnect();
+		return false;
+	}
+			
 	if(!verifyINF(c, cmd))
 		return false;
 
 	if(c.getState() == Client::STATE_IDENTIFY) {
 		enterNormal(c, true, false);
-	} else if(c.getState() != Client::STATE_NORMAL) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
-		c.disconnect();
-		return false;
 	}
-
+	
 	return true;
 }
 
@@ -447,9 +461,9 @@ void ClientManager::removeLogins(Client& c) throw() {
 void ClientManager::removeClient(Client& c) throw() {
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Client::STATE_NORMAL) {
-		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())));
 		clients.erase(c.getSID());
 		cids.erase(c.getCID());
+		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())));
 	} else {
 		removeLogins(c);
 	}

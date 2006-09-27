@@ -95,7 +95,7 @@ private:
 			if (!lua_isnil(L, -1)) {
 				const char *msg = lua_tostring(L, -1);
 				if (msg == NULL) msg = "(error object is not a string)";
-				fprintf(stderr, "%s\n", msg);
+				fprintf(stderr, "%d, %d: %s\n", status, lua_type(L, -1), msg);
 				lua_pop(L, 1);
 			}
 		}

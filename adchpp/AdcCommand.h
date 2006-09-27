@@ -69,11 +69,13 @@ public:
 	};
 
 	static const char TYPE_BROADCAST = 'B';
+	static const char TYPE_CLIENT = 'C';
 	static const char TYPE_DIRECT = 'D';
 	static const char TYPE_ECHO = 'E';
 	static const char TYPE_FEATURE = 'F';
 	static const char TYPE_INFO = 'I';
 	static const char TYPE_HUB = 'H';
+	static const char TYPE_UDP = 'U';
 
 	// Known commands...
 #define C(n, a, b, c) static const uint32_t CMD_##n = (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); typedef Type<CMD_##n> n
@@ -138,7 +140,7 @@ public:
 
 	bool operator==(uint32_t aCmd) const { return cmdInt == aCmd; }
 
-	ADCHPP_DLL static string escape(const string& s);
+	ADCHPP_DLL static void escape(const string& s, string& out);
 
 	uint32_t getTo() const { return to; }
 	void setTo(uint32_t aTo) { to = aTo; }

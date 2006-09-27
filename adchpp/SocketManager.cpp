@@ -206,12 +206,14 @@ private:
 					continue;
 				}
 				if(overlapped->type == MSOverlapped::READ_DONE) {
+					dcdebug("Error reading: %s\n", Util::translateError(::GetLastError()).c_str());
 					failRead(ms);
 					pool.put(overlapped);
 					continue;
 				}
 				
 				if(overlapped->type == MSOverlapped::WRITE_DONE) {
+					dcdebug("Error writing: %s\n", Util::translateError(::GetLastError()).c_str());
 					failWrite(ms);
 					pool.put(overlapped);
 					continue;
@@ -405,25 +407,29 @@ private:
 	}
 	
 	void failRead(ManagedSocket* ms) throw() {
+		if(active.find(ms) == active.end()) {
+			return;
+		}
 		active.erase(ms);
 		
+		ms->close();
 		ms->failSocket();
 				
 		ms->deref();
 	}
 	
-	bool prepareWrite(ManagedSocket* ms) throw() {
+	void prepareWrite(ManagedSocket* ms) throw() {
 		if(stop || ms->writeBuf) {
-			return false;
+			return;
 		}
 		
 		ms->writeBuf = ms->prepareWrite();
 		
 		if(!ms->writeBuf) {
 			if(ms->disc) {
-				ms->close();
+				ms->shutdown();
 			}
-			return false;
+			return;
 		}
 		
 		ms->ref();
@@ -441,7 +447,7 @@ private:
 				pool.put(overlapped);
 			}
 		}
-		return true;
+		return;
 	}
 	
 	void handleWriteDone(ManagedSocket* ms, DWORD bytes) throw() {
@@ -473,12 +479,8 @@ private:
 	}
 	
 	void handleDisconnect(ManagedSocket* ms) throw() {
-		if(prepareWrite(ms)) {
-			disconnecting.insert(ms);
-			return;
-		}
-		
-		ms->close();
+		prepareWrite(ms);
+		disconnecting.insert(ms);
 	}
 	
 	void handleDeref(ManagedSocket* ms) throw() {
@@ -608,8 +610,6 @@ public:
 		if(stop)
 			return;
 			
-		//if(ms->disc == CLOSE_DONE)
-			//return;
 		Event ev(Event::DISCONNECT, ms);
 		::write(event[0], &ev, sizeof(ev));
 	}			
@@ -666,6 +666,7 @@ private:
 		}
 		
 		while(!stop || !active.empty()) {
+			checkDisconnects();
 			std::vector<epoll_event> events;
 			if(!poller.get(events)) {
 				LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
@@ -802,7 +803,7 @@ private:
 			
 			if(!writeBuf) {
 				if(ms->disc) {
-					failRead(ms);
+					ms->shutdown();
 				}
 				return;
 			}
@@ -835,9 +836,11 @@ private:
 	
 	void disconnect(ManagedSocket* ms) throw() {
 		failRead(ms);
+		disconnecting.insert(ms);
 	}
 	
 	void deref(ManagedSocket* ms) throw() {
+		disconnecting.erase(ms);
 		ms->deref();
 	}
 	

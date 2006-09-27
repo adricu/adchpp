@@ -11,6 +11,7 @@
 #include <adchpp/SimpleXML.h>
 #include <adchpp/Exception.h>
 #include <adchpp/PluginManager.h>
+#include <adchpp/TigerHash.h>
 
 using namespace adchpp;
 
@@ -19,6 +20,13 @@ using namespace adchpp;
 %include "std_string.i"
 %include "std_vector.i"
 %include "std_except.i"
+
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef signed char int8_t;
+typedef signed short int16_t;
+typedef signed int int32_t;
 
 using namespace std;
 
@@ -35,6 +43,7 @@ void shutdown() {
 %nodefaultdtor ClientManager;
 %nodefaultdtor LogManager;
 %nodefaultdtor SettingsManager;
+%nodefaultdtor Util;
 %nodefaultdtor PluginManager;
 
 namespace adchpp {
@@ -119,7 +128,11 @@ public:
 	//string& toBase32(string& tmp) const;
 
 	size_t toHash() const;
-	const uint8_t* data() const;
+	//const uint8_t* data() const;
+	
+	%extend {
+		string data() const { return string(reinterpret_cast<const char*>(self->data()), CID::SIZE); }
+	}  
 
 	bool isZero() const;
 	static CID generate();
@@ -206,8 +219,8 @@ public:
 	enum { HUB_SID = 0x41414141 };
 
 	AdcCommand();
-	explicit AdcCommand(Severity sev, Error err, const string& desc, char aType = TYPE_INFO);
-	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID);
+	explicit AdcCommand(Severity sev, Error err, const string& desc, char aType);
+	explicit AdcCommand(uint32_t cmd, char aType, uint32_t aFrom);
 	explicit AdcCommand(const string& aLine) throw(ParseException);
 	AdcCommand(const AdcCommand& rhs);
 
@@ -233,7 +246,7 @@ public:
 
 	bool operator==(uint32_t aCmd) const;
 
-	static string escape(const string& s);
+	static void escape(const string& s, string& out);
 
 	uint32_t getTo() const;
 	void setTo(uint32_t aTo);
@@ -524,16 +537,50 @@ public:
 		return manage(self, self->connect(f));
 	}
 }
+
 %extend Signal<void (Client&, AdcCommand&, int&)> {
 	boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(boost::function<void (Client&, AdcCommand&, int&)> f) {
 		return manage(self, self->connect(f));
 	}
 }
+
 %extend Signal<void (Client&, string&)> {
 	boost::shared_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(boost::function<void (Client&, string&)> f) {
 		return manage(self, self->connect(f));
 	}
 }
+
+class TigerHash {
+public:
+	/** Hash size in bytes */
+	enum { HASH_SIZE = 24 };
+
+	TigerHash();
+	
+	%extend {
+		void update(const string& data) {
+			self->update(data.data(), data.size());
+		}
+		string finalize() {
+			return string(reinterpret_cast<const char*>(self->finalize()), TigerHash::HASH_SIZE);
+		}
+	}
+};
+
+class Encoder
+{
+public:
+	%extend {
+		static string toBase32(const string& src) {
+			return Encoder::toBase32(reinterpret_cast<const uint8_t*>(src.data()), src.size());
+		}
+		static string fromBase32(const string& src) {
+			string result((src.length()*5)/8, 0);
+			Encoder::fromBase32(src.data(), reinterpret_cast<uint8_t*>(&result[0]), result.size());
+			return result;
+		}
+	}
+};
 
 class PluginManager 
 {

@@ -29,18 +29,17 @@ AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /
 	addParam(desc);
 }
 
-string AdcCommand::escape(const string& s) {
-	string tmp;
-	tmp.reserve(s.length() + 1);
-	for(size_t i = 0; i < s.length(); ++i) {
-		switch(s[i]) {
-			case ' ': tmp += "\\s"; break;
-			case '\n': tmp += "\\n"; break;
-			case '\\': tmp += "\\\\"; break;
-			default: tmp += s[i];
+void AdcCommand::escape(const string& s, string& out) {
+	out.reserve(out.length() + static_cast<size_t>(s.length() * 1.1));
+	string::const_iterator send = s.end();
+	for(string::const_iterator i = s.begin(); i != send; ++i) {
+		switch(*i) {
+			case ' ': out += "\\s"; break;
+			case '\n': out += "\\n"; break;
+			case '\\': out += "\\\\"; break;
+			default: out += *i;
 		}
 	}
-	return tmp;
 }
 
 void AdcCommand::parse(const string& aLine) throw(ParseException) {
@@ -52,7 +51,7 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 	
 	type = aLine[0];
 	
-	if(!(type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE || type == TYPE_HUB)) {
+	if(type != TYPE_BROADCAST && type != TYPE_CLIENT && type != TYPE_DIRECT && type != TYPE_ECHO && type != TYPE_FEATURE && type != TYPE_INFO && type != TYPE_HUB && type != TYPE_UDP) {
 		throw ParseException("Invalid type");
 	}
 	
@@ -67,21 +66,23 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 	cur.reserve(128);
 
 	bool toSet = false;
-	bool fromSet = false;
 	bool featureSet = false;
+	bool fromSet = false;
 
 	while(i < len) {
 		switch(buf[i]) {
 		case '\\': 
-			{
-				++i;
-				switch(buf[i]) {
-				case 's': cur += ' '; break;
-				case 'n': cur += '\n'; break;
-				case '\\': cur += '\\'; break;
-				default: throw ParseException("Invalid escape");
-				}
-			}
+			++i;
+			if(i == len)
+				throw ParseException("Escape at eol");
+			if(buf[i] == 's')
+				cur += ' ';
+			else if(buf[i] == 'n')
+				cur += '\n';
+			else if(buf[i] == '\\')
+				cur += '\\';
+			else
+				throw ParseException("Unknown escape");
 			break;
 		case ' ': 
 			// New parameter...
@@ -92,18 +93,18 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 					}
 					from = toSID(cur);
 					fromSet = true;
-				} else if(type == TYPE_FEATURE && !featureSet) {
-					if(cur.length() % 5 != 0) {
-						throw ParseException("Invalid feature length");
-					}
-                    features = cur;
-					featureSet = true;
 				} else if((type == TYPE_DIRECT || type == TYPE_ECHO) && !toSet) {
 					if(cur.length() != 4) {
 						throw ParseException("Invalid SID length");
 					}
 					to = toSID(cur);
 					toSet = true;
+				} else if(type == TYPE_FEATURE && !featureSet) {
+					if(cur.length() % 5 != 0) {
+						throw ParseException("Invalid feature length");
+					}
+                    features = cur;
+					featureSet = true;
 				} else {
 					parameters.push_back(cur);
 				}
@@ -122,18 +123,18 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 			}
 			from = toSID(cur);
 			fromSet = true;
-		} else if(type == TYPE_FEATURE && !featureSet) {
-			if(cur.length() % 5 != 0) {
-				throw ParseException("Invalid feature length");
-			}
-			features = cur;
-			featureSet = true;
 		} else if((type == TYPE_DIRECT || type == TYPE_ECHO) && !toSet) {
 			if(cur.length() != 4) {
 				throw ParseException("Invalid SID length");
 			}
 			to = toSID(cur);
 			toSet = true;
+		} else if(type == TYPE_FEATURE && !featureSet) {
+			if(cur.length() % 5 != 0) {
+				throw ParseException("Invalid feature length");
+			}
+            features = cur;
+			featureSet = true;
 		} else {
 			parameters.push_back(cur);
 		}
@@ -161,14 +162,9 @@ const string& AdcCommand::toString() const {
 	tmp += type;
 	tmp += cmdChar;
 
-	if(type != TYPE_INFO && type != TYPE_HUB) {
+	if(type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) {
 		tmp += ' ';
 		appendSID(tmp, from);
-	}
-
-	if(type == TYPE_FEATURE) {
-		tmp += ' ';
-		tmp += features;
 	}
 
 	if(type == TYPE_DIRECT || type == TYPE_ECHO) {
@@ -176,9 +172,14 @@ const string& AdcCommand::toString() const {
 		appendSID(tmp, to);
 	}
 
+	if(type == TYPE_FEATURE) {
+		tmp += ' ';
+		tmp += features;
+	}
+
 	for(StringIterC i = getParameters().begin(); i != getParameters().end(); ++i) {
 		tmp += ' ';
-		tmp += escape(*i);
+		escape(*i, tmp);
 	}
 
 	tmp += '\n';

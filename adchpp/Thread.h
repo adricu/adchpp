@@ -56,7 +56,7 @@ public:
 	bool isRunning() throw() { return (threadHandle != NULL); }
 
 	static void sleep(uint32_t millis) { ::Sleep(millis); }
-	static void yield() { ::Sleep(0); }
+	static void yield() { ::Sleep(1); }
 
 #elif defined(HAVE_PTHREAD)
 

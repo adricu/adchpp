@@ -116,7 +116,7 @@ public:
 
 	void listen(short aPort) throw(SocketException);
 
-	void shutdown() { ::shutdown(sock, 1); }
+	void shutdown() { ::shutdown(sock, SD_SEND); }
 	
 	int read(void* aBuffer, size_t aBufLen) throw(SocketException); 
 	int wait(uint32_t millis, int waitFor) throw(SocketException);

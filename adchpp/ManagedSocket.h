@@ -72,7 +72,8 @@ private:
 	bool completeRead(ByteVector* buf) throw();
 	void failSocket() throw();
 	
-	void close() { ::shutdown(getSocket(), SD_SEND); sock.disconnect(); }
+	void shutdown() { sock.shutdown(); }
+	void close() { sock.disconnect(); }
 	
 	// Functions processing events
 	void processIncoming() throw();

@@ -71,7 +71,7 @@ void ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = fal
 	if(outBuf->size() + len > (uint32_t)SETTING(MAX_BUFFER_SIZE)) {
 		if(lowPrio && SETTING(KEEP_SLOW_USERS)) {
 			return;
-		} else if(overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {
+		} else if(overFlow > 0 && overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {
 			disconnect();
 			return;
 		} else {
@@ -109,26 +109,30 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 
 	Util::stats.totalUp += written;
 
-	FastMutex::Lock l(outbufCS);
+	bool moreData;
+	{
+		FastMutex::Lock l(outbufCS);
+		
+		if(written != buf->size()) {
+			if(outBuf == 0) {
+				buf->erase(buf->begin(), buf->begin() + written);
+				outBuf = buf;
+				buf = 0;
+			} else {
+				outBuf->insert(outBuf->begin(), buf->begin() + written, buf->end());
+			}
+		} 
+		moreData = (outBuf != 0);
+		if( !moreData || (outBuf->size() < (size_t)SETTING(MAX_BUFFER_SIZE)) )
+			overFlow = 0;
+			
+	}
 	
-	if(written == buf->size()) {
-		// Everything written, good...
+	if(buf) {
 		Util::freeBuf = buf;
-	} else {
-		if(outBuf == 0) {
-			buf->erase(buf->begin(), buf->begin() + written);
-			outBuf = buf;
-			buf = 0;
-		} else {
-			outBuf->insert(outBuf->begin(), buf->begin() + written, buf->end());
-			Util::freeBuf = buf;
-		}
-	} 
+	}
 	
-	if( (outBuf == 0) || (outBuf->size() < (size_t)SETTING(MAX_BUFFER_SIZE)) )
-		overFlow = 0;
-
-	return outBuf != 0;
+	return moreData;
 }
 
 bool ManagedSocket::completeRead(ByteVector* buf) throw() {

@@ -388,7 +388,6 @@ int Socket::getLocalPort() throw() {
 
 void Socket::disconnect() throw() {
 	if(sock != INVALID_SOCKET) {
-		::shutdown(sock, 1); // Make sure we send FIN (SD_SEND shutdown type...)
 		closesocket(sock);
 	}
 

@@ -50,14 +50,14 @@ void initConfig(const string& configPath) {
 }
 
 void startup(void (*f)()) {
-	if(!SETTING(LANGUAGE_FILE).empty()) {
+/*	if(!SETTING(LANGUAGE_FILE).empty()) {
 		if(File::isAbsolutePath(SETTING(LANGUAGE_FILE))) {
 			ResourceManager::getInstance()->loadLanguage(SETTING(LANGUAGE_FILE));
 		} else {
 			ResourceManager::getInstance()->loadLanguage(Util::getCfgPath() + SETTING(LANGUAGE_FILE));
 		}
 	}
-
+*/
 	Util::stats.startTime = GET_TIME();
 
 	if(f) f();
