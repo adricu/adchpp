@@ -34,13 +34,13 @@ void Thread::start() throw(ThreadException) {
 }
 
 void Thread::join() throw() {
-	if(threadHandle == NULL) {
+	if(!isRunning()) {
 		return;
 	}
 
 	::WaitForSingleObject(threadHandle, INFINITE);
 	::CloseHandle(threadHandle);
-	threadHandle = NULL;
+	threadHandle = INVALID_HANDLE_VALUE;
 }
 
 #else // _WIN32

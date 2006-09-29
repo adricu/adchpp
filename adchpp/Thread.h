@@ -45,15 +45,15 @@ public:
 		HIGH = THREAD_PRIORITY_ABOVE_NORMAL
 	};
 
-	Thread() throw() : threadHandle(NULL) { }
+	Thread() throw() : threadHandle(INVALID_HANDLE_VALUE) { }
 	virtual ~Thread() { 
-		if(threadHandle)
+		if(threadHandle != INVALID_HANDLE_VALUE)
 			CloseHandle(threadHandle);
 	}
 	
 	void setThreadPriority(Priority p) throw() { ::SetThreadPriority(threadHandle, p); }
 	
-	bool isRunning() throw() { return (threadHandle != NULL); }
+	bool isRunning() throw() { return (threadHandle != INVALID_HANDLE_VALUE); }
 
 	static void sleep(uint32_t millis) { ::Sleep(millis); }
 	static void yield() { ::Sleep(1); }
