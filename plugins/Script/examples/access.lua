@@ -170,7 +170,6 @@ local function dump(c, code, msg)
 end
 
 local function reply(c, msg)
-	print("\n" ..  adchpp.TYPE_INFO .. "\n")
 	answer = adchpp.AdcCommand(adchpp.CMD_MSG, adchpp.TYPE_INFO, adchpp.HUB_SID)
 	answer:addParam(msg)
 	c:send(answer)
@@ -392,7 +391,7 @@ local function onMSG(c, cmd)
 			return adchpp.DONT_SEND
 		end
 		
-		register_client(c, parameters, 1)
+		register_user(c:getCID(), c:getField("NI"), parameters, 1)
 				
 		reply(c, "You're now registered")
 		return adchpp.DONT_SEND
