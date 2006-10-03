@@ -74,8 +74,12 @@ public:
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
 		lua_pushinteger(L, i);
 		
-		docall(3, 0);
+		docall(3, 1);
 		
+		if(lua_isnumber(L, -1)) {
+			i |= static_cast<int>(lua_tonumber(L, -1));
+		}
+		lua_pop(L, 1);
 	}
 
 private:
@@ -123,3 +127,13 @@ private:
 }
 
 %include "adchpp.i"
+
+%extend adchpp::AdcCommand {
+	std::string getParam(const char* name, size_t start) {
+		std::string tmp;
+		if(self->getParam(name, start, tmp)) {
+			return tmp;
+		}
+		return std::string();
+	}
+}

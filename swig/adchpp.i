@@ -186,13 +186,21 @@ public:
 		SEV_FATAL = 2
 	};
 
+#ifdef SWIGLUA
+	static const short TYPE_BROADCAST = 'B';
+	static const short TYPE_DIRECT = 'D';
+	static const short TYPE_ECHO = 'E';
+	static const short TYPE_FEATURE = 'F';
+	static const short TYPE_INFO = 'I';
+	static const short TYPE_HUB = 'H';
+#else
 	static const char TYPE_BROADCAST = 'B';
 	static const char TYPE_DIRECT = 'D';
 	static const char TYPE_ECHO = 'E';
 	static const char TYPE_FEATURE = 'F';
 	static const char TYPE_INFO = 'I';
 	static const char TYPE_HUB = 'H';
-
+#endif
 	// Known commands...
 #define C(n, a, b, c) static const unsigned int CMD_##n = (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); 
 	// Base commands
@@ -238,7 +246,9 @@ public:
 	AdcCommand& addParam(const string& str);
 	const string& getParam(size_t n) const;
 
-	bool getParam(const char* name, size_t start, string& ret) const;
+#ifndef SWIGLUA
+	bool getParam(const char* name, size_t start, string& OUTPUT) const;
+#endif
 	bool delParam(const char* name, size_t start);
 	
 	bool hasFlag(const char* name, size_t start) const;
@@ -292,7 +302,7 @@ public:
 	bool supports(const string& feat) const throw();
 
 	//void send(const char* command, size_t len) throw();
-	//void send(const AdcCommand& cmd) throw();
+	void send(const AdcCommand& cmd) throw();
 	void send(const string& command) throw();
 	//void send(const char* command) throw();
 

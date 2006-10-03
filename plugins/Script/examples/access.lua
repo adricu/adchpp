@@ -5,6 +5,14 @@ require("luadchpp")
 
 adchpp = luadchpp
 
+-- Temporary fixes for SWIG 1.3.29
+adchpp.TYPE_BROADCAST = string.char(adchpp.TYPE_BROADCAST)
+adchpp.TYPE_DIRECT = string.char(adchpp.TYPE_DIRECT)
+adchpp.TYPE_ECHO = string.char(adchpp.TYPE_ECHO)
+adchpp.TYPE_FEATURE = string.char(adchpp.TYPE_FEATURE)
+adchpp.TYPE_INFO = string.char(adchpp.TYPE_INFO)
+adchpp.TYPE_HUB = string.char(adchpp.TYPE_HUB)
+
 -- Configuration
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
@@ -155,7 +163,7 @@ local function make_user(cid, nick, password, level)
 end
 
 local function dump(c, code, msg)
-	answer = adchpp.AdcCommand(adchpp.CMD_STA)
+	answer = adchpp.AdcCommand(adchpp.CMD_STA, adchpp.TYPE_INFO, adchpp.HUB_SID)
 	answer:addParam("" .. adchpp.SEV_FATAL .. code):addParam(msg)
 	c:send(answer)
 	c:disconnect()
@@ -237,7 +245,7 @@ local command_processed = adchpp.DONT_DISPATCH + adchpp.DONT_SEND
 local function onINF(c, cmd)
 	
 	for field, regex in pairs(inf_fields) do
-		hasVal, val = cmd:getParam(field, 0)
+		val = cmd:getParam(field, 0)
 		if #val > 0 and hasVal and not val:match(regex) then
 			print("Bad INF " .. field)
 			reply(c, "Field " .. field .. " has an invalid value, removed")
@@ -245,33 +253,33 @@ local function onINF(c, cmd)
 		end
 	end
 
-	if cmd:getParam("HI", 0) then
+	if #cmd:getParam("HI", 0) > 0 then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Don't hide")
 		return command_processed
 	end
 	
-	if cmd:getParam("OP", 0) then
+	if #cmd:getParam("OP", 0) > 0 then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "I decide who's an OP")
 		return command_processed
 	end
 	
-	if cmd:getParam("RG", 0) then
+	if #cmd:getParam("RG", 0) > 0 then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "I decide who's registered")
 		return command_processed
 	end
 	
-	if cmd:getParam("HU", 0) then
+	if #cmd:getParam("HU", 0) > 0 then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "I'm the hub, not you")
 		return command_processed
 	end
 	
-	if cmd:getParam("BO", 0) then
+	if #cmd:getParam("BO", 0) > 0 then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "You're not a bot")
 		return command_processed
 	end
 	
 	if c:getState() == adchpp.STATE_NORMAL then
-		if cmd:getParam("NI", 0) or cmd:getParam("ID", 0) or cmd:getParam("PD", 0) then
+		if #cmd:getParam("NI", 0) > 0 or #cmd:getParam("ID", 0) > 0 or #cmd:getParam("PD", 0) > 0 then
 			dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Nick/CID changes not supported, please reconnect")
 			return command_processed
 		end
@@ -279,10 +287,10 @@ local function onINF(c, cmd)
 		return 0
 	end
 	
-	local hasNick, nick = cmd:getParam("NI", 0)
-	local hasCID, cid = cmd:getParam("ID", 0)
+	local nick = cmd:getParam("NI", 0)
+	local cid = cmd:getParam("ID", 0)
 	
-	if not hasNick or not hasCID then
+	if #nick == 0 or #cid == 0 then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return command_processed
 	end
