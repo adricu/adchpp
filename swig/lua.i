@@ -1,5 +1,7 @@
 %module luadchpp
 
+typedef unsigned int size_t;
+
 %wrapper %{
 
 static int traceback (lua_State *L) {

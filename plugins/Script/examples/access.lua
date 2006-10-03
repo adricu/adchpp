@@ -162,7 +162,8 @@ local function dump(c, code, msg)
 end
 
 local function reply(c, msg)
-	answer = adchpp.AdcCommand(adchpp.CMD_MSG)
+	print("\n" ..  adchpp.TYPE_INFO .. "\n")
+	answer = adchpp.AdcCommand(adchpp.CMD_MSG, adchpp.TYPE_INFO, adchpp.HUB_SID)
 	answer:addParam(msg)
 	c:send(answer)
 end
@@ -466,7 +467,7 @@ local function onReceive(c, cmd, override)
 	
 	local allowed_type = command_contexts[cmd:getCommand()]
 	if allowed_type then
-		if not string.char(cmd:getType()):match(allowed_type) then
+		if not cmd:getType():match(allowed_type) then
 			print("Invalid context for " .. cmd:getCommandString())
 			reply(c, "Invalid context for " .. cmd:getCommandString())
 			return command_processed
@@ -502,5 +503,6 @@ end
 load_users()
 
 local cm = adchpp.getCM()
-cm:signalReceive():connect(onReceive)
---dis = adchpp.signalDisconnected(onDisconnected)
+conn = cm:signalReceive():connect(onReceive)
+dis = cm:signalDisconnected():connect(onDisconnected)
+

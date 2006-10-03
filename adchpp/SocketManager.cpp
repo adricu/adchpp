@@ -644,7 +644,7 @@ private:
 		} 
 		
 		if(!poller.associate(srv.getSocket())) {
-			LOGDT(SocketManager::className, "Unable to associate IO Completion port: " + Util::translateError(errno));
+			LOGDT(SocketManager::className, "Unable to set epoll: " + Util::translateError(errno));
 			return false;
 		}
 		
@@ -674,6 +674,7 @@ private:
 			for(std::vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
 				epoll_event& ev = *i;
 				if(ev.data.fd == srv.getSocket()) {
+					printf("accepting\n");
 					accept();
 				} else if(ev.data.fd == event[1]) {
 					handleEvents();
