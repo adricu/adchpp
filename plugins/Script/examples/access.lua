@@ -329,7 +329,7 @@ local function onPAS(c, cmd)
 	local cid = c:getCID()
 	local nick = c:getField("NI")
 	
-	local user = get_user(c:getCID(), c:getField("NI"))
+	local user = get_user(c:getCID():toBase32(), c:getField("NI"))
 	if not user then
 		print("User sending PAS not found (?)")
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Can't find you now")
@@ -346,7 +346,7 @@ local function onPAS(c, cmd)
 		return command_processed
 	end
 	
-	local updateOk, message = update_user(user, cid, nick)
+	local updateOk, message = update_user(user, cid:toBase32(), nick)
 	if not updateOk then
 		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, message)
 		return command_processed
@@ -391,7 +391,7 @@ local function onMSG(c, cmd)
 			return adchpp.DONT_SEND
 		end
 		
-		register_user(c:getCID(), c:getField("NI"), parameters, 1)
+		register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 				
 		reply(c, "You're now registered")
 		return adchpp.DONT_SEND
@@ -410,10 +410,10 @@ local function onMSG(c, cmd)
 		
 		local cid
 		if other then
-			cid = other:getCID()
+			cid = other:getCID():toBase32()
 		end
 		
-		my_user = get_user(c:getCID(), c:getField("NI"))
+		my_user = get_user(c:getCID():toBase32(), c:getField("NI"))
 		
 		if not my_user then
 			reply(c, "Only registered users may register others")

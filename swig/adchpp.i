@@ -132,6 +132,7 @@ public:
 	
 	%extend {
 		string data() const { return string(reinterpret_cast<const char*>(self->data()), CID::SIZE); }
+		string __str__() { return self->toBase32(); }
 	}  
 
 	bool isZero() const;

@@ -43,35 +43,24 @@ const string LuaScript::className = "LuaScript";
 
 namespace {
 	void prepare_cpath(lua_State* L, const string& path) {
-		int top = lua_gettop(L);
 		lua_getfield(L, LUA_GLOBALSINDEX, "package");
-		printf("getting package\n");
 		if (!lua_istable(L, -1)) {
-			printf("No package table\n");
 			lua_pop(L, 1);
 			return;
 		}
-		printf("getting field\n");
 		lua_getfield(L, -1, "cpath");
 		if (!lua_isstring(L, -1)) {
-			printf("No cpath in package\n");
 			lua_pop(L, 2);
 			return;
 		}
 		
 		string oldpath = lua_tostring(L, -1);
 		oldpath += ";" + path + "?.so";
-		printf("pushing string\n");
 		lua_pushstring(L, oldpath.c_str());
-		printf("setting field\n");
 		lua_setfield(L, -3, "cpath");
 		
 		// Pop table
-		printf("popping table\n");
 		lua_pop(L, 2);
-		if(top != lua_gettop(L)) {
-			printf("Invalid top %d (%d)", lua_gettop(L), top);
-		}
 	}
 }
 
