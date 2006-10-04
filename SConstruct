@@ -49,7 +49,9 @@ if mode not in gcc_flags:
 toolset = [tools, 'swig']
 
 env = Environment(tools = toolset, ENV=os.environ)
-    
+
+env.SConsignFile()
+
 env.Append(CPPDEFINES = defs[mode])
 env.Append(CPPDEFINES = defs['common'])
 if env['PLATFORM'] == 'win32':
