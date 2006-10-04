@@ -4,7 +4,7 @@ Import('dev source_path')
 env, target, sources = dev.prepare_build(source_path, 'adchpp')
 
 env.Append(CPPPATH = ['.', '#'])
-env.Append(LIBS=['adchpp'])
+env.Append(LIBS=['adchppd'])
    
 ret = env.Program(target, sources)
 
