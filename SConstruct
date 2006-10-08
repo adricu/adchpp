@@ -51,6 +51,7 @@ toolset = [tools, 'swig']
 env = Environment(tools = toolset, ENV=os.environ)
 
 env.SConsignFile()
+env.Tool("gch", toolpath=".")
 
 env.Append(CPPDEFINES = defs[mode])
 env.Append(CPPDEFINES = defs['common'])

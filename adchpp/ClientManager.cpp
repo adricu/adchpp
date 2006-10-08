@@ -459,6 +459,7 @@ void ClientManager::removeLogins(Client& c) throw() {
 }
 
 void ClientManager::removeClient(Client& c) throw() {
+	signalDisconnected_(c);
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Client::STATE_NORMAL) {
 		clients.erase(c.getSID());
