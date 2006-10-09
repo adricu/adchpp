@@ -375,6 +375,11 @@ local function onMSG(c, cmd)
 		return adchpp.DONT_SEND
 	end
 	
+	if command == "error" then
+		xxxxyyyy()
+		return adchpp.DONT_SEND
+	end
+	
 	if command == "help" then
 		reply(c, "+test, +help, +regme password, +regnick nick password level")
 		return adchpp.DONT_SEND
