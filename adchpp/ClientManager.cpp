@@ -351,6 +351,12 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 	return true;
 }
 
+void ClientManager::setState(Client& c, Client::State newState) throw() {
+	Client::State oldState = c.getState();
+	c.setState(newState);
+	signalState_(c, oldState);
+}
+
 bool ClientManager::verifyUsers(Client& c) throw() {
 	if(c.isSet(Client::FLAG_OK_COUNT))
 		return true;
@@ -377,7 +383,7 @@ void ClientManager::enterIdentify(Client& c, bool sendData) throw() {
 		c.send(AdcCommand(AdcCommand::CMD_SID).addParam(AdcCommand::fromSID(c.getSID())));
 		c.send(strings.inf);
 	}
-	c.setState(Client::STATE_IDENTIFY);
+	setState(c, Client::STATE_IDENTIFY);
 }
 
 vector<uint8_t> ClientManager::enterVerify(Client& c, bool sendData) throw() {
@@ -391,7 +397,7 @@ vector<uint8_t> ClientManager::enterVerify(Client& c, bool sendData) throw() {
 		}
 		c.send(AdcCommand(AdcCommand::CMD_GPA).addParam(Encoder::toBase32(&challenge[0], challenge.size())));
 	}
-	c.setState(Client::STATE_VERIFY);
+	setState(c, Client::STATE_VERIFY);
 	return challenge;
 }
 
@@ -422,7 +428,7 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 	}
 
 	removeLogins(c);
-	c.setState(Client::STATE_NORMAL);
+	setState(c, Client::STATE_NORMAL);
 
 	clients.insert(make_pair(c.getSID(), &c));
 	cids.insert(make_pair(c.getCID(), c.getSID()));

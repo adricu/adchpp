@@ -403,6 +403,8 @@ public:
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
 	bool verifyUsers(Client& c) throw();
 
+	void setState(Client& c, Client::State newState) throw();
+	
 	//void incomingConnection(ManagedSocket* ms) throw();
 	
 	//void startup() throw() { updateCache(); }

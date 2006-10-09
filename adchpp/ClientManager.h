@@ -23,11 +23,11 @@
 #include "CID.h"
 #include "AdcCommand.h"
 #include "Signal.h"
+#include "Client.h"
 
 namespace adchpp {
 	
 class ManagedSocket;
-class Client;
 
 /**
  * The ClientManager takes care of all protocol details, clients and so on. This is the very
@@ -138,6 +138,9 @@ public:
 	
 	/** Verify the number of connected clients */
 	ADCHPP_DLL bool verifyUsers(Client& c) throw();
+	
+	/** Update the state of c (this fires signalState as well) */
+	ADCHPP_DLL void setState(Client& c, Client::State newState) throw();
 
 	/**
 	 * The SocketManager calls this when a new connection has been accepted.
@@ -195,7 +198,7 @@ private:
 	friend class CommandHandler<ClientManager>;
 
 	uint32_t makeSID();
-
+	
 	void removeLogins(Client& c) throw();
 	void removeClient(Client& c) throw();
 
