@@ -38,9 +38,8 @@ if 'HAVE_PTHREAD' in env['CPPDEFINES']:
 if env['PLATFORM'] == 'win32':
     env.Append(LIBS = ['ws2_32', 'mswsock'])
 
-if env.Dictionary().get('pch', False):
-	print "Found gch"
-env['GchSh'] = env.GchSh('adchpp.h')[0]
+if 'gcc' in env['TOOLS']:
+	env['GchSh'] = env.GchSh('adchpp.h')[0]
 
 for i, source in enumerate(sources):
 	if source.find("version.cpp") != -1:

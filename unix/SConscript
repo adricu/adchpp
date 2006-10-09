@@ -1,10 +1,10 @@
 # vim: set filetype=py
 
 Import('dev source_path')
-env, target, sources = dev.prepare_build(source_path, 'adchpp')
+env, target, sources = dev.prepare_build(source_path, 'adchppd')
 
 env.Append(CPPPATH = ['.', '#'])
-env.Append(LIBS=['adchppd'])
+env.Append(LIBS=['adchpp'])
    
 ret = env.Program(target, sources)
 
