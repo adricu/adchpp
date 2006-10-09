@@ -92,7 +92,6 @@ public:
 	C(GPA, 'G','P','A');
 	C(PAS, 'P','A','S');
 	C(QUI, 'Q','U','I');
-	C(DSC, 'D','S','C');
 	C(GET, 'G','E','T');
 	C(GFI, 'G','F','I');
 	C(SND, 'S','N','D');
@@ -188,7 +187,6 @@ public:
 			C(GPA);
 			C(PAS);
 			C(QUI);
-			C(DSC);
 			C(GET);
 			C(GFI);
 			C(SND);

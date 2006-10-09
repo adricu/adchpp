@@ -17,7 +17,6 @@ adchpp.TYPE_HUB = string.char(adchpp.TYPE_HUB)
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
 local command_min_levels = {
-	[adchpp.CMD_DSC] = 2
 }
 
 -- Regexes for the various fields. 
@@ -71,10 +70,13 @@ local command_contexts = {
 	[adchpp.CMD_GPA] = context_hub,
 	[adchpp.CMD_PAS] = context_hub,
 	[adchpp.CMD_QUI] = context_hub,
-	[adchpp.CMD_DSC] = context_hub,
 	[adchpp.CMD_GET] = context_hub,
 	[adchpp.CMD_GFI] = context_hub,
 	[adchpp.CMD_SND] = context_hub,
+}
+
+local user_commands = {
+	Disconnect = "HDSC %[userSID]\n"
 }
 
 -- The rest
@@ -358,6 +360,17 @@ local function onPAS(c, cmd)
 		
 	reply(c, "Welcome back")
 	cm:enterNormal(c, true, true)
+	
+	if user.level > 1 then
+		for k, v in pairs(user_commands) do
+
+			ucmd = adchpp.AdcCommand(adchpp.CMD_CMD, adchpp.TYPE_INFO, adchpp.HUB_SID)
+			ucmd:addParam(k)
+			ucmd:addParam("TT", v)
+			ucmd:addParam("CT", "2")
+			c:send(ucmd)
+		end
+	end
 	return command_processed
 end
 
@@ -464,6 +477,20 @@ local function onMSG(c, cmd)
 	return 0
 end
 
+local function onDSC(c, cmd)
+	sid = cmd:getParam(0)
+	
+	victim = cm:getClient(adchpp.AdcCommand_toSID(sid))
+	if not victim then
+		print "Victim not found"
+		return command_processed
+	end
+	
+	victim:disconnect()
+	reply(c, "Victim disconnected")
+	return command_processed
+end
+
 local function onReceive(c, cmd, override)
 	
 	cmdstr = cmd:getCommandString()
@@ -504,6 +531,8 @@ local function onReceive(c, cmd, override)
 		return onPAS(c, cmd)
 	elseif cmd:getCommand() == adchpp.CMD_MSG then
 		return onMSG(c, cmd)
+	elseif cmd:getCommandString() == "DSC" then
+		return onDSC(c, cmd)
 	end
 	return 0
 end

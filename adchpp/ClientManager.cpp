@@ -436,27 +436,6 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 	return true;
 }
 
-bool ClientManager::handle(AdcCommand::DSC, Client& c, AdcCommand& cmd) throw() {
-	if(cmd.getParam(0).size() != 4) {
-		return false;
-	}
-	
-	Client* victim = getClient(AdcCommand::toSID(cmd.getParam(0)));
-	if(!victim) {
-		c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Client not found"));
-		return false;
-	}
-	
-	AdcCommand qui(AdcCommand::CMD_QUI);
-	for(size_t i = 1; i < cmd.getParameters().size(); ++i) {
-		qui.addParam(cmd.getParameters()[i]);
-	}
-	
-	victim->send(qui);
-	victim->disconnect();
-	return false;
-}
-
 void ClientManager::removeLogins(Client& c) throw() {
 	deque<pair<Client*, time_t> >::iterator i = find_if(logins.begin(), logins.end(), CompareFirst<Client*, time_t>(&c));
 	if(i != logins.end()) {

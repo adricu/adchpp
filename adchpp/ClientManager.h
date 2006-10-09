@@ -204,7 +204,6 @@ private:
 
 	bool handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw();
 	bool handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw();
-	bool handle(AdcCommand::DSC, Client& c, AdcCommand& cmd) throw();
 	bool handleDefault(Client& c, AdcCommand& cmd) throw();
 	
 	template<typename T> bool handle(T, Client& c, AdcCommand& cmd) throw() { return handleDefault(c, cmd); }

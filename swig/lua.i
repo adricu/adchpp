@@ -97,16 +97,20 @@ private:
 		status = lua_pcall(L, narg, nret, base);
 		lua_remove(L, base);  /* remove traceback function */
 		if(status == LUA_ERRRUN) {
-			if (!lua_isstring(L, -1)) {
+			if (!lua_isnil(L, -1)) {
 				const char *msg = lua_tostring(L, -1);
 				if (msg == NULL) msg = "(error object is not a string)";
 				fprintf(stderr, "%d, %d: %s\n", status, lua_type(L, -1), msg);
+			} else {
+				fprintf(stderr, "Lua error without error");
 			}
 			lua_pop(L, 1);
 		} else if(status == LUA_ERRMEM) {
 			fprintf(stderr, "Lua memory allocation error\n");
 		} else if(status == LUA_ERRERR) {
 			fprintf(stderr, "Lua error function error\n");
+		} else if(status != 0) {
+			fprintf(stderr, "Unknown lua status: %d\n", status);
 		}
 			
 		return status;
