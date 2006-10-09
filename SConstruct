@@ -32,6 +32,12 @@ defs = {
 
 # --- cut ---
 
+import SCons
+if SCons.__version__ != "0.96.1":
+	import sys
+	print "Only builds with SCons 0.96.1, you have", SCons.__version__
+	sys.exit()
+
 import os,sys
 
 if sys.platform == 'win32':
