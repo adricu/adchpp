@@ -17,6 +17,7 @@ adchpp.TYPE_HUB = string.char(adchpp.TYPE_HUB)
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
 local command_min_levels = {
+--	[adchpp.CMD_DSC] = 2
 }
 
 -- Regexes for the various fields. 
@@ -361,9 +362,8 @@ local function onPAS(c, cmd)
 	reply(c, "Welcome back")
 	cm:enterNormal(c, true, true)
 	
-	if user.level > 1 then
+	if user.level > 1 and c:supports("UCMD") then
 		for k, v in pairs(user_commands) do
-
 			ucmd = adchpp.AdcCommand(adchpp.CMD_CMD, adchpp.TYPE_INFO, adchpp.HUB_SID)
 			ucmd:addParam(k)
 			ucmd:addParam("TT", v)
@@ -399,13 +399,8 @@ local function onMSG(c, cmd)
 	end
 	
 	if command == "regme" then
-		if not parameters then
-			reply(c, "You need to supply a password")
-			return adchpp.DONT_SEND
-		end
-		
 		if not parameters:match("%S+") then
-			reply(c, "No whitespace allowed in password")
+			reply(c, "You need to supply a password without whitespace")
 			return adchpp.DONT_SEND
 		end
 		
@@ -424,7 +419,7 @@ local function onMSG(c, cmd)
 		
 		level = tonumber(level)
 		
-		other = cm:getClientByNick(nick)
+		other = cm:findByNick(nick)
 		
 		local cid
 		if other then

@@ -272,6 +272,12 @@ public:
 		int cmd = self->getCommand();
 		return string(reinterpret_cast<const char*>(&cmd), 3);
 	}
+	static uint32_t toCMD(const string& cmd) {
+		if(cmd.length() != 3) {
+			return 0;
+		}
+		return (((uint32_t)cmd[0]) | (((uint32_t)cmd[1])<<8) | (((uint32_t)cmd[2])<<16));
+	}
 }
 
 class Client {
@@ -380,6 +386,14 @@ public:
 			ret.push_back(i->second);
 		}
 		return ret;
+	}
+	Client* findByNick(const string& nick) {
+		for(ClientManager::ClientMap::iterator i = self->getClients().begin(); i != self->getClients().end(); ++i) {
+			const string& nick2 = i->second->getField("NI");
+			if(nick == nick2)
+				return i->second;
+		}
+		return 0;
 	}
 	}
 	
