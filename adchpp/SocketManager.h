@@ -25,7 +25,7 @@
 #include "Singleton.h"
 
 namespace adchpp {
-	
+
 class ManagedSocket;
 class Writer;
 

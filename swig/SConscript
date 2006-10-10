@@ -77,10 +77,11 @@ def buildPyModule():
 	if '/MDd' in env['CCFLAGS']:
 		env['CCFLAGS'].remove('/MDd')
 		env['CCFLAGS'].append('/MD')
-		
+	
+	import os,distutils,sys
 	if env['PLATFORM'] == 'win32':
-		env.Append(LIBPATH=['c:/python24/libs'])
-		env.Append(LIBS=['python24', 'adchpp'])
+		env.Append(LIBPATH=[os.path.join(distutils.sysconfig.get_config_var('prefix'),"libs")])
+		env.Append(LIBS=["python"+"".join(sys.version[0:3].split(".")), 'adchpp'])
 	else:
 		env.Append(LIBS=['python2.4', 'adchpp'])
 		
@@ -94,20 +95,10 @@ def buildLuaModule():
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
 	f = env.CFile(build_path + 'lua_wrap.cxx', source='lua.i')
 	
-	import distutils.sysconfig
-	
-	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
-	if '_DEBUG' in env['CPPDEFINES']:
-		env['CPPDEFINES'].remove('_DEBUG')
-	if '/MDd' in env['CCFLAGS']:
-		env['CCFLAGS'].remove('/MDd')
-		env['CCFLAGS'].append('/MD')
-
 	env.Append(LIBS=['adchpp', 'alua'])
-	
 	# We assume the lua from the script plugin will be used...
 	
-	env.Append(CPPPATH=['#/lua/'])
+	env.Append(CPPPATH=['#', '#/lua/'])
 
 	if env['PLATFORM'] == 'win32':
 		env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])

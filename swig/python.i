@@ -6,19 +6,19 @@
 %}
 
 %typemap(in) boost::function<void (adchpp::Client&)> {
-	$1 = PyHandle($input);
+	$1 = PyHandle($input, false);
 }
 %typemap(in) boost::function<void (adchpp::Client&, adchpp::AdcCommand&)> {
-	$1 = PyHandle($input);
+	$1 = PyHandle($input, false);
 }
 %typemap(in) boost::function<void (adchpp::Client&, int)> {
-	$1 = PyHandle($input);
+	$1 = PyHandle($input, false);
 }
 %typemap(in) boost::function<void (adchpp::Client&, const std::string&)> {
-	$1 = PyHandle($input);
+	$1 = PyHandle($input, false);
 }
 %typemap(in) boost::function<void (adchpp::Client&, adchpp::AdcCommand&, int&)> {
-	$1 = PyHandle($input);
+	$1 = PyHandle($input, false);
 }
 
 %include "adchpp.i"
@@ -34,7 +34,7 @@ struct PyGIL {
 };
 
 struct PyHandle {
-	PyHandle(PyObject* obj_) : obj(obj_) { Py_XINCREF(obj); }
+	PyHandle(PyObject* obj_, bool newRef) : obj(obj_) { if(!newRef) Py_XINCREF(obj); }
 	PyHandle(const PyHandle& rhs) : obj(rhs.obj) { Py_XINCREF(obj); }
 	
 	PyHandle& operator=(const PyHandle& rhs) { 
@@ -45,11 +45,12 @@ struct PyHandle {
 	}
 	~PyHandle() { Py_XDECREF(obj); }
 	
+	PyObject* operator ->() { return obj; }
 	operator PyObject*() { return obj; }
 	
 	void operator()() {
 		PyGIL gil;
-		PyHandle ret(PyObject_Call(obj, PyTuple_New(0), 0));
+		PyHandle ret(PyObject_Call(obj, PyTuple_New(0), 0), true);
 	}
 	
 	void operator()(adchpp::Client& c) {
@@ -57,7 +58,7 @@ struct PyHandle {
 		PyObject* args(PyTuple_New(1));
 		
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
-		PyHandle ret(PyObject_Call(obj, args, 0));
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}
 
 	void operator()(adchpp::Client& c, const std::string& str) {
@@ -67,7 +68,7 @@ struct PyHandle {
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
 		PyTuple_SetItem(args, 1, PyString_FromString(str.c_str()));
 		
-		PyHandle ret(PyObject_Call(obj, args, 0));
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}
 	
 	void operator()(adchpp::Client& c, int i) {
@@ -77,7 +78,7 @@ struct PyHandle {
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
 		PyTuple_SetItem(args, 1, PyInt_FromLong(i));
 		
-		PyHandle ret(PyObject_Call(obj, args, 0));
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}
 
 	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd) {
@@ -87,7 +88,7 @@ struct PyHandle {
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
 		
-		PyHandle ret(PyObject_Call(obj, args, 0));
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}
 
 	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd, int& i) {
@@ -98,7 +99,11 @@ struct PyHandle {
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
 		PyTuple_SetItem(args, 2, PyInt_FromLong(i));
 		
-		PyHandle ret(PyObject_Call(obj, args, 0));
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
+		
+		if(PyInt_Check(ret)) {
+			i |= static_cast<int>(PyInt_AsLong(ret));
+		}
 	}
 
 private:
