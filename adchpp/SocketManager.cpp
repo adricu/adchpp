@@ -390,6 +390,7 @@ private:
 				return;
 			}
 			
+			Util::freeBuf = readBuf;
 			prepareRead(ms);
 			return;
 		}
@@ -427,7 +428,7 @@ private:
 		
 		if(!ms->writeBuf) {
 			if(ms->disc) {
-				ms->shutdown();
+				ms->close();
 			}
 			return;
 		}
