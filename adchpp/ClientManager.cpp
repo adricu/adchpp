@@ -101,7 +101,7 @@ void ClientManager::updateCache() throw() {
 bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
 	time_t add = ((cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_FEATURE) ? 1 : 0) * SETTING(FLOOD_ADD);
 	if(c.isFlooding(add)) {
-		c.disconnect();
+		c.disconnect(Util::REASON_FLOODING);
 		return true;
 	}
 	
@@ -135,7 +135,7 @@ void ClientManager::onConnected(Client& c) throw() {
 		Client* cc = logins.front().first;
 
 		dcdebug("ClientManager: Login timeout in state %d\n", cc->getState());
-		cc->disconnect();
+		cc->disconnect(Util::REASON_LOGIN_TIMEOUT);
 		logins.pop_front();
 	}
 
@@ -160,7 +160,7 @@ void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
 		cmd.getType() == AdcCommand::TYPE_HUB)) 
 	{
 		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid command type"));
-		c.disconnect();
+		c.disconnect(Util::REASON_INVALID_COMMAND_TYPE);
 		return;
 	}
 	
@@ -179,10 +179,14 @@ void ClientManager::onBadLine(Client& c, const string& aLine) throw() {
 	signalBadLine_(c, aLine);
 }
 
+void ClientManager::badState(Client& c) throw() {
+	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
+	c.disconnect(Util::REASON_BAD_STATE);
+}	
+
 bool ClientManager::handleDefault(Client& c, AdcCommand&) throw() {
 	if(c.getState() != Client::STATE_NORMAL) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
-		c.disconnect();
+		badState(c);
 		return false;
 	}			
 	return true; 
@@ -196,8 +200,7 @@ bool ClientManager::handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw() 
 	if(c.getState() == Client::STATE_PROTOCOL) {
 		enterIdentify(c, true);
 	} else if(c.getState() != Client::STATE_NORMAL) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
-		c.disconnect();
+		badState(c);
 		return false;
 	}
 	return true;
@@ -207,7 +210,7 @@ bool ClientManager::verifySUP(Client& c, AdcCommand& cmd) throw() {
 	c.updateSupports(cmd);
 	if(!c.supports("BASE") && !c.supports("BAS0")) {
 		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "This hub requires BASE support"));
-		c.disconnect();
+		c.disconnect(Util::REASON_NO_BASE_SUPPORT);
 	}
 	return true;
 }
@@ -254,8 +257,7 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const vect
 
 bool ClientManager::handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw() {
 	if(c.getState() != Client::STATE_IDENTIFY && c.getState() != Client::STATE_NORMAL) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
-		c.disconnect();
+		badState(c);
 		return false;
 	}
 			
@@ -283,7 +285,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 				cmd.resetString();
 			} else if(j->compare(2, j->size()-2, c.getIp()) != 0 && j->size() != 2) {
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam("IP", c.getIp()));
-				c.disconnect();
+				c.disconnect(Util::REASON_INVALID_IP);
 				return false;
 			} 
 		}
@@ -297,13 +299,13 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 		string spid;
 		if(!cmd.getParam("PD", 0, spid)) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INF_MISSING, "PID missing").addParam("FLPD"));
-			c.disconnect();
+			c.disconnect(Util::REASON_PID_MISSING);
 			return false;
 		}
 		
 		if(strtmp.size() != CID::BASE32_SIZE || spid.size() != CID::BASE32_SIZE) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid CID/PID length"));
-			c.disconnect();
+			c.disconnect(Util::REASON_PID_CID_LENGTH);
 			return false;
 		}			
 		
@@ -314,11 +316,18 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 		th.update(pid.data(), CID::SIZE);
 		if(!(CID(th.finalize()) == cid)) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INVALID_PID, "PID does not correspond to CID"));
-			c.disconnect();
+			c.disconnect(Util::REASON_PID_CID_MISMATCH);
+			return false;
+		}
+		
+		if(cids.find(c.getCID()) != cids.end()) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, STRING(CID_TAKEN)));
+			c.disconnect(Util::REASON_CID_TAKEN);
 			return false;
 		}
 
 		c.setCID(cid);
+		cids.insert(make_pair(c.getCID(), c.getSID()));
 		cmd.delParam("PD", 0);
 	}
 	return true;
@@ -331,7 +340,7 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 		for(string::size_type i = 0; i < strtmp.length(); ++i) {
 			if((uint8_t)strtmp[i] < 33) {
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, STRING(NICK_INVALID)));
-				c.disconnect();
+				c.disconnect(Util::REASON_NICK_INVALID);
 				return false;
 			}
 		}
@@ -341,7 +350,7 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 		
 		if(nicks.find(strtmp) != nicks.end()) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_TAKEN, STRING(NICK_TAKEN)));
-			c.disconnect();
+			c.disconnect(Util::REASON_NICK_TAKEN);
 			return false;
 		}
 
@@ -368,7 +377,7 @@ bool ClientManager::verifyUsers(Client& c) throw() {
 		} else {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_HUB_FULL, STRING(HUB_FULL)));
 		}
-		c.disconnect();
+		c.disconnect(Util::REASON_HUB_FULL);
 		return false;
 	}
 	c.setFlag(Client::FLAG_OK_COUNT);
@@ -404,11 +413,6 @@ vector<uint8_t> ClientManager::enterVerify(Client& c, bool sendData) throw() {
 bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw() {
 	dcassert(c.getState() == Client::STATE_IDENTIFY || c.getState() == Client::STATE_VERIFY);
 	dcdebug("%s entering NORMAL\n", AdcCommand::fromSID(c.getSID()).c_str());
-	if(cids.find(c.getCID()) != cids.end()) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, STRING(CID_TAKEN)));
-		c.disconnect();
-		return false;
-	}
 
 	if(sendData) {
 		string str;
@@ -431,7 +435,6 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 	setState(c, Client::STATE_NORMAL);
 
 	clients.insert(make_pair(c.getSID(), &c));
-	cids.insert(make_pair(c.getCID(), c.getSID()));
 
 	return true;
 }
@@ -448,12 +451,12 @@ void ClientManager::removeClient(Client& c) throw() {
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Client::STATE_NORMAL) {
 		clients.erase(c.getSID());
-		cids.erase(c.getCID());
 		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())));
 	} else {
 		removeLogins(c);
 	}
 	nicks.erase(c.getField("NI"));
+	cids.erase(c.getCID());
 }
 
 void ClientManager::addSupports(const string& str) throw() {

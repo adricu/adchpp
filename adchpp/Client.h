@@ -81,14 +81,8 @@ public:
 		socket->fastWrite(command.c_str(), command.length(), lowPrio);
 	}
 
-	void disconnect() throw() {
-		if(!disconnecting) {
-			disconnecting = true;
-			dcassert(socket != NULL);
-			socket->disconnect();
-		}
-	}
-
+	/** @param reason The statistic to update */
+	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
 	ManagedSocket* getSocket() throw() { return socket; }
 	const ManagedSocket* getSocket() const throw() { return socket; }
 	const string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }

@@ -46,6 +46,7 @@ string Util::appPath;
 Util::Stats Util::stats;
 string Util::emptyString;
 string Util::cfgPath;
+size_t Util::reasons[REASON_LAST];
 
 Pool<ByteVector, Util::Clear> Util::freeBuf;
 

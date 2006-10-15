@@ -108,16 +108,38 @@ private:
 class Util  
 {
 public:
+	enum Reason {
+		REASON_BAD_STATE,
+		REASON_CID_TAKEN,
+		REASON_FLOODING,
+		REASON_HUB_FULL,
+		REASON_INVALID_COMMAND_TYPE,
+		REASON_INVALID_IP,
+		REASON_INVALID_SID,
+		REASON_LOGIN_TIMEOUT,
+		REASON_MAX_COMMAND_SIZE,
+		REASON_NICK_INVALID,
+		REASON_NICK_TAKEN,
+		REASON_NO_BASE_SUPPORT,
+		REASON_PID_MISSING,
+		REASON_PID_CID_LENGTH,
+		REASON_PID_CID_MISMATCH,
+		REASON_PLUGIN,
+		REASON_LAST,
+	};
+
+	ADCHPP_DLL static size_t reasons[REASON_LAST];
+	
 	struct Stats {
 		int64_t totalUp;			///< Total bytes uploaded
 		int64_t totalDown;			///< Total bytes downloaded
-		uint32_t startTime;		///< The time the hub was started
+		uint32_t startTime;			///< The time the hub was started
 	};
 
 	ADCHPP_DLL static Stats stats;
 	ADCHPP_DLL static string emptyString;
 
-	static void initialize(const string& configPath);
+	ADCHPP_DLL static void initialize(const string& configPath);
 	ADCHPP_DLL static string getOsVersion();
 	ADCHPP_DLL static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
 	ADCHPP_DLL static string formatTime(const string& msg, time_t t = time(NULL));

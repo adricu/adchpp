@@ -86,7 +86,7 @@ void Client::onData(const vector<uint8_t>& data) throw() {
 	}
 
 	if(SETTING(MAX_COMMAND_SIZE) > 0 && line.size() > (size_t)SETTING(MAX_COMMAND_SIZE)) {
-		disconnect();
+		disconnect(Util::REASON_MAX_COMMAND_SIZE);
 		return;
 	}
 
@@ -121,7 +121,7 @@ void Client::onData(const vector<uint8_t>& data) throw() {
 			if(cmd.getType() == 'H') {
 				cmd.setFrom(getSID());
 			} else if(cmd.getFrom() != getSID()) {
-				disconnect();
+				disconnect(Util::REASON_INVALID_SID);
 				line.clear();
 				return;
 			}
@@ -182,6 +182,14 @@ bool Client::isFlooding(time_t addSeconds) {
 	}
 	
 	return false;
+}
+
+void Client::disconnect(Util::Reason reason) throw() {
+	if(socket && !disconnecting) {
+		Util::reasons[reason]++;
+		disconnecting = true;
+		socket->disconnect();
+	}
 }
 
 void Client::onFailed() throw() {

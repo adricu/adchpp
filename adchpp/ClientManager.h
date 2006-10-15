@@ -44,19 +44,20 @@ public:
 	typedef HASH_MAP<uint32_t, Client*> ClientMap;
 	typedef ClientMap::iterator ClientIter;
 	
-	/**
-	 * Adds a string to the supports being sent out (useful for protocol extension plugins).
-	 */
+	/** Adds a string to SUP, propagating the change to all connected clients */
 	ADCHPP_DLL void addSupports(const string& str) throw();
+	/** Removes a string from SUP, propagating the change to all connected clients */
 	ADCHPP_DLL void removeSupports(const string& str) throw();
 
 	ADCHPP_DLL void updateCache() throw();
 	
+	/** @return SID of client or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const string& nick) const throw();
+	/** @return SID of client or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const CID& cid) const throw();
 	
 	/** @return The client associated with a certain SID, NULL if not found */
-	Client* getClient(const uint32_t& aSid) throw() {
+	Client* getClient(uint32_t aSid) throw() {
 		ClientIter i = clients.find(aSid);
 		return (i == clients.end()) ? 0 : i->second;
 	}
@@ -66,11 +67,11 @@ public:
 	 */
 	ClientMap& getClients() throw() { return clients; }
 
-	/**
-	 * Send a command to the clients according to its type
-	 */
+	/** Send a command to the clients according to its type */
 	ADCHPP_DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
+	/** Send command to all regardless of type */
 	ADCHPP_DLL void sendToAll(const AdcCommand& cmd) throw();
+	/** Send command to a single client regardless of type */
 	ADCHPP_DLL void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
 	/**
@@ -212,6 +213,8 @@ private:
 	void onReceive(Client&, AdcCommand&) throw();
 	void onBadLine(Client&, const string&) throw();
 	void onFailed(Client&) throw();
+	
+	void badState(Client& c) throw();
 	
 	SignalConnected signalConnected_;
 	SignalReceive signalReceive_;

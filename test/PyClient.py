@@ -1,13 +1,15 @@
 import sys
 
 sys.path.append('../build/debug-mingw/bin')
-sys.path.append('../build/debug-default/bin')
+sys.path.append('../build/debug-mingw/bin')
 
 CLIENTS = 100
 
 import socket, threading, time
 
-from pyadchpp import CID, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
+from pyadchpp import Util_initialize, CID, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
+
+Util_initialize("")
 
 class Client(object):
 	def __init__(self, n):
@@ -67,8 +69,8 @@ class Client(object):
 		cmd.addParam("NI" + self.nick)
 		self.command(cmd)
 	
-	def test_close(self):
-		self.sock.close()
+#	def test_close(self):
+#		self.sock.close()
 		
 	def test_error(self):
 		cmd = AdcCommand(AdcCommand.CMD_MSG, AdcCommand.TYPE_BROADCAST, self.sid)
@@ -89,9 +91,10 @@ class Client(object):
 		try:
 			while self.get_command():
 				pass
+			self.sock.close()
 		except Exception, e:
 			print "Client " + self.nick + " died:", e
-			self.running = False
+		self.running = False
 try:
 	clients = []
 	for i in range(CLIENTS):
@@ -115,7 +118,7 @@ try:
 			if len(clients) == 0:
 				break
 				
-			if random.random() > (1./len(clients)):
+			if random.random() > (5./len(clients)):
 				continue
 			tests = []
 			for k,v in Client.__dict__.iteritems():

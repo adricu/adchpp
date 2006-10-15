@@ -16,10 +16,13 @@
 using namespace adchpp;
 
 %}
- 
+
 %include "std_string.i"
 %include "std_vector.i"
 %include "std_except.i"
+%include "carrays.i"
+
+%array_functions(size_t, size_t);
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -110,6 +113,82 @@ public:
 	const string& getError() const throw();
 	
 	virtual const char* what();
+};
+
+class Util  
+{
+public:
+	enum Reason {
+		REASON_BAD_STATE,
+		REASON_CID_TAKEN,
+		REASON_FLOODING,
+		REASON_HUB_FULL,
+		REASON_INVALID_COMMAND_TYPE,
+		REASON_INVALID_IP,
+		REASON_INVALID_SID,
+		REASON_LOGIN_TIMEOUT,
+		REASON_MAX_COMMAND_SIZE,
+		REASON_NICK_INVALID,
+		REASON_NICK_TAKEN,
+		REASON_NO_BASE_SUPPORT,
+		REASON_PID_MISSING,
+		REASON_PID_CID_LENGTH,
+		REASON_PID_CID_MISMATCH,
+		REASON_PLUGIN,
+		REASON_LAST,
+	};
+
+	static size_t reasons[REASON_LAST];
+	
+/*	struct Stats {
+		int64_t totalUp;			///< Total bytes uploaded
+		int64_t totalDown;			///< Total bytes downloaded
+		uint32_t startTime;		///< The time the hub was started
+	};
+
+	static Stats stats;
+*/
+	static string emptyString;
+
+	static void initialize(const string& configPath);
+	static string getOsVersion();
+	static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
+	static string formatTime(const string& msg, time_t t = time(NULL));
+	
+	static const string& getCfgPath();
+	static void setCfgPath(const string& path);
+
+	static string getAppPath();
+	static string getAppName();
+
+	static string translateError(int aError);
+	
+	static string toAcp(const wstring& wString);
+	static const string& toAcp(const string& wString);
+
+	static wstring toUnicode(const string& aString);
+	static const wstring& toUnicode(const wstring& aString);
+
+	static string formatBytes(const string& aString);
+
+	static string getShortTimeString();
+	static string getTimeString();
+		
+	static string formatBytes(int64_t aBytes);
+
+	static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0);
+
+	static string formatSeconds(int64_t aSec);
+	
+
+	/** Avoid this! Use the one of a connected socket instead... */
+	static string getLocalIp();
+
+	static uint32_t rand();
+	static uint32_t rand(uint32_t high);
+	static uint32_t rand(uint32_t low, uint32_t high);
+	static double randd();
+
 };
 
 class CID {
@@ -266,8 +345,8 @@ public:
 	static uint32_t toSID(const string& aSID);
 	static string fromSID(const uint32_t aSID);
 	static void appendSID(string& str, uint32_t aSID);
-};
-%extend AdcCommand {
+
+%extend {
 	string getCommandString() {
 		int cmd = self->getCommand();
 		return string(reinterpret_cast<const char*>(&cmd), 3);
@@ -279,6 +358,8 @@ public:
 		return (((uint32_t)cmd[0]) | (((uint32_t)cmd[1])<<8) | (((uint32_t)cmd[2])<<16));
 	}
 }
+	
+};
 
 class Client {
 public:
@@ -312,7 +393,7 @@ public:
 	void send(const string& command) throw();
 	//void send(const char* command) throw();
 
-	void disconnect() throw();
+	void disconnect(Util::Reason reason) throw();
 	//ManagedSocket* getSocket() throw() { return socket; }
 	//const ManagedSocket* getSocket() const throw() { return socket; }
 	const string& getIp() const throw();
@@ -624,60 +705,6 @@ public:
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();
-};
-
-class Util  
-{
-public:
-/*	struct Stats {
-		int64_t totalUp;			///< Total bytes uploaded
-		int64_t totalDown;			///< Total bytes downloaded
-		uint32_t startTime;		///< The time the hub was started
-	};
-
-	static Stats stats;
-*/
-	static string emptyString;
-
-//	static void initialize(const string& configPath);
-	static string getOsVersion();
-	static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
-	static string formatTime(const string& msg, time_t t = time(NULL));
-	
-	static const string& getCfgPath();
-	static void setCfgPath(const string& path);
-
-	static string getAppPath();
-	static string getAppName();
-
-	static string translateError(int aError);
-	
-	static string toAcp(const wstring& wString);
-	static const string& toAcp(const string& wString);
-
-	static wstring toUnicode(const string& aString);
-	static const wstring& toUnicode(const wstring& aString);
-
-	static string formatBytes(const string& aString);
-
-	static string getShortTimeString();
-	static string getTimeString();
-		
-	static string formatBytes(int64_t aBytes);
-
-	static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0);
-
-	static string formatSeconds(int64_t aSec);
-	
-
-	/** Avoid this! Use the one of a connected socket instead... */
-	static string getLocalIp();
-
-	static uint32_t rand();
-	static uint32_t rand(uint32_t high);
-	static uint32_t rand(uint32_t low, uint32_t high);
-	static double randd();
-
 };
 
 

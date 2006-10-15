@@ -377,28 +377,29 @@ end
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
 
-	command, parameters = msg:match("^%+(%a+) ?(.*)")
+	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 	
 	if not command then
 		return 0
 	end
-		
+
+	local stat = '+' .. command
+	if stats[stat] then
+		stats[stat] = stats[stat] + 1
+	else
+		stats[stat] = 1
+	end
+	
 	if command == "test" then
 		reply(c, "Test ok")
 		return adchpp.DONT_SEND
-	end
-	
-	if command == "error" then
+	elseif command == "error" then
 		xxxxyyyy()
 		return adchpp.DONT_SEND
-	end
-	
-	if command == "help" then
+	elseif command == "help" then
 		reply(c, "+test, +help, +regme password, +regnick nick password level")
 		return adchpp.DONT_SEND
-	end
-	
-	if command == "regme" then
+	elseif command == "regme" then
 		if not parameters:match("%S+") then
 			reply(c, "You need to supply a password without whitespace")
 			return adchpp.DONT_SEND
@@ -408,9 +409,7 @@ local function onMSG(c, cmd)
 				
 		reply(c, "You're now registered")
 		return adchpp.DONT_SEND
-	end
-	
-	if command == "regnick" then
+	elseif command == "regnick" then
 		local nick, password, level = parameters:match("^(%S+) (%S+) (%d+)")
 		if not nick or not password or not level then
 			reply(c, "You must supply nick, password and level!")
@@ -452,9 +451,7 @@ local function onMSG(c, cmd)
 		end
 
 		return adchpp.DONT_SEND
-	end
-	
-	if command == "stats" then
+	elseif command == "stats" then
 		local uptime = os.difftime(os.time(), start_time)
 		local uptime_d = math.floor(uptime / (60*60*24))
 		local uptime_h = math.floor(uptime / (60*60)) % 24
@@ -463,10 +460,17 @@ local function onMSG(c, cmd)
 		
 		str = "\nScript uptime: " .. string.format("%d days, %d hours, %d minutes and %d seconds\n", uptime_d, uptime_h, uptime_m,uptime_s)
 		for k, v in pairs(stats) do
-			str = str .. k .. ": " .. v .. "\n"
+			str = str .. v .. "\t" .. k .. "\n"
 		end
+		str = str .. "Disconnect reasons: \n"
+		for k, v in pairs(adchpp) do
+			if k:sub(1, 7) == "REASON_" and k ~= "REASON_LAST" then
+				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k .. "\n"
+			end
+		end
+		
 		reply(c, str)
-		return command_processed
+		return adchpp.DONT_SEND
 	end
 	
 	return 0
@@ -487,10 +491,6 @@ local function onDSC(c, cmd)
 end
 
 local function onReceive(c, cmd, override)
-	
-	for i,v in ipairs(cm:getClients()) do
-		print(i .. v)
-	end
 	
 	cmdstr = cmd:getCommandString()
 	if stats[cmdstr] then
