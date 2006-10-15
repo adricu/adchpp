@@ -24,13 +24,22 @@ static int traceback (lua_State *L) {
   return 1;
 }
 
+class RegistryItem : private boost::noncopyable {
+public:
+	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { }
+	~RegistryItem() { luaL_unref(L, LUA_REGISTRYINDEX, index); }
+
+	void push() { lua_rawgeti(L, LUA_REGISTRYINDEX, index); }
+private:
+	lua_State* L;
+	int index;
+};
+
 class LuaFunction {
 public:
-	LuaFunction(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { }
-	LuaFunction(const LuaFunction& rhs) : L(rhs.L), index(rhs.index) { }
-	LuaFunction& operator=(const LuaFunction& rhs) { L = rhs.L; index = rhs.index; return *this; }
-	
-	/** @todo Fix deref */
+	LuaFunction(lua_State* L_) : L(L_), registryItem(new RegistryItem(L_)) { }
+	LuaFunction(const LuaFunction& rhs) : L(rhs.L), registryItem(rhs.registryItem) { }
+	LuaFunction& operator=(const LuaFunction& rhs) { L = rhs.L; registryItem = rhs.registryItem; return *this; }
 
 	void operator()(adchpp::Client& c) {
 		pushFunction();
@@ -85,9 +94,7 @@ public:
 
 private:
 
-	void pushFunction() {
-		lua_rawgeti(L, LUA_REGISTRYINDEX, index);
-	}
+	void pushFunction() { registryItem->push(); }
 
 	int docall(int narg, int nret) {
 		int status;
@@ -117,7 +124,7 @@ private:
 	}
 	
 	lua_State* L;
-	int index;
+	boost::shared_ptr<RegistryItem> registryItem;
 };
 
 %}

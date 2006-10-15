@@ -488,6 +488,10 @@ end
 
 local function onReceive(c, cmd, override)
 	
+	for i,v in ipairs(cm:getClients()) do
+		print(i .. v)
+	end
+	
 	cmdstr = cmd:getCommandString()
 	if stats[cmdstr] then
 		stats[cmdstr] = stats[cmdstr] + 1
