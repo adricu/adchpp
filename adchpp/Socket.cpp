@@ -92,7 +92,7 @@ void Socket::listen(short aPort) throw(SocketException) {
 	}
 }
 
-void Socket::accept(const Socket& aSocket) throw(SocketException){
+string Socket::accept(const Socket& aSocket) throw(SocketException){
 	if(sock != INVALID_SOCKET) {
 		Socket::disconnect();
 	}
@@ -101,6 +101,7 @@ void Socket::accept(const Socket& aSocket) throw(SocketException){
 	socklen_t sz = sizeof(sock_addr);
 
 	checksockerr(sock=::accept(aSocket.sock, (sockaddr*)&sock_addr, &sz));
+	return string(inet_ntoa(sock_addr.sin_addr));
 }
 
 /**

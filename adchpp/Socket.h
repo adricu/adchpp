@@ -105,7 +105,7 @@ public:
 	virtual void bind(short aPort) throw(SocketException);
 	virtual void connect(const string& aIp, short aPort) throw(SocketException);
 	void connect(const string& aIp, const string& aPort) throw(SocketException) { connect(aIp, (short)Util::toInt(aPort)); }
-	virtual void accept(const Socket& aSocket) throw(SocketException);
+	virtual string accept(const Socket& aSocket) throw(SocketException);
 	virtual void write(const char* aBuffer, size_t aLen) throw(SocketException);
 	void write(const string& aData) throw(SocketException) { write(aData.data(), aData.length()); }
 	virtual int writeNB(const char* aBuffer, size_t aLen) throw(SocketException);

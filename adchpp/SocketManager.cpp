@@ -728,14 +728,13 @@ private:
 	void accept() throw() {
 		ManagedSocket* ms = new ManagedSocket();
 		try {
-			ms->sock.accept(srv);
+			ms->setIp(ms->sock.accept(srv));
 					
 			if(!poller.associate(ms)) {
 				LOGDT(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
 				ms->deref();
 				return;
 			}
-			//ms->setIp(inet_ntoa(remote->sin_addr));
 	
 			// Job thread gets a reference here...
 			ms->ref();
