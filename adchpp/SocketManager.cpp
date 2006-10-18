@@ -768,10 +768,10 @@ private:
 				Util::freeBuf = readBuf;
 				
 				int error = errno;
-				if(error == EAGAIN) {
-					return;
+				if(error != EAGAIN) {
+					failRead(ms);
 				}
-				failRead(ms);
+				return;
 			} else if(bytes == 0) {
 				Util::freeBuf = readBuf;
 				failRead(ms);
