@@ -86,6 +86,15 @@ class Client(object):
 		cmd = AdcCommand(AdcCommand.CMD_MSG, AdcCommand.TYPE_BROADCAST, self.sid)
 		cmd.addParam("hello from " + self.nick)
 		self.command(cmd)
+		
+	def test_nick(self):
+		self.nick = "user_" + str(CID_generate())
+		cmd = AdcCommand(AdcCommand.CMD_MSG, AdcCommand.TYPE_BROADCAST, self.sid)
+		cmd.addParam("renaming myself to " + self.nick)
+		self.command(cmd)
+		cmd = AdcCommand(AdcCommand.CMD_INF, AdcCommand.TYPE_BROADCAST, self.sid)
+		cmd.addParam("NI", self.nick)
+		self.command(cmd)
 
 	def __call__(self):
 		try:
@@ -109,6 +118,12 @@ try:
 	
 	time.sleep(5)
 	import random
+	tests = []
+	for k,v in Client.__dict__.iteritems():
+		if len(k) < 4 or k[0:4] != "test":
+			continue
+		tests.append(v)
+	print tests
 	while len(clients) > 0:
 		time.sleep(1)
 		for c in clients:
@@ -120,14 +135,9 @@ try:
 				
 			if random.random() > (5./len(clients)):
 				continue
-			tests = []
-			for k,v in Client.__dict__.iteritems():
-				if len(k) < 4 or k[0:4] != "test":
-					continue
-				tests.append(v)
 			try:
 				random.choice(tests)(c)
-			except:
+			except Exception, e:
 				pass
 	print "No more clients"
 except Exception, e:

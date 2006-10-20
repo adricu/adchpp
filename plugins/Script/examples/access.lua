@@ -281,11 +281,6 @@ local function onINF(c, cmd)
 	end
 	
 	if c:getState() == adchpp.STATE_NORMAL then
-		if #cmd:getParam("NI", 0) > 0 or #cmd:getParam("ID", 0) > 0 or #cmd:getParam("PD", 0) > 0 then
-			dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Nick/CID changes not supported, please reconnect")
-			return command_processed
-		end
-		
 		return 0
 	end
 	

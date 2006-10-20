@@ -110,6 +110,7 @@ class Util
 public:
 	enum Reason {
 		REASON_BAD_STATE,
+		REASON_CID_CHANGE,
 		REASON_CID_TAKEN,
 		REASON_FLOODING,
 		REASON_HUB_FULL,

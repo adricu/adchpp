@@ -279,23 +279,30 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 
 	for(StringIter j = cmd.getParameters().begin(); j != cmd.getParameters().end(); ++j) {
 		if(j->compare(0, 2, "I4") == 0) {
-			if(j->compare(2, j->size()-2, "0.0.0.0") == 0) {
+			if(j->size() == 2) {
+				// Clearing is ok
+			} else if(j->compare(2, j->size()-2, "0.0.0.0") == 0) {
 				c.setField("I4", c.getIp());
 				*j = "I4" + c.getIp();
 				cmd.resetString();
-			} else if(j->compare(2, j->size()-2, c.getIp()) != 0 && j->size() != 2) {
+			} else if(j->size()-2 != c.getIp().size() || j->compare(2, j->size()-2, c.getIp()) != 0) {
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam("IP", c.getIp()));
 				c.disconnect(Util::REASON_INVALID_IP);
 				return false;
-			} 
+			}
 		}
 	}
 	return true;
 }
 
 bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
-
 	if(cmd.getParam("ID", 0, strtmp)) {
+		if(c.getState() != Client::STATE_IDENTIFY) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID changes not allowed"));
+			c.disconnect(Util::REASON_CID_CHANGE);
+			return false;			
+		}
+		
 		string spid;
 		if(!cmd.getParam("PD", 0, spid)) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INF_MISSING, "PID missing").addParam("FLPD"));
