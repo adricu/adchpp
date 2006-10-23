@@ -653,7 +653,7 @@ private:
 				} else if(ev.data.fd == event[1]) {
 					handleEvents();
 				} else {
-					ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr);
+					ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr));
 					if(ev.events & EPOLLIN || ev.events & EPOLLERR) {
 						read(ms);
 					} else if(ev.events & EPOLLOUT) {
@@ -678,7 +678,7 @@ private:
 			}
 			for(size_t i = 0; i*sizeof(ev[0]) < static_cast<size_t>(bytes); ++i) {
 				Event* e = ev[i];
-				switch(ev[i].event) {
+				switch(e->event) {
 					case Event::WRITE: {
 						write(e->ms);
 					} break;
