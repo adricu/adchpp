@@ -110,10 +110,6 @@ public:
 	void addWriter(ManagedSocketPtr ms) {
 		if(stop)
 			return;
-		if(ms->writeBuf) {
-			// Already writing...
-			return;
-		}
 		MSOverlapped* overlapped = pool.get();
 		*overlapped = MSOverlapped(MSOverlapped::WRITE_WAITING, ms);
 		

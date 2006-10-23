@@ -54,33 +54,39 @@ ManagedSocket::~ManagedSocket() throw() {
 }
 
 void ManagedSocket::write(const char* buf, size_t len) throw() {
+	bool add = false;
 	{
 		FastMutex::Lock l(outbufCS);
-		fastWrite(buf, len);
+		add = fastWrite(buf, len);
 	}
-	SocketManager::getInstance()->addWriter(this);
+	if(add) {
+		SocketManager::getInstance()->addWriter(this);
+	}
 }
 
-void ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = false */) throw() {
+bool ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = false */) throw() {
+	bool add = false;
 	if((len == 0) || (disc > 0))
-		return;
+		return false;
 	
 	if(outBuf == 0) {
+		add = true;
 		outBuf = Util::freeBuf;
 	}
 	
 	if(outBuf->size() + len > (uint32_t)SETTING(MAX_BUFFER_SIZE)) {
 		if(lowPrio && SETTING(KEEP_SLOW_USERS)) {
-			return;
+			return false;
 		} else if(overFlow > 0 && overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {
 			disconnect();
-			return;
+			return false;
 		} else {
 			overFlow = GET_TICK();
 		}
 	}
 	
 	outBuf->insert(outBuf->end(), buf, buf + len);
+	return add;
 }
 
 ByteVector* ManagedSocket::prepareWrite() {

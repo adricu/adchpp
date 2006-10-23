@@ -276,10 +276,9 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 	if(c.isSet(Client::FLAG_OK_IP))
 		return true;
 		
-	dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
-
 	for(StringIter j = cmd.getParameters().begin(); j != cmd.getParameters().end(); ++j) {
 		if(j->compare(0, 2, "I4") == 0) {
+			dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
 			if(j->size() == 2) {
 				// Clearing is ok
 			} else if(j->compare(2, j->size()-2, "0.0.0.0") == 0) {
@@ -298,6 +297,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 
 bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 	if(cmd.getParam("ID", 0, strtmp)) {
+		dcdebug("%s verifying CID\n", AdcCommand::fromSID(c.getSID()).c_str());
 		if(c.getState() != Client::STATE_IDENTIFY) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID changes not allowed"));
 			c.disconnect(Util::REASON_CID_CHANGE);
@@ -348,9 +348,9 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 }
 
 bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
-	dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
 
 	if(cmd.getParam("NI", 0, strtmp)) {
+		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
 		for(string::size_type i = 0; i < strtmp.length(); ++i) {
 			if((uint8_t)strtmp[i] < 33) {
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, STRING(NICK_INVALID)));

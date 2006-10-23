@@ -41,7 +41,7 @@ public:
 	ADCHPP_DLL void write(const char* buf, size_t len) throw();
 	
 	/** Asynchronous write, assumes that buffers are locked */
-	ADCHPP_DLL void fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
+	ADCHPP_DLL bool fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
 	
 	/** Locks the write buffer for all sockets */
 	static void lock() { outbufCS.lock(); }
