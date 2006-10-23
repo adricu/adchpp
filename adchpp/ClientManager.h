@@ -181,6 +181,8 @@ private:
 	NickMap nicks;
 	typedef HASH_MAP_X(CID, uint32_t, CID::Hash, equal_to<CID>, less<CID>) CIDMap;
 	CIDMap cids;
+	typedef HASH_SET<uint32_t> SIDSet;
+	SIDSet sids;
 
 	// Temporary string to use whenever a temporary string is needed (to avoid (de)allocating memory all the time...)
 	string strtmp;

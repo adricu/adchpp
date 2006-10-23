@@ -65,7 +65,7 @@ public:
 		FLAG_OK_IP = 0x100
 	};
 
-	static Client* create(uint32_t sid, const ManagedSocketPtr& ms_) throw();
+	static Client* create(const ManagedSocketPtr& ms_) throw();
 	
 	const StringList& getSupportList() const throw() { return supportList; }
 	bool supports(const string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
@@ -142,7 +142,7 @@ public:
 	void setState(State state_) { state = state_; }
 
 private:
-	Client(uint32_t aSID) throw();
+	Client() throw();
 	virtual ~Client() throw() { }
 
 	StringList supportList;

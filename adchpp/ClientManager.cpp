@@ -109,7 +109,7 @@ bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
 }
 
 void ClientManager::incomingConnection(const ManagedSocketPtr& ms) throw() {
-	Client::create(makeSID(), ms);
+	Client::create(ms);
 }
 
 uint32_t ClientManager::makeSID() {
@@ -122,8 +122,10 @@ uint32_t ClientManager::makeSID() {
 		sid.chars[1] = Encoder::base32Alphabet[Util::rand(sizeof(Encoder::base32Alphabet))];
 		sid.chars[2] = Encoder::base32Alphabet[Util::rand(sizeof(Encoder::base32Alphabet))];
 		sid.chars[3] = Encoder::base32Alphabet[Util::rand(sizeof(Encoder::base32Alphabet))];
-		if(clients.find(sid.sid) == clients.end())
+		if(sids.find(sid.sid) == sids.end()) {
+			sids.insert(sid.sid);
 			return sid.sid;
+		}
 	}
 }
 
@@ -139,7 +141,7 @@ void ClientManager::onConnected(Client& c) throw() {
 	}
 
 	logins.push_back(make_pair(&c, GET_TIME()));
-
+	
 	signalConnected_(c);
 }
 
@@ -469,6 +471,7 @@ void ClientManager::removeClient(Client& c) throw() {
 	}
 	nicks.erase(c.getField("NI"));
 	cids.erase(c.getCID());
+	sids.erase(c.getSID());
 }
 
 void ClientManager::addSupports(const string& str) throw() {
