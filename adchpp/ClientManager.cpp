@@ -141,7 +141,7 @@ void ClientManager::onConnected(Client& c) throw() {
 	}
 
 	logins.push_back(make_pair(&c, GET_TIME()));
-	
+	c.setSID(makeSID());
 	signalConnected_(c);
 }
 

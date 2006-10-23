@@ -137,6 +137,7 @@ public:
 	
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
+	void setSID(uint32_t sid_) { sid = sid_; }
 	uint32_t getSID() const { return sid; }
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
