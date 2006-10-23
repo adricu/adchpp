@@ -39,7 +39,7 @@ void Client::deleteThis() throw() {
 	delete this;
 }
 
-void Client::setSocket(ManagedSocket* aSocket) throw() {
+void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 	dcassert(!socket);
 	socket = aSocket;
 	socket->setConnectedHandler(boost::bind(&Client::onConnected, this));

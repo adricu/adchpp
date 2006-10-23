@@ -52,17 +52,20 @@ struct MSOverlapped : OVERLAPPED {
 		WRITE_WAITING,
 		WRITE_ALL,
 		DISCONNECT,
-		DEREF,
 		SHUTDOWN
 	} type;
-	ManagedSocket* ms;
+	ManagedSocketPtr ms;
 	
-	MSOverlapped() { memset(this, 0, sizeof(*this)); }
-	MSOverlapped(Types type_) { memset(this, 0, sizeof(*this)); type = type_; }
-	
-} OVERLAPPED_WRITE_WAITING(MSOverlapped::WRITE_WAITING), OVERLAPPED_WRITE_ALL(MSOverlapped::WRITE_ALL), 
-  OVERLAPPED_DISCONNECT(MSOverlapped::DISCONNECT), OVERLAPPED_DEREF(MSOverlapped::DEREF), 
-  OVERLAPPED_SHUTDOWN(MSOverlapped::SHUTDOWN);
+	MSOverlapped() { memset(static_cast<OVERLAPPED*>(this), 0, sizeof(OVERLAPPED)); }
+	MSOverlapped(Types type_) : type(type_) { memset(static_cast<OVERLAPPED*>(this), 0, sizeof(OVERLAPPED)); }
+	MSOverlapped(Types type_, const ManagedSocketPtr& ms_) : type(type_), ms(ms_) { memset(static_cast<OVERLAPPED*>(this), 0, sizeof(OVERLAPPED)); }
+};
+
+struct ClearOverlapped {
+	void operator()(MSOverlapped& overlapped) {
+		overlapped.ms = 0;
+	}
+};
 
 class CompletionPort {
 public:
@@ -79,16 +82,17 @@ public:
 		return handle != NULL;
 	}
 
-	bool associate(socket_t socket, ManagedSocket* key) {
-		return ::CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), handle, reinterpret_cast<DWORD>(key), 0) != FALSE;
+	bool associate(socket_t socket) {
+		return ::CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), handle, 0, 0) != FALSE;
 	}
 	
-	bool post(DWORD bytes, ManagedSocket* key, MSOverlapped* overlapped) {
-		return ::PostQueuedCompletionStatus(handle, bytes, reinterpret_cast<DWORD>(key), overlapped) != FALSE;
+	bool post(MSOverlapped* overlapped) {
+		return ::PostQueuedCompletionStatus(handle, 0, 0, overlapped) != FALSE;
 	}
 	
-	bool get(DWORD* bytes, ManagedSocket** key, MSOverlapped** overlapped) {
-		return ::GetQueuedCompletionStatus(handle, bytes, reinterpret_cast<DWORD*>(key), reinterpret_cast<OVERLAPPED**>(overlapped), 1000);
+	bool get(DWORD* bytes, MSOverlapped** overlapped) {
+		DWORD x = 0;
+		return ::GetQueuedCompletionStatus(handle, bytes, &x, reinterpret_cast<OVERLAPPED**>(overlapped), 1000);
 	}
 	
 	operator bool() { return handle != INVALID_HANDLE_VALUE; }
@@ -103,14 +107,17 @@ public:
 	Writer() : stop(false) {
 	}
 	
-	void addWriter(ManagedSocket* ms) {
+	void addWriter(ManagedSocketPtr ms) {
 		if(stop)
 			return;
 		if(ms->writeBuf) {
 			// Already writing...
 			return;
 		}
-		if(!port.post(0, ms, &OVERLAPPED_WRITE_WAITING)) {
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::WRITE_WAITING, ms);
+		
+		if(!port.post(overlapped)) {
 			LOGDT(SocketManager::className, "Fatal error while posting write to completion port: " + Util::translateError(::GetLastError()));
 		}			
 	}
@@ -118,32 +125,34 @@ public:
 	void addAllWriters() {
 		if(stop)
 			return;
-		if(!port.post(0, 0, &OVERLAPPED_WRITE_ALL)) {
+			
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::WRITE_ALL);
+		
+		if(!port.post(overlapped)) {
 			LOGDT(SocketManager::className, "Fatal error while posting writeAll to completion port: " + Util::translateError(::GetLastError()));
 		}			
 	}
 	
-	void addDisconnect(ManagedSocket* ms) {
+	void addDisconnect(ManagedSocketPtr ms) {
 		if(stop)
 			return;
 			
-		if(!port.post(0, ms, &OVERLAPPED_DISCONNECT)) {
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::DISCONNECT, ms);
+		
+		if(!port.post(overlapped)) {
 			LOGDT(SocketManager::className, "Fatal error while posting disconnect to completion port: " + Util::translateError(::GetLastError()));
 		}			
 	}			
 	
-	void addDeref(ManagedSocket* ms) {
-		if(stop)
-			return;
-		
-		if(!port.post(0, ms, &OVERLAPPED_DEREF)) {
-			LOGDT(SocketManager::className, "Fatal error while posting deref to completion port: " + Util::translateError(::GetLastError()));
-		}			
-	}			
-
 	void shutdown() {
 		stop = true;
-		if(!port.post(0, 0, &OVERLAPPED_SHUTDOWN)) {
+		
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::SHUTDOWN);
+		
+		if(!port.post(overlapped)) {
 			LOGDT(SocketManager::className, "Fatal error while posting shutdown to completion port: " + Util::translateError(::GetLastError()));
 		}
 		join();
@@ -163,7 +172,7 @@ private:
 			return false;
 		} 
 		
-		if(!port.associate(srv.getSocket(), 0)) {
+		if(!port.associate(srv.getSocket())) {
 			LOGDT(SocketManager::className, "Unable to associate IO Completion port: " + Util::translateError(::GetLastError()));
 			return false;
 		}
@@ -174,17 +183,16 @@ private:
 	virtual int run() {
 		LOGDT(SocketManager::className, "Writer starting");
 		if(!init()) {
-			return 2;
+			return 0;
 		}
 		
 		prepareAccept();
 		
 		DWORD bytes = 0;
 		MSOverlapped* overlapped = 0;
-		ManagedSocket* ms = 0;
 		
 		while(!stop || !accepting.empty() || !active.empty()) {
-			bool ret = port.get(&bytes, &ms, &overlapped);
+			bool ret = port.get(&bytes, &overlapped);
 			//dcdebug("Event: %x, %x, %x, %x, %x, %x\n", (unsigned int)ret, (unsigned int)bytes, (unsigned int)ms, (unsigned int)overlapped, (unsigned int)overlapped->ms, (unsigned int)overlapped->type);
 			
 			if(!ret) {
@@ -195,54 +203,39 @@ private:
 						continue;
 					}
 					LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
-					return 0;
-				}
-				if(overlapped->type == MSOverlapped::ACCEPT) {
+					return error;
+				} else if(overlapped->type == MSOverlapped::ACCEPT) {
 					dcdebug("Error accepting: %s\n", Util::translateError(::GetLastError()).c_str());
 					failAccept(overlapped->ms);
-
-					pool.put(overlapped);
-					
-					continue;
-				}
-				if(overlapped->type == MSOverlapped::READ_DONE) {
+				} else if(overlapped->type == MSOverlapped::READ_DONE) {
 					dcdebug("Error reading: %s\n", Util::translateError(::GetLastError()).c_str());
-					failRead(ms);
-					pool.put(overlapped);
-					continue;
-				}
-				
-				if(overlapped->type == MSOverlapped::WRITE_DONE) {
+					failRead(overlapped->ms);
+				} else if(overlapped->type == MSOverlapped::WRITE_DONE) {
 					dcdebug("Error writing: %s\n", Util::translateError(::GetLastError()).c_str());
-					failWrite(ms);
-					pool.put(overlapped);
-					continue;
+					failWrite(overlapped->ms);
+				} else {
+					dcdebug("Unknown error %d when waiting\n", overlapped->type);
 				}
-				
-				dcdebug("Unknown error %d when waiting\n", overlapped->type);
+				pool.put(overlapped);
 				continue;
 			}	
 			
 			switch(overlapped->type) {
 				case MSOverlapped::ACCEPT: {
 					checkDisconnects();
-
 					handleAccept(overlapped->ms);
-					pool.put(overlapped);
 					break;
 				}
 				case MSOverlapped::READ_DONE: {
-					handleReadDone(ms);
-					pool.put(overlapped);
+					handleReadDone(overlapped->ms);
 					break;
 				}
 				case MSOverlapped::WRITE_DONE: {
-					handleWriteDone(ms, bytes);
-					pool.put(overlapped);
+					handleWriteDone(overlapped->ms, bytes);
 					break;
 				}
 				case MSOverlapped::WRITE_WAITING: {
-					prepareWrite(ms);
+					prepareWrite(overlapped->ms);
 					break;
 				}
 				case MSOverlapped::WRITE_ALL: {
@@ -250,18 +243,15 @@ private:
 					break;
 				}
 				case MSOverlapped::DISCONNECT: {
-					handleDisconnect(ms);
+					handleDisconnect(overlapped->ms);
 					break;
 				}
-				case MSOverlapped::DEREF: {
-					handleDeref(ms);
-					break;
-				}					
 				case MSOverlapped::SHUTDOWN: {
 					handleShutdown();
 					break;
 				} 
 			}
+			pool.put(overlapped);
 		}
 		LOGDT(SocketManager::className, "Writer shutting down");
 		return 0;
@@ -276,19 +266,16 @@ private:
 		}
 		
 		while(accepting.size() < PREPARED_SOCKETS) {
-			ManagedSocket* ms = new ManagedSocket();
+			ManagedSocketPtr ms(new ManagedSocket());
 			try {
 				ms->create();
 			} catch (const SocketException& e) {
 				LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
-	
-				ms->deref();
 				return;
 			}
 				
-			if(!port.associate(ms->getSocket(), ms)) {
+			if(!port.associate(ms->getSocket())) {
 				LOGDT(SocketManager::className, "Unable to associate IO Completion port: " + Util::translateError(::GetLastError()));
-				ms->deref();
 				return;
 			}
 
@@ -298,8 +285,7 @@ private:
 			ms->writeBuf->resize(ACCEPT_BUF_SIZE);
 			
 			MSOverlapped* overlapped = pool.get();
-			overlapped->type = MSOverlapped::ACCEPT;
-			overlapped->ms = ms;
+			*overlapped = MSOverlapped(MSOverlapped::ACCEPT, ms);
 
 			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), &(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
 				if(::WSAGetLastError() != ERROR_IO_PENDING) {
@@ -308,7 +294,6 @@ private:
 					}
 					
 					pool.put(overlapped);
-					ms->deref();
 					return;
 				}
 			}
@@ -317,7 +302,7 @@ private:
 		}
 	}
 
-	void handleAccept(ManagedSocket* ms) throw() {
+	void handleAccept(const ManagedSocketPtr& ms) throw() {
 		struct sockaddr_in *local, *remote;
 		int sz1 = sizeof(local), sz2 = sizeof(remote);
 		
@@ -328,11 +313,8 @@ private:
 		Util::freeBuf = ms->writeBuf;
 		ms->writeBuf = 0;
 	
-		// Job thread gets a reference here...
-		ms->ref();
-
-		accepting.erase(ms);
 		active.insert(ms);
+		accepting.erase(ms);
 
 		ClientManager::getInstance()->incomingConnection(ms);
 
@@ -343,14 +325,13 @@ private:
 		prepareAccept();	
 	}
 	
-	void failAccept(ManagedSocket* ms) throw() {
+	void failAccept(ManagedSocketPtr& ms) throw() {
 		accepting.erase(ms);
-		ms->deref();
 		
 		prepareAccept();
 	}
 	
-	void prepareRead(ManagedSocket* ms) throw() {
+	void prepareRead(const ManagedSocketPtr& ms) throw() {
 		if(stop)
 			return;
 			
@@ -359,8 +340,7 @@ private:
 		WSABUF wsabuf = { 0, 0 };
 		
 		MSOverlapped* overlapped = pool.get();
-		overlapped->type = MSOverlapped::READ_DONE;
-		overlapped->ms = ms;
+		*overlapped = MSOverlapped(MSOverlapped::READ_DONE, ms);
 		
 		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
 			int error = ::WSAGetLastError();
@@ -371,7 +351,7 @@ private:
 		}
 	}
 	
-	void handleReadDone(ManagedSocket* ms) throw() {
+	void handleReadDone(const ManagedSocketPtr& ms) throw() {
 		ByteVector* readBuf = Util::freeBuf;
 		
 		if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
@@ -407,19 +387,18 @@ private:
 		prepareRead(ms);
 	}
 	
-	void failRead(ManagedSocket* ms) throw() {
+	void failRead(const ManagedSocketPtr& ms) throw() {
 		if(active.find(ms) == active.end()) {
 			return;
 		}
 		active.erase(ms);
+		disconnecting.erase(ms);
 		
 		ms->close();
 		ms->failSocket();
-				
-		ms->deref();
 	}
 	
-	void prepareWrite(ManagedSocket* ms) throw() {
+	void prepareWrite(const ManagedSocketPtr& ms) throw() {
 		if(stop || ms->writeBuf) {
 			return;
 		}
@@ -433,13 +412,11 @@ private:
 			return;
 		}
 		
-		ms->ref();
 		ms->wsabuf.len = ms->writeBuf->size();
 		ms->wsabuf.buf = reinterpret_cast<char*>(&(*ms->writeBuf)[0]);
 
 		MSOverlapped* overlapped = pool.get();
-		overlapped->type = MSOverlapped::WRITE_DONE;
-		overlapped->ms = ms;	// For debugging, not actually used
+		*overlapped = MSOverlapped(MSOverlapped::WRITE_DONE, ms);
 		
 		DWORD x = 0;
 		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
@@ -451,7 +428,7 @@ private:
 		return;
 	}
 	
-	void handleWriteDone(ManagedSocket* ms, DWORD bytes) throw() {
+	void handleWriteDone(const ManagedSocketPtr& ms, DWORD bytes) throw() {
 		ByteVector* buf = ms->writeBuf;
 		ms->writeBuf = 0;
 		
@@ -462,15 +439,13 @@ private:
 		if(ms->completeWrite(buf, bytes)) {
 			prepareWrite(ms);
 		}
-		ms->deref();
 	}
 	
-	void failWrite(ManagedSocket* ms) throw() {
+	void failWrite(const ManagedSocketPtr& ms) throw() {
 		Util::freeBuf = ms->writeBuf;
 		ms->writeBuf = 0;
 		
 		ms->close();
-		ms->deref();
 	}
 	
 	void handleWriteAll() throw() {
@@ -479,20 +454,19 @@ private:
 		}
 	}
 	
-	void handleDisconnect(ManagedSocket* ms) throw() {
+	void handleDisconnect(const ManagedSocketPtr& ms) throw() {
+		if(active.find(ms) == active.end()) {
+			return;
+		}
+		
 		prepareWrite(ms);
 		disconnecting.insert(ms);
-	}
-	
-	void handleDeref(ManagedSocket* ms) throw() {
-		disconnecting.erase(ms);
-		ms->deref();
 	}
 	
 	void checkDisconnects() throw() {
 		uint32_t now = GET_TICK();
 		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
-			ManagedSocket* ms = *i;
+			const ManagedSocketPtr& ms = *i;
 			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
 				ms->close();
 			}
@@ -513,9 +487,9 @@ private:
 	
 	bool stop;
 	
-	SimplePool<MSOverlapped> pool;
+	Pool<MSOverlapped, ClearOverlapped> pool;
 	
-	typedef HASH_SET<ManagedSocket*, PointerHash<ManagedSocket> > SocketSet;
+	typedef HASH_SET<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that have a pending accept */
@@ -544,7 +518,7 @@ struct EPoll {
 		return true;
 	}
 	
-	bool associate(ManagedSocket* ms) {
+	bool associate(const ManagedSocketPtr& ms) {
 		epoll_event ev = { 0, 0 };
 		ev.data.ptr = reinterpret_cast<void*>(ms);
 		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
@@ -579,9 +553,9 @@ struct Event {
 		DEREF,
 		SHUTDOWN
 	} event;
-	ManagedSocket* ms;
+	const ManagedSocketPtr& ms;
 	
-	Event(Type event_, ManagedSocket* ms_) : event(event_), ms(ms_) { }
+	Event(Type event_, const ManagedSocketPtr& ms_) : event(event_), ms(ms_) { }
 	Event() : event(WRITE), ms(0) { }
 };
 
@@ -592,7 +566,7 @@ public:
 	Writer() : stop(false) {
 	}
 	
-	void addWriter(ManagedSocket* ms) {
+	void addWriter(const ManagedSocketPtr& ms) {
 		if(stop)
 			return;
 		
@@ -607,7 +581,7 @@ public:
 		::write(event[0], &ev, sizeof(ev));
 	}
 	
-	void addDisconnect(ManagedSocket* ms) {
+	void addDisconnect(const ManagedSocketPtr& ms) {
 		if(stop)
 			return;
 			
@@ -615,7 +589,7 @@ public:
 		::write(event[0], &ev, sizeof(ev));
 	}			
 	
-	void addDeref(ManagedSocket* ms) {
+	void addDeref(const ManagedSocketPtr& ms) {
 		if(stop)
 			return;
 			
@@ -680,7 +654,7 @@ private:
 				} else if(ev.data.fd == event[1]) {
 					handleEvents();
 				} else {
-					ManagedSocket* ms = reinterpret_cast<ManagedSocket*>(ev.data.ptr);
+					const ManagedSocketPtr& ms = reinterpret_cast<const ManagedSocketPtr&>(ev.data.ptr);
 					if(ev.events & EPOLLIN || ev.events & EPOLLERR) {
 						read(ms);
 					} else if(ev.events & EPOLLOUT) {
@@ -726,7 +700,7 @@ private:
 	}
 	
 	void accept() throw() {
-		ManagedSocket* ms = new ManagedSocket();
+		const ManagedSocketPtr& ms = new ManagedSocket();
 		try {
 			ms->setIp(ms->sock.accept(srv));
 					
@@ -754,7 +728,7 @@ private:
 		}
 	}
 	
-	void read(ManagedSocket* ms) throw() {
+	void read(const ManagedSocketPtr& ms) throw() {
 		if(stop)
 			return;
 		while(true) {
@@ -782,7 +756,7 @@ private:
 		}
 	}
 	
-	void failRead(ManagedSocket* ms) throw() {
+	void failRead(const ManagedSocketPtr& ms) throw() {
 		if(active.find(ms) == active.end()) {
 			return;
 		}
@@ -794,7 +768,7 @@ private:
 		ms->deref();
 	}
 	
-	void write(ManagedSocket* ms) throw() {
+	void write(const ManagedSocketPtr& ms) throw() {
 		if(stop) {
 			return;
 		}
@@ -825,7 +799,7 @@ private:
 		}
 	}
 	
-	void failWrite(ManagedSocket* ms) throw() {
+	void failWrite(const ManagedSocketPtr& ms) throw() {
 		failRead(ms);
 	}
 	
@@ -835,12 +809,12 @@ private:
 		}
 	}
 	
-	void disconnect(ManagedSocket* ms) throw() {
+	void disconnect(const ManagedSocketPtr& ms) throw() {
 		failRead(ms);
 		disconnecting.insert(ms);
 	}
 	
-	void deref(ManagedSocket* ms) throw() {
+	void deref(const ManagedSocketPtr& ms) throw() {
 		disconnecting.erase(ms);
 		ms->deref();
 	}
@@ -848,7 +822,7 @@ private:
 	void checkDisconnects() throw() {
 		uint32_t now = GET_TICK();
 		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
-			ManagedSocket* ms = *i;
+			const ManagedSocketPtr& ms = *i;
 			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
 				failRead(ms);
 			}
@@ -869,7 +843,7 @@ private:
 
 	int event[2];
 		
-	typedef HASH_SET<ManagedSocket*, PointerHash<ManagedSocket> > SocketSet;
+	typedef HASH_SET<const ManagedSocketPtr&, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that are being written to but should be disconnected if timeout it reached */
@@ -913,7 +887,7 @@ int SocketManager::run() {
 	return 0;
 }
 
-void SocketManager::addWriter(ManagedSocket* ms) throw() {
+void SocketManager::addWriter(const ManagedSocketPtr& ms) throw() {
 	writer->addWriter(ms);
 }
 
@@ -921,12 +895,8 @@ void SocketManager::addAllWriters() throw() {
 	writer->addAllWriters();	
 }
 
-void SocketManager::addDisconnect(ManagedSocket* ms) throw() {
+void SocketManager::addDisconnect(const ManagedSocketPtr& ms) throw() {
 	writer->addDisconnect(ms);
-}
-
-void SocketManager::addDeref(ManagedSocket* ms) throw() {
-	writer->addDeref(ms);
 }
 
 void SocketManager::addJob(const Callback& callback) throw() { 

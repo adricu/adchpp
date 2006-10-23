@@ -37,10 +37,9 @@ public:
 	void startup() throw(ThreadException) { start(); }
 	void shutdown();
 
-	void addWriter(ManagedSocket* ms) throw();
-	void addDisconnect(ManagedSocket* ms) throw();
+	void addWriter(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
+	void addDisconnect(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
 	void addAllWriters() throw();
-	void addDeref(ManagedSocket* ms) throw();
 		
 private:
 	friend class ManagedSocket;

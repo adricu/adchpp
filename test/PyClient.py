@@ -1,7 +1,6 @@
 import sys
 
 sys.path.append('../build/debug-mingw/bin')
-sys.path.append('../build/debug-mingw/bin')
 
 CLIENTS = 100
 

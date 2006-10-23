@@ -147,7 +147,7 @@ public:
 	 * The SocketManager calls this when a new connection has been accepted.
 	 * Don't touch.
 	 */
-	void incomingConnection(ManagedSocket* ms) throw();
+	void incomingConnection(const ManagedSocketPtr& ms) throw();
 	
 	void startup() throw() { updateCache(); }
 	void shutdown();

@@ -23,6 +23,7 @@
 #include "Socket.h"
 #include "Mutex.h"
 #include "Signal.h"
+#include "Util.h"
 
 namespace adchpp {
 	
@@ -32,7 +33,7 @@ class Writer;
 /**
  * An asynchronous socket managed by SocketManager.
  */
-class ManagedSocket {
+class ManagedSocket : public intrusive_ptr_base {
 public:
 	void create() throw(SocketException) { sock.create(); }
 
@@ -80,9 +81,6 @@ private:
 	void processData(ByteVector* buf) throw();
 	void processFail() throw();
 	
-	void ref() { refCount++; }
-	void deref() { if(--refCount == 0) delete this; }
-	
 	// No copies
 	ManagedSocket(const ManagedSocket&);
 	ManagedSocket& operator=(const ManagedSocket&);
@@ -113,6 +111,8 @@ private:
 
 	ADCHPP_DLL static FastMutex outbufCS;
 };
+
+typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;
 
 }
 

@@ -33,7 +33,12 @@
 #endif
 
 namespace adchpp {
-	
+
+intrusive_ptr_base::~intrusive_ptr_base() {
+}
+
+FastMutex intrusive_ptr_base::mtx;
+
 #ifndef _DEBUG
 FastMutex FastAllocBase::mtx;
 #endif

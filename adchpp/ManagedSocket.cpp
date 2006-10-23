@@ -39,6 +39,7 @@ ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0), refCou
 }
 
 ManagedSocket::~ManagedSocket() throw() {
+	dcdebug("ManagedSocket deleted\n");
 	if(outBuf) {
 		dcdebug("Left (%d): %.*s\n", outBuf->size(), outBuf->size(), &(*outBuf)[0]);
 		Util::freeBuf = outBuf;
@@ -169,7 +170,6 @@ void ManagedSocket::processData(ByteVector* buf) throw() {
 
 void ManagedSocket::processFail() throw() {
 	failedHandler();
-	SocketManager::getInstance()->addDeref(this);
 }
 
 }

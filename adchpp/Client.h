@@ -83,11 +83,11 @@ public:
 
 	/** @param reason The statistic to update */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
-	ManagedSocket* getSocket() throw() { return socket; }
-	const ManagedSocket* getSocket() const throw() { return socket; }
+	const ManagedSocketPtr& getSocket() throw() { return socket; }
+	const ManagedSocketPtr& getSocket() const throw() { return socket; }
 	const string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
 
-	void setSocket(ManagedSocket* aSocket) throw();
+	void setSocket(const ManagedSocketPtr& aSocket) throw();
 
 	/** 
 	 * Set data mode for aBytes bytes.
@@ -167,7 +167,7 @@ private:
 	
 	PSDList psd;
 	string line;
-	ManagedSocket* socket;
+	ManagedSocketPtr socket;
 	int64_t dataBytes;
 	
 	time_t floodTimer;

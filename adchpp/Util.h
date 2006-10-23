@@ -21,8 +21,39 @@
 
 #include "ResourceManager.h"
 #include "Pool.h"
+#include "Mutex.h"
 
 namespace adchpp { 
+
+struct intrusive_ptr_base {
+	intrusive_ptr_base() : refs(0) { }
+	virtual ~intrusive_ptr_base() = 0;
+private:
+	friend void intrusive_ptr_add_ref(intrusive_ptr_base*);
+	friend void intrusive_ptr_release(intrusive_ptr_base*);
+	
+	static FastMutex mtx;
+	
+	long refs;
+};
+
+inline void intrusive_ptr_add_ref(intrusive_ptr_base* ptr) {
+#ifdef _WIN32
+	InterlockedIncrement(&ptr->refs);	
+#else
+	FastMutex::Lock l(intrusive_ptr_base::mtx);
+	ptr->refs++;
+#endif
+}
+
+inline void intrusive_ptr_release(intrusive_ptr_base* ptr) {
+#ifdef _WIN32
+	if(!InterlockedDecrement(&ptr->refs)) delete ptr;
+#else
+	FastMutex::Lock l(intrusive_ptr_base::mtx);
+	if(!--ptr->refs) delete ptr;
+#endif
+}
 
 /** Evaluates op(pair<T1, T2>.first, compareTo) */
 template<class T1, class T2, class op = equal_to<T1> >
@@ -60,6 +91,9 @@ struct PointerHash {
 #endif 
 	size_t operator()(const T* a) const { return ((size_t)a)/sizeof(T); }
 	bool operator()(const T* a, const T* b) { return a < b; }
+	
+	size_t operator()(const boost::intrusive_ptr<T>& a) const { return ((size_t)a.get())/sizeof(T); }
+	bool operator()(const boost::intrusive_ptr<T>& a, const boost::intrusive_ptr<T>& b) { return a.get() < b.get(); }
 };
 template<>
 struct PointerHash<void> {

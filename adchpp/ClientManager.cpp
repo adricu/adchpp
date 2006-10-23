@@ -108,7 +108,7 @@ bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
 	return false;
 }
 
-void ClientManager::incomingConnection(ManagedSocket* ms) throw() {
+void ClientManager::incomingConnection(const ManagedSocketPtr& ms) throw() {
 	Client* c = Client::create(makeSID());
 	c->setSocket(ms);
 }

@@ -52,7 +52,7 @@ public:
 		busy--;
 		Clear()(*item);
 		// Remove some objects every now and then...
-		if(free.size() > busy && free.size() > 32) {
+		if(free.size() > (2*busy) && free.size() > 32) {
 			dcdebug("Clearing pool\n");
 			while(free.size() > busy / 2) {
 				delete free.back();
