@@ -519,14 +519,14 @@ struct EPoll {
 	}
 	
 	bool associate(const ManagedSocketPtr& ms) {
-		epoll_event ev = { 0, 0 };
-		ev.data.ptr = reinterpret_cast<void*>(ms);
+		struct epoll_event ev;
+		ev.data.ptr = reinterpret_cast<void*>(ms.get());
 		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
 		return epoll_ctl(poll_fd, EPOLL_CTL_ADD, ms->getSocket(), &ev) == 0;
 	}
 	
 	bool associate(int fd) {
-		epoll_event ev = { 0, 0 };
+		struct epoll_event ev;
 		ev.data.fd = fd;
 		ev.events = EPOLLIN;
 		return epoll_ctl(poll_fd, EPOLL_CTL_ADD, fd, &ev) == 0;
@@ -552,16 +552,20 @@ struct Event {
 		DISCONNECT,
 		SHUTDOWN
 	} event;
-	const ManagedSocketPtr& ms;
+	ManagedSocketPtr ms;
 	
 	Event(Type event_, const ManagedSocketPtr& ms_) : event(event_), ms(ms_) { }
 	Event() : event(WRITE), ms(0) { }
 };
 
+struct ClearEvent {
+	void operator()(Event& evt) {
+		evt.ms = 0;
+	}
+};
+
 class Writer : public Thread {
 public:
-	static const size_t INITIAL_SOCKETS = 32;
-	
 	Writer() : stop(false) {
 	}
 	
@@ -569,14 +573,16 @@ public:
 		if(stop)
 			return;
 		
-		Event ev(Event::WRITE, ms);
+		Event* ev = pool.get();
+		*ev = Event(Event::WRITE, ms);
 		::write(event[0], &ev, sizeof(ev));
 	}
 	
 	void addAllWriters() {
 		if(stop)
 			return;
-		Event ev(Event::WRITE_ALL, 0);
+		Event* ev = pool.get();
+		*ev = Event(Event::WRITE_ALL, 0);
 		::write(event[0], &ev, sizeof(ev));
 	}
 	
@@ -584,14 +590,16 @@ public:
 		if(stop)
 			return;
 			
-		Event ev(Event::DISCONNECT, ms);
+		Event* ev = pool.get();
+		*ev = Event(Event::DISCONNECT, ms);
 		::write(event[0], &ev, sizeof(ev));
 	}			
 	
 	void shutdown() {
 		stop = true;
 
-		Event ev(Event::SHUTDOWN, 0);
+		Event* ev = pool.get();
+		*ev = Event(Event::SHUTDOWN, 0);
 		::write(event[0], &ev, sizeof(ev));
 
 		join();
@@ -645,7 +653,7 @@ private:
 				} else if(ev.data.fd == event[1]) {
 					handleEvents();
 				} else {
-					const ManagedSocketPtr& ms = reinterpret_cast<const ManagedSocketPtr&>(ev.data.ptr);
+					ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr);
 					if(ev.events & EPOLLIN || ev.events & EPOLLERR) {
 						read(ms);
 					} else if(ev.events & EPOLLOUT) {
@@ -659,7 +667,7 @@ private:
 	}
 	
 	void handleEvents() {
-		Event ev[16];
+		Event* ev[16];
 		while(true) {
 			int bytes = ::recv(event[1], ev, sizeof(ev), MSG_DONTWAIT);
 			if(bytes == -1) {
@@ -669,20 +677,22 @@ private:
 				}
 			}
 			for(size_t i = 0; i*sizeof(ev[0]) < static_cast<size_t>(bytes); ++i) {
+				Event* e = ev[i];
 				switch(ev[i].event) {
 					case Event::WRITE: {
-						write(ev[i].ms);
+						write(e->ms);
 					} break;
 					case Event::WRITE_ALL: {
 						writeAll();
 					} break;
 					case Event::DISCONNECT: {
-						disconnect(ev[i].ms);
+						disconnect(e->ms);
 					} break;
 					case Event::SHUTDOWN: {
 						handleShutdown();
 					} break;
 				}
+				pool.put(e);
 			}
 		}	
 	}
@@ -818,6 +828,8 @@ private:
 	bool stop;
 
 	int event[2];
+	
+	Pool<Event, ClearEvent> pool;
 		
 	typedef HASH_SET<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
