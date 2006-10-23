@@ -27,16 +27,14 @@
 
 namespace adchpp {
 	
-Client* Client::create(uint32_t sid) throw() {
-	return new Client(sid);
+Client* Client::create(uint32_t sid, const ManagedSocketPtr& ms) throw() {
+	Client* c = new Client(sid);
+	c->setSocket(ms);
+	return c;
 }
 
 Client::Client(uint32_t aSID) throw() : sid(aSID), state(STATE_PROTOCOL), disconnecting(false), socket(0), dataBytes(0), floodTimer(0) { 
 
-}
-
-void Client::deleteThis() throw() {
-	delete this;
 }
 
 void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {

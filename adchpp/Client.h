@@ -20,8 +20,8 @@
 #define ADCHPP_CLIENT_H
 
 #include "common.h"
-#include "ManagedSocket.h"
 
+#include "ManagedSocket.h"
 #include "FastAlloc.h"
 #include "Signal.h"
 #include "AdcCommand.h"
@@ -30,10 +30,12 @@
 
 namespace adchpp {
 
+class ClientManager;
+
 /**
  * The client represents one connection to a user.
  */
-class Client : public Flags, public FastAlloc<Client> {
+class Client : public Flags, public FastAlloc<Client>, public boost::noncopyable {
 public:
 	enum State {
 		/** Initial protocol negotiation (wait for SUP) */
@@ -63,9 +65,8 @@ public:
 		FLAG_OK_IP = 0x100
 	};
 
-	ADCHPP_DLL static Client* create(uint32_t sid) throw();
-	ADCHPP_DLL void deleteThis() throw();
-
+	static Client* create(uint32_t sid, const ManagedSocketPtr& ms_) throw();
+	
 	const StringList& getSupportList() const throw() { return supportList; }
 	bool supports(const string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
 
@@ -86,8 +87,6 @@ public:
 	const ManagedSocketPtr& getSocket() throw() { return socket; }
 	const ManagedSocketPtr& getSocket() const throw() { return socket; }
 	const string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
-
-	void setSocket(const ManagedSocketPtr& aSocket) throw();
 
 	/** 
 	 * Set data mode for aBytes bytes.
@@ -142,12 +141,9 @@ public:
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
 
+private:
 	Client(uint32_t aSID) throw();
 	virtual ~Client() throw() { }
-
-private:
-	Client(const Client&);
-	Client& operator=(const Client&);
 
 	StringList supportList;
 	typedef pair<int, void*> PSDPair;
@@ -173,6 +169,7 @@ private:
 	time_t floodTimer;
 	
 	boost::function<void (const uint8_t*, size_t)> dataHandler;
+	void setSocket(const ManagedSocketPtr& aSocket) throw();
 	
 	void onConnected() throw();
 	void onData(const ByteVector&) throw();

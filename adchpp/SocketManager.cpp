@@ -688,9 +688,6 @@ private:
 					case Event::DISCONNECT: {
 						disconnect(ev[i].ms);
 					} break;
-					case Event::DEREF: {
-						deref(ev[i].ms);
-					} break;
 					case Event::SHUTDOWN: {
 						handleShutdown();
 					} break;
@@ -812,11 +809,6 @@ private:
 	void disconnect(const ManagedSocketPtr& ms) throw() {
 		failRead(ms);
 		disconnecting.insert(ms);
-	}
-	
-	void deref(const ManagedSocketPtr& ms) throw() {
-		disconnecting.erase(ms);
-		ms->deref();
 	}
 	
 	void checkDisconnects() throw() {

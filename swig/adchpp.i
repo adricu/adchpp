@@ -43,6 +43,7 @@ void shutdown() {
 %}
 
 %nodefaultctor;
+%nodefaultdtor Client;
 %nodefaultdtor ClientManager;
 %nodefaultdtor LogManager;
 %nodefaultdtor SettingsManager;
@@ -135,6 +136,7 @@ public:
 		REASON_PID_MISSING,
 		REASON_PID_CID_LENGTH,
 		REASON_PID_CID_MISMATCH,
+		REASON_PID_WITHOUT_CID,
 		REASON_PLUGIN,
 		REASON_LAST,
 	};

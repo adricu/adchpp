@@ -109,8 +109,7 @@ bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
 }
 
 void ClientManager::incomingConnection(const ManagedSocketPtr& ms) throw() {
-	Client* c = Client::create(makeSID());
-	c->setSocket(ms);
+	Client::create(makeSID(), ms);
 }
 
 uint32_t ClientManager::makeSID() {
@@ -336,6 +335,12 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 		c.setCID(cid);
 		cids.insert(make_pair(c.getCID(), c.getSID()));
 		cmd.delParam("PD", 0);
+	}
+	
+	if(cmd.getParam("PD", 0, strtmp)) {
+		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "PD but no ID"));
+		c.disconnect(Util::REASON_PID_WITHOUT_CID);
+		return false;
 	}
 	return true;
 }
