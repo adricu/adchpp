@@ -23,7 +23,7 @@
 
 namespace adchpp {
 	
-#ifndef _DEBUG
+#ifdef NDEBUG
 struct FastAllocBase {
 ADCHPP_DLL static FastMutex mtx;
 };

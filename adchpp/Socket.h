@@ -64,17 +64,17 @@ typedef int socket_t;
 
 class ADCHPP_VISIBLE SocketException : public Exception {
 public:
-#ifdef _DEBUG
+#ifndef NDEBUG
 	SocketException(const string& aError) throw() : Exception("SocketException: " + aError) { }
 
 	SocketException(int aError) throw() : 
 	Exception("SocketException: " + errorToString(aError)) {
 		dcdebug("Thrown: %s\n", error.c_str());
 	}
-#else //_DEBUG
+#else //NDEBUG
 	SocketException(const string& aError) throw() : Exception(aError) { }
 	SocketException(int aError) throw() : Exception(errorToString(aError)) { }
-#endif // _DEBUG
+#endif // NDEBUG
 	
 	virtual ~SocketException() throw() { }
 private:

@@ -36,7 +36,7 @@ protected:
 	string error;
 };
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 
 #define STANDARD_EXCEPTION(name) class ADCHPP_VISIBLE name : public Exception { \
 public:\
@@ -45,7 +45,7 @@ public:\
 	virtual ~name() throw() { } \
 }
 
-#else // _DEBUG
+#else // NDEBUG
 
 #define STANDARD_EXCEPTION(name) class ADCHPP_VISIBLE name : public Exception { \
 public:\

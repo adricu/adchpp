@@ -45,7 +45,7 @@ namespace adchpp {
 extern ADCHPP_DLL const char compileTime[];
 // ADCHPP_DLL extern void logAssert(const char* file, int line, const char* exp);
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 
 extern ADCHPP_DLL void logAssert(const char* file, int line, const char* exp);
 
@@ -72,7 +72,7 @@ inline void debugTrace(const char* format, ...)
 
 #define dcasserta(exp) dcassert(exp)
 #define dcdrun(exp) exp
-#else //_DEBUG
+#else //NDEBUG
 #define dcdebug if(false) printf
 //#define dcassert(exp) do { if(!(exp)) logAssert(__FILE__, __LINE__, #exp); } while(0)
 #define dcassert(exp)
@@ -82,7 +82,7 @@ inline void debugTrace(const char* format, ...)
 #define dcasserta(exp)
 #endif // WIN32
 #define dcdrun(exp)
-#endif //_DEBUG
+#endif //NDEBUG
 
 // Make sure we're using the templates from algorithm...
 #ifdef min

@@ -39,7 +39,7 @@ intrusive_ptr_base::~intrusive_ptr_base() {
 
 FastMutex intrusive_ptr_base::mtx;
 
-#ifndef _DEBUG
+#ifdef NDEBUG
 FastMutex FastAllocBase::mtx;
 #endif
 

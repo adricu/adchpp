@@ -12,7 +12,7 @@
 #define VERSIONSTRING "2.0." xstrver(ADCHPP_REVISION)
 #define VERSIONFLOAT 2.0
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 #define BUILDSTRING "Debug"
 #else
 #define BUILDSTRING "Release"

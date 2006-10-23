@@ -49,7 +49,7 @@ public:
 		case WAIT_OBJECT_0 + 1: return RESULT_MESSAGE;
 		default: dcasserta(false);
 		}
-#ifdef _DEBUG
+#ifndef NDEBUG
 		return RESULT_TIMEOUT;
 #endif
 	};

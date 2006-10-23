@@ -51,7 +51,7 @@ LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
 	if(recursion++ > 30)
 		exit(-1);
 
-#ifndef _DEBUG
+#ifdef NDEBUG
 	// The release version loads the dll and pdb:s here...
 	EXTENDEDTRACEINITIALIZE( Util::getAppPath().c_str() );
 #endif
@@ -105,7 +105,7 @@ LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
 	f.close();
 
 	PRINTERROR(_T("Fatal error encountered, debug info in exceptioninfo.txt"));
-#ifndef _DEBUG
+#ifdef NDEBUG
 	EXTENDEDTRACEUNINITIALIZE();
 #endif
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -178,7 +178,7 @@ static void removeService(const TCHAR* name) {
 
 static void init(const string& configPath) {
 
-#if defined(_MSC_VER) && defined(_DEBUG)
+#if defined(_MSC_VER) && !defined(NDEBUG)
 	EXTENDEDTRACEINITIALIZE( Util::getAppPath().c_str() );
 	SetUnhandledExceptionFilter(&DCUnhandledExceptionFilter);
 #endif
@@ -199,7 +199,7 @@ static void uninit() {
 	LOGDT(modName, versionString + " shut down");
 	printf("Shutting down.");
 	shutdown(&f2);
-#if defined(_MSC_VER) && defined(_DEBUG)
+#if defined(_MSC_VER) && !defined(NDEBUG)
 	EXTENDEDTRACEUNINITIALIZE();
 #endif
 	printf(".\n");
