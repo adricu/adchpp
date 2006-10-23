@@ -550,7 +550,6 @@ struct Event {
 		WRITE,
 		WRITE_ALL,
 		DISCONNECT,
-		DEREF,
 		SHUTDOWN
 	} event;
 	const ManagedSocketPtr& ms;
@@ -589,14 +588,6 @@ public:
 		::write(event[0], &ev, sizeof(ev));
 	}			
 	
-	void addDeref(const ManagedSocketPtr& ms) {
-		if(stop)
-			return;
-			
-		Event ev(Event::DEREF, ms);
-		::write(event[0], &ev, sizeof(ev));
-	}			
-
 	void shutdown() {
 		stop = true;
 
@@ -697,19 +688,15 @@ private:
 	}
 	
 	void accept() throw() {
-		const ManagedSocketPtr& ms = new ManagedSocket();
+		ManagedSocketPtr ms(new ManagedSocket());
 		try {
 			ms->setIp(ms->sock.accept(srv));
 					
 			if(!poller.associate(ms)) {
 				LOGDT(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
-				ms->deref();
 				return;
 			}
 	
-			// Job thread gets a reference here...
-			ms->ref();
-
 			active.insert(ms);
 
 			ClientManager::getInstance()->incomingConnection(ms);
@@ -719,8 +706,6 @@ private:
 			read(ms);
 		} catch (const SocketException& e) {
 			LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
-
-			ms->deref();
 			return;
 		}
 	}
@@ -762,7 +747,6 @@ private:
 		ms->failSocket();
 		
 		ms->close();
-		ms->deref();
 	}
 	
 	void write(const ManagedSocketPtr& ms) throw() {
@@ -835,7 +819,7 @@ private:
 
 	int event[2];
 		
-	typedef HASH_SET<const ManagedSocketPtr&, PointerHash<ManagedSocket> > SocketSet;
+	typedef HASH_SET<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that are being written to but should be disconnected if timeout it reached */
