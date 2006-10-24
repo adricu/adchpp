@@ -328,7 +328,7 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 			return false;
 		}
 		
-		if(cids.find(c.getCID()) != cids.end()) {
+		if(cids.find(cid) != cids.end()) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, STRING(CID_TAKEN)));
 			c.disconnect(Util::REASON_CID_TAKEN);
 			return false;

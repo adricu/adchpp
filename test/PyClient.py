@@ -13,7 +13,7 @@ Util_initialize("")
 class Client(object):
 	def __init__(self, n):
 		self.sock = socket.socket()
-		self.pid = CID_generate()
+		self.pid = CID("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB") #CID_generate()
 		tiger = TigerHash()
 		tiger.update(self.pid.data())
 		self.cid = CID(Encoder_toBase32(tiger.finalize()))
