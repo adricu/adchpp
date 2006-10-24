@@ -359,14 +359,13 @@ private:
 		DWORD flags = 0;
 		
 		if(::WSARecv(ms->getSocket(), &wsa, 1, &bytes, &flags, 0, 0) == SOCKET_ERROR) {
+			Util::freeBuf = readBuf;
 			if(::WSAGetLastError() != WSAEWOULDBLOCK) {
 				// Socket failed...
-				Util::freeBuf = readBuf;
 				failRead(ms);
 				return;
 			}
 			
-			Util::freeBuf = readBuf;
 			prepareRead(ms);
 			return;
 		}
@@ -387,11 +386,12 @@ private:
 		if(active.find(ms) == active.end()) {
 			return;
 		}
-		active.erase(ms);
-		disconnecting.erase(ms);
 		
 		ms->close();
 		ms->failSocket();
+
+		active.erase(ms);
+		disconnecting.erase(ms);
 	}
 	
 	void prepareWrite(const ManagedSocketPtr& ms) throw() {
@@ -546,6 +546,7 @@ struct Event {
 		WRITE,
 		WRITE_ALL,
 		DISCONNECT,
+		REMOVE,
 		SHUTDOWN
 	} event;
 	ManagedSocketPtr ms;
@@ -603,7 +604,10 @@ public:
 	
 private:
 	bool init() {
-		poller.init();
+		if(!poller.init()) {
+			LOGDT(SocketManager::className, "Unable to create initialize epoll: " + Util::translateError(errno));
+			return false;
+		}			
 		
 		try {
 			srv.listen(SETTING(SERVER_PORT));
@@ -632,19 +636,19 @@ private:
 	virtual int run() {
 		LOGDT(SocketManager::className, "Writer starting");
 		if(!init()) {
-			return 2;
+			return 0;
 		}
 		
+		std::vector<epoll_event> events;
 		while(!stop || !active.empty()) {
 			checkDisconnects();
-			std::vector<epoll_event> events;
+			events.clear();
 			if(!poller.get(events)) {
 				LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
 			}
 			for(std::vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
 				epoll_event& ev = *i;
 				if(ev.data.fd == srv.getSocket()) {
-					printf("accepting\n");
 					accept();
 				} else if(ev.data.fd == event[1]) {
 					handleEvents();
@@ -663,17 +667,24 @@ private:
 	}
 	
 	void handleEvents() {
-		Event* ev[16];
 		while(true) {
-			int bytes = ::recv(event[1], ev, sizeof(ev), MSG_DONTWAIT);
+			size_t start = ev.size();
+			ev.resize(64 * sizeof(Event*));
+			int bytes = ::recv(event[1], &ev[0] + start, ev.size() - start, MSG_DONTWAIT);
 			if(bytes == -1) {
+				ev.resize(start);
 				int err = errno;
 				if(err == EAGAIN) {
 					return;
 				}
+				LOGDT(SocketManager::className, "Error reading from event[1]: " + Util::translateError(err));
+				return;
 			}
-			for(size_t i = 0; i*sizeof(ev[0]) < static_cast<size_t>(bytes); ++i) {
-				Event* e = ev[i];
+			ev.resize(bytes);
+			size_t events = bytes / sizeof(Event*);
+			for(size_t i = 0; i < events; ++i) {
+				Event** ee = reinterpret_cast<Event**>(&ev[i*sizeof(Event*)]);
+				Event* e = *ee;
 				switch(e->event) {
 					case Event::WRITE: {
 						write(e->ms);
@@ -684,12 +695,16 @@ private:
 					case Event::DISCONNECT: {
 						disconnect(e->ms);
 					} break;
+					case Event::REMOVE: {
+						failRead(e->ms);
+					} break;
 					case Event::SHUTDOWN: {
 						handleShutdown();
 					} break;
 				}
 				pool.put(e);
 			}
+			ev.erase(ev.begin(), ev.begin() + events*sizeof(Event*));
 		}	
 	}
 	
@@ -719,13 +734,13 @@ private:
 	void read(const ManagedSocketPtr& ms) throw() {
 		if(stop)
 			return;
-		while(true) {
-			// Read until we can read no more
+		bool cont = true;
+		while(cont) {
 			ByteVector* readBuf = Util::freeBuf;
 			if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
 				readBuf->resize(SETTING(BUFFER_SIZE));
-			ssize_t bytes;
-			bytes = ::recv(ms->getSocket(), &(*readBuf)[0], readBuf->size(), MSG_DONTWAIT);
+				
+			ssize_t bytes = ::recv(ms->getSocket(), &(*readBuf)[0], readBuf->size(), MSG_DONTWAIT);
 			if(bytes == -1) {
 				Util::freeBuf = readBuf;
 				
@@ -739,6 +754,8 @@ private:
 				failRead(ms);
 				return;
 			}
+			cont = (readBuf->size() == static_cast<size_t>(bytes));
+			
 			readBuf->resize(bytes);
 			ms->completeRead(readBuf);
 		}
@@ -748,11 +765,12 @@ private:
 		if(active.find(ms) == active.end()) {
 			return;
 		}
-		active.erase(ms);
-		
-		ms->failSocket();
 		
 		ms->close();
+		ms->failSocket();
+		
+		active.erase(ms);
+		disconnecting.erase(ms);
 	}
 	
 	void write(const ManagedSocketPtr& ms) throw() {
@@ -765,18 +783,19 @@ private:
 			
 			if(!writeBuf) {
 				if(ms->disc) {
-					ms->shutdown();
+					addRemove(ms);
 				}
 				return;
 			}
 			
 			ssize_t bytes = ::send(ms->getSocket(), &(*writeBuf)[0], writeBuf->size(), MSG_DONTWAIT);
 			if(bytes == -1) {
-				Util::freeBuf = writeBuf;
 				int error = errno;
 				if(error == EAGAIN) {
+					ms->completeWrite(writeBuf, 0);
 					return;
 				}
+				Util::freeBuf = writeBuf;
 				failWrite(ms);
 				return;
 			}
@@ -787,7 +806,7 @@ private:
 	}
 	
 	void failWrite(const ManagedSocketPtr& ms) throw() {
-		failRead(ms);
+		addRemove(ms);
 	}
 	
 	void writeAll() throw() {
@@ -797,8 +816,11 @@ private:
 	}
 	
 	void disconnect(const ManagedSocketPtr& ms) throw() {
-		failRead(ms);
+		if(active.find(ms) == active.end()) 
+			return;
+		dcassert((int)ms.get() != 0x11);
 		disconnecting.insert(ms);
+		write(ms);
 	}
 	
 	void checkDisconnects() throw() {
@@ -806,24 +828,35 @@ private:
 		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
 			const ManagedSocketPtr& ms = *i;
 			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
-				failRead(ms);
+				ms->shutdown();
 			}
 		}
 	}
 	
 	void handleShutdown() throw() {
-		SocketSet tmp(active);
-		for(SocketSet::iterator i = tmp.begin(); i != tmp.end(); ++i) {
-			failRead(*i);
+		srv.disconnect();
+		
+		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
+			addRemove(*i);
 		}
 	}
 	
+	// This is needed because calling close() on the socket
+	// will remove it from the epoll set (so the main loop won't
+	// be notified)
+	void addRemove(const ManagedSocketPtr& ms) {
+		Event* ev = pool.get();
+		*ev = Event(Event::REMOVE, ms);
+		::write(event[0], &ev, sizeof(ev));
+	}
+		
 	EPoll poller;
 	Socket srv;
 	
 	bool stop;
 
 	int event[2];
+	std::vector<uint8_t> ev;
 	
 	Pool<Event, ClearEvent> pool;
 		

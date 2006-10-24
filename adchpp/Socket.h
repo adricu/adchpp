@@ -60,6 +60,9 @@ typedef int socket_t;
 #ifndef SD_SEND
 #define SD_SEND SHUT_WR
 #endif
+#ifndef SD_BOTH
+#define SD_BOTH SHUT_RDWR
+#endif
 #endif
 
 class ADCHPP_VISIBLE SocketException : public Exception {
@@ -116,7 +119,7 @@ public:
 
 	void listen(short aPort) throw(SocketException);
 
-	void shutdown() { ::shutdown(sock, SD_SEND); }
+	void shutdown() { ::shutdown(sock, SD_BOTH); }
 	
 	int read(void* aBuffer, size_t aBufLen) throw(SocketException); 
 	int wait(uint32_t millis, int waitFor) throw(SocketException);
