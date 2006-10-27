@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 
 sys.path.append('../build/debug-mingw/bin')
@@ -6,14 +7,14 @@ CLIENTS = 100
 
 import socket, threading, time
 
-from pyadchpp import Util_initialize, CID, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
+from pyadchpp import ParseException, Util_initialize, CID, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
 
 Util_initialize("")
 
 class Client(object):
 	def __init__(self, n):
 		self.sock = socket.socket()
-		self.pid = CID("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB") #CID_generate()
+		self.pid = CID_generate()
 		tiger = TigerHash()
 		tiger.update(self.pid.data())
 		self.cid = CID(Encoder_toBase32(tiger.finalize()))
@@ -38,10 +39,13 @@ class Client(object):
 		
 			self.line += line
 			index = self.line.find('\n')
+			if index==0:
+				self.line = self.line[index+1:]
+				index = -1
 			
-		cmdline = self.line[:index + 1]
+		self.lastline = self.line[:index + 1]
 		self.line = self.line[index+1:]
-		return AdcCommand(cmdline)
+		return AdcCommand(self.lastline)
 	
 	def expect(self, command):
 		cmd = self.get_command()
@@ -102,8 +106,18 @@ class Client(object):
 			self.sock.close()
 		except Exception, e:
 			print "Client " + self.nick + " died:", e
+		except ParseException, e:
+			print "Client " + self.nick + " died, line was:", self.lastline
 		self.running = False
 try:
+	import sys
+	if len(sys.argv) > 2:
+		ip = sys.argv[1]
+		port = int(sys.argv[2])
+	else:
+		ip = "127.0.0.1"
+		port = 2780
+	
 	clients = []
 	for i in range(CLIENTS):
 		if i > 0 and i % 10 == 0:
@@ -112,7 +126,7 @@ try:
 		print "Logging in", i
 		client = Client(i)
 		clients.append(client)
-		client.login(("127.0.0.1", 2780))
+		client.login((ip,port))
 		threading.Thread(target = client, name = client.nick).start()
 	
 	time.sleep(5)

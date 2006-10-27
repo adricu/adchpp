@@ -818,7 +818,7 @@ private:
 				return;
 			}
 			
-			ssize_t bytes = ::send(ms->getSocket(), &(*writeBuf)[0], writeBuf->size(), MSG_DONTWAIT);
+			ssize_t bytes = ::send(ms->getSocket(), &(*writeBuf)[0], writeBuf->size(), MSG_NOSIGNAL | MSG_DONTWAIT);
 			if(bytes == -1) {
 				int error = errno;
 				if(error == EAGAIN) {
