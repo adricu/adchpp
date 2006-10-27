@@ -78,7 +78,7 @@ bool ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = fal
 		if(lowPrio && SETTING(KEEP_SLOW_USERS)) {
 			return false;
 		} else if(overFlow > 0 && overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {
-			disconnect();
+			disconnect(Util::REASON_WRITE_OVERFLOW);
 			return false;
 		} else {
 			overFlow = GET_TICK();
@@ -156,26 +156,35 @@ void ManagedSocket::failSocket() throw() {
 	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processFail, this));
 }
 
-void ManagedSocket::disconnect() throw() {
+void ManagedSocket::disconnect(Util::Reason reason) throw() {
 	if(disc) {
 		return;
 	}
 
 	disc = GET_TICK();
+	Util::reasons[reason]++;
 	SocketManager::getInstance()->addDisconnect(this);
+	failSocket();
 }
 
 void ManagedSocket::processIncoming() throw() {
-	connectedHandler();
+	if(connectedHandler)
+		connectedHandler();
 }
 
 void ManagedSocket::processData(ByteVector* buf) throw() {
-	dataHandler(*buf);
+	if(dataHandler)
+		dataHandler(*buf);
 	Util::freeBuf = buf;
 }
 
 void ManagedSocket::processFail() throw() {
-	failedHandler();
+	if(failedHandler) {
+		failedHandler();
+		failedHandler.clear();
+		dataHandler.clear();
+		connectedHandler.clear();
+	}
 }
 
 }

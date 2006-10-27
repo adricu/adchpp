@@ -327,8 +327,12 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 			c.disconnect(Util::REASON_PID_CID_MISMATCH);
 			return false;
 		}
-		
-		if(cids.find(cid) != cids.end()) {
+		CIDMap::iterator i = cids.find(cid);
+		if(i != cids.end()) {
+			ClientIter j = clients.find(i->second);
+			if(j != clients.end()) {
+				j->second->send("\n");
+			}
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, STRING(CID_TAKEN)));
 			c.disconnect(Util::REASON_CID_TAKEN);
 			return false;

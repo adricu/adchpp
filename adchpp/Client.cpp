@@ -184,9 +184,8 @@ bool Client::isFlooding(time_t addSeconds) {
 
 void Client::disconnect(Util::Reason reason) throw() {
 	if(socket && !disconnecting) {
-		Util::reasons[reason]++;
 		disconnecting = true;
-		socket->disconnect();
+		socket->disconnect(reason);
 	}
 }
 

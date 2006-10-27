@@ -48,7 +48,7 @@ public:
 	static void unlock() { outbufCS.unlock(); }
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
-	ADCHPP_DLL void disconnect() throw();
+	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
 
 	const string& getIp() const { return ip; }
 	void setIp(const string& ip_) { ip = ip_; }
