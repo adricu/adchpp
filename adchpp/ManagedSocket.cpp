@@ -164,27 +164,19 @@ void ManagedSocket::disconnect(Util::Reason reason) throw() {
 	disc = GET_TICK();
 	Util::reasons[reason]++;
 	SocketManager::getInstance()->addDisconnect(this);
-	failSocket();
 }
 
 void ManagedSocket::processIncoming() throw() {
-	if(connectedHandler)
-		connectedHandler();
+	connectedHandler();
 }
 
 void ManagedSocket::processData(ByteVector* buf) throw() {
-	if(dataHandler)
-		dataHandler(*buf);
+	dataHandler(*buf);
 	Util::freeBuf = buf;
 }
 
 void ManagedSocket::processFail() throw() {
-	if(failedHandler) {
-		failedHandler();
-		failedHandler.clear();
-		dataHandler.clear();
-		connectedHandler.clear();
-	}
+	failedHandler();
 }
 
 }

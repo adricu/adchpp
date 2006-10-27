@@ -39,6 +39,7 @@
 #endif
 
 namespace adchpp {
+static uint32_t WRITE_TIMEOUT = 100;
 
 #ifdef _WIN32
 
@@ -92,7 +93,7 @@ public:
 	
 	bool get(DWORD* bytes, MSOverlapped** overlapped) {
 		DWORD x = 0;
-		return ::GetQueuedCompletionStatus(handle, bytes, &x, reinterpret_cast<OVERLAPPED**>(overlapped), 1000);
+		return ::GetQueuedCompletionStatus(handle, bytes, &x, reinterpret_cast<OVERLAPPED**>(overlapped), WRITE_TIMEOUT);
 	}
 	
 	operator bool() { return handle != INVALID_HANDLE_VALUE; }
@@ -110,24 +111,27 @@ public:
 	void addWriter(ManagedSocketPtr ms) {
 		if(stop)
 			return;
+#if 0
 		MSOverlapped* overlapped = pool.get();
 		*overlapped = MSOverlapped(MSOverlapped::WRITE_WAITING, ms);
 		
 		if(!port.post(overlapped)) {
 			LOGDT(SocketManager::className, "Fatal error while posting write to completion port: " + Util::translateError(::GetLastError()));
-		}			
+		}
+#endif			
 	}
 	
 	void addAllWriters() {
 		if(stop)
 			return;
-			
+#if 0			
 		MSOverlapped* overlapped = pool.get();
 		*overlapped = MSOverlapped(MSOverlapped::WRITE_ALL);
 		
 		if(!port.post(overlapped)) {
 			LOGDT(SocketManager::className, "Fatal error while posting writeAll to completion port: " + Util::translateError(::GetLastError()));
-		}			
+		}
+#endif			
 	}
 	
 	void addDisconnect(ManagedSocketPtr ms) {
@@ -187,6 +191,8 @@ private:
 		DWORD bytes = 0;
 		MSOverlapped* overlapped = 0;
 		
+		uint32_t lastWrite = 0;
+		
 		while(!stop || !accepting.empty() || !active.empty()) {
 			bool ret = port.get(&bytes, &overlapped);
 			//dcdebug("Event: %x, %x, %x, %x, %x, %x\n", (unsigned int)ret, (unsigned int)bytes, (unsigned int)ms, (unsigned int)overlapped, (unsigned int)overlapped->ms, (unsigned int)overlapped->type);
@@ -194,12 +200,10 @@ private:
 			if(!ret) {
 				if(overlapped == 0) {
 					int error = ::GetLastError();
-					if(error == WAIT_TIMEOUT) {
-						checkDisconnects();
-						continue;
+					if(error != WAIT_TIMEOUT) {
+						LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
+						return error;
 					}
-					LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
-					return error;
 				} else if(overlapped->type == MSOverlapped::ACCEPT) {
 					dcdebug("Error accepting: %s\n", Util::translateError(::GetLastError()).c_str());
 					failAccept(overlapped->ms);
@@ -212,42 +216,50 @@ private:
 				} else {
 					dcdebug("Unknown error %d when waiting\n", overlapped->type);
 				}
-				pool.put(overlapped);
-				continue;
-			}	
-			
-			switch(overlapped->type) {
-				case MSOverlapped::ACCEPT: {
-					checkDisconnects();
-					handleAccept(overlapped->ms);
-					break;
+			} else {	
+				switch(overlapped->type) {
+					case MSOverlapped::ACCEPT: {
+						checkDisconnects();
+						handleAccept(overlapped->ms);
+						break;
+					}
+					case MSOverlapped::READ_DONE: {
+						handleReadDone(overlapped->ms);
+						break;
+					}
+					case MSOverlapped::WRITE_DONE: {
+						handleWriteDone(overlapped->ms, bytes);
+						break;
+					}
+					case MSOverlapped::WRITE_WAITING: {
+						prepareWrite(overlapped->ms);
+						break;
+					}
+					case MSOverlapped::WRITE_ALL: {
+						writeAll();
+						break;
+					}
+					case MSOverlapped::DISCONNECT: {
+						handleDisconnect(overlapped->ms);
+						break;
+					}
+					case MSOverlapped::SHUTDOWN: {
+						handleShutdown();
+						break;
+					} 
 				}
-				case MSOverlapped::READ_DONE: {
-					handleReadDone(overlapped->ms);
-					break;
-				}
-				case MSOverlapped::WRITE_DONE: {
-					handleWriteDone(overlapped->ms, bytes);
-					break;
-				}
-				case MSOverlapped::WRITE_WAITING: {
-					prepareWrite(overlapped->ms);
-					break;
-				}
-				case MSOverlapped::WRITE_ALL: {
-					handleWriteAll();
-					break;
-				}
-				case MSOverlapped::DISCONNECT: {
-					handleDisconnect(overlapped->ms);
-					break;
-				}
-				case MSOverlapped::SHUTDOWN: {
-					handleShutdown();
-					break;
-				} 
 			}
-			pool.put(overlapped);
+			if(overlapped != 0) {
+				pool.put(overlapped);
+			}
+			
+			uint32_t now = GET_TICK();
+			if(now > lastWrite + WRITE_TIMEOUT) {
+				checkDisconnects();
+				writeAll();
+				lastWrite = now;
+			}
+
 		}
 		LOGDT(SocketManager::className, "Writer shutting down");
 		return 0;
@@ -388,10 +400,15 @@ private:
 		}
 		
 		ms->close();
-		ms->failSocket();
 
+		SocketSet::iterator i = disconnecting.find(ms);
+		if(i == disconnecting.end()) {
+			ms->failSocket();
+		} else {
+			disconnecting.erase(i);
+		}
+			
 		active.erase(ms);
-		disconnecting.erase(ms);
 	}
 	
 	void prepareWrite(const ManagedSocketPtr& ms) throw() {
@@ -444,7 +461,7 @@ private:
 		ms->close();
 	}
 	
-	void handleWriteAll() throw() {
+	void writeAll() throw() {
 		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
 			prepareWrite(*i);
 		}
@@ -457,6 +474,7 @@ private:
 		
 		prepareWrite(ms);
 		disconnecting.insert(ms);
+		ms->failSocket();
 	}
 	
 	void checkDisconnects() throw() {
@@ -530,7 +548,7 @@ struct EPoll {
 	
 	bool get(vector<epoll_event>& events) {
 		events.resize(1024);
-		int n = epoll_wait(poll_fd, &events[0], events.size(), -1);
+		int n = epoll_wait(poll_fd, &events[0], events.size(), WRITE_TIMEOUT);
 		if(n == -1) {
 			return false;
 		}
@@ -569,18 +587,18 @@ public:
 	void addWriter(const ManagedSocketPtr& ms) {
 		if(stop)
 			return;
-		
+/*		
 		Event* ev = pool.get();
 		*ev = Event(Event::WRITE, ms);
-		::write(event[0], &ev, sizeof(ev));
+		::write(event[0], &ev, sizeof(ev));*/
 	}
 	
 	void addAllWriters() {
 		if(stop)
 			return;
-		Event* ev = pool.get();
+/*		Event* ev = pool.get();
 		*ev = Event(Event::WRITE_ALL, 0);
-		::write(event[0], &ev, sizeof(ev));
+		::write(event[0], &ev, sizeof(ev));*/
 	}
 	
 	void addDisconnect(const ManagedSocketPtr& ms) {
@@ -639,10 +657,11 @@ private:
 			return 0;
 		}
 		
+		uint32_t lastWrite = 0;
 		std::vector<epoll_event> events;
 		while(!stop || !active.empty()) {
-			checkDisconnects();
 			events.clear();
+			
 			if(!poller.get(events)) {
 				LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
 			}
@@ -660,6 +679,13 @@ private:
 						write(ms);
 					}
 				}
+			}
+			
+			uint32_t now = GET_TICK();
+			if(now > lastWrite + WRITE_TIMEOUT) {
+				checkDisconnects();
+				writeAll();
+				lastWrite = now;
 			}
 		}
 		LOGDT(SocketManager::className, "Writer shutting down");
@@ -767,10 +793,14 @@ private:
 		}
 		
 		ms->close();
-		ms->failSocket();
+		SocketSet::iterator i = disconnecting.find(ms);
+		if(i == disconnecting.end()) {
+			ms->failSocket();
+		} else {
+			disconnecting.erase(i);
+		}
 		
 		active.erase(ms);
-		disconnecting.erase(ms);
 	}
 	
 	void write(const ManagedSocketPtr& ms) throw() {
@@ -818,8 +848,9 @@ private:
 	void disconnect(const ManagedSocketPtr& ms) throw() {
 		if(active.find(ms) == active.end()) 
 			return;
-		dcassert((int)ms.get() != 0x11);
+
 		disconnecting.insert(ms);
+		ms->failSocket();
 		write(ms);
 	}
 	
