@@ -20,6 +20,7 @@
 
 #include "Util.h"
 #include "FastAlloc.h"
+#include "SettingsManager.h"
 
 #include <locale.h>
 #ifndef _WIN32
@@ -48,7 +49,11 @@ string Util::appName;
 string Util::appPath;
 #endif
 
-Util::Stats Util::stats;
+int64_t Stats::bytesQueued = 0;
+int64_t Stats::bytesSent = 0;
+int64_t Stats::bytesReceived = 0;
+time_t Stats::startTime = 0;
+
 string Util::emptyString;
 string Util::cfgPath;
 size_t Util::reasons[REASON_LAST];
@@ -62,6 +67,14 @@ void Util::initialize(const string& configPath) {
 	sgenrand((unsigned long)time(NULL));
 	
 	setCfgPath(configPath);
+}
+
+void Util::Clear::operator()(ByteVector& v) {
+	if(v.capacity() > static_cast<size_t>(SETTING(BUFFER_SIZE))) {
+		ByteVector().swap(v);
+	} else {
+	 	v.clear();
+	}
 }
 
 /**

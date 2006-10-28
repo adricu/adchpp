@@ -43,6 +43,9 @@ public:
 	/** Asynchronous write, assumes that buffers are locked */
 	ADCHPP_DLL bool fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
 	
+	/** Returns the number of bytes in the output buffer; buffers must be locked */
+	size_t getQueuedBytes() { return outBuf ? outBuf->size() : 0; }
+	
 	/** Locks the write buffer for all sockets */
 	static void lock() { outbufCS.lock(); }
 	static void unlock() { outbufCS.unlock(); }

@@ -75,6 +75,16 @@ void ClientManager::sendToAll(const AdcCommand& cmd) throw() {
 	SocketManager::getInstance()->addAllWriters();
 }
 
+size_t ClientManager::getQueuedBytes() throw() {
+	size_t total = 0;
+	ManagedSocket::lock();
+	for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
+		total += i->second->getQueuedBytes();
+	}
+	ManagedSocket::unlock();
+	return total;
+}
+
 void ClientManager::sendTo(const AdcCommand& cmd, const uint32_t& to) throw() {
 	ClientIter i = clients.find(to);
 	if(i != clients.end()) {

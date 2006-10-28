@@ -58,7 +58,7 @@ void startup(void (*f)()) {
 		}
 	}
 */
-	Util::stats.startTime = GET_TIME();
+	Stats::startTime = GET_TIME();
 
 	if(f) f();
 	ClientManager::getInstance()->startup();

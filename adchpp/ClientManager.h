@@ -143,6 +143,8 @@ public:
 	/** Update the state of c (this fires signalState as well) */
 	ADCHPP_DLL void setState(Client& c, Client::State newState) throw();
 
+	ADCHPP_DLL size_t getQueuedBytes() throw();
+	
 	/**
 	 * The SocketManager calls this when a new connection has been accepted.
 	 * Don't touch.

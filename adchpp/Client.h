@@ -81,7 +81,8 @@ public:
 	void fastSend(const string& command, bool lowPrio = false) throw() {
 		socket->fastWrite(command.c_str(), command.length(), lowPrio);
 	}
-
+	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
+	
 	/** @param reason The statistic to update */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
 	const ManagedSocketPtr& getSocket() throw() { return socket; }

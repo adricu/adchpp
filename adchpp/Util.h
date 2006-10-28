@@ -139,6 +139,13 @@ private:
 	TPtr p;
 };
 
+struct Stats {
+	ADCHPP_DLL static int64_t bytesQueued;
+	ADCHPP_DLL static int64_t bytesSent;
+	ADCHPP_DLL static int64_t bytesReceived;
+	ADCHPP_DLL static time_t startTime;
+};
+
 class Util  
 {
 public:
@@ -167,13 +174,6 @@ public:
 
 	ADCHPP_DLL static size_t reasons[REASON_LAST];
 	
-	struct Stats {
-		int64_t totalUp;			///< Total bytes uploaded
-		int64_t totalDown;			///< Total bytes downloaded
-		uint32_t startTime;			///< The time the hub was started
-	};
-
-	ADCHPP_DLL static Stats stats;
 	ADCHPP_DLL static string emptyString;
 
 	ADCHPP_DLL static void initialize(const string& configPath);
@@ -300,7 +300,7 @@ public:
 	ADCHPP_DLL static string getLocalIp();
 
 	struct Clear {
-		void operator()(ByteVector& x) { x.clear(); }
+		void operator()(ByteVector& x);
 	};
 	/** Pool of free buffers */
 	ADCHPP_DLL static Pool<ByteVector, Clear> freeBuf;

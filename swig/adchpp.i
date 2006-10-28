@@ -27,9 +27,12 @@ using namespace adchpp;
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed int int32_t;
+typedef signed long long int64_t;
+typedef unsigned int time_t;
 
 using namespace std;
 
@@ -116,6 +119,13 @@ public:
 	virtual const char* what();
 };
 
+struct Stats {
+	static int64_t bytesQueued;
+	static int64_t bytesSent;
+	static int64_t bytesReceived;
+	static time_t startTime;
+};
+
 class Util  
 {
 public:
@@ -144,14 +154,6 @@ public:
 
 	static size_t reasons[REASON_LAST];
 	
-/*	struct Stats {
-		int64_t totalUp;			///< Total bytes uploaded
-		int64_t totalDown;			///< Total bytes downloaded
-		uint32_t startTime;		///< The time the hub was started
-	};
-
-	static Stats stats;
-*/
 	static string emptyString;
 
 	static void initialize(const string& configPath);
@@ -502,6 +504,8 @@ public:
 	bool verifyUsers(Client& c) throw();
 
 	void setState(Client& c, Client::State newState) throw();
+	
+	size_t getQueuedBytes() throw();
 	
 	//void incomingConnection(ManagedSocket* ms) throw();
 	

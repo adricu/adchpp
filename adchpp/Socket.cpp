@@ -154,7 +154,7 @@ int Socket::read(void* aBuffer, size_t aBufLen) throw(SocketException) {
 	checkrecv(len=::recv(sock, (char*)aBuffer, (int)aBufLen, 0));
 
 	dcdebug("In (%d): %.30s\n", len, (char*)aBuffer);
-	Util::stats.totalDown += len;
+	Stats::bytesReceived += len;
 	return len;
 }
 
@@ -195,7 +195,7 @@ int Socket::writeNB(const char* aBuffer, size_t aLen) throw(SocketException) {
 	}
 	dcdebug("Out (%d/%d): %.30s\n", i, aLen, (char*)aBuffer);
 	
-	Util::stats.totalUp += i;
+	Stats::bytesSent += i;
 
 	return i;
 }
@@ -238,7 +238,7 @@ void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t
 	int i = ::sendto(sock, aBuffer, (int)aLen, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
 	checksockerr(i);
 
-	Util::stats.totalUp += i;
+	Stats::bytesSent += i;
 }
 
 /**

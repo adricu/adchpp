@@ -129,6 +129,13 @@ private:
 
 %}
 
+%typemap(in, checkfn="lua_isnumber") int64_t,uint64_t,const int64_t&, const uint64_t& {
+	$1 = ($1_ltype)lua_tonumber(L,$input);
+}
+%typemap(out) int64_t,uint64_t,const int64_t&, const uint64_t& {
+   lua_pushnumber(L, (lua_Number)$1); SWIG_arg++;
+}
+
 %typemap(in) boost::function<void (adchpp::Client &) > {
 	$1 = LuaFunction(L);
 }

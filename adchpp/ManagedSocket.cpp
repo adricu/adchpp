@@ -65,10 +65,10 @@ void ManagedSocket::write(const char* buf, size_t len) throw() {
 }
 
 bool ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = false */) throw() {
-	bool add = false;
 	if((len == 0) || (disc > 0))
 		return false;
 	
+	bool add = false;
 	if(outBuf == 0) {
 		add = true;
 		outBuf = Util::freeBuf;
@@ -85,6 +85,7 @@ bool ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = fal
 		}
 	}
 	
+	Stats::bytesQueued += len;
 	outBuf->insert(outBuf->end(), buf, buf + len);
 	return add;
 }
@@ -114,7 +115,7 @@ ByteVector* ManagedSocket::prepareWrite() {
 
 bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 
-	Util::stats.totalUp += written;
+	Stats::bytesSent += written;
 
 	bool moreData;
 	{
@@ -143,7 +144,7 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 }
 
 bool ManagedSocket::completeRead(ByteVector* buf) throw() {
-	Util::stats.totalDown += buf->size();
+	Stats::bytesReceived += buf->size();
 	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processData, this, buf));
 	return true;
 }

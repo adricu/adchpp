@@ -61,12 +61,6 @@ LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
 		firstException = false;
 	}
 
-/*	if(File::getSize(Util::getAppPath() + "DCPlusPlus.pdb") == -1) {
-		// No debug symbols, we're not interested...
-		PRINTERROR(_T("DC++ has crashed and you don't have debug symbols installed. Hence, I can't find out why it crashed, so don't report this as a bug unless you find a solution..."), _T("DC++ has crashed"));
-		exit(1);
-	}
-*/
 	printf("Writing to %s\n", (Util::getCfgPath()).c_str());
 	File f(Util::getCfgPath() + "exceptioninfo.txt", File::WRITE, File::OPEN | File::CREATE);
 	f.setEndPos(0);
@@ -78,14 +72,6 @@ LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
 
 	f.write(buf, strlen(buf));
 
-/*	OSVERSIONINFOEX ver;
-	WinUtil::getVersionInfo(ver);
-
-	sprintf(buf, "Major: %d\r\nMinor: %d\r\nBuild: %d\r\nSP: %d\r\nType: %d\r\n",
-		(DWORD)ver.dwMajorVersion, (DWORD)ver.dwMinorVersion, (DWORD)ver.dwBuildNumber,
-		(DWORD)ver.wServicePackMajor, (DWORD)ver.wProductType);
-
-	f.write(buf, strlen(buf));*/
 	time_t now;
 	time(&now);
 	strftime(buf, DEBUG_BUFSIZE, "Time: %Y-%m-%d %H:%M:%S\r\n", localtime(&now));

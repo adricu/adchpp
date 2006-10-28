@@ -369,6 +369,15 @@ local function onPAS(c, cmd)
 	return command_processed
 end
 
+local function formatSeconds(t)
+	local t_d = math.floor(t / (60*60*24))
+	local t_h = math.floor(t / (60*60)) % 24
+	local t_m = math.floor(t / 60) % 60
+	local t_s = t % 60
+
+	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
+end
+
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
 
@@ -447,13 +456,14 @@ local function onMSG(c, cmd)
 
 		return adchpp.DONT_SEND
 	elseif command == "stats" then
-		local uptime = os.difftime(os.time(), start_time)
-		local uptime_d = math.floor(uptime / (60*60*24))
-		local uptime_h = math.floor(uptime / (60*60)) % 24
-		local uptime_m = math.floor(uptime / 60) % 60
-		local uptime_s = uptime % 60
+		local now = os.time()
+		local scripttime = os.difftime(now, start_time)
+		local hubtime = os.difftime(now, adchpp.Stats_startTime)
 		
-		str = "\nScript uptime: " .. string.format("%d days, %d hours, %d minutes and %d seconds\n", uptime_d, uptime_h, uptime_m,uptime_s)
+		str = "\n"
+		str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
+		str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
+		
 		for k, v in pairs(stats) do
 			str = str .. v .. "\t" .. k .. "\n"
 		end
@@ -463,6 +473,17 @@ local function onMSG(c, cmd)
 				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k .. "\n"
 			end
 		end
+		
+		local queued = cm:getQueuedBytes()
+		local totalQueued = adchpp.Stats_bytesQueued
+		local totalSent = adchpp.Stats_bytesSent
+		local totalReceived = adchpp.Stats_bytesReceived
+		
+		str = str .. "Bandwidth stats: \n"
+		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued\n"
+		str = str .. adchpp.Util_formatBytes(totalQueued) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(totalQueued/hubtime) .. "/s)\n"
+		str = str .. adchpp.Util_formatBytes(totalSent) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(totalSent/hubtime) .. "/s)\n"
+		str = str .. adchpp.Util_formatBytes(totalReceived) .. "\tTotal bytes received (" .. adchpp.Util_formatBytes(totalReceived/hubtime) .. "/s)\n"
 		
 		reply(c, str)
 		return adchpp.DONT_SEND
