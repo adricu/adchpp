@@ -120,9 +120,12 @@ public:
 };
 
 struct Stats {
-	static int64_t bytesQueued;
-	static int64_t bytesSent;
-	static int64_t bytesReceived;
+	static size_t queueCalls;
+	static int64_t queueBytes;
+	static size_t sendCalls;
+	static int64_t sendBytes;
+	static int64_t recvCalls;
+	static int64_t recvBytes;
 	static time_t startTime;
 };
 

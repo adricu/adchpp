@@ -140,9 +140,12 @@ private:
 };
 
 struct Stats {
-	ADCHPP_DLL static int64_t bytesQueued;
-	ADCHPP_DLL static int64_t bytesSent;
-	ADCHPP_DLL static int64_t bytesReceived;
+	ADCHPP_DLL static size_t queueCalls;
+	ADCHPP_DLL static int64_t queueBytes;
+	ADCHPP_DLL static size_t sendCalls;
+	ADCHPP_DLL static int64_t sendBytes;
+	ADCHPP_DLL static int64_t recvCalls;
+	ADCHPP_DLL static int64_t recvBytes;
 	ADCHPP_DLL static time_t startTime;
 };
 

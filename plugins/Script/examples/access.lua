@@ -475,15 +475,21 @@ local function onMSG(c, cmd)
 		end
 		
 		local queued = cm:getQueuedBytes()
-		local totalQueued = adchpp.Stats_bytesQueued
-		local totalSent = adchpp.Stats_bytesSent
-		local totalReceived = adchpp.Stats_bytesReceived
+		local queueBytes = adchpp.Stats_queueBytes
+		local queueCalls = adchpp.Stats_queueCalls
+		local sendBytes = adchpp.Stats_sendBytes
+		local sendCalls = adchpp.Stats_sendCalls
+		local recvBytes = adchpp.Stats_recvBytes
+		local recvCalls = adchpp.Stats_recvCalls
 		
 		str = str .. "Bandwidth stats: \n"
 		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued\n"
-		str = str .. adchpp.Util_formatBytes(totalQueued) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(totalQueued/hubtime) .. "/s)\n"
-		str = str .. adchpp.Util_formatBytes(totalSent) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(totalSent/hubtime) .. "/s)\n"
-		str = str .. adchpp.Util_formatBytes(totalReceived) .. "\tTotal bytes received (" .. adchpp.Util_formatBytes(totalReceived/hubtime) .. "/s)\n"
+		str = str .. adchpp.Util_formatBytes(queueBytes) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(queueBytes/hubtime) .. "/s)\n"
+		str = str .. queueCalls .. "\tQueue calls (" .. adchpp.Util_formatBytes(queueBytes/queueCalls) .. "/call)\n"
+		str = str .. adchpp.Util_formatBytes(sendBytes) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(sendBytes/hubtime) .. "/s)\n"
+		str = str .. sendCalls .. "\tSend calls (" .. adchpp.Util_formatBytes(sendBytes/sendCalls) .. "/call)\n"
+		str = str .. adchpp.Util_formatBytes(recvBytes) .. "\tTotal bytes received (" .. adchpp.Util_formatBytes(recvBytes/hubtime) .. "/s)\n"
+		str = str .. recvCalls .. "\tReceive calls (" .. adchpp.Util_formatBytes(recvBytes/recvCalls) .. "/call)\n"
 		
 		reply(c, str)
 		return adchpp.DONT_SEND

@@ -49,9 +49,12 @@ string Util::appName;
 string Util::appPath;
 #endif
 
-int64_t Stats::bytesQueued = 0;
-int64_t Stats::bytesSent = 0;
-int64_t Stats::bytesReceived = 0;
+size_t Stats::queueCalls = 0;
+int64_t Stats::queueBytes = 0;
+size_t Stats::sendCalls = 0;
+int64_t Stats::sendBytes = 0;
+int64_t Stats::recvCalls = 0;
+int64_t Stats::recvBytes = 0;
 time_t Stats::startTime = 0;
 
 string Util::emptyString;
