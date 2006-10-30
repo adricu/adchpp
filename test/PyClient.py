@@ -127,7 +127,9 @@ try:
 		client = Client(i)
 		clients.append(client)
 		client.login((ip,port))
-		threading.Thread(target = client, name = client.nick).start()
+		t = threading.Thread(target = client, name = client.nick)
+		t.setDaemon(True)
+		t.start()
 	
 	time.sleep(5)
 	import random

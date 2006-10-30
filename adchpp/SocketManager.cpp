@@ -568,7 +568,7 @@ struct EPoll {
 	bool associate(const ManagedSocketPtr& ms) {
 		struct epoll_event ev;
 		ev.data.ptr = reinterpret_cast<void*>(ms.get());
-		ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
+		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
 		return epoll_ctl(poll_fd, EPOLL_CTL_ADD, ms->getSocket(), &ev) == 0;
 	}
 	
@@ -716,7 +716,7 @@ private:
 					if(ev.events & EPOLLOUT) {
 						write(ms);
 					}
-					if(ev.events & (EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+					if(ev.events & (EPOLLIN | EPOLLHUP | EPOLLERR)) {
 						read(ms);
 					} 
 				}
@@ -763,7 +763,7 @@ private:
 						disconnect(e->ms);
 					} break;
 					case Event::REMOVE: {
-						failRead(e->ms);
+						failRead(e->ms, 0);
 					} break;
 					case Event::SHUTDOWN: {
 						handleShutdown();

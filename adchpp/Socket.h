@@ -76,7 +76,7 @@ public:
 	SocketException(int aError) throw() : Exception(errorToString(aError)), err(aError) { }
 #endif // NDEBUG
 	
-	int getErrorCode() { return err; }
+	int getErrorCode() const { return err; }
 	virtual ~SocketException() throw() { }
 private:
 	int err;
