@@ -108,7 +108,7 @@ public:
 	Writer() : stop(false) {
 	}
 	
-	void addWriter(ManagedSocketPtr ms) {
+	void addWriter(ManagedSocketPtr /*ms */) {
 		if(stop)
 			return;
 #if 0
@@ -157,6 +157,13 @@ public:
 		}
 		join();
 	}
+
+	void getErrors(SocketManager::ErrorMap& acceptErrors_, SocketManager::ErrorMap& readErrors_, SocketManager::ErrorMap& writeErrors_) {
+		FastMutex::Lock l(errorMutex);
+		acceptErrors_ = acceptErrors;
+		readErrors_ = readErrors;
+		writeErrors_ = writeErrors;
+	}
 	
 private:
 	bool init() {
@@ -198,21 +205,21 @@ private:
 			//dcdebug("Event: %x, %x, %x, %x, %x, %x\n", (unsigned int)ret, (unsigned int)bytes, (unsigned int)ms, (unsigned int)overlapped, (unsigned int)overlapped->ms, (unsigned int)overlapped->type);
 			
 			if(!ret) {
+				int error = ::GetLastError();
 				if(overlapped == 0) {
-					int error = ::GetLastError();
 					if(error != WAIT_TIMEOUT) {
 						LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
 						return error;
 					}
 				} else if(overlapped->type == MSOverlapped::ACCEPT) {
-					dcdebug("Error accepting: %s\n", Util::translateError(::GetLastError()).c_str());
-					failAccept(overlapped->ms);
+					dcdebug("Error accepting: %s\n", Util::translateError(error).c_str());
+					failAccept(overlapped->ms, error);
 				} else if(overlapped->type == MSOverlapped::READ_DONE) {
-					dcdebug("Error reading: %s\n", Util::translateError(::GetLastError()).c_str());
-					failRead(overlapped->ms);
+					dcdebug("Error reading: %s\n", Util::translateError(error).c_str());
+					failRead(overlapped->ms, error);
 				} else if(overlapped->type == MSOverlapped::WRITE_DONE) {
-					dcdebug("Error writing: %s\n", Util::translateError(::GetLastError()).c_str());
-					failWrite(overlapped->ms);
+					dcdebug("Error writing: %s\n", Util::translateError(error).c_str());
+					failWrite(overlapped->ms, error);
 				} else {
 					dcdebug("Unknown error %d when waiting\n", overlapped->type);
 				}
@@ -296,12 +303,17 @@ private:
 			*overlapped = MSOverlapped(MSOverlapped::ACCEPT, ms);
 
 			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), &(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
-				if(::WSAGetLastError() != ERROR_IO_PENDING) {
+				int error = ::WSAGetLastError();
+				if(error != ERROR_IO_PENDING) {
 					if(!stop) {
 						LOGDT(SocketManager::className, "Failed accepting connection: " + Util::translateError(GetLastError()));
 					}
 					
 					pool.put(overlapped);
+					
+					FastMutex::Lock l(errorMutex);
+					acceptErrors[error]++;
+					
 					return;
 				}
 			}
@@ -333,10 +345,14 @@ private:
 		prepareAccept();	
 	}
 	
-	void failAccept(ManagedSocketPtr& ms) throw() {
+	void failAccept(ManagedSocketPtr& ms, int error) throw() {
 		accepting.erase(ms);
 		
+		
 		prepareAccept();
+		
+		FastMutex::Lock l(errorMutex);
+		acceptErrors[error]++;
 	}
 	
 	void prepareRead(const ManagedSocketPtr& ms) throw() {
@@ -354,7 +370,7 @@ private:
 			int error = ::WSAGetLastError();
 			if(error != WSA_IO_PENDING) {
 				dcdebug("Error preparing read: %s\n", Util::translateError(error).c_str());
-				failRead(ms);
+				failRead(ms, error);
 			}
 		}
 	}
@@ -372,9 +388,10 @@ private:
 		
 		if(::WSARecv(ms->getSocket(), &wsa, 1, &bytes, &flags, 0, 0) == SOCKET_ERROR) {
 			Util::freeBuf = readBuf;
-			if(::WSAGetLastError() != WSAEWOULDBLOCK) {
+			int error = ::WSAGetLastError();
+			if(error != WSAEWOULDBLOCK) {
 				// Socket failed...
-				failRead(ms);
+				failRead(ms, error);
 				return;
 			}
 			
@@ -384,7 +401,7 @@ private:
 		
 		if(bytes == 0) {
 			Util::freeBuf = readBuf;
-			failRead(ms);
+			failRead(ms, 0);
 			return;
 		}
 		
@@ -394,11 +411,16 @@ private:
 		prepareRead(ms);
 	}
 	
-	void failRead(const ManagedSocketPtr& ms) throw() {
+	void failRead(const ManagedSocketPtr& ms, int error) throw() {
 		if(active.find(ms) == active.end()) {
 			return;
 		}
 		
+		if(error != 0) {
+			FastMutex::Lock l(errorMutex);
+			readErrors[error]++;
+		}
+		 
 		ms->close();
 
 		SocketSet::iterator i = disconnecting.find(ms);
@@ -433,8 +455,9 @@ private:
 		
 		DWORD x = 0;
 		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
-			if(::WSAGetLastError() != WSA_IO_PENDING) {
-				failWrite(ms);
+			int error = ::WSAGetLastError();
+			if(error != WSA_IO_PENDING) {
+				failWrite(ms, error);
 				pool.put(overlapped);
 			}
 		}
@@ -454,11 +477,12 @@ private:
 		}
 	}
 	
-	void failWrite(const ManagedSocketPtr& ms) throw() {
+	void failWrite(const ManagedSocketPtr& ms, int error) throw() {
 		Util::freeBuf = ms->writeBuf;
 		ms->writeBuf = 0;
 		
-		ms->close();
+		FastMutex::Lock l(errorMutex);
+		writeErrors[error]++;
 	}
 	
 	void writeAll() throw() {
@@ -472,6 +496,10 @@ private:
 			return;
 		}
 		
+		if(disconnecting.find(ms) != disconnecting.end()) {
+			return;
+		}
+ 
 		prepareWrite(ms);
 		disconnecting.insert(ms);
 		ms->failSocket();
@@ -495,6 +523,11 @@ private:
 			(*i)->close();
 		}
 	}
+	
+	FastMutex errorMutex;
+	SocketManager::ErrorMap acceptErrors;
+	SocketManager::ErrorMap readErrors;
+	SocketManager::ErrorMap writeErrors;
 	
 	CompletionPort port;
 	Socket srv;
@@ -535,7 +568,7 @@ struct EPoll {
 	bool associate(const ManagedSocketPtr& ms) {
 		struct epoll_event ev;
 		ev.data.ptr = reinterpret_cast<void*>(ms.get());
-		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+		ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
 		return epoll_ctl(poll_fd, EPOLL_CTL_ADD, ms->getSocket(), &ev) == 0;
 	}
 	
@@ -620,6 +653,13 @@ public:
 		join();
 	}
 	
+	void getErrors(SocketManager::ErrorMap& acceptErrors_, SocketManager::ErrorMap& readErrors_, SocketManager::ErrorMap& writeErrors_) {
+		FastMutex::Lock l(errorMutex);
+		acceptErrors_ = acceptErrors;
+		readErrors_ = readErrors;
+		writeErrors_ = writeErrors;
+	}
+	
 private:
 	bool init() {
 		if(!poller.init()) {
@@ -673,11 +713,12 @@ private:
 					handleEvents();
 				} else {
 					ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr));
-					if(ev.events & EPOLLIN || ev.events & EPOLLERR) {
-						read(ms);
-					} else if(ev.events & EPOLLOUT) {
+					if(ev.events & EPOLLOUT) {
 						write(ms);
 					}
+					if(ev.events & (EPOLLIN | EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+						read(ms);
+					} 
 				}
 			}
 			
@@ -753,6 +794,10 @@ private:
 			read(ms);
 		} catch (const SocketException& e) {
 			LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
+			if(e.getErrorCode() != 0) {
+				FastMutex::Lock l(errorMutex);
+				acceptErrors[e.getErrorCode()]++;
+			}
 			return;
 		}
 	}
@@ -772,12 +817,12 @@ private:
 				
 				int error = errno;
 				if(error != EAGAIN) {
-					failRead(ms);
+					failRead(ms, error);
 				}
 				return;
 			} else if(bytes == 0) {
 				Util::freeBuf = readBuf;
-				failRead(ms);
+				failRead(ms, 0);
 				return;
 			}
 			cont = (readBuf->size() == static_cast<size_t>(bytes));
@@ -787,7 +832,7 @@ private:
 		}
 	}
 	
-	void failRead(const ManagedSocketPtr& ms) throw() {
+	void failRead(const ManagedSocketPtr& ms, int error) throw() {
 		if(active.find(ms) == active.end()) {
 			return;
 		}
@@ -801,6 +846,10 @@ private:
 		}
 		
 		active.erase(ms);
+		if(error != 0) {
+			FastMutex::Lock l(errorMutex);
+			readErrors[error]++;
+		}
 	}
 	
 	void write(const ManagedSocketPtr& ms) throw() {
@@ -826,7 +875,7 @@ private:
 					return;
 				}
 				Util::freeBuf = writeBuf;
-				failWrite(ms);
+				failWrite(ms, error);
 				return;
 			}
 			if(!ms->completeWrite(writeBuf, bytes)) {
@@ -835,8 +884,12 @@ private:
 		}
 	}
 	
-	void failWrite(const ManagedSocketPtr& ms) throw() {
+	void failWrite(const ManagedSocketPtr& ms, int error) throw() {
 		addRemove(ms);
+		if(error != 0) {
+			FastMutex::Lock l(errorMutex);
+			writeErrors[error]++;
+		}
 	}
 	
 	void writeAll() throw() {
@@ -848,6 +901,10 @@ private:
 	void disconnect(const ManagedSocketPtr& ms) throw() {
 		if(active.find(ms) == active.end()) 
 			return;
+		
+		if(disconnecting.find(ms) != disconnecting.end()) {
+			return;
+		}
 
 		disconnecting.insert(ms);
 		ms->failSocket();
@@ -884,6 +941,11 @@ private:
 	EPoll poller;
 	Socket srv;
 	
+	FastMutex errorMutex;
+	SocketManager::ErrorMap acceptErrors;
+	SocketManager::ErrorMap readErrors;
+	SocketManager::ErrorMap writeErrors;
+
 	bool stop;
 
 	int event[2];
@@ -962,5 +1024,10 @@ void SocketManager::shutdown() {
 	
 	writer.release();
 }
+
+void SocketManager::getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_) {
+	writer->getErrors(acceptErrors_, readErrors_, writeErrors_);
+}
+
 
 }

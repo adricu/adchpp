@@ -12,6 +12,7 @@
 #include <adchpp/Exception.h>
 #include <adchpp/PluginManager.h>
 #include <adchpp/TigerHash.h>
+#include <adchpp/SocketManager.h>
 
 using namespace adchpp;
 
@@ -20,6 +21,8 @@ using namespace adchpp;
 %include "std_string.i"
 %include "std_vector.i"
 %include "std_except.i"
+%include "std_pair.i"
+
 %include "carrays.i"
 
 %array_functions(size_t, size_t);
@@ -52,10 +55,13 @@ void shutdown() {
 %nodefaultdtor SettingsManager;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
+%nodefaultdtor SocketManager;
 
 namespace adchpp {
 	class Client;
 }
+%template(TErrorPair) std::pair<int, size_t>;
+%template(TErrorList) std::vector<std::pair<int, size_t> >;
 
 %template(TClientList) std::vector<adchpp::Client*>;
 %template(TStringList) std::vector<std::string>;
@@ -448,6 +454,39 @@ public:
 	void logDateTime(const string& area, const string& msg) throw();
 };
 
+class SocketManager {
+	public:
+	%extend {
+		std::vector<std::pair<int, size_t> > getAcceptErrors() {
+			std::vector<std::pair<int, size_t> > tmp;
+			adchpp::SocketManager::ErrorMap a, r, w;
+			self->getErrors(a, r, w);
+			for(SocketManager::ErrorMap::iterator i = a.begin(); i != a.end(); ++i) {
+				tmp.push_back(std::make_pair(i->first, i->second));
+			}
+			return tmp;
+		}
+		std::vector<std::pair<int, size_t> > getReadErrors() {
+			std::vector<std::pair<int, size_t> > tmp;
+			adchpp::SocketManager::ErrorMap a, r, w;
+			self->getErrors(a, r, w);
+			for(SocketManager::ErrorMap::iterator i = r.begin(); i != r.end(); ++i) {
+				tmp.push_back(std::make_pair(i->first, i->second));
+			}
+			return tmp;
+		}
+		std::vector<std::pair<int, size_t> > getWriteErrors() {
+			std::vector<std::pair<int, size_t> > tmp;
+			adchpp::SocketManager::ErrorMap a, r, w;
+			self->getErrors(a, r, w);
+			for(SocketManager::ErrorMap::iterator i = w.begin(); i != w.end(); ++i) {
+				tmp.push_back(std::make_pair(i->first, i->second));
+			}
+			return tmp;
+		}
+	}
+};
+
 class ClientManager 
 {
 public:
@@ -727,5 +766,6 @@ namespace adchpp {
 	LogManager* getLM() { return LogManager::getInstance(); }
 	SettingsManager* getSM() { return SettingsManager::getInstance(); }
 	PluginManager* getPM() { return PluginManager::getInstance(); }
+	SocketManager* getSocketManager() { return SocketManager::getInstance(); }
 }
 %}

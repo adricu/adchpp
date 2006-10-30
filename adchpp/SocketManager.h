@@ -40,7 +40,9 @@ public:
 	void addWriter(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
 	void addDisconnect(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
 	void addAllWriters() throw();
-		
+	
+	typedef HASH_MAP<int, size_t> ErrorMap;
+	ADCHPP_DLL void getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_);
 private:
 	friend class ManagedSocket;
 	friend class Writer;

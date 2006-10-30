@@ -308,10 +308,7 @@ int Socket::wait(uint32_t millis, int waitFor) throw(SocketException) {
 		socklen_t z = sizeof(y);
 		checksockerr(getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&y, &z));
 
-		if(y != 0)
-			throw SocketException(y);
-		// Should never happen
-		throw SocketException("Unknown socket error");
+		throw SocketException(y);
 	}
 
 	if(waitFor & WAIT_READ) {

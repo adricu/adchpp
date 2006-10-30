@@ -378,6 +378,20 @@ local function formatSeconds(t)
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
 end
 
+local function pairsByKeys (t, f)
+	local a = {}
+	for n in pairs(t) do table.insert(a, n) end
+		table.sort(a, f)
+		local i = 0      -- iterator variable
+		local iter = function ()   -- iterator function
+		i = i + 1
+		if a[i] == nil then return nil
+		else return a[i], t[a[i]]
+		end
+	end
+	return iter
+end
+
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
 
@@ -464,14 +478,38 @@ local function onMSG(c, cmd)
 		str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
 		str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
 		
+		str = str .. "\nADC and script commands: \n"
+		
 		for k, v in pairs(stats) do
 			str = str .. v .. "\t" .. k .. "\n"
 		end
-		str = str .. "Disconnect reasons: \n"
+		
+		str = str .. "\nDisconnect reasons: \n"
 		for k, v in pairs(adchpp) do
 			if k:sub(1, 7) == "REASON_" and k ~= "REASON_LAST" then
 				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k .. "\n"
 			end
+		end
+		
+		sm = adchpp.getSocketManager()
+		a = sm:getAcceptErrors()
+		r = sm:getReadErrors()
+		w = sm:getWriteErrors()
+		str = str .. "\nSocket errors: \n"
+		str = str .. " - Accept errors: \n"
+		for i = 0, a:size()-1 do
+			e = a[i]
+			str = str .. e.first .. "\t" .. e.second .. "\t" .. adchpp.Util_translateError(e.first) .. "\n"
+		end
+		str = str .. " - Read errors: \n"
+		for i = 0, r:size()-1 do
+			e = r[i]
+			str = str .. e.first .. "\t" .. e.second .. "\t" .. adchpp.Util_translateError(e.first) .. "\n"
+		end
+		str = str .. " - Write errors: \n"
+		for i = 0, w:size()-1 do
+			e = w[i]
+			str = str .. e.first .. "\t" .. e.second .. "\t" .. adchpp.Util_translateError(e.first) .. "\n"
 		end
 		
 		local queued = cm:getQueuedBytes()
@@ -482,8 +520,8 @@ local function onMSG(c, cmd)
 		local recvBytes = adchpp.Stats_recvBytes
 		local recvCalls = adchpp.Stats_recvCalls
 		
-		str = str .. "Bandwidth stats: \n"
-		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued\n"
+		str = str .. "\nBandwidth stats: \n"
+		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getClients():size()) .. "/user)\n"
 		str = str .. adchpp.Util_formatBytes(queueBytes) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(queueBytes/hubtime) .. "/s)\n"
 		str = str .. queueCalls .. "\tQueue calls (" .. adchpp.Util_formatBytes(queueBytes/queueCalls) .. "/call)\n"
 		str = str .. adchpp.Util_formatBytes(sendBytes) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(sendBytes/hubtime) .. "/s)\n"
