@@ -123,8 +123,8 @@ public:
 		parameters.back() += value;
 		return *this;
 	}
-	AdcCommand& addParam(const string& str) {
-		parameters.push_back(str);
+	AdcCommand& addParam(const string& param) {
+		parameters.push_back(param);
 		return *this;
 	}
 	const string& getParam(size_t n) const {

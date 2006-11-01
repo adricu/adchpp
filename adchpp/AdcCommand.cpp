@@ -43,8 +43,6 @@ void AdcCommand::escape(const string& s, string& out) {
 }
 
 void AdcCommand::parse(const string& aLine) throw(ParseException) {
-	string::size_type i = 5;
-
 	if(aLine.length() < 5) {
 		throw ParseException("Command too short");
 	}
@@ -58,17 +56,22 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 	cmd[0] = aLine[1];
 	cmd[1] = aLine[2];
 	cmd[2] = aLine[3];
+	
+	if(aLine[4] != ' ') {
+		throw ParseException("Missing space after command");
+	}
 
 	string::size_type len = aLine.length() - 1; // aLine contains trailing LF
 	
 	const char* buf = aLine.c_str();
 	string cur;
-	cur.reserve(128);
+	cur.reserve(64);
 
 	bool toSet = false;
 	bool featureSet = false;
 	bool fromSet = false;
 
+	string::size_type i = 5;
 	while(i < len) {
 		switch(buf[i]) {
 		case '\\': 

@@ -72,62 +72,54 @@ void* Client::getPSD(int id) throw() {
 
 void Client::onData(const vector<uint8_t>& data) throw() {
 	dcdebug("In (%d): %.*s\n", data.size(), data.size(), &data[0]);
-	
-	size_t i = 0;
 
-	if(dataBytes > 0) {
-		i = (size_t)min(dataBytes, (int64_t)data.size());
-		dataHandler(&data[0], i);
-		dataBytes -= i;
-		if(i == data.size())
-			return;
-	}
-
-	if(SETTING(MAX_COMMAND_SIZE) > 0 && line.size() > (size_t)SETTING(MAX_COMMAND_SIZE)) {
-		disconnect(Util::REASON_MAX_COMMAND_SIZE);
-		return;
-	}
-
+	size_t done = 0;
 	size_t len = data.size();
-	while(!disconnecting) {
+	while(!disconnecting && done < len) {
 		if(dataBytes > 0) {
-			size_t n = (size_t)min(dataBytes, (int64_t)(data.size() - i));
-			dataHandler(&data[0], i);
+			size_t n = (size_t)min(dataBytes, (int64_t)(len - done));
+			dataHandler(&data[done], n);
 			dataBytes -= n;
-			i += n;
-		}
-
-		size_t j = i;
-		while(j < len && data[j] != '\n')
-			++j;
-		if(j == len) {
-			if(i < len)
-				line.append((char*)&data[i], len - i);
-			return;
-		}
-		line.append((char*)&data[i], j - i + 1); // include LF
-		i = j + 1;
-		
-		if(line.size() == 1) {
-			line.clear();
-			continue;
-		}
-		
-		try {
-			AdcCommand cmd(line);
-
-			if(cmd.getType() == 'H') {
-				cmd.setFrom(getSID());
-			} else if(cmd.getFrom() != getSID()) {
-				disconnect(Util::REASON_INVALID_SID);
-				line.clear();
+			done += n;
+		} else {
+			size_t j = done;
+			while(j < len && data[j] != '\n')
+				++j;
+				
+			if(j == len) {
+				line.append((char*)&data[done], j - done);
 				return;
 			}
-			ClientManager::getInstance()->onReceive(*this, cmd);
-		} catch(const ParseException&) {
-			ClientManager::getInstance()->onBadLine(*this, line);
+			line.append((char*)&data[done], j - done + 1); // include LF
+			
+			done = j + 1;
+
+			if(SETTING(MAX_COMMAND_SIZE) > 0 && line.size() > (size_t)SETTING(MAX_COMMAND_SIZE)) {
+				send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Command too long"));
+				disconnect(Util::REASON_MAX_COMMAND_SIZE);
+				return;
+			}
+
+			if(line.size() == 1) {
+				line.clear();
+				continue;
+			}
+			
+			try {
+				AdcCommand cmd(line);
+	
+				if(cmd.getType() == 'H') {
+					cmd.setFrom(getSID());
+				} else if(cmd.getFrom() != getSID()) {
+					disconnect(Util::REASON_INVALID_SID);
+					return;
+				}
+				ClientManager::getInstance()->onReceive(*this, cmd);
+			} catch(const ParseException&) {
+				ClientManager::getInstance()->onBadLine(*this, line);
+			}
+			line.clear();
 		}
-		line.clear();
 	}
 }	
 
@@ -204,6 +196,7 @@ bool Client::isFlooding(time_t addSeconds) {
 void Client::disconnect(Util::Reason reason) throw() {
 	if(socket && !disconnecting) {
 		disconnecting = true;
+		line.clear();
 		socket->disconnect(reason);
 	}
 }

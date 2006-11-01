@@ -132,7 +132,7 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 				outBuf->insert(outBuf->begin(), buf->begin() + written, buf->end());
 			}
 		} 
-		moreData = (outBuf != 0);
+		moreData = (outBuf != 0) || disc > 0;
 		if( !moreData || (outBuf->size() < (size_t)SETTING(MAX_BUFFER_SIZE)) )
 			overFlow = 0;
 			
