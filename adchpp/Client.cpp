@@ -131,6 +131,16 @@ void Client::onData(const vector<uint8_t>& data) throw() {
 	}
 }	
 
+void Client::setField(const char* name, const string& value) throw() { 
+	if(value.empty()) {
+		info.erase(*(uint16_t*)name);
+	} else {
+		info[*(uint16_t*)name] = value; 
+	}
+	changed[*(uint16_t*)name] = value;
+	INF.clear();
+}
+
 bool Client::getChangedFields(AdcCommand& cmd) const throw() {
 	for(InfMap::const_iterator i = changed.begin(); i != changed.end(); ++i) 
 		cmd.addParam(string((char*)&i->first, 2));
@@ -140,6 +150,15 @@ bool Client::getAllFields(AdcCommand& cmd) const throw() {
 	for(InfMap::const_iterator i = info.begin(); i != info.end(); ++i) 
 		cmd.addParam(string((char*)&i->first, 2), i->second);
 	return !info.empty();
+}
+
+const string& Client::getINF() const throw() {
+	if(INF.empty()) {
+		AdcCommand cmd(AdcCommand::CMD_INF, AdcCommand::TYPE_BROADCAST, getSID());
+		getAllFields(cmd);
+		INF = cmd.toString();
+	}
+	return INF;	
 }
 
 void Client::updateFields(const AdcCommand& cmd) throw() {

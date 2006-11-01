@@ -65,11 +65,10 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 	}
 }
 
-void ClientManager::sendToAll(const AdcCommand& cmd) throw() {
-	string txt = cmd.toString();
+void ClientManager::sendToAll(const string& cmd) throw() {
 	ManagedSocket::lock();
 	for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
-		i->second->fastSend(txt);
+		i->second->fastSend(cmd);
 	}
 	ManagedSocket::unlock();
 	SocketManager::getInstance()->addAllWriters();
@@ -445,17 +444,12 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 	if(sendData) {
 		string str;
 		for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
-			AdcCommand tmpcmd(AdcCommand::CMD_INF, AdcCommand::TYPE_BROADCAST, i->second->getSID());
-			i->second->getAllFields(tmpcmd);
-			str += tmpcmd.toString();
-			tmpcmd.getParameters().clear();
+			str += i->second->getINF();
 		}
 		c.send(str);
 		if(sendOwnInf) {
-			AdcCommand cmd(AdcCommand::CMD_INF, AdcCommand::TYPE_BROADCAST, c.getSID());
-			c.getAllFields(cmd);
-			sendToAll(cmd);
-			c.send(cmd);
+			sendToAll(c.getINF());
+			c.send(c.getINF());
 		}
 	}
 

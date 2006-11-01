@@ -70,7 +70,8 @@ public:
 	/** Send a command to the clients according to its type */
 	ADCHPP_DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
 	/** Send command to all regardless of type */
-	ADCHPP_DLL void sendToAll(const AdcCommand& cmd) throw();
+	ADCHPP_DLL void sendToAll(const AdcCommand& cmd) throw() { sendToAll(cmd.toString()); }
+	ADCHPP_DLL void sendToAll(const string& cmd) throw();
 	/** Send command to a single client regardless of type */
 	ADCHPP_DLL void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 

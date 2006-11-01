@@ -528,6 +528,7 @@ public:
 	
 	void send(const AdcCommand& cmd, bool lowPrio = false) throw();
 	void sendToAll(const AdcCommand& cmd) throw();
+	void sendToAll(const string& cmd) throw();
 	void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
 	bool checkFlooding(Client& c, const AdcCommand&) throw();
@@ -644,9 +645,6 @@ public:
 	int64_t getInt64(Int64Setting key) {
 		return self->get(key);
 	}
-	//const string& get(StrSetting key) const;
-	//int get(IntSetting key) const;
-	//int64_t get(Int64Setting key) const;
 
 	void setString(StrSetting key, string const& value) {
 		self->set(key, value);
@@ -654,18 +652,12 @@ public:
 	void setInt(IntSetting key, int value) {
 		self->set(key, value);
 	}
-	
 	void setInt64(Int64Setting key, int64_t value) {
 		self->set(key, value);
 	}
-	void setInt64(Int64Setting key, int value) {
+	void setBool(IntSetting key, bool value) {
 		self->set(key, value);
 	}
-	
-	void setInt(IntSetting key, bool value) {
-		self->set(key, value);
-	}
-
 }
 	bool getBool(IntSetting key) const;
 	

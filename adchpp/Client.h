@@ -98,18 +98,12 @@ public:
 	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
 	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
 	ADCHPP_DLL bool getAllFields(AdcCommand& cmd) const throw();
-
+	ADCHPP_DLL const string& getINF() const throw();
+	
 	void resetChanged() { changed.clear(); }
 
 	const string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(*(uint16_t*)name); return i == info.end() ? Util::emptyString : i->second; }
-	void setField(const char* name, const string& value) throw() { 
-		if(value.empty()) {
-			info.erase(*(uint16_t*)name);
-		} else {
-			info[*(uint16_t*)name] = value; 
-		}
-		changed[*(uint16_t*)name] = value;
-	}
+	ADCHPP_DLL void setField(const char* name, const string& value) throw();
 
 	ADCHPP_DLL void updateFields(const AdcCommand& cmd) throw();
 	ADCHPP_DLL void updateSupports(const AdcCommand& cmd) throw();
@@ -170,6 +164,8 @@ private:
 	
 	time_t floodTimer;
 	
+	/** Latest INF cached */
+	mutable string INF;
 	boost::function<void (const uint8_t*, size_t)> dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
 	
