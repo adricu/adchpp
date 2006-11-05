@@ -589,6 +589,12 @@ struct EPoll {
 		return true;
 	}
 	
+	void remove(const ManagedSocketPtr& ms) {
+		// Buggy pre-2.6.9 kernels require non-null for last param
+		epoll_event e;
+		epoll_ctl(poll_fd, EPOLL_CTL_DEL, ms->getSocket(), &e);
+	}
+	
 	int poll_fd;
 };
 
@@ -705,21 +711,27 @@ private:
 			if(!poller.get(events)) {
 				LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
 			}
+			bool doevents = false;
 			for(std::vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
 				epoll_event& ev = *i;
 				if(ev.data.fd == srv.getSocket()) {
 					accept();
 				} else if(ev.data.fd == event[1]) {
-					handleEvents();
+					doevents = true;
 				} else {
 					ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr));
+					if(ev.events & (EPOLLIN | EPOLLHUP | EPOLLERR)) {
+						if(!read(ms))
+							continue;
+					}
 					if(ev.events & EPOLLOUT) {
 						write(ms);
 					}
-					if(ev.events & (EPOLLIN | EPOLLHUP | EPOLLERR)) {
-						read(ms);
-					} 
 				}
+			}
+			
+			if(doevents) {
+				handleEvents();	
 			}
 			
 			uint32_t now = GET_TICK();
@@ -802,11 +814,11 @@ private:
 		}
 	}
 	
-	void read(const ManagedSocketPtr& ms) throw() {
-		if(stop)
-			return;
-		bool cont = true;
-		while(cont) {
+	bool read(const ManagedSocketPtr& ms) throw() {
+		if(stop || !(*ms))
+			return false;
+			
+		for(;;) {
 			ByteVector* readBuf = Util::freeBuf;
 			if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
 				readBuf->resize(SETTING(BUFFER_SIZE));
@@ -818,33 +830,35 @@ private:
 				int error = errno;
 				if(error != EAGAIN) {
 					failRead(ms, error);
+					return false;
 				}
-				return;
+				break;
 			} else if(bytes == 0) {
 				Util::freeBuf = readBuf;
 				failRead(ms, 0);
-				return;
+				return false;
 			}
-			cont = (readBuf->size() == static_cast<size_t>(bytes));
 			
 			readBuf->resize(bytes);
 			ms->completeRead(readBuf);
 		}
+		return true;
 	}
 	
 	void failRead(const ManagedSocketPtr& ms, int error) throw() {
-		if(active.find(ms) == active.end()) {
+		if(!(*ms)) {
 			return;
 		}
 		
-		ms->close();
 		SocketSet::iterator i = disconnecting.find(ms);
 		if(i == disconnecting.end()) {
 			ms->failSocket();
 		} else {
 			disconnecting.erase(i);
 		}
-		
+
+		poller.remove(ms);		
+		ms->close();
 		active.erase(ms);
 		if(error != 0) {
 			FastMutex::Lock l(errorMutex);
@@ -853,7 +867,7 @@ private:
 	}
 	
 	void write(const ManagedSocketPtr& ms) throw() {
-		if(stop) {
+		if(stop || !(*ms)) {
 			return;
 		}
 		
@@ -899,7 +913,7 @@ private:
 	}
 	
 	void disconnect(const ManagedSocketPtr& ms) throw() {
-		if(active.find(ms) == active.end()) 
+		if(!(*ms)) 
 			return;
 		
 		if(disconnecting.find(ms) != disconnecting.end()) {

@@ -64,6 +64,7 @@ public:
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
 	socket_t getSocket() { return sock.getSocket(); }
+	operator bool() const { return sock; }
 private:
 
 	ManagedSocket() throw();
