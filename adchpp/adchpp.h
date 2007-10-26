@@ -109,98 +109,42 @@ typedef unsigned __int64 uint64_t;
 # define ADCHPP_DLL __attribute__ ((visibility("default")))
 # define ADCHPP_VISIBLE __attribute__ ((visibility("default")))
 
-#include <unistd.h>
-#include <stdint.h>
-
 #endif
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <memory.h>
-#include <sys/types.h>
-#include <time.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstdarg>
 
-#include <algorithm>
-#include <vector>
 #include <string>
-#include <map>
-//#include <set>
-#include <list>
+#include <vector>
 #include <deque>
+#include <list>
 #include <functional>
-
-#include <boost/function.hpp>
-#include <boost/utility.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/intrusive_ptr.hpp>
+#include <memory>
 
 #ifdef _STLPORT_VERSION
-# define HASH_SET hash_set
-# define HASH_MAP hash_map
-// STLPort 5.0.2 hash_multimap buggy
-# define HASH_MULTIMAP multimap
-# define HASH_SET_X(key, hfunc, eq, order) hash_set<key, hfunc, eq >
-# define HASH_MAP_X(key, type, hfunc, eq, order) hash_map<key, type, hfunc, eq >
-# define HASH_MULTIMAP_X(key, type, hfunc, eq, order) multimap<key, type, order > 
 
-#include <hash_map>
-#include <hash_set>
-namespace adchpp {
-using namespace std;
-}
+#include <unordered_map>
+#include <unordered_set>
 
 #elif defined(__GLIBCPP__) || defined(__GLIBCXX__)  // Using GNU C++ library?
-# define HASH_SET hash_set
-# define HASH_MAP hash_map
-# define HASH_MULTIMAP hash_multimap
-# define HASH_SET_X(key, hfunc, eq, order) hash_set<key, hfunc, eq >
-# define HASH_MAP_X(key, type, hfunc, eq, order) hash_map<key, type, hfunc, eq >
-# define HASH_MULTIMAP_X(key, type, hfunc, eq, order) hash_multimap<key, type, hfunc, eq >
 
-#include <ext/hash_map>
-#include <ext/hash_set>
-#include <ext/functional>
-namespace adchpp {
-using namespace std;
-using namespace __gnu_cxx;
-}
-
-// GNU C++ library doesn't have hash(std::string) or hash(long long int)
-namespace __gnu_cxx {
-	template<> struct hash<std::string> {
-		size_t operator()(const std::string& x) const
-		{ return hash<const char*>()(x.c_str()); }
-	};
-	template<> struct hash<long long int> {
-		size_t operator()(long long int x) const { return x; }
-	};
-}
+#include <tr1/unordered_set>
+#include <tr1/unordered_map>
 
 #elif defined(_MSC_VER)  // Assume the msvc stl
-# define HASH_SET hash_set
-# define HASH_MAP hash_map
-# define HASH_MULTIMAP hash_multimap
-# define HASH_SET_X(key, hfunc, eq, order) hash_set<key, hfunc >
-# define HASH_MAP_X(key, type, hfunc, eq, order) hash_map<key, type, hfunc >
-# define HASH_MULTIMAP_X(key, type, hfunc, eq, order) hash_multimap<key, type, hfunc >
-
-#include <hash_map>
-#include <hash_set>
-namespace adchpp {
-using namespace std;
-using namespace stdext;
-}
+#error "afaik msvc doesn't have tr1 containers, so it'll need stlport (or maybe a recent version of boost)"
 #else
-# define HASH_SET set
-# define HASH_MAP map
-# define HASH_SET_X(key, hfunc, eq, order)
-# define HASH_MAP_X(key, type, hfunc, eq, order) map<key, type, order >
-# define HASH_MULTIMAP multimap
-# define HASH_MULTIMAP_X(key, type, hfunc, eq, order) multimap<key, type, order >
+#error "Unknown STL, please configure accordingly"
 #endif
+
+#include <boost/intrusive_ptr.hpp>
+#include <boost/noncopyable.hpp>
+
+namespace adchpp {
+
+using namespace std;
+
+}
 
 #ifdef _UNICODE
 # ifndef _T

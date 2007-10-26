@@ -967,7 +967,7 @@ private:
 	
 	Pool<Event, ClearEvent> pool;
 		
-	typedef HASH_SET<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
+	typedef std::tr1::unordered_set<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that are being written to but should be disconnected if timeout it reached */

@@ -143,7 +143,7 @@ typedef void (*PLUGIN_UNLOAD)();
 class PluginManager : public Singleton<PluginManager>
 {
 public:
-	typedef HASH_MAP<string, Plugin*> Registry;
+	typedef std::tr1::unordered_map<string, Plugin*> Registry;
 	typedef Registry::iterator RegistryIter;
 
 	/**

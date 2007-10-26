@@ -19,14 +19,11 @@
 #ifndef ADCHPP_SIGNAL_H
 #define ADCHPP_SIGNAL_H
 
-#include <boost/function.hpp>
-#include <boost/type_traits.hpp>
-
 namespace adchpp {
 	
 template<typename F>
 struct Signal {
-	typedef boost::function<F> Slot;
+	typedef std::tr1::function<F> Slot;
 	typedef list<Slot> SlotList;
 	typedef typename SlotList::iterator Connection;
 	
@@ -106,9 +103,9 @@ private:
 	typename Sig::SlotList::iterator iter;
 };
 
-template<typename Sig>
-boost::shared_ptr<ManagedConnection<Sig> > manage(Sig* signal, const typename Sig::SlotList::iterator& iter) {
-	return boost::shared_ptr<ManagedConnection<Sig> >(new ManagedConnection<Sig>(signal, iter));
+template<typename Sig, typename F>
+std::tr1::shared_ptr<ManagedConnection<Sig> > manage(Sig* signal, const F& f) {
+	return std::tr1::shared_ptr<ManagedConnection<Sig> >(new ManagedConnection<Sig>(signal, signal->connect(f)));
 }
 }
 

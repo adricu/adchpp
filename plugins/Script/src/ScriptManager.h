@@ -64,7 +64,7 @@ private:
 	void reload();
 	void clearEngines();
 	
-	boost::shared_ptr<ManagedConnection<ClientManager::SignalReceive> > receiveConn;
+	std::tr1::shared_ptr<ManagedConnection<ClientManager::SignalReceive> > receiveConn;
 	void onReceive(Client& c, AdcCommand& cmd, int& handled);
 };
 

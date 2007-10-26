@@ -23,9 +23,9 @@
 #include "ClientManager.h"
 #include "TimerManager.h"
 
-#include <boost/bind.hpp>
-
 namespace adchpp {
+
+using namespace std::tr1::placeholders;
 	
 Client* Client::create(const ManagedSocketPtr& ms) throw() {
 	Client* c = new Client();
@@ -40,9 +40,9 @@ Client::Client() throw() : sid(0), state(STATE_PROTOCOL), disconnecting(false), 
 void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 	dcassert(!socket);
 	socket = aSocket;
-	socket->setConnectedHandler(boost::bind(&Client::onConnected, this));
-	socket->setDataHandler(boost::bind(&Client::onData, this, _1));
-	socket->setFailedHandler(boost::bind(&Client::onFailed, this));
+	socket->setConnectedHandler(std::tr1::bind(&Client::onConnected, this));
+	socket->setDataHandler(std::tr1::bind(&Client::onData, this, _1));
+	socket->setFailedHandler(std::tr1::bind(&Client::onFailed, this));
 }
 
 void Client::onConnected() throw() {
@@ -78,7 +78,7 @@ void Client::onData(const vector<uint8_t>& data) throw() {
 	while(!disconnecting && done < len) {
 		if(dataBytes > 0) {
 			size_t n = (size_t)min(dataBytes, (int64_t)(len - done));
-			dataHandler(&data[done], n);
+			dataHandler(*this, &data[done], n);
 			dataBytes -= n;
 			done += n;
 		} else {

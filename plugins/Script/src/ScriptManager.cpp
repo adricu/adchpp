@@ -22,7 +22,6 @@
 #include "Engine.h"
 #include "LuaEngine.h"
 
-#include <boost/bind.hpp>
 #include <adchpp/SimpleXML.h>
 #include <adchpp/File.h>
 #include <adchpp/TimerManager.h>
@@ -33,13 +32,15 @@
 #include <adchpp/ClientManager.h>
 #include <adchpp/Client.h>
 
+using namespace std::tr1::placeholders;
+
 ScriptManager* ScriptManager::instance = 0;
 const string ScriptManager::className = "ScriptManager";
 
 ScriptManager::ScriptManager() {
 	LOGDT(className, "Starting");
 	ClientManager::SignalReceive& sig = ClientManager::getInstance()->signalReceive();
-	receiveConn = manage(&sig, sig.connect(boost::bind(&ScriptManager::onReceive, this, _1, _2, _3)));
+	receiveConn = manage(&sig, std::tr1::bind(&ScriptManager::onReceive, this, _1, _2, _3));
 	
 	load();
 }
@@ -90,7 +91,7 @@ void ScriptManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 	}
 	
 	if(cmd.getParam(0) == "+reload") {
-		SocketManager::getInstance()->addJob(boost::bind(&ScriptManager::reload, this));
+		SocketManager::getInstance()->addJob(std::tr1::bind(&ScriptManager::reload, this));
 		c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Reloading scripts"));
 		override |= ClientManager::DONT_SEND;
 	} else if(cmd.getParam(0) == "+scripts") {

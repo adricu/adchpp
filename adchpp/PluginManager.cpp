@@ -27,7 +27,7 @@
 #include "version.h"
 #include "File.h"
 
-#include <boost/bind.hpp>
+using namespace std::tr1::placeholders;
 
 #ifdef _WIN32
 
@@ -57,14 +57,12 @@ PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 
 PluginManager::PluginManager() throw() : pluginIds(0) { 
-	SettingsManager::getInstance()->signalLoad().connect(boost::bind(&PluginManager::onLoad, this, _1));
+	SettingsManager::getInstance()->signalLoad().connect(std::tr1::bind(&PluginManager::onLoad, this, _1));
 }
 
 PluginManager::~PluginManager() throw() { 
 	
 }
-
-#include <boost/bind.hpp>
 
 bool PluginManager::loadPlugin(const string& file) {
 	if(file.length() < 3) {

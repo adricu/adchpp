@@ -148,16 +148,16 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 bool ManagedSocket::completeRead(ByteVector* buf) throw() {
 	Stats::recvBytes += buf->size();
 	Stats::recvCalls++;
-	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processData, this, buf));
+	SocketManager::getInstance()->addJob(std::tr1::bind(&ManagedSocket::processData, this, buf));
 	return true;
 }
 
 void ManagedSocket::completeAccept() throw() {
-	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processIncoming, this));
+	SocketManager::getInstance()->addJob(std::tr1::bind(&ManagedSocket::processIncoming, this));
 }
 
 void ManagedSocket::failSocket() throw() {
-	SocketManager::getInstance()->addJob(boost::bind(&ManagedSocket::processFail, this));
+	SocketManager::getInstance()->addJob(std::tr1::bind(&ManagedSocket::processFail, this));
 }
 
 void ManagedSocket::disconnect(Util::Reason reason) throw() {

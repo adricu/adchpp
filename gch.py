@@ -27,6 +27,7 @@ import SCons.Action
 import SCons.Builder
 import SCons.Scanner.C
 import SCons.Util
+import SCons
 
 GchAction = SCons.Action.Action('$GCHCOM')
 GchShAction = SCons.Action.Action('$GCHSHCOM')
@@ -34,23 +35,26 @@ GchShAction = SCons.Action.Action('$GCHSHCOM')
 def gen_suffix(env, sources):
     return sources[0].get_suffix() + env['GCHSUFFIX']
 
+if SCons.__version__ == "0.96.1":
+    scanner = SCons.Scanner.C.CScan()
+else:
+    scanner = SCons.Scanner.C.CScanner()
+
 GchShBuilder = SCons.Builder.Builder(action = GchShAction,
-                                     source_scanner = SCons.Scanner.C.CScan(),
+                                     source_scanner = scanner,
                                      suffix = gen_suffix)
 
 GchBuilder = SCons.Builder.Builder(action = GchAction,
-                                   source_scanner = SCons.Scanner.C.CScan(),
+                                   source_scanner = scanner,
                                    suffix = gen_suffix)
 
 def static_pch_emitter(target,source,env):
     SCons.Defaults.StaticObjectEmitter( target, source, env )
-
-    scanner = SCons.Scanner.C.CScan()
+	
     path = scanner.path(env)
     deps = scanner(source[0], env, path)
-
     if env.has_key('Gch') and env['Gch']:
-        if env['Gch'].path.strip('.gch') in [x.path for x in deps]:
+        if env['Gch'].path[:-4] in [x.path for x in deps]:
             env.Depends(target, env['Gch'])
 
     return (target, source)
@@ -58,12 +62,10 @@ def static_pch_emitter(target,source,env):
 def shared_pch_emitter(target,source,env):
     SCons.Defaults.SharedObjectEmitter( target, source, env )
 
-    scanner = SCons.Scanner.C.CScan()
     path = scanner.path(env)
     deps = scanner(source[0], env, path)
-
     if env.has_key('GchSh') and env['GchSh']:
-        if env['GchSh'].path.strip('.gch') in [x.path for x in deps]:
+        if env['GchSh'].path[:-4] in [x.path for x in deps]:
             env.Depends(target, env['GchSh'])
     return (target, source)
 

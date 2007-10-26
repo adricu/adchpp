@@ -101,6 +101,8 @@ public:
 #undef C
 
 	enum { HUB_SID = 0x41414141 };
+	
+	uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c) { return (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); }
 
 	ADCHPP_DLL AdcCommand();
 	ADCHPP_DLL explicit AdcCommand(Severity sev, Error err, const string& desc, char aType = TYPE_INFO);

@@ -71,13 +71,16 @@ typedef std::vector<std::string> StringList;
 typedef std::vector<adchpp::Client*> ClientList;
 %}
 
-namespace boost {
+namespace std {
+namespace tr1 {
 template<typename T>
 class shared_ptr {
 public:
 	T* operator->();	
 };
 }
+}
+
 namespace adchpp {
 
 void initConfig(const std::string& configPath);
@@ -415,7 +418,7 @@ public:
 
 	//void setSocket(ManagedSocket* aSocket) throw();
 
-	//void setDataMode(boost::function<void (const uint8_t*, size_t)> handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
+	//void setDataMode(std::tr1::function<void (const uint8_t*, size_t)> handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
 	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
 	bool getChangedFields(AdcCommand& cmd);
@@ -670,32 +673,32 @@ public:
 %template(SignalCAI) Signal<void (Client&, AdcCommand&, int&)>;
 %template(SignalS) Signal<void (const SimpleXML&)>;
 
-%template(ManagedC) boost::shared_ptr<ManagedConnection<Signal<void (Client&)> > >;
-%template(ManagedCAI) boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
-%template(ManagedCS) boost::shared_ptr<ManagedConnection<Signal<void (Client&, const string&)> > >;
-%template(ManagedCI) boost::shared_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
+%template(ManagedC) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&)> > >;
+%template(ManagedCAI) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
+%template(ManagedCS) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, const string&)> > >;
+%template(ManagedCI) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
 
 %extend Signal<void (Client&)> {
-	boost::shared_ptr<ManagedConnection<Signal<void (Client&)> > > connect(boost::function<void (Client&)> f) {
-		return manage(self, self->connect(f));
+	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&)> > > connect(std::tr1::function<void (Client&)> f) {
+		return manage(self, f);
 	}
 }
 
 %extend Signal<void (Client&, AdcCommand&)> {
-	boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > > connect(boost::function<void (Client&, AdcCommand&)> f) {
-		return manage(self, self->connect(f));
+	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > > connect(std::tr1::function<void (Client&, AdcCommand&)> f) {
+		return manage(self, f);
 	}
 }
 
 %extend Signal<void (Client&, AdcCommand&, int&)> {
-	boost::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(boost::function<void (Client&, AdcCommand&, int&)> f) {
-		return manage(self, self->connect(f));
+	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(std::tr1::function<void (Client&, AdcCommand&, int&)> f) {
+		return manage(self, f);
 	}
 }
 
 %extend Signal<void (Client&, string&)> {
-	boost::shared_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(boost::function<void (Client&, string&)> f) {
-		return manage(self, self->connect(f));
+	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(std::tr1::function<void (Client&, string&)> f) {
+		return manage(self, f));
 	}
 }
 

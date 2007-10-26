@@ -41,7 +41,7 @@ public:
 		DONT_SEND = 1 << 1
 	};
 	
-	typedef HASH_MAP<uint32_t, Client*> ClientMap;
+	typedef std::tr1::unordered_map<uint32_t, Client*> ClientMap;
 	typedef ClientMap::iterator ClientIter;
 	
 	/** Adds a string to SUP, propagating the change to all connected clients */
@@ -180,11 +180,11 @@ private:
 	deque<pair<Client*, time_t> > logins;
 
 	ClientMap clients;
-	typedef HASH_MAP<string, uint32_t> NickMap;
+	typedef std::tr1::unordered_map<string, uint32_t> NickMap;
 	NickMap nicks;
-	typedef HASH_MAP_X(CID, uint32_t, CID::Hash, equal_to<CID>, less<CID>) CIDMap;
+	typedef std::tr1::unordered_map<CID, uint32_t, CID::Hash>  CIDMap;
 	CIDMap cids;
-	typedef HASH_SET<uint32_t> SIDSet;
+	typedef std::tr1::unordered_set<uint32_t> SIDSet;
 	SIDSet sids;
 
 	// Temporary string to use whenever a temporary string is needed (to avoid (de)allocating memory all the time...)

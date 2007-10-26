@@ -93,7 +93,6 @@ public:
 	}
 
 private:
-
 	void pushFunction() { registryItem->push(); }
 
 	int docall(int narg, int nret) {
@@ -124,7 +123,7 @@ private:
 	}
 	
 	lua_State* L;
-	boost::shared_ptr<RegistryItem> registryItem;
+	std::tr1::shared_ptr<RegistryItem> registryItem;
 };
 
 %}
@@ -136,15 +135,15 @@ private:
    lua_pushnumber(L, (lua_Number)$1); SWIG_arg++;
 }
 
-%typemap(in) boost::function<void (adchpp::Client &) > {
+%typemap(in) std::tr1::function<void (adchpp::Client &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) boost::function<void (adchpp::Client &, adchpp::AdcCommand &) > {
+%typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) boost::function<void (adchpp::Client &, adchpp::AdcCommand &, int&) > {
+%typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &, int&) > {
 	$1 = LuaFunction(L);
 }
 

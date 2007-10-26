@@ -56,11 +56,11 @@ public:
 	const string& getIp() const { return ip; }
 	void setIp(const string& ip_) { ip = ip_; }
 	
-	typedef boost::function<void()> ConnectedHandler;
+	typedef std::tr1::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
-	typedef boost::function<void(const ByteVector&)> DataHandler;
+	typedef std::tr1::function<void(const ByteVector&)> DataHandler;
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
-	typedef boost::function<void()> FailedHandler;
+	typedef std::tr1::function<void()> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
 	socket_t getSocket() { return sock.getSocket(); }

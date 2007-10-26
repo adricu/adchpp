@@ -5,19 +5,19 @@
 #undef socklen_t
 %}
 
-%typemap(in) boost::function<void (adchpp::Client&)> {
+%typemap(in) std::tr1::function<void (adchpp::Client&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) boost::function<void (adchpp::Client&, adchpp::AdcCommand&)> {
+%typemap(in) std::tr1::function<void (adchpp::Client&, adchpp::AdcCommand&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) boost::function<void (adchpp::Client&, int)> {
+%typemap(in) std::tr1::function<void (adchpp::Client&, int)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) boost::function<void (adchpp::Client&, const std::string&)> {
+%typemap(in) std::tr1::function<void (adchpp::Client&, const std::string&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) boost::function<void (adchpp::Client&, adchpp::AdcCommand&, int&)> {
+%typemap(in) std::tr1::function<void (adchpp::Client&, adchpp::AdcCommand&, int&)> {
 	$1 = PyHandle($input, false);
 }
 

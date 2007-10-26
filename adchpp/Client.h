@@ -93,7 +93,8 @@ public:
 	 * Set data mode for aBytes bytes.
 	 * May only be called from on(ClientListener::Command...).
 	 */
-	void setDataMode(boost::function<void (const uint8_t*, size_t)> handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
+	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
+	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
 	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
 	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
@@ -146,7 +147,7 @@ private:
 	typedef vector<PSDPair> PSDList;
 	typedef PSDList::iterator PSDIter;
 
-	typedef HASH_MAP<uint16_t, string> InfMap;
+	typedef std::tr1::unordered_map<uint16_t, string> InfMap;
 	typedef InfMap::iterator InfIter;
 
 	InfMap info;
@@ -166,7 +167,7 @@ private:
 	
 	/** Latest INF cached */
 	mutable string INF;
-	boost::function<void (const uint8_t*, size_t)> dataHandler;
+	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
 	
 	void onConnected() throw();

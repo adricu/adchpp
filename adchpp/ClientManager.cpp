@@ -244,7 +244,6 @@ bool ClientManager::verifyINF(Client& c, AdcCommand& cmd) throw() {
 
 bool ClientManager::verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt, const string& suppliedHash) {
 	TigerHash tiger;
-	tiger.update(c.getCID().data(), CID::SIZE);
 	tiger.update(&password[0], password.size());
 	tiger.update(&salt[0], salt.size());
 	uint8_t tmp[TigerHash::HASH_SIZE];
@@ -255,7 +254,7 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const vect
 	TigerHash tiger2;
 	// Support dc++ 0.69 for a while
 	string cid = c.getCID().toBase32();
-	tiger2.update(cid.data(), cid.size());
+	tiger2.update(c.getCID().data(), CID::SIZE);
 	tiger2.update(&password[0], password.size());
 	tiger2.update(&salt[0], salt.size());
 	if(memcmp(tiger2.finalize(), tmp, TigerHash::HASH_SIZE) == 0) {

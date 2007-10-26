@@ -31,7 +31,7 @@ class Writer;
 
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
-	typedef boost::function<void()> Callback;
+	typedef std::tr1::function<void()> Callback;
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
 
 	void startup() throw(ThreadException) { start(); }
@@ -41,7 +41,7 @@ public:
 	void addDisconnect(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
 	void addAllWriters() throw();
 	
-	typedef HASH_MAP<int, size_t> ErrorMap;
+	typedef std::tr1::unordered_map<int, size_t> ErrorMap;
 	ADCHPP_DLL void getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_);
 private:
 	friend class ManagedSocket;

@@ -92,15 +92,15 @@ inline void debugTrace(const char* format, ...)
 #undef max
 #endif
 
-typedef vector<string> StringList;
+typedef std::vector<std::string> StringList;
 typedef StringList::iterator StringIter;
 typedef StringList::const_iterator StringIterC;
 
-typedef vector<wstring> WStringList;
+typedef std::vector<std::wstring> WStringList;
 typedef WStringList::iterator WStringIter;
 typedef WStringList::const_iterator WStringIterC;
 
-typedef vector<uint8_t> ByteVector;
+typedef std::vector<uint8_t> ByteVector;
 typedef ByteVector::iterator ByteIter;
 
 /** 
