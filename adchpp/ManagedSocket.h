@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,12 +43,11 @@ public:
 	/** Asynchronous write, assumes that buffers are locked */
 	ADCHPP_DLL bool fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
 	
+	/** Returns the lock used for the write buffers */
+	static FastMutex& getWriteLock() { return outbufCS; }
+	
 	/** Returns the number of bytes in the output buffer; buffers must be locked */
 	size_t getQueuedBytes() { return outBuf ? outBuf->size() : 0; }
-	
-	/** Locks the write buffer for all sockets */
-	static void lock() { outbufCS.lock(); }
-	static void unlock() { outbufCS.unlock(); }
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
@@ -98,8 +97,6 @@ private:
 	uint32_t overFlow;
 	/** Disconnection scheduled for this socket */
 	uint32_t disc;
-	/** Reference count, one for each thread that uses the instance */
-	uint32_t refCount;
 
 	string ip;
 #ifdef _WIN32

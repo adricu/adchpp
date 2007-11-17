@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,12 +27,12 @@ namespace adchpp {
 
 struct intrusive_ptr_base {
 	intrusive_ptr_base() : refs(0) { }
-	virtual ~intrusive_ptr_base() = 0;
+	ADCHPP_DLL virtual ~intrusive_ptr_base() = 0;
 private:
 	friend void intrusive_ptr_add_ref(intrusive_ptr_base*);
 	friend void intrusive_ptr_release(intrusive_ptr_base*);
 	
-	static FastMutex mtx;
+	ADCHPP_DLL static FastMutex mtx;
 	
 	long refs;
 };

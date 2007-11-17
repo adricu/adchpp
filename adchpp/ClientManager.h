@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -155,19 +155,19 @@ public:
 	void startup() throw() { updateCache(); }
 	void shutdown();
 	
-	typedef Signal<void (Client&)> SignalConnected;
-	typedef Signal<void (Client&, AdcCommand&, int&)> SignalReceive;
-	typedef Signal<void (Client&, const string&)> SignalBadLine;
-	typedef Signal<void (Client&, AdcCommand&, int&)> SignalSend;
-	typedef Signal<void (Client&, int)> SignalState;
-	typedef Signal<void (Client&)> SignalDisconnected;
+	typedef SignalTraits<void (Client&)> SignalConnected;
+	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
+	typedef SignalTraits<void (Client&, const string&)> SignalBadLine;
+	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalSend;
+	typedef SignalTraits<void (Client&, int)> SignalState;
+	typedef SignalTraits<void (Client&)> SignalDisconnected;
 
-	SignalConnected& signalConnected() { return signalConnected_; }
-	SignalReceive& signalReceive() { return signalReceive_; }
-	SignalBadLine& signalBadLine() { return signalBadLine_; }
-	SignalSend& signalSend() { return signalSend_; }
-	SignalState& signalState() { return signalState_; }
-	SignalDisconnected& signalDisconnected() { return signalDisconnected_; }
+	SignalConnected::Signal& signalConnected() { return signalConnected_; }
+	SignalReceive::Signal& signalReceive() { return signalReceive_; }
+	SignalBadLine::Signal& signalBadLine() { return signalBadLine_; }
+	SignalSend::Signal& signalSend() { return signalSend_; }
+	SignalState::Signal& signalState() { return signalState_; }
+	SignalDisconnected::Signal& signalDisconnected() { return signalDisconnected_; }
 
 private:
 	friend class Client;
@@ -221,18 +221,16 @@ private:
 	
 	void badState(Client& c) throw();
 	
-	SignalConnected signalConnected_;
-	SignalReceive signalReceive_;
-	SignalBadLine signalBadLine_;
-	SignalSend signalSend_;
-	SignalState signalState_;
-	SignalDisconnected signalDisconnected_;
+	SignalConnected::Signal signalConnected_;
+	SignalReceive::Signal signalReceive_;
+	SignalBadLine::Signal signalBadLine_;
+	SignalSend::Signal signalSend_;
+	SignalState::Signal signalState_;
+	SignalDisconnected::Signal signalDisconnected_;
 
-	ClientManager() throw() {
-		supports.push_back("BASE");
-	}
+	ClientManager() throw();
 
-	virtual ~ClientManager() throw() { }
+	virtual ~ClientManager() throw();
 
 };
 

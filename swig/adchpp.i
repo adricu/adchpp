@@ -71,14 +71,12 @@ typedef std::vector<std::string> StringList;
 typedef std::vector<adchpp::Client*> ClientList;
 %}
 
-namespace std {
-namespace tr1 {
+namespace boost {
 template<typename T>
-class shared_ptr {
+class intrusive_ptr {
 public:
 	T* operator->();	
 };
-}
 }
 
 namespace adchpp {
@@ -88,23 +86,6 @@ void initConfig(const std::string& configPath);
 template<typename F>
 struct Signal {
 
-	template<typename T0>
-	void operator()(T0& t0);
-	template<typename T0, typename T1>
-	void operator()(T0& t0, T1& t1);
-	
-	template<typename T0, typename T1, typename T2>
-	void operator()(const T0& t0, const T1& t1, const T2& t2);
-
-	template<typename T0, typename T1, typename T2>
-	void operator()(const T0& t0, T1& t1, T2& t2);
-	
-	template<typename T0, typename T1, typename T2>
-	void operator()(T0& t0, T1& t1, T2& t2);
-	
-	template<typename T>
-	void connect(T f);
-	
 	~Signal() { }
 };
 
@@ -115,6 +96,13 @@ struct ManagedConnection {
 	
 	void disconnect();
 	void release();
+};
+
+template<typename F>
+struct SignalTraits {
+	typedef Signal<F> Signal;
+	typedef typename Signal::Connection Connection;
+	typedef boost::intrusive_ptr<ManagedConnection<Signal> > ManagedConnection;
 };
 
 class Exception : public std::exception
@@ -558,19 +546,19 @@ public:
 	//void startup() throw() { updateCache(); }
 	//void shutdown();
 	
-	typedef Signal<void (Client&)> SignalConnected;
-	typedef Signal<void (Client&, AdcCommand&, int&)> SignalReceive;
-	typedef Signal<void (Client&, const string&)> SignalBadLine;
-	typedef Signal<void (Client&, AdcCommand&, int&)> SignalSend;
-	typedef Signal<void (Client&, int)> SignalState;
-	typedef Signal<void (Client&)> SignalDisconnected;
+	typedef SignalTraits<void (Client&)> SignalConnected;
+	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
+	typedef SignalTraits<void (Client&, const string&)> SignalBadLine;
+	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalSend;
+	typedef SignalTraits<void (Client&, int)> SignalState;
+	typedef SignalTraits<void (Client&)> SignalDisconnected;
 
-	SignalConnected& signalConnected() { return signalConnected_; }
-	SignalReceive& signalReceive() { return signalReceive_; }
-	SignalBadLine& signalBadLine() { return signalBadLine_; }
-	SignalSend& signalSend() { return signalSend_; }
-	SignalState& signalState() { return signalState_; }
-	SignalDisconnected& signalDisconnected() { return signalDisconnected_; }
+	SignalConnected::Signal& signalConnected() { return signalConnected_; }
+	SignalReceive::Signal& signalReceive() { return signalReceive_; }
+	SignalBadLine::Signal& signalBadLine() { return signalBadLine_; }
+	SignalSend::Signal& signalSend() { return signalSend_; }
+	SignalState::Signal& signalState() { return signalState_; }
+	SignalDisconnected::Signal& signalDisconnected() { return signalDisconnected_; }
 
 	//virtual ~ClientManager() throw() { }
 };
@@ -664,8 +652,8 @@ public:
 }
 	bool getBool(IntSetting key) const;
 	
-	typedef Signal<void (const SimpleXML&)> SignalLoad;
-	SignalLoad& signalLoad();
+	typedef SignalTraits<void (const SimpleXML&)> SignalLoad;
+	SignalLoad::Signal& signalLoad();
 };
 
 %template(SignalC) Signal<void (Client&)>;
@@ -673,31 +661,31 @@ public:
 %template(SignalCAI) Signal<void (Client&, AdcCommand&, int&)>;
 %template(SignalS) Signal<void (const SimpleXML&)>;
 
-%template(ManagedC) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&)> > >;
-%template(ManagedCAI) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
-%template(ManagedCS) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, const string&)> > >;
-%template(ManagedCI) std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
+%template(ManagedC) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > >;
+%template(ManagedCAI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
+%template(ManagedCS) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, const string&)> > >;
+%template(ManagedCI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
 
 %extend Signal<void (Client&)> {
-	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&)> > > connect(std::tr1::function<void (Client&)> f) {
+	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > > connect(std::tr1::function<void (Client&)> f) {
 		return manage(self, f);
 	}
 }
 
 %extend Signal<void (Client&, AdcCommand&)> {
-	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > > connect(std::tr1::function<void (Client&, AdcCommand&)> f) {
+	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > > connect(std::tr1::function<void (Client&, AdcCommand&)> f) {
 		return manage(self, f);
 	}
 }
 
 %extend Signal<void (Client&, AdcCommand&, int&)> {
-	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(std::tr1::function<void (Client&, AdcCommand&, int&)> f) {
+	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(std::tr1::function<void (Client&, AdcCommand&, int&)> f) {
 		return manage(self, f);
 	}
 }
 
 %extend Signal<void (Client&, string&)> {
-	std::tr1::shared_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(std::tr1::function<void (Client&, string&)> f) {
+	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(std::tr1::function<void (Client&, string&)> f) {
 		return manage(self, f));
 	}
 }

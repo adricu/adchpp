@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 #ifndef ADCHPP_SIGNAL_H
 #define ADCHPP_SIGNAL_H
 
+#include "Util.h"
+
 namespace adchpp {
 	
 template<typename F>
@@ -26,6 +28,7 @@ struct Signal {
 	typedef std::tr1::function<F> Slot;
 	typedef list<Slot> SlotList;
 	typedef typename SlotList::iterator Connection;
+	typedef F FunctionType;
 	
 	template<typename T0>
 	void operator()(T0& t0) {
@@ -77,7 +80,7 @@ private:
 };
 
 template<typename Sig>
-struct ManagedConnection {
+struct ManagedConnection : intrusive_ptr_base {
 	ManagedConnection(Sig* signal_, const typename Sig::Connection& iter_) : signal(signal_), iter(iter_) { 
 	}
 	
@@ -103,10 +106,18 @@ private:
 	typename Sig::SlotList::iterator iter;
 };
 
-template<typename Sig, typename F>
-std::tr1::shared_ptr<ManagedConnection<Sig> > manage(Sig* signal, const F& f) {
-	return std::tr1::shared_ptr<ManagedConnection<Sig> >(new ManagedConnection<Sig>(signal, signal->connect(f)));
+template<typename Signal, typename F>
+boost::intrusive_ptr<ManagedConnection<Signal> > manage(Signal* signal, const F& f) {
+	return boost::intrusive_ptr<ManagedConnection<Signal> >(new ManagedConnection<Signal>(signal, signal->connect(f)));
 }
+
+template<typename F>
+struct SignalTraits {
+	typedef Signal<F> Signal;
+	typedef typename Signal::Connection Connection;
+	typedef boost::intrusive_ptr<ManagedConnection<Signal> > ManagedConnection;
+};
+
 }
 
 #endif // SIGNAL_H

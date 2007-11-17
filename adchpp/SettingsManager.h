@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,8 +111,8 @@ public:
 
 	void load(const string& aFileName);
 
-	typedef Signal<void (const SimpleXML&)> SignalLoad;
-	SignalLoad& signalLoad() { return signalLoad_; }
+	typedef SignalTraits<void (const SimpleXML&)> SignalLoad;
+	SignalLoad::Signal& signalLoad() { return signalLoad_; }
 private:
 	friend class Singleton<SettingsManager>;
 	ADCHPP_DLL static SettingsManager* instance;
@@ -128,7 +128,7 @@ private:
 	int    intSettings[INT_LAST - INT_FIRST];
 	int64_t int64Settings[/*INT64_LAST - INT64_FIRST*/1];
 	
-	SignalLoad signalLoad_;
+	SignalLoad::Signal signalLoad_;
 };
 
 

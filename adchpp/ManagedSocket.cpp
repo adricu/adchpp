@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,13 +25,11 @@
 #include "PluginManager.h"
 #include "SettingsManager.h"
 
-#include <boost/bind.hpp>
-
 namespace adchpp {
 	
 FastMutex ManagedSocket::outbufCS;
 
-ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0), refCount(1)
+ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0)
 #ifdef _WIN32
 , writeBuf(0)
 #endif

@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,25 +28,36 @@
 #include "TigerHash.h"
 #include "Encoder.h"
 #include "version.h"
+#include "SettingsManager.h"
 
 namespace adchpp {
 	
 ClientManager* ClientManager::instance = 0;
 const string ClientManager::className = "ClientManager";
 
+ClientManager::ClientManager() throw() {
+	supports.push_back("BASE");
+	supports.push_back("TIGR");
+}
+
+ClientManager::~ClientManager() throw() {
+	
+}
+
 void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) throw() {
-	string txt = cmd.toString();
+	const string& txt = cmd.toString();
 
 	switch(cmd.getType()) {
 		case AdcCommand::TYPE_FEATURE:
 		case AdcCommand::TYPE_BROADCAST:
-			ManagedSocket::lock();
+		{
+			FastMutex::Lock l(ManagedSocket::getWriteLock());
 			for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
 				i->second->fastSend(txt, lowPrio);
 			}
-			ManagedSocket::unlock();
-			SocketManager::getInstance()->addAllWriters();
-			break;
+		}
+		SocketManager::getInstance()->addAllWriters();
+		break;
 		case AdcCommand::TYPE_DIRECT: // Fallthrough
 		case AdcCommand::TYPE_ECHO:
 			{
@@ -66,21 +77,22 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 }
 
 void ClientManager::sendToAll(const string& cmd) throw() {
-	ManagedSocket::lock();
-	for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
-		i->second->fastSend(cmd);
+	{
+		FastMutex::Lock l(ManagedSocket::getWriteLock());
+		for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
+			i->second->fastSend(cmd);
+		}
 	}
-	ManagedSocket::unlock();
 	SocketManager::getInstance()->addAllWriters();
 }
 
 size_t ClientManager::getQueuedBytes() throw() {
 	size_t total = 0;
-	ManagedSocket::lock();
+	
+	FastMutex::Lock l(ManagedSocket::getWriteLock());
 	for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
 		total += i->second->getQueuedBytes();
 	}
-	ManagedSocket::unlock();
 	return total;
 }
 
@@ -100,10 +112,10 @@ void ClientManager::updateCache() throw() {
 
 	strings.inf = AdcCommand(AdcCommand::CMD_INF)
 		.addParam("NI", SETTING(HUB_NAME))
-		.addParam("HU1")
 		.addParam("HI1")
 		.addParam("DE", SETTING(DESCRIPTION))
 		.addParam("VE", versionString)
+		.addParam("CT5")
 		.toString();
 }
 
@@ -156,12 +168,6 @@ void ClientManager::onConnected(Client& c) throw() {
 
 void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
 	int override = 0;
-	signalReceive_(c, cmd, override);
-
-	if(checkFlooding(c, cmd)) {
-		return;
-	}
-	
 	if(!(
 		cmd.getType() == AdcCommand::TYPE_BROADCAST || 
 		cmd.getType() == AdcCommand::TYPE_DIRECT || 
@@ -173,7 +179,13 @@ void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
 		c.disconnect(Util::REASON_INVALID_COMMAND_TYPE);
 		return;
 	}
+
+	if(checkFlooding(c, cmd)) {
+		return;
+	}
 	
+	signalReceive_(c, cmd, override);
+
 	if(!(override & DONT_DISPATCH)) {
 		if(!dispatch(c, cmd)) {
 			return;

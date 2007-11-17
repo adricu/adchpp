@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ const string ScriptManager::className = "ScriptManager";
 
 ScriptManager::ScriptManager() {
 	LOGDT(className, "Starting");
-	ClientManager::SignalReceive& sig = ClientManager::getInstance()->signalReceive();
+	ClientManager::SignalReceive::Signal& sig = ClientManager::getInstance()->signalReceive();
 	receiveConn = manage(&sig, std::tr1::bind(&ScriptManager::onReceive, this, _1, _2, _3));
 	
 	load();
