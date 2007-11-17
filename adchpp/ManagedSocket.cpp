@@ -27,7 +27,7 @@
 
 namespace adchpp {
 	
-FastMutex ManagedSocket::outbufCS;
+FastMutex ManagedSocket::writeMutex;
 
 ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0)
 #ifdef _WIN32
@@ -54,7 +54,7 @@ ManagedSocket::~ManagedSocket() throw() {
 void ManagedSocket::write(const char* buf, size_t len) throw() {
 	bool add = false;
 	{
-		FastMutex::Lock l(outbufCS);
+		FastMutex::Lock l(writeMutex);
 		add = fastWrite(buf, len);
 	}
 	if(add) {
@@ -93,7 +93,7 @@ ByteVector* ManagedSocket::prepareWrite() {
 	ByteVector* buffer = 0;
 
 	{
-		FastMutex::Lock l(outbufCS);
+		FastMutex::Lock l(writeMutex);
 
 		if(outBuf == 0) {
 			return 0;
@@ -119,7 +119,7 @@ bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
 
 	bool moreData;
 	{
-		FastMutex::Lock l(outbufCS);
+		FastMutex::Lock l(writeMutex);
 		
 		if(written != buf->size()) {
 			if(outBuf == 0) {

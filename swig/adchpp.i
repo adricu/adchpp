@@ -85,15 +85,10 @@ void initConfig(const std::string& configPath);
 
 template<typename F>
 struct Signal {
-
-	~Signal() { }
 };
 
 template<typename Sig>
 struct ManagedConnection {
-	ManagedConnection(Sig* signal_, const typename Sig::SlotList::iterator& iter_);
-	~ManagedConnection();
-	
 	void disconnect();
 	void release();
 };
@@ -330,6 +325,8 @@ public:
 	AdcCommand& addParam(const string& name, const string& value);
 	AdcCommand& addParam(const string& str);
 	const string& getParam(size_t n) const;
+	
+	const string& getFeatures() const;
 
 #ifndef SWIGLUA
 	bool getParam(const char* name, size_t start, string& OUTPUT) const;
@@ -422,6 +419,8 @@ public:
 
 	bool isUdpActive();
 	bool isTcpActive();
+
+	bool isFiltered(const std::string& features) const;
 
 	bool isFlooding(time_t addSeconds);
 	

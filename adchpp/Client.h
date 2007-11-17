@@ -99,14 +99,16 @@ public:
 	
 	void resetChanged() { changed.clear(); }
 
-	const string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(*(uint16_t*)name); return i == info.end() ? Util::emptyString : i->second; }
+	const string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(AdcCommand::toCode(name)); return i == info.end() ? Util::emptyString : i->second; }
 	ADCHPP_DLL void setField(const char* name, const string& value) throw();
 
 	ADCHPP_DLL void updateFields(const AdcCommand& cmd) throw();
 	ADCHPP_DLL void updateSupports(const AdcCommand& cmd) throw();
 
-	bool isUdpActive() const { return info.find(*(uint16_t*)"U4") != info.end(); }
-	bool isTcpActive() const { return info.find(*(uint16_t*)"I4") != info.end(); }
+	bool isUdpActive() const { return info.find(AdcCommand::toCode("U4")) != info.end(); }
+	bool isTcpActive() const { return info.find(AdcCommand::toCode("I4")) != info.end(); }
+	
+	ADCHPP_DLL bool isFiltered(const std::string& features) const;
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 	
@@ -138,6 +140,9 @@ private:
 	Client() throw();
 	virtual ~Client() throw() { }
 
+	/** H-C INF SU */
+	StringList filters;
+	/** H-C SUP */
 	StringList supportList;
 	typedef pair<int, void*> PSDPair;
 	typedef vector<PSDPair> PSDList;

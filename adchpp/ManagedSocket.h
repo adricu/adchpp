@@ -44,7 +44,7 @@ public:
 	ADCHPP_DLL bool fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
 	
 	/** Returns the lock used for the write buffers */
-	static FastMutex& getWriteLock() { return outbufCS; }
+	static FastMutex& getWriteMutex() { return writeMutex; }
 	
 	/** Returns the number of bytes in the output buffer; buffers must be locked */
 	size_t getQueuedBytes() { return outBuf ? outBuf->size() : 0; }
@@ -110,7 +110,7 @@ private:
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
 
-	ADCHPP_DLL static FastMutex outbufCS;
+	ADCHPP_DLL static FastMutex writeMutex;
 };
 
 typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;

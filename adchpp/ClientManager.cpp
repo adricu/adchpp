@@ -51,9 +51,11 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 		case AdcCommand::TYPE_FEATURE:
 		case AdcCommand::TYPE_BROADCAST:
 		{
-			FastMutex::Lock l(ManagedSocket::getWriteLock());
+			bool all = (cmd.getType() == AdcCommand::TYPE_BROADCAST);
+			FastMutex::Lock l(ManagedSocket::getWriteMutex());
 			for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
-				i->second->fastSend(txt, lowPrio);
+				if(all || !i->second->isFiltered(cmd.getFeatures()))
+					i->second->fastSend(txt, lowPrio);
 			}
 		}
 		SocketManager::getInstance()->addAllWriters();
@@ -78,7 +80,7 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 
 void ClientManager::sendToAll(const string& cmd) throw() {
 	{
-		FastMutex::Lock l(ManagedSocket::getWriteLock());
+		FastMutex::Lock l(ManagedSocket::getWriteMutex());
 		for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
 			i->second->fastSend(cmd);
 		}
@@ -89,7 +91,7 @@ void ClientManager::sendToAll(const string& cmd) throw() {
 size_t ClientManager::getQueuedBytes() throw() {
 	size_t total = 0;
 	
-	FastMutex::Lock l(ManagedSocket::getWriteLock());
+	FastMutex::Lock l(ManagedSocket::getWriteMutex());
 	for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
 		total += i->second->getQueuedBytes();
 	}

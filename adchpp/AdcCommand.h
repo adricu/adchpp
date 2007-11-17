@@ -132,6 +132,8 @@ public:
 	const string& getParam(size_t n) const {
 		return getParameters().size() > n ? getParameters()[n] : Util::emptyString;
 	}
+	
+	const string& getFeatures() const { return features; }
 
 	/** Return a named parameter where the name is a two-letter code */
 	ADCHPP_DLL bool getParam(const char* name, size_t start, string& ret) const;
