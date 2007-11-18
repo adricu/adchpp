@@ -49,7 +49,7 @@ private:
 	
 	virtual int run();
 
-	typedef vector<Callback> ProcessQueue;
+	typedef std::vector<Callback> ProcessQueue;
 
 	FastMutex processCS;
 	
@@ -58,9 +58,9 @@ private:
 
 	Semaphore processSem;
 
-	auto_ptr<Writer> writer;
+	std::auto_ptr<Writer> writer;
 
-	static const string className;
+	static const std::string className;
 
 	friend class Singleton<SocketManager>;
 	ADCHPP_DLL static SocketManager* instance;

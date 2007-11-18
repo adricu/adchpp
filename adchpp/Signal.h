@@ -26,7 +26,7 @@ namespace adchpp {
 template<typename F>
 struct Signal {
 	typedef std::tr1::function<F> Slot;
-	typedef list<Slot> SlotList;
+	typedef std::list<Slot> SlotList;
 	typedef typename SlotList::iterator Connection;
 	typedef F FunctionType;
 	

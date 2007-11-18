@@ -152,13 +152,11 @@ env.Append(SCANNERS=[SWIGScanner])
 conf = Configure(env)
 
 if conf.CheckCHeader('sys/epoll.h'):
-	conf.env.Append(CPPDEFINES='HAVE_SYS_EPOLL_H')
-if conf.CheckCHeader('sys/poll.h'):
-	conf.env.Append(CPPDEFINES='HAVE_SYS_POLL_H')
+	conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
 if conf.CheckLib('dl', 'dlopen'):
-	conf.env.Append(CPPDEFINES='HAVE_DL')
+	conf.env.Append(CPPDEFINES=['HAVE_DL'])
 if conf.CheckLib('pthread', 'pthread_create'):
-	conf.env.Append(CPPDEFINES='HAVE_PTHREAD')
+	conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
 
 env = conf.Finish()
 

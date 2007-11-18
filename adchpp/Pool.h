@@ -64,7 +64,7 @@ public:
 
 private:
 	size_t busy;
-	vector<T*> free;
+	std::vector<T*> free;
 };
 
 

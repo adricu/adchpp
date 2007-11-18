@@ -27,7 +27,9 @@
 #include "SettingsManager.h"
 
 namespace adchpp {
-	
+
+using namespace std;
+
 const char compileTime[] = __DATE__ " " __TIME__;
 
 static bool initialized = false;

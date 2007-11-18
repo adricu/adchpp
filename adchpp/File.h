@@ -46,24 +46,24 @@ public:
 		TRUNCATE = 0x04
 	};
 
-	ADCHPP_DLL File(const string& aFileName, int access, int mode = OPEN) throw(FileException);
+	ADCHPP_DLL File(const std::string& aFileName, int access, int mode = OPEN) throw(FileException);
 
 	ADCHPP_DLL int64_t getSize();
-	ADCHPP_DLL static int64_t getSize(const string& aFileName);
+	ADCHPP_DLL static int64_t getSize(const std::string& aFileName);
 
-	ADCHPP_DLL string read(uint32_t len) throw(FileException);
+	ADCHPP_DLL std::string read(uint32_t len) throw(FileException);
 	
 	/** Returns the directory part of the full path */
-	ADCHPP_DLL static string getFilePath(const string& name) throw();
+	ADCHPP_DLL static std::string getFilePath(const std::string& name) throw();
 	/** Returns the filename part of the full path */
-	ADCHPP_DLL static string getFileName(const string& name) throw();
-	ADCHPP_DLL static bool isAbsolutePath(const string& name) throw();
+	ADCHPP_DLL static std::string getFileName(const std::string& name) throw();
+	ADCHPP_DLL static bool isAbsolutePath(const std::string& name) throw();
 	
-	static string makeAbsolutePath(string const& path, string const& filename) {
+	static std::string makeAbsolutePath(const std::string& path, const std::string& filename) {
 		return isAbsolutePath(filename) ? filename : path + filename;
 	}
 
-	ADCHPP_DLL static void ensureDirectory(const string& aFile) throw();
+	ADCHPP_DLL static void ensureDirectory(const std::string& aFile) throw();
 	
 #ifdef _WIN32
 	void close() {
@@ -159,8 +159,8 @@ public:
 	void setEOF() throw(FileException) {
 	}
 
-	static void deleteFile(const string& aFileName) { ::unlink(aFileName.c_str()); };
-	static void renameFile(const string& source, const string& target) { ::rename(source.c_str(), target.c_str()); };
+	static void deleteFile(const std::string& aFileName) { ::unlink(aFileName.c_str()); };
+	static void renameFile(const std::string& source, const std::string& target) { ::rename(source.c_str(), target.c_str()); };
 	
 #endif // WIN32
 
@@ -168,12 +168,12 @@ public:
 		close();
 	}
 
-	string read() throw(FileException) {
+	std::string read() throw(FileException) {
 		setPos(0);
 		return read((uint32_t)getSize());
 	}
 
-	void write(const string& aString) throw(FileException) {
+	void write(const std::string& aString) throw(FileException) {
 		write((void*)aString.data(), aString.size());
 	}
 		

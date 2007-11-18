@@ -111,8 +111,9 @@ typedef unsigned __int64 uint64_t;
 
 #endif
 
-#include <cerrno>
-#include <cstdarg>
+#include <errno.h>
+#include <stdarg.h>
+#include <stddef.h>
 
 #include <string>
 #include <vector>
@@ -139,12 +140,6 @@ typedef unsigned __int64 uint64_t;
 
 #include <boost/intrusive_ptr.hpp>
 #include <boost/noncopyable.hpp>
-
-namespace adchpp {
-
-using namespace std;
-
-}
 
 #ifdef _UNICODE
 # ifndef _T

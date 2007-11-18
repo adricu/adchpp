@@ -27,8 +27,6 @@
 #include "version.h"
 #include "File.h"
 
-using namespace std::tr1::placeholders;
-
 #ifdef _WIN32
 
 #define PLUGIN_EXT _T(".dll")
@@ -53,6 +51,9 @@ using namespace std::tr1::placeholders;
 
 namespace adchpp {
 	
+using namespace std;
+using namespace std::tr1::placeholders;
+
 PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 

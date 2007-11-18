@@ -53,12 +53,12 @@ public:
 
 	virtual int getVersion() { return 0; }
 
-	static const string className;
+	static const std::string className;
 private:
 	friend class Singleton<ScriptManager>;
 	static ScriptManager* instance;
 	
-	vector<Engine*> engines;
+	std::vector<Engine*> engines;
 	
 	void load();
 	void reload();

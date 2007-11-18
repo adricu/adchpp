@@ -20,8 +20,8 @@
 #define ADCHPP_VERSION_H
 
 namespace adchpp {
-	ADCHPP_DLL extern string appName;
-	ADCHPP_DLL extern string versionString;
+	ADCHPP_DLL extern std::string appName;
+	ADCHPP_DLL extern std::string versionString;
 	ADCHPP_DLL extern float versionFloat;
 }
 

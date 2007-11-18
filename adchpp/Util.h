@@ -56,22 +56,22 @@ inline void intrusive_ptr_release(intrusive_ptr_base* ptr) {
 }
 
 /** Evaluates op(pair<T1, T2>.first, compareTo) */
-template<class T1, class T2, class op = equal_to<T1> >
+template<class T1, class T2, class op = std::equal_to<T1> >
 class CompareFirst {
 public:
 	CompareFirst(const T1& compareTo) : a(compareTo) { }
-	bool operator()(const pair<T1, T2>& p) { return op()(p.first, a); }
+	bool operator()(const std::pair<T1, T2>& p) { return op()(p.first, a); }
 private:
 	CompareFirst& operator=(const CompareFirst&);
 	const T1& a;
 };
 
 /** Evaluates op(pair<T1, T2>.second, compareTo) */
-template<class T1, class T2, class op = equal_to<T2> >
+template<class T1, class T2, class op = std::equal_to<T2> >
 class CompareSecond {
 public:
 	CompareSecond(const T2& compareTo) : a(compareTo) { }
-	bool operator()(const pair<T1, T2>& p) { return op()(p.second, a); }
+	bool operator()(const std::pair<T1, T2>& p) { return op()(p.second, a); }
 private:
 	CompareSecond& operator=(const CompareSecond&);
 	const T2& a;
@@ -179,56 +179,56 @@ public:
 
 	ADCHPP_DLL static size_t reasons[REASON_LAST];
 	
-	ADCHPP_DLL static string emptyString;
+	ADCHPP_DLL static std::string emptyString;
 
-	ADCHPP_DLL static void initialize(const string& configPath);
-	ADCHPP_DLL static string getOsVersion();
-	ADCHPP_DLL static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
-	ADCHPP_DLL static string formatTime(const string& msg, time_t t = time(NULL));
+	ADCHPP_DLL static void initialize(const std::string& configPath);
+	ADCHPP_DLL static std::string getOsVersion();
+	ADCHPP_DLL static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
+	ADCHPP_DLL static std::string formatTime(const std::string& msg, time_t t = time(NULL));
 	
-	static const string& getCfgPath() { return cfgPath; }
-	static void setCfgPath(const string& path) { cfgPath = path; }
+	static const std::string& getCfgPath() { return cfgPath; }
+	static void setCfgPath(const std::string& path) { cfgPath = path; }
 	
-	ADCHPP_DLL static string getAppPath();
-	ADCHPP_DLL static string getAppName();
+	ADCHPP_DLL static std::string getAppPath();
+	ADCHPP_DLL static std::string getAppName();
 	
 #ifndef _WIN32
-	ADCHPP_DLL static void setApp(const string& app);
-	static string appPath;
-	static string appName;
+	ADCHPP_DLL static void setApp(const std::string& app);
+	static std::string appPath;
+	static std::string appName;
 	
 #endif
 
-	ADCHPP_DLL static string translateError(int aError);
+	ADCHPP_DLL static std::string translateError(int aError);
 	
-	ADCHPP_DLL static string toAcp(const wstring& wString);
-	static const string& toAcp(const string& wString) { return wString; }
-	static string& toAcp(string& wString) { return wString; }
+	ADCHPP_DLL static std::string toAcp(const std::wstring& wString);
+	static const std::string& toAcp(const std::string& wString) { return wString; }
+	static std::string& toAcp(std::string& wString) { return wString; }
 
-	ADCHPP_DLL static wstring toUnicode(const string& aString);
-	static const wstring& toUnicode(const wstring& aString) { return aString; }
-	static wstring& toUnicode(wstring& aString) { return aString; }
+	ADCHPP_DLL static std::wstring toUnicode(const std::string& aString);
+	static const std::wstring& toUnicode(const std::wstring& aString) { return aString; }
+	static std::wstring& toUnicode(std::wstring& aString) { return aString; }
 
-	static string formatBytes(const string& aString) { return formatBytes(toInt64(aString)); }
+	static std::string formatBytes(const std::string& aString) { return formatBytes(toInt64(aString)); }
 
-	ADCHPP_DLL static string getShortTimeString();
-	ADCHPP_DLL static string getTimeString();
+	ADCHPP_DLL static std::string getShortTimeString();
+	ADCHPP_DLL static std::string getTimeString();
 		
-	ADCHPP_DLL static string formatBytes(int64_t aBytes);
+	ADCHPP_DLL static std::string formatBytes(int64_t aBytes);
 
-	ADCHPP_DLL static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0);
+	ADCHPP_DLL static void tokenize(StringList& lst, const std::string& str, char sep, std::string::size_type j = 0);
 	
-	static string formatSeconds(int64_t aSec) {
+	static std::string formatSeconds(int64_t aSec) {
 		char buf[64];
 		sprintf(buf, "%01d:%02d:%02d:%02d", (int)(aSec / (24*60*60)), (int)((aSec / (60*60)) % 24), (int)((aSec / 60) % 60), (int)(aSec % 60));
 		return buf;
 	}
 	
-	static bool toBool(const string& aString) { return toBool(aString.c_str()); }
-	static int toInt(const string& aString) { return toInt(aString.c_str()); }
-	static double toDouble(const string& aString) { return toDouble(aString.c_str()); }
-	static float toFloat(const string& aString) { return toFloat(aString.c_str()); }
-	static int64_t toInt64(const string& aString) { return toInt64(aString.c_str()); }
+	static bool toBool(const std::string& aString) { return toBool(aString.c_str()); }
+	static int toInt(const std::string& aString) { return toInt(aString.c_str()); }
+	static double toDouble(const std::string& aString) { return toDouble(aString.c_str()); }
+	static float toFloat(const std::string& aString) { return toFloat(aString.c_str()); }
+	static int64_t toInt64(const std::string& aString) { return toInt64(aString.c_str()); }
 	
 	static bool toBool(const char* aString) { return toInt(aString) > 0; }
 	static int toInt(const char* aString) { return ::atoi(aString); }
@@ -242,37 +242,41 @@ public:
 #endif
 	}
 	
-	static string toString(short val) {
+	static std::string toString(bool val) {
+		return val ? "1" : "0";
+	}
+	
+	static std::string toString(short val) {
 		char buf[8];
 		sprintf(buf, "%d", (int)val);
 		return buf;
 	}	
-	static string toString(unsigned short val) {
+	static std::string toString(unsigned short val) {
 		char buf[8];
 		sprintf(buf, "%u", (unsigned int)val);
 		return buf;
 	}	
-	static string toString(int val) {
+	static std::string toString(int val) {
 		char buf[16];
 		sprintf(buf, "%d", val);
 		return buf;
 	}	
-	static string toString(unsigned int val) {
+	static std::string toString(unsigned int val) {
 		char buf[16];
 		sprintf(buf, "%u", val);
 		return buf;
 	}	
-	static string toString(long val) {
+	static std::string toString(long val) {
 		char buf[32];
 		sprintf(buf, "%ld", val);
 		return buf;
 	}	
-	static string toString(unsigned long val) {
+	static std::string toString(unsigned long val) {
 		char buf[32];
 		sprintf(buf, "%lu", val);
 		return buf;
 	}
-	static string toString(long long val) {
+	static std::string toString(long long val) {
 		char buf[32];
 #ifdef _MSC_VER
 		sprintf(buf, "%I64d", val);
@@ -281,7 +285,7 @@ public:
 #endif
 		return buf;
 	}
-	static string toString(unsigned long long val) {
+	static std::string toString(unsigned long long val) {
 		char buf[32];
 #ifdef _MSC_VER
 		sprintf(buf, "%I64u", val);
@@ -291,18 +295,18 @@ public:
 		return buf;
 	}
 	
-	static string toString(double val, int maxDec = 2) {
+	static std::string toString(double val, int maxDec = 2) {
 		char buf[32];
 		sprintf(buf, "%.*f", maxDec, val);
 		return buf;
 	}
 
-	static const string& toString(const string& aString) {
+	static const std::string& toString(const std::string& aString) {
 		return aString;
 	}
 
 	/** Avoid this! Use the one of a connected socket instead... */
-	ADCHPP_DLL static string getLocalIp();
+	ADCHPP_DLL static std::string getLocalIp();
 
 	struct Clear {
 		void operator()(ByteVector& x);
@@ -316,7 +320,7 @@ public:
 	static double randd() { return ((double)rand()) / ((double)0xffffffff); }
 
 private:
-	ADCHPP_DLL static string cfgPath;
+	ADCHPP_DLL static std::string cfgPath;
 };
 
 }

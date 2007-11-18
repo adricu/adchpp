@@ -63,9 +63,9 @@ public:
 	 * Get the XML name of a setting
 	 * @param n Setting identifier
 	 */
-	const string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
+	const std::string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
 
-	const string& get(StrSetting key) const {
+	const std::string& get(StrSetting key) const {
 		return strSettings[key - STR_FIRST];
 	}
 
@@ -80,7 +80,7 @@ public:
 		return (get(key) > 0);
 	}
 
-	void set(StrSetting key, string const& value) {
+	void set(StrSetting key, const std::string& value) {
 		strSettings[key - STR_FIRST] = value;
 	}
 
@@ -109,7 +109,7 @@ public:
 		load(Util::getCfgPath() + _T("adchpp.xml"));
 	}
 
-	void load(const string& aFileName);
+	void load(const std::string& aFileName);
 
 	typedef SignalTraits<void (const SimpleXML&)> SignalLoad;
 	SignalLoad::Signal& signalLoad() { return signalLoad_; }
@@ -120,12 +120,12 @@ private:
 	SettingsManager() throw();
 	virtual ~SettingsManager() throw() { }
 
-	ADCHPP_DLL static const string settingTags[SETTINGS_LAST+1];
+	ADCHPP_DLL static const std::string settingTags[SETTINGS_LAST+1];
 
-	static const string className;
+	static const std::string className;
 
-	string strSettings[STR_LAST - STR_FIRST];
-	int    intSettings[INT_LAST - INT_FIRST];
+	std::string strSettings[STR_LAST - STR_FIRST];
+	int intSettings[INT_LAST - INT_FIRST];
 	int64_t int64Settings[/*INT64_LAST - INT64_FIRST*/1];
 	
 	SignalLoad::Signal signalLoad_;

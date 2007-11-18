@@ -1,6 +1,7 @@
 #include "adchpp.h"
 #include "ResourceManager.h"
 namespace adchpp {
+using namespace std;
 string ResourceManager::strings[] = {
 "B", 
 "CID taken", 

@@ -26,6 +26,7 @@
 
 namespace adchpp {
 
+using namespace std;
 using namespace std::tr1::placeholders;
 	
 Client* Client::create(const ManagedSocketPtr& ms) throw() {

@@ -32,6 +32,7 @@
 #include <adchpp/ClientManager.h>
 #include <adchpp/Client.h>
 
+using namespace std;
 using namespace std::tr1::placeholders;
 
 ScriptManager* ScriptManager::instance = 0;

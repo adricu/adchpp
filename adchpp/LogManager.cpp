@@ -25,6 +25,8 @@
 
 namespace adchpp {
 	
+using namespace std;
+
 LogManager* LogManager::instance = 0;
 
 void LogManager::logDateTime(const string& area, const string& msg) throw() 

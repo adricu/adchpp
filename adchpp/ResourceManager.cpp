@@ -26,6 +26,9 @@
 
 namespace adchpp {
 	
+using namespace std;
+using namespace std::tr1;
+
 ResourceManager* ResourceManager::instance = 0;
 const string ResourceManager::className = "ResourceManager";
 
@@ -35,7 +38,7 @@ void ResourceManager::loadLanguage(const string& aFile) {
 		SimpleXML xml;
 		xml.fromXML(f.read());
 
-		std::tr1::unordered_map<string, int> h;
+		unordered_map<string, int> h;
 		
 		for(int i = 0; i < LAST; ++i) {
 			h[names[i]] = i;
@@ -47,7 +50,7 @@ void ResourceManager::loadLanguage(const string& aFile) {
 				xml.stepIn();
 
 				while(xml.findChild("String")) {
-					std::tr1::unordered_map<string, int>::iterator j = h.find(xml.getChildAttrib("Name"));
+					unordered_map<string, int>::iterator j = h.find(xml.getChildAttrib("Name"));
 
 					if(j != h.end()) {
 						strings[j->second] = xml.getChildData();

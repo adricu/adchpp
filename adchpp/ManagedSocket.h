@@ -52,8 +52,8 @@ public:
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
 
-	const string& getIp() const { return ip; }
-	void setIp(const string& ip_) { ip = ip_; }
+	const std::string& getIp() const { return ip; }
+	void setIp(const std::string& ip_) { ip = ip_; }
 	
 	typedef std::tr1::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
@@ -98,7 +98,7 @@ private:
 	/** Disconnection scheduled for this socket */
 	uint32_t disc;
 
-	string ip;
+	std::string ip;
 #ifdef _WIN32
 	/** Data currently being sent by WSASend, 0 if not sending */
 	ByteVector* writeBuf;

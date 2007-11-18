@@ -23,6 +23,7 @@
 
 namespace adchpp {
 	
+using namespace std;
 
 #define PASSES 3
 

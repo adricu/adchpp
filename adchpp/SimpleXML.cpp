@@ -22,6 +22,8 @@
 
 namespace adchpp {
 	
+using namespace std;
+
 SimpleXML::SimpleXML(int numAttribs) : attribs(numAttribs), found(false) { 
 	root = current = new Tag("BOGUSROOT", Util::emptyString, NULL); 
 }

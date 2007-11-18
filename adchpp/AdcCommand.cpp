@@ -21,7 +21,9 @@
 #include "AdcCommand.h"
 
 namespace adchpp {
-	
+
+using namespace std;
+
 AdcCommand::AdcCommand() : cmdInt(0), str(0), from(0), type(0) { }
 
 AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), str(&tmp), from(HUB_SID), type(aType) {

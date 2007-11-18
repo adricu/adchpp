@@ -35,6 +35,8 @@
 
 namespace adchpp {
 
+using namespace std;
+
 intrusive_ptr_base::~intrusive_ptr_base() {
 }
 

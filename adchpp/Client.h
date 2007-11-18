@@ -65,17 +65,17 @@ public:
 	static Client* create(const ManagedSocketPtr& ms_) throw();
 	
 	const StringList& getSupportList() const throw() { return supportList; }
-	bool supports(const string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
+	bool supports(const std::string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
 
 	void send(const char* command, size_t len) throw() {
 		dcassert(socket != NULL);
 		socket->write(command, len);
 	}
 	void send(const AdcCommand& cmd) throw() { send(cmd.toString()); }
-	void send(const string& command) throw() { send(command.c_str(), command.length()); }
+	void send(const std::string& command) throw() { send(command.c_str(), command.length()); }
 	void send(const char* command) throw() { socket->write(command, strlen(command)); }
 
-	void fastSend(const string& command, bool lowPrio = false) throw() {
+	void fastSend(const std::string& command, bool lowPrio = false) throw() {
 		socket->fastWrite(command.c_str(), command.length(), lowPrio);
 	}
 	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
@@ -84,7 +84,7 @@ public:
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
 	const ManagedSocketPtr& getSocket() throw() { return socket; }
 	const ManagedSocketPtr& getSocket() const throw() { return socket; }
-	const string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
+	const std::string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
 
 	/** 
 	 * Set data mode for aBytes bytes.
@@ -96,12 +96,12 @@ public:
 	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
 	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
 	ADCHPP_DLL bool getAllFields(AdcCommand& cmd) const throw();
-	ADCHPP_DLL const string& getINF() const throw();
+	ADCHPP_DLL const std::string& getINF() const throw();
 	
 	void resetChanged() { changed.clear(); }
 
-	const string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(AdcCommand::toCode(name)); return i == info.end() ? Util::emptyString : i->second; }
-	ADCHPP_DLL void setField(const char* name, const string& value) throw();
+	const std::string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(AdcCommand::toCode(name)); return i == info.end() ? Util::emptyString : i->second; }
+	ADCHPP_DLL void setField(const char* name, const std::string& value) throw();
 
 	ADCHPP_DLL void updateFields(const AdcCommand& cmd) throw();
 	ADCHPP_DLL void updateSupports(const AdcCommand& cmd) throw();
@@ -150,11 +150,11 @@ private:
 	StringList filters;
 	/** H-C SUP */
 	StringList supportList;
-	typedef pair<int, void*> PSDPair;
-	typedef vector<PSDPair> PSDList;
+	typedef std::pair<int, void*> PSDPair;
+	typedef std::vector<PSDPair> PSDList;
 	typedef PSDList::iterator PSDIter;
 
-	typedef std::tr1::unordered_map<uint16_t, string> InfMap;
+	typedef std::tr1::unordered_map<uint16_t, std::string> InfMap;
 	typedef InfMap::iterator InfIter;
 
 	InfMap info;
@@ -168,14 +168,14 @@ private:
 	bool disconnecting;
 	
 	PSDList psd;
-	string line;
+	std::string line;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;
 	
 	time_t floodTimer;
 	
 	/** Latest INF cached */
-	mutable string INF;
+	mutable std::string INF;
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
 	

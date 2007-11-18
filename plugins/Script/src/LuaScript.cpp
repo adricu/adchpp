@@ -39,6 +39,8 @@ extern "C" {
 
 }
 
+using namespace std;
+
 const string LuaScript::className = "LuaScript";
 
 namespace {

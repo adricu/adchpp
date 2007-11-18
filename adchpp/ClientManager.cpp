@@ -31,7 +31,9 @@
 #include "SettingsManager.h"
 
 namespace adchpp {
-	
+
+using namespace std;
+
 ClientManager* ClientManager::instance = 0;
 const string ClientManager::className = "ClientManager";
 

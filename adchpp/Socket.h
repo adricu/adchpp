@@ -80,7 +80,7 @@ public:
 	virtual ~SocketException() throw() { }
 private:
 	int err;
-	static string errorToString(int aError) throw();
+	static std::string errorToString(int aError) throw();
 };
 
 class Socket
@@ -99,21 +99,21 @@ public:
 	};
 
 	Socket() throw(SocketException) : sock(INVALID_SOCKET) { }
-	Socket(const string& aIp, const string& aPort) throw(SocketException) : sock(INVALID_SOCKET) { connect(aIp, aPort); }
-	Socket(const string& aIp, short aPort) throw(SocketException) : sock(INVALID_SOCKET) { connect(aIp, aPort); }
+	Socket(const std::string& aIp, const std::string& aPort) throw(SocketException) : sock(INVALID_SOCKET) { connect(aIp, aPort); }
+	Socket(const std::string& aIp, short aPort) throw(SocketException) : sock(INVALID_SOCKET) { connect(aIp, aPort); }
 	virtual ~Socket() throw() { disconnect(); }
 
 	virtual void create(int aType = TYPE_TCP) throw(SocketException);
 	virtual void bind(short aPort) throw(SocketException);
-	virtual void connect(const string& aIp, short aPort) throw(SocketException);
-	void connect(const string& aIp, const string& aPort) throw(SocketException) { connect(aIp, (short)Util::toInt(aPort)); }
-	virtual string accept(const Socket& aSocket) throw(SocketException);
+	virtual void connect(const std::string& aIp, short aPort) throw(SocketException);
+	void connect(const std::string& aIp, const std::string& aPort) throw(SocketException) { connect(aIp, (short)Util::toInt(aPort)); }
+	virtual std::string accept(const Socket& aSocket) throw(SocketException);
 	virtual void write(const char* aBuffer, size_t aLen) throw(SocketException);
-	void write(const string& aData) throw(SocketException) { write(aData.data(), aData.length()); }
+	void write(const std::string& aData) throw(SocketException) { write(aData.data(), aData.length()); }
 	virtual int writeNB(const char* aBuffer, size_t aLen) throw(SocketException);
-	int writeNB(const string& aData) throw(SocketException) { return writeNB(aData.data(), aData.length()); }
-	virtual void writeTo(const string& aIp, short aPort, const char* aBuffer, size_t aLen) throw(SocketException);
-	void writeTo(const string& aIp, short aPort, const string& aData) throw(SocketException) { writeTo(aIp, aPort, aData.data(), aData.length()); }
+	int writeNB(const std::string& aData) throw(SocketException) { return writeNB(aData.data(), aData.length()); }
+	virtual void writeTo(const std::string& aIp, short aPort, const char* aBuffer, size_t aLen) throw(SocketException);
+	void writeTo(const std::string& aIp, short aPort, const std::string& aData) throw(SocketException) { writeTo(aIp, aPort, aData.data(), aData.length()); }
 	virtual void disconnect() throw();
 
 	void listen(short aPort) throw(SocketException);
@@ -123,7 +123,7 @@ public:
 	int read(void* aBuffer, size_t aBufLen) throw(SocketException); 
 	int wait(uint32_t millis, int waitFor) throw(SocketException);
 	
-	static string resolve(const string& aDns);
+	static std::string resolve(const std::string& aDns);
 	
 	int getAvailable() {
 		u_long i = 0;
@@ -143,7 +143,7 @@ public:
 	}
 #endif
 	
-	string getLocalIp() throw();
+	std::string getLocalIp() throw();
 	int getLocalPort() throw();	
 	socket_t getSocket() { return sock; }
 	

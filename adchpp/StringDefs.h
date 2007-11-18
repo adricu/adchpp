@@ -1,6 +1,7 @@
 // @Prolog: #include "adchpp.h"
 // @Prolog: #include "ResourceManager.h"
 // @Prolog: namespace adchpp {
+// @Prolog: using namespace std;
 
 // @Strings: string ResourceManager::strings[]
 // @Names: string ResourceManager::names[]

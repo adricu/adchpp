@@ -38,18 +38,18 @@ public:
 	};
 	CID() { memset(cid, 0, sizeof(cid)); }
 	explicit CID(const uint8_t* data) { memcpy(cid, data, sizeof(cid)); }
-	explicit CID(const string& base32) { Encoder::fromBase32(base32.c_str(), cid, sizeof(cid)); }
+	explicit CID(const std::string& base32) { Encoder::fromBase32(base32.c_str(), cid, sizeof(cid)); }
 
 	bool operator==(const CID& rhs) const { return memcmp(cid, rhs.cid, sizeof(cid)) == 0; }
 	bool operator<(const CID& rhs) const { return memcmp(cid, rhs.cid, sizeof(cid)) < 0; }
 
-	string toBase32() const { return Encoder::toBase32(cid, sizeof(cid)); }
-	string& toBase32(string& tmp) const { return Encoder::toBase32(cid, sizeof(cid), tmp); }
+	std::string toBase32() const { return Encoder::toBase32(cid, sizeof(cid)); }
+	std::string& toBase32(std::string& tmp) const { return Encoder::toBase32(cid, sizeof(cid), tmp); }
 
 	size_t toHash() const { return *reinterpret_cast<const size_t*>(cid); }
 	const uint8_t* data() const { return cid; }
 
-	bool isZero() const { return find_if(cid, cid+SIZE, bind2nd(not_equal_to<uint8_t>(), 0)) == (cid+SIZE); }
+	bool isZero() const { return std::find_if(cid, cid+SIZE, std::bind2nd(std::not_equal_to<uint8_t>(), 0)) == (cid+SIZE); }
 
 	static CID generate() {
 		uint8_t data[CID::SIZE];

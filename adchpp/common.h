@@ -101,7 +101,7 @@ typedef ByteVector::iterator ByteIter;
 
 /** 
  * Initialize configuration.
- */ADCHPP_DLL void initialize(const string& path);
+ */ADCHPP_DLL void initialize(const std::string& path);
 
 /** 
  * Load plugins and start listening for incoming connections

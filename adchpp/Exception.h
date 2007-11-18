@@ -23,17 +23,17 @@
 
 namespace adchpp {
 	
-class ADCHPP_VISIBLE Exception : public exception
+class ADCHPP_VISIBLE Exception : public std::exception
 {
 public:
 	Exception() { }
-	Exception(const string& aError) throw() : error(aError) { dcdebug("Thrown: %s\n", error.c_str()); }
+	Exception(const std::string& aError) throw() : error(aError) { dcdebug("Thrown: %s\n", error.c_str()); }
 	virtual ~Exception() throw() { }
-	const string& getError() const throw() { return error; }
+	const std::string& getError() const throw() { return error; }
 	
 	virtual const char* what() { return error.c_str(); }
 protected:
-	string error;
+	std::string error;
 };
 
 #ifndef NDEBUG
@@ -41,7 +41,7 @@ protected:
 #define STANDARD_EXCEPTION(name) class ADCHPP_VISIBLE name : public Exception { \
 public:\
 	name() throw() : Exception(#name) { } \
-	name(const string& aError) throw() : Exception(#name ": " + aError) { } \
+	name(const std::string& aError) throw() : Exception(#name ": " + aError) { } \
 	virtual ~name() throw() { } \
 }
 

@@ -27,6 +27,8 @@
 
 namespace adchpp {
 	
+using namespace std;
+
 FastMutex ManagedSocket::writeMutex;
 
 ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0)

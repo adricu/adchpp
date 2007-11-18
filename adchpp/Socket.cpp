@@ -21,7 +21,9 @@
 #include "Socket.h"
 
 namespace adchpp {
-	
+
+using namespace std;
+
 string SocketException::errorToString(int aError) throw() {
 	return Util::translateError(aError);
 }

@@ -18,6 +18,7 @@ using namespace adchpp;
 
 %}
 
+%include "exception.i"
 %include "std_string.i"
 %include "std_vector.i"
 %include "std_except.i"
@@ -26,6 +27,14 @@ using namespace adchpp;
 %include "carrays.i"
 
 %array_functions(size_t, size_t);
+
+%exception {
+	try {
+		$action
+	} catch(const std::exception& e) {
+		SWIG_exception(SWIG_UnknownError, e.what());
+	}
+}
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -105,9 +114,9 @@ class Exception : public std::exception
 {
 public:
 	Exception();
-	Exception(const string& aError) throw();
+	Exception(const std::string& aError) throw();
 	virtual ~Exception() throw();
-	const string& getError() const throw();
+	const std::string& getError() const throw();
 	
 	virtual const char* what();
 };
@@ -151,41 +160,41 @@ public:
 
 	static size_t reasons[REASON_LAST];
 	
-	static string emptyString;
+	static std::string emptyString;
 
-	static void initialize(const string& configPath);
-	static string getOsVersion();
-	static void decodeUrl(const string& aUrl, string& aServer, short& aPort, string& aFile);
-	static string formatTime(const string& msg, time_t t = time(NULL));
+	static void initialize(const std::string& configPath);
+	static std::string getOsVersion();
+	static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
+	static std::string formatTime(const std::string& msg, time_t t = time(NULL));
 	
-	static const string& getCfgPath();
-	static void setCfgPath(const string& path);
+	static const std::string& getCfgPath();
+	static void setCfgPath(const std::string& path);
 
-	static string getAppPath();
-	static string getAppName();
+	static std::string getAppPath();
+	static std::string getAppName();
 
-	static string translateError(int aError);
+	static std::string translateError(int aError);
 	
-	static string toAcp(const wstring& wString);
-	static const string& toAcp(const string& wString);
+	static std::string toAcp(const std::wstring& wString);
+	static const std::string& toAcp(const std::string& wString);
 
-	static wstring toUnicode(const string& aString);
-	static const wstring& toUnicode(const wstring& aString);
+	static std::wstring toUnicode(const std::string& aString);
+	static const std::wstring& toUnicode(const std::wstring& aString);
 
-	static string formatBytes(const string& aString);
+	static std::string formatBytes(const std::string& aString);
 
-	static string getShortTimeString();
-	static string getTimeString();
+	static std::string getShortTimeString();
+	static std::string getTimeString();
 		
-	static string formatBytes(int64_t aBytes);
+	static std::string formatBytes(int64_t aBytes);
 
-	static void tokenize(StringList& lst, const string& str, char sep, string::size_type j = 0);
+	static void tokenize(StringList& lst, const std::string& str, char sep, std::string::size_type j = 0);
 
-	static string formatSeconds(int64_t aSec);
+	static std::string formatSeconds(int64_t aSec);
 	
 
 	/** Avoid this! Use the one of a connected socket instead... */
-	static string getLocalIp();
+	static std::string getLocalIp();
 
 	static uint32_t rand();
 	static uint32_t rand(uint32_t high);
@@ -201,20 +210,20 @@ public:
 
 	CID();
 	explicit CID(const uint8_t* data);
-	explicit CID(const string& base32);
+	explicit CID(const std::string& base32);
 
 	bool operator==(const CID& rhs) const;
 	bool operator<(const CID& rhs) const;
 
-	string toBase32() const;
-	//string& toBase32(string& tmp) const;
+	std::string toBase32() const;
+	//std::string& toBase32(std::string& tmp) const;
 
 	size_t toHash() const;
 	//const uint8_t* data() const;
 	
 	%extend {
-		string data() const { return string(reinterpret_cast<const char*>(self->data()), CID::SIZE); }
-		string __str__() { return self->toBase32(); }
+		std::string data() const { return std::string(reinterpret_cast<const char*>(self->data()), CID::SIZE); }
+		std::string __str__() { return self->toBase32(); }
 	}  
 
 	bool isZero() const;
@@ -225,7 +234,7 @@ public:
 class ParseException : public Exception {
 public:
 	ParseException() throw();
-	ParseException(const string&) throw();
+	ParseException(const std::string&) throw();
 };
 
 class AdcCommand {
@@ -309,29 +318,29 @@ public:
 	enum { HUB_SID = 0x41414141 };
 
 	AdcCommand();
-	explicit AdcCommand(Severity sev, Error err, const string& desc, char aType);
+	explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType);
 	explicit AdcCommand(uint32_t cmd, char aType, uint32_t aFrom);
-	explicit AdcCommand(const string& aLine) throw(ParseException);
+	explicit AdcCommand(const std::string& aLine) throw(ParseException);
 	AdcCommand(const AdcCommand& rhs);
 
-	void parse(const string& aLine) throw(ParseException);
+	void parse(const std::string& aLine) throw(ParseException);
 	uint32_t getCommand() const;
 	char getType() const;
 
 	StringList& getParameters();
 	//const StringList& getParameters() const;
 
-	const string& toString() const;
+	const std::string& toString() const;
 	void resetString();
 
-	AdcCommand& addParam(const string& name, const string& value);
-	AdcCommand& addParam(const string& str);
-	const string& getParam(size_t n) const;
+	AdcCommand& addParam(const std::string& name, const std::string& value);
+	AdcCommand& addParam(const std::string& str);
+	const std::string& getParam(size_t n) const;
 	
-	const string& getFeatures() const;
+	const std::string& getFeatures() const;
 
 #ifndef SWIGLUA
-	bool getParam(const char* name, size_t start, string& OUTPUT) const;
+	bool getParam(const char* name, size_t start, std::string& OUTPUT) const;
 #endif
 	bool delParam(const char* name, size_t start);
 	
@@ -340,23 +349,23 @@ public:
 
 	bool operator==(uint32_t aCmd) const;
 
-	static void escape(const string& s, string& out);
+	static void escape(const std::string& s, std::string& out);
 
 	uint32_t getTo() const;
 	void setTo(uint32_t aTo);
 	uint32_t getFrom() const;
 	void setFrom(uint32_t aFrom);
 
-	static uint32_t toSID(const string& aSID);
-	static string fromSID(const uint32_t aSID);
-	static void appendSID(string& str, uint32_t aSID);
+	static uint32_t toSID(const std::string& aSID);
+	static std::string fromSID(const uint32_t aSID);
+	static void appendSID(std::string& str, uint32_t aSID);
 
 %extend {
-	string getCommandString() {
+	std::string getCommandString() {
 		int cmd = self->getCommand();
-		return string(reinterpret_cast<const char*>(&cmd), 3);
+		return std::string(reinterpret_cast<const char*>(&cmd), 3);
 	}
-	static uint32_t toCMD(const string& cmd) {
+	static uint32_t toCMD(const std::string& cmd) {
 		if(cmd.length() != 3) {
 			return 0;
 		}
@@ -396,17 +405,17 @@ public:
 	//DLL void deleteThis() throw();
 
 	const StringList& getSupportList() const throw();
-	bool supports(const string& feat) const throw();
+	bool supports(const std::string& feat) const throw();
 
 	//void send(const char* command, size_t len) throw();
 	void send(const AdcCommand& cmd) throw();
-	void send(const string& command) throw();
+	void send(const std::string& command) throw();
 	//void send(const char* command) throw();
 
 	void disconnect(Util::Reason reason) throw();
 	//ManagedSocket* getSocket() throw() { return socket; }
 	//const ManagedSocket* getSocket() const throw() { return socket; }
-	const string& getIp() const throw();
+	const std::string& getIp() const throw();
 
 	//void setSocket(ManagedSocket* aSocket) throw();
 
@@ -418,8 +427,8 @@ public:
 
 	void resetChanged() { changed.clear(); }
 
-	const string& getField(const char* name) const throw();
-	void setField(const char* name, const string& value) throw();
+	const std::string& getField(const char* name) const throw();
+	void setField(const char* name, const std::string& value) throw();
 
 	void updateFields(const AdcCommand& cmd) throw();
 	void updateSupports(const AdcCommand& cmd) throw();
@@ -447,8 +456,8 @@ public:
 class LogManager
 {
 public:
-	void log(const string& area, const string& msg) throw();
-	void logDateTime(const string& area, const string& msg) throw();
+	void log(const std::string& area, const std::string& msg) throw();
+	void logDateTime(const std::string& area, const std::string& msg) throw();
 };
 
 class SocketManager {
@@ -495,12 +504,12 @@ public:
 	//typedef HASH_MAP<uint32_t, Client*> ClientMap;
 	//typedef ClientMap::iterator ClientIter;
 	
-	void addSupports(const string& str) throw();
-	void removeSupports(const string& str) throw();
+	void addSupports(const std::string& str) throw();
+	void removeSupports(const std::string& str) throw();
 
 	void updateCache() throw();
 	
-	uint32_t getSID(const string& nick) const throw();
+	uint32_t getSID(const std::string& nick) const throw();
 	uint32_t getSID(const CID& cid) const throw();
 	
 	Client* getClient(const uint32_t& aSid) throw();
@@ -513,9 +522,9 @@ public:
 		}
 		return ret;
 	}
-	Client* findByNick(const string& nick) {
+	Client* findByNick(const std::string& nick) {
 		for(ClientManager::ClientMap::iterator i = self->getClients().begin(); i != self->getClients().end(); ++i) {
-			const string& nick2 = i->second->getField("NI");
+			const std::string& nick2 = i->second->getField("NI");
 			if(nick == nick2)
 				return i->second;
 		}
@@ -525,7 +534,7 @@ public:
 	
 	void send(const AdcCommand& cmd, bool lowPrio = false) throw();
 	void sendToAll(const AdcCommand& cmd) throw();
-	void sendToAll(const string& cmd) throw();
+	void sendToAll(const std::string& cmd) throw();
 	void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
 	bool checkFlooding(Client& c, const AdcCommand&) throw();
@@ -538,7 +547,7 @@ public:
 	bool verifySUP(Client& c, AdcCommand& cmd) throw();
 	bool verifyINF(Client& c, AdcCommand& cmd) throw();
 	bool verifyNick(Client& c, const AdcCommand& cmd) throw();
-	bool verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt, const string& suppliedHash);
+	bool verifyPassword(Client& c, const std::string& password, const vector<uint8_t>& salt, const std::string& suppliedHash);
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
 
@@ -553,7 +562,7 @@ public:
 	
 	typedef SignalTraits<void (Client&)> SignalConnected;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
-	typedef SignalTraits<void (Client&, const string&)> SignalBadLine;
+	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalSend;
 	typedef SignalTraits<void (Client&, int)> SignalState;
 	typedef SignalTraits<void (Client&)> SignalDisconnected;
@@ -574,34 +583,34 @@ public:
 	SimpleXML(int numAttribs = 0);
 	~SimpleXML();
 	
-	void addTag(const string& aName, const string& aData = Util::emptyString) throw(SimpleXMLException);
-	void addAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
-	void addChildAttrib(const string& aName, const string& aData) throw(SimpleXMLException);
+	void addTag(const std::string& aName, const std::string& aData = Util::emptyString) throw(SimpleXMLException);
+	void addAttrib(const std::string& aName, const std::string& aData) throw(SimpleXMLException);
+	void addChildAttrib(const std::string& aName, const std::string& aData) throw(SimpleXMLException);
 
-	const string& getData() const;
+	const std::string& getData() const;
 	void stepIn() const throw(SimpleXMLException);
 	void stepOut() const throw(SimpleXMLException);
 	
 	void resetCurrentChild() const throw();
-	bool findChild(const string& aName) const throw();
+	bool findChild(const std::string& aName) const throw();
 
-	const string& getChildData() const throw(SimpleXMLException);
+	const std::string& getChildData() const throw(SimpleXMLException);
 
-	const string& getChildAttrib(const string& aName, const string& aDefault = Util::emptyString) const throw(SimpleXMLException);
+	const std::string& getChildAttrib(const std::string& aName, const std::string& aDefault = Util::emptyString) const throw(SimpleXMLException);
 
-	int getIntChildAttrib(const string& aName) throw(SimpleXMLException);
-	int64_t getLongLongChildAttrib(const string& aName) throw(SimpleXMLException);
-	bool getBoolChildAttrib(const string& aName) throw(SimpleXMLException);
-	void fromXML(const string& aXML) throw(SimpleXMLException);
-	string toXML();
+	int getIntChildAttrib(const std::string& aName) throw(SimpleXMLException);
+	int64_t getLongLongChildAttrib(const std::string& aName) throw(SimpleXMLException);
+	bool getBoolChildAttrib(const std::string& aName) throw(SimpleXMLException);
+	void fromXML(const std::string& aXML) throw(SimpleXMLException);
+	std::string toXML();
 	
-	static void escape(string& aString, bool aAttrib, bool aLoading = false);
+	static void escape(std::string& aString, bool aAttrib, bool aLoading = false);
 	/** 
 	 * This is a heurestic for whether escape needs to be called or not. The results are
  	 * only guaranteed for false, i e sometimes true might be returned even though escape
 	 * was not needed...
 	 */
-	static bool needsEscape(const string& aString, bool aAttrib, bool aLoading = false);
+	static bool needsEscape(const std::string& aString, bool aAttrib, bool aLoading = false);
 };
 
 class SettingsManager
@@ -629,10 +638,10 @@ public:
 		INT64_LAST = INT64_FIRST, SETTINGS_LAST = INT64_LAST };
 
 	//bool getType(const char* name, int& n, int& type);
-	const string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
+	const std::string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
 
 %extend {
-	const string& getString(StrSetting key) {
+	const std::string& getString(StrSetting key) {
 		return self->get(key);
 	}
 	int getInt(IntSetting key) {
@@ -642,7 +651,7 @@ public:
 		return self->get(key);
 	}
 
-	void setString(StrSetting key, string const& value) {
+	void setString(StrSetting key, std::string const& value) {
 		self->set(key, value);
 	}
 	void setInt(IntSetting key, int value) {
@@ -668,7 +677,7 @@ public:
 
 %template(ManagedC) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > >;
 %template(ManagedCAI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
-%template(ManagedCS) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, const string&)> > >;
+%template(ManagedCS) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, const std::string&)> > >;
 %template(ManagedCI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
 
 %extend Signal<void (Client&)> {
@@ -689,8 +698,8 @@ public:
 	}
 }
 
-%extend Signal<void (Client&, string&)> {
-	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, string&)> > > connect(std::tr1::function<void (Client&, string&)> f) {
+%extend Signal<void (Client&, std::string&)> {
+	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, std::string&)> > > connect(std::tr1::function<void (Client&, std::string&)> f) {
 		return manage(self, f));
 	}
 }
@@ -703,11 +712,11 @@ public:
 	TigerHash();
 	
 	%extend {
-		void update(const string& data) {
+		void update(const std::string& data) {
 			self->update(data.data(), data.size());
 		}
-		string finalize() {
-			return string(reinterpret_cast<const char*>(self->finalize()), TigerHash::HASH_SIZE);
+		std::string finalize() {
+			return std::string(reinterpret_cast<const char*>(self->finalize()), TigerHash::HASH_SIZE);
 		}
 	}
 };
@@ -716,11 +725,11 @@ class Encoder
 {
 public:
 	%extend {
-		static string toBase32(const string& src) {
+		static std::string toBase32(const std::string& src) {
 			return Encoder::toBase32(reinterpret_cast<const uint8_t*>(src.data()), src.size());
 		}
-		static string fromBase32(const string& src) {
-			string result((src.length()*5)/8, 0);
+		static std::string fromBase32(const std::string& src) {
+			std::string result((src.length()*5)/8, 0);
 			Encoder::fromBase32(src.data(), reinterpret_cast<uint8_t*>(&result[0]), result.size());
 			return result;
 		}
@@ -730,16 +739,16 @@ public:
 class PluginManager 
 {
 public:
-	//typedef HASH_MAP<string, Plugin*> Registry;
+	//typedef HASH_MAP<std::string, Plugin*> Registry;
 	//typedef Registry::iterator RegistryIter;
 
 	const StringList& getPluginList() const;
-	const string& getPluginPath() const;
+	const std::string& getPluginPath() const;
 	//int getPluginId() { return pluginIds++; }
 
-	//bool registerPlugin(const string& name, Plugin* ptr);
-	//bool unregisterPlugin(const string& name);
-	//Plugin* getPlugin(const string& name);
+	//bool registerPlugin(const std::string& name, Plugin* ptr);
+	//bool unregisterPlugin(const std::string& name);
+	//Plugin* getPlugin(const std::string& name);
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();

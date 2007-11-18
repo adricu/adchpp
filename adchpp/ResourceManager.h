@@ -31,8 +31,8 @@ public:
 	
 #include "StringDefs.h"
 
-	void loadLanguage(const string& aFile);
-	const string& getString(Strings x) const { return strings[x]; }
+	void loadLanguage(const std::string& aFile);
+	const std::string& getString(Strings x) const { return strings[x]; }
 
 private:
 
@@ -43,10 +43,10 @@ private:
 	ResourceManager() throw() { }
 	virtual ~ResourceManager() throw() { }
 	
-	ADCHPP_DLL static string strings[LAST];
-	static string names[LAST];
+	ADCHPP_DLL static std::string strings[LAST];
+	static std::string names[LAST];
 
-	static const string className;
+	static const std::string className;
 };
 
 #define STRING(x) ResourceManager::getInstance()->getString(ResourceManager::x)

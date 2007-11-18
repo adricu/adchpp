@@ -27,6 +27,8 @@
 
 namespace adchpp {
 	
+using namespace std;
+
 SettingsManager* SettingsManager::instance = 0;
 const string SettingsManager::className = "SettingsManager";
 

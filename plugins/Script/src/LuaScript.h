@@ -29,15 +29,15 @@ public:
 	LuaScript(Engine* engine);
 	virtual ~LuaScript();
 
-	void loadFile(const string& path, const string& filename);	
+	void loadFile(const std::string& path, const std::string& filename);	
 	
-	void getStats(string& str) const;
+	void getStats(std::string& str) const;
 	
-	static const string className;
+	static const std::string className;
 private:
 
 	lua_State* l;
-	string filename;
+	std::string filename;
 };
 
 #endif /*LUASCRIPT_H_*/

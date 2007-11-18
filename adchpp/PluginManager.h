@@ -143,7 +143,7 @@ typedef void (*PLUGIN_UNLOAD)();
 class PluginManager : public Singleton<PluginManager>
 {
 public:
-	typedef std::tr1::unordered_map<string, Plugin*> Registry;
+	typedef std::tr1::unordered_map<std::string, Plugin*> Registry;
 	typedef Registry::iterator RegistryIter;
 
 	/**
@@ -156,7 +156,7 @@ public:
 	/**
 	 * Get the plugin path as set in adchpp.xml
 	 */
-	const string& getPluginPath() const {
+	const std::string& getPluginPath() const {
 		return pluginPath;
 	}
 
@@ -173,19 +173,19 @@ public:
 	 * Register a plugin interface under a name.
 	 * @return false if name was already registered and call fails
 	 */
-	bool registerPlugin(const string& name, Plugin* ptr) {
-		return 	registry.insert(make_pair(name, ptr)).second;
+	bool registerPlugin(const std::string& name, Plugin* ptr) {
+		return 	registry.insert(std::make_pair(name, ptr)).second;
 	}
 	
 	/** @return True if the plugin existed and was thus unregistered */
-	bool unregisterPlugin(const string& name) {
+	bool unregisterPlugin(const std::string& name) {
 		return registry.erase(name) > 0;
 	}
 	
 	/**
 	 * @return Plugin interface, or NULL if not found
 	 */
-	Plugin* getPlugin(const string& name) {
+	Plugin* getPlugin(const std::string& name) {
 		RegistryIter i = registry.find(name);
 		return i == registry.end() ? NULL : i->second;
 	}
@@ -224,22 +224,22 @@ private:
 	friend class Singleton<PluginManager>;
 	ADCHPP_DLL static PluginManager* instance;
 
-	typedef vector<PluginInfo> PluginList;
+	typedef std::vector<PluginInfo> PluginList;
 	typedef PluginList::iterator PluginIter;
 
 	PluginList active;
 	Registry registry;
 
 	StringList plugins;
-	string pluginPath;
+	std::string pluginPath;
 
 	int pluginIds;
 	
-	static const string className;
+	static const std::string className;
 	
 	PluginManager() throw();
 	
-	bool loadPlugin(const string& file);
+	bool loadPlugin(const std::string& file);
 	
 	void onLoad(const SimpleXML& xml) throw();
 };

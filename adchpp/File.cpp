@@ -21,7 +21,9 @@
 #include "File.h"
 
 namespace adchpp {
-	
+
+using namespace std;
+
 string File::read(uint32_t len) throw(FileException) {
 	string tmp;
 	tmp.resize(len);

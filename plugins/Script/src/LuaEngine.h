@@ -28,11 +28,11 @@ public:
 	LuaEngine();
 	virtual ~LuaEngine();
 	
-	virtual Script* loadScript(const string& path, const string& filename, const ParameterMap& parameters);
+	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters);
 	virtual void unloadScript(Script* script);
 	
-	virtual void getStats(string& str) const;
+	virtual void getStats(std::string& str) const;
 private:
-	vector<LuaScript*> scripts;
+	std::vector<LuaScript*> scripts;
 };
 #endif /*LUAENGINE_H_*/

@@ -45,14 +45,14 @@ public:
 	typedef ClientMap::iterator ClientIter;
 	
 	/** Adds a string to SUP, propagating the change to all connected clients */
-	ADCHPP_DLL void addSupports(const string& str) throw();
+	ADCHPP_DLL void addSupports(const std::string& str) throw();
 	/** Removes a string from SUP, propagating the change to all connected clients */
-	ADCHPP_DLL void removeSupports(const string& str) throw();
+	ADCHPP_DLL void removeSupports(const std::string& str) throw();
 
 	ADCHPP_DLL void updateCache() throw();
 	
 	/** @return SID of client or 0 if not found */
-	ADCHPP_DLL uint32_t getSID(const string& nick) const throw();
+	ADCHPP_DLL uint32_t getSID(const std::string& nick) const throw();
 	/** @return SID of client or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const CID& cid) const throw();
 	
@@ -71,7 +71,7 @@ public:
 	ADCHPP_DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
 	/** Send command to all regardless of type */
 	void sendToAll(const AdcCommand& cmd) throw() { sendToAll(cmd.toString()); }
-	ADCHPP_DLL void sendToAll(const string& cmd) throw();
+	ADCHPP_DLL void sendToAll(const std::string& cmd) throw();
 	/** Send command to a single client regardless of type */
 	ADCHPP_DLL void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
@@ -97,7 +97,7 @@ public:
 	 * @param sendData Send GPA.
 	 * @return The random data that was sent to the client (if sendData was true, undefined otherwise).
 	 */
-	ADCHPP_DLL vector<uint8_t> enterVerify(Client& c, bool sendData) throw();
+	ADCHPP_DLL ByteVector enterVerify(Client& c, bool sendData) throw();
 
 	/**
 	 * Enter NORMAL state. Call this if you stop an INF of a password-less
@@ -129,7 +129,7 @@ public:
 	/**
 	 * Verify password
 	 */
-	ADCHPP_DLL bool verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt, const string& suppliedHash);
+	ADCHPP_DLL bool verifyPassword(Client& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
 
 	/**
 	 * Verify that IP is correct and replace any zero addresses.
@@ -157,7 +157,7 @@ public:
 	
 	typedef SignalTraits<void (Client&)> SignalConnected;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
-	typedef SignalTraits<void (Client&, const string&)> SignalBadLine;
+	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalSend;
 	typedef SignalTraits<void (Client&, int)> SignalState;
 	typedef SignalTraits<void (Client&)> SignalDisconnected;
@@ -177,10 +177,10 @@ private:
 	 */
 	StringList supports;
 
-	deque<pair<Client*, time_t> > logins;
+	std::deque<std::pair<Client*, time_t> > logins;
 
 	ClientMap clients;
-	typedef std::tr1::unordered_map<string, uint32_t> NickMap;
+	typedef std::tr1::unordered_map<std::string, uint32_t> NickMap;
 	NickMap nicks;
 	typedef std::tr1::unordered_map<CID, uint32_t, CID::Hash>  CIDMap;
 	CIDMap cids;
@@ -188,14 +188,14 @@ private:
 	SIDSet sids;
 
 	// Temporary string to use whenever a temporary string is needed (to avoid (de)allocating memory all the time...)
-	string strtmp;
+	std::string strtmp;
 
-	static const string className;
+	static const std::string className;
 
 	// Strings used in various places along the pipeline...rebuilt in updateCache()...
 	struct Strings {
-		string sup;
-		string inf;
+		std::string sup;
+		std::string inf;
 	} strings;
 
 	friend class Singleton<ClientManager>;
@@ -216,7 +216,7 @@ private:
 
 	void onConnected(Client&) throw();
 	void onReceive(Client&, AdcCommand&) throw();
-	void onBadLine(Client&, const string&) throw();
+	void onBadLine(Client&, const std::string&) throw();
 	void onFailed(Client&) throw();
 	
 	void badState(Client& c, const AdcCommand& cmd) throw();

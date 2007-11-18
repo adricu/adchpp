@@ -27,10 +27,10 @@ class Engine {
 public:
 	virtual ~Engine() { }
 	
-	virtual Script* loadScript(const string& path, const string& filename, const ParameterMap& parameters) = 0;
+	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters) = 0;
 	virtual void unloadScript(Script* script) = 0;
 
-	virtual void getStats(string& str) const = 0;
+	virtual void getStats(std::string& str) const = 0;
 private:
 };
 

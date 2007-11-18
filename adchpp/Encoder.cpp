@@ -22,7 +22,9 @@
 #include "common.h"
 
 namespace adchpp {
-	
+
+using namespace std;
+
 const int8_t Encoder::base32Table[256] = {
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,

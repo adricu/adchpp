@@ -22,7 +22,12 @@
 #include "LuaScript.h"
 
 #include <adchpp/Util.h>
+
+extern "C" {
 #include <lua.h>
+}
+
+using namespace std;
 
 LuaEngine::LuaEngine() {
 	

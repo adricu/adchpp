@@ -37,6 +37,9 @@
 #endif
 
 namespace adchpp {
+
+using namespace std;
+
 static uint32_t WRITE_TIMEOUT = 100;
 
 #ifdef _WIN32

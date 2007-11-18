@@ -21,9 +21,11 @@
 #define FULLVERSIONSTRING APPNAME " v" VERSIONSTRING "-" BUILDSTRING
 
 namespace adchpp {
-	
-	string appName = APPNAME;
-	string versionString = FULLVERSIONSTRING;
-	float versionFloat = VERSIONFLOAT;
+
+using namespace std;
+
+string appName = APPNAME;
+string versionString = FULLVERSIONSTRING;
+float versionFloat = VERSIONFLOAT;
 	
 }

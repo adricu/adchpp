@@ -35,8 +35,8 @@ public:
 	 * @param area Name of the module that generated the error.
 	 * @param msg Message to log.
 	 */
-	void log(const string& area, const string& msg) throw() {
-		string tmp(area);
+	void log(const std::string& area, const std::string& msg) throw() {
+		std::string tmp(area);
 		tmp += ": ";
 		tmp += msg;
 		dolog(tmp);
@@ -46,7 +46,7 @@ public:
 	 * Same as log, but prepends the current date and time.
 	 * @see log
 	 */	 
-	ADCHPP_DLL void logDateTime(const string& area, const string& msg) throw();
+	ADCHPP_DLL void logDateTime(const std::string& area, const std::string& msg) throw();
 private:
 	friend class Singleton<LogManager>;
 	ADCHPP_DLL static LogManager* instance;
@@ -55,7 +55,7 @@ private:
 	LogManager() throw() { }
 	virtual ~LogManager() throw() { }
 	
-	ADCHPP_DLL void dolog(const string& msg) throw();
+	ADCHPP_DLL void dolog(const std::string& msg) throw();
 };
 
 #define LOG(area, msg) LogManager::getInstance()->log(area, msg)
