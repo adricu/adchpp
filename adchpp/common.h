@@ -100,16 +100,21 @@ typedef std::vector<uint8_t> ByteVector;
 typedef ByteVector::iterator ByteIter;
 
 /** 
- * Initialize configuration, must be called before startup
- */ADCHPP_DLL void initConfig(const string& path);
+ * Initialize configuration.
+ */ADCHPP_DLL void initialize(const string& path);
 
 /** 
- * Second startup phase, this can take quite some time as plugins and 
- * dynamic data are loaded.
- * @param f Unless NULL, this function is called after each step in the initialization
+ * Load plugins and start listening for incoming connections
  */ADCHPP_DLL void startup(void (*f)());
 
-/** Shuts down the adchpp hub library (doh!). */ADCHPP_DLL void shutdown(void (*f)());
+/** 
+ * Stop listening for incoming connections
+ */ADCHPP_DLL void shutdown(void (*f)());
+
+/**
+ * Release any resources held by adchpp. Before using any library routines again, you must call initalialize.
+ */
+ADCHPP_DLL void cleanup();
 
 }
 

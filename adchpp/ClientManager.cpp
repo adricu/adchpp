@@ -118,6 +118,7 @@ void ClientManager::updateCache() throw() {
 		.addParam("DE", SETTING(DESCRIPTION))
 		.addParam("VE", versionString)
 		.addParam("CT5")
+		.addParam("HU1")	// ADC <=0.13
 		.toString();
 }
 
@@ -203,14 +204,14 @@ void ClientManager::onBadLine(Client& c, const string& aLine) throw() {
 	signalBadLine_(c, aLine);
 }
 
-void ClientManager::badState(Client& c) throw() {
-	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command"));
+void ClientManager::badState(Client& c, const AdcCommand& cmd) throw() {
+	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command").addParam("FC", cmd.toString().substr(0, 4)));
 	c.disconnect(Util::REASON_BAD_STATE);
 }	
 
-bool ClientManager::handleDefault(Client& c, AdcCommand&) throw() {
+bool ClientManager::handleDefault(Client& c, AdcCommand& cmd) throw() {
 	if(c.getState() != Client::STATE_NORMAL) {
-		badState(c);
+		badState(c, cmd);
 		return false;
 	}			
 	return true; 
@@ -224,7 +225,7 @@ bool ClientManager::handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw() 
 	if(c.getState() == Client::STATE_PROTOCOL) {
 		enterIdentify(c, true);
 	} else if(c.getState() != Client::STATE_NORMAL) {
-		badState(c);
+		badState(c, cmd);
 		return false;
 	}
 	return true;
@@ -232,10 +233,25 @@ bool ClientManager::handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw() 
 
 bool ClientManager::verifySUP(Client& c, AdcCommand& cmd) throw() {
 	c.updateSupports(cmd);
-	if(!c.supports("BASE") && !c.supports("BAS0")) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "This hub requires BASE support"));
-		c.disconnect(Util::REASON_NO_BASE_SUPPORT);
+	if(!c.supports("BASE")) {
+		if(COMPATIBILITY && c.supports("BAS0")) {
+			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Your client only supports an experimental version of ADC, please upgrade as soon as possible as you will not be able to connect in the future"));
+		} else {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "This hub requires BASE support"));
+			c.disconnect(Util::REASON_NO_BASE_SUPPORT);
+		}
 	}
+	
+	if(c.supports("BASE") && !c.supports("TIGR")) {
+		if(COMPATIBILITY) {
+			// ADC <= 0.13
+			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Your client claims to support BASE but not TIGR, please upgrade as soon as possible"));
+		} else {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "This hub requires TIGR support"));
+			c.disconnect(Util::REASON_NO_TIGR_SUPPORT);
+		}
+	}
+	
 	return true;
 }
 
@@ -247,9 +263,6 @@ bool ClientManager::verifyINF(Client& c, AdcCommand& cmd) throw() {
 		return false;
 
 	if(!verifyNick(c, cmd))
-		return false;
-
-	if(!verifyUsers(c))
 		return false;
 
 	c.updateFields(cmd);
@@ -264,6 +277,9 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const vect
 	Encoder::fromBase32(suppliedHash.c_str(), tmp, TigerHash::HASH_SIZE);
 	if(memcmp(tiger.finalize(), tmp, TigerHash::HASH_SIZE) == 0)
 		return true;
+	
+	if(!COMPATIBILITY)
+		return false;
 	
 	TigerHash tiger2;
 	// Support dc++ 0.69 for a while
@@ -280,7 +296,7 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const vect
 
 bool ClientManager::handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw() {
 	if(c.getState() != Client::STATE_IDENTIFY && c.getState() != Client::STATE_NORMAL) {
-		badState(c);
+		badState(c, cmd);
 		return false;
 	}
 			
@@ -366,7 +382,7 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 	}
 	
 	if(cmd.getParam("PD", 0, strtmp)) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "PD but no ID"));
+		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID required when sending PID"));
 		c.disconnect(Util::REASON_PID_WITHOUT_CID);
 		return false;
 	}
@@ -374,7 +390,6 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 }
 
 bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
-
 	if(cmd.getParam("NI", 0, strtmp)) {
 		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
 		for(string::size_type i = 0; i < strtmp.length(); ++i) {
@@ -404,24 +419,6 @@ void ClientManager::setState(Client& c, Client::State newState) throw() {
 	Client::State oldState = c.getState();
 	c.setState(newState);
 	signalState_(c, oldState);
-}
-
-bool ClientManager::verifyUsers(Client& c) throw() {
-	if(c.isSet(Client::FLAG_OK_COUNT))
-		return true;
-	dcdebug("%s verifying user count\n", AdcCommand::fromSID(c.getSID()).c_str());
-
-	if(SETTING(MAX_USERS) > 0 && clients.size() >= (size_t)SETTING(MAX_USERS)) {
-		if(BOOLSETTING(REDIRECT_FULL)) {
-			c.send(AdcCommand(AdcCommand::CMD_QUI).addParam("RD", SETTING(REDIRECT_SERVER)).addParam("MS", STRING(HUB_FULL)));
-		} else {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_HUB_FULL, STRING(HUB_FULL)));
-		}
-		c.disconnect(Util::REASON_HUB_FULL);
-		return false;
-	}
-	c.setFlag(Client::FLAG_OK_COUNT);
-	return true;
 }
 
 void ClientManager::enterIdentify(Client& c, bool sendData) throw() {

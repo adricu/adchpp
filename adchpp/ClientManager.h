@@ -136,10 +136,10 @@ public:
 	 */
 	ADCHPP_DLL bool verifyIp(Client& c, AdcCommand& cmd) throw();
 
+	/**
+	 * Verify that CID is correct and corresponds to PID
+	 */
 	ADCHPP_DLL bool verifyCID(Client& c, AdcCommand& cmd) throw();
-	
-	/** Verify the number of connected clients */
-	ADCHPP_DLL bool verifyUsers(Client& c) throw();
 	
 	/** Update the state of c (this fires signalState as well) */
 	ADCHPP_DLL void setState(Client& c, Client::State newState) throw();
@@ -219,7 +219,7 @@ private:
 	void onBadLine(Client&, const string&) throw();
 	void onFailed(Client&) throw();
 	
-	void badState(Client& c) throw();
+	void badState(Client& c, const AdcCommand& cmd) throw();
 	
 	SignalConnected::Signal signalConnected_;
 	SignalReceive::Signal signalReceive_;

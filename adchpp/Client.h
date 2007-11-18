@@ -31,7 +31,7 @@ namespace adchpp {
 /**
  * The client represents one connection to a user.
  */
-class Client : public Flags, public FastAlloc<Client>, public boost::noncopyable {
+class Client : public FastAlloc<Client>, public boost::noncopyable {
 public:
 	enum State {
 		/** Initial protocol negotiation (wait for SUP) */
@@ -48,17 +48,18 @@ public:
 
 	enum {
 		FLAG_BOT = 0x01,
-		FLAG_OP = 0x02,				
-		FLAG_PASSWORD = 0x04,
-		FLAG_HIDDEN = 0x08,
+		FLAG_REGISTERED = 0x02,
+		FLAG_OP = 0x04,
+		FLAG_OWNER = 0x08,
 		FLAG_HUB = 0x10,
+		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_OWNER | FLAG_HUB,
+		FLAG_PASSWORD = 0x100,
+		FLAG_HIDDEN = 0x101,
 		/** Extended away, no need to send msg */
-		FLAG_EXT_AWAY = 0x20,
+		FLAG_EXT_AWAY = 0x102,
 		/** Plugins can use these flags to disable various checks */
-		/** Bypass max users count */
-		FLAG_OK_COUNT = 0x80,
 		/** Bypass ip check */
-		FLAG_OK_IP = 0x100
+		FLAG_OK_IP = 0x104
 	};
 
 	static Client* create(const ManagedSocketPtr& ms_) throw();
@@ -112,6 +113,11 @@ public:
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 	
+	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
+	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
+	void setFlag(size_t aFlag);
+	void unsetFlag(size_t aFlag);
+	
 	/**
 	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
 	 * per-client data, and retrieve it later on. Each plugin is only allowed
@@ -153,6 +159,8 @@ private:
 
 	InfMap info;
 	InfMap changed;
+	
+	Flags flags;
 
 	CID cid;
 	uint32_t sid;

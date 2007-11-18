@@ -81,7 +81,8 @@ public:
 
 namespace adchpp {
 
-void initConfig(const std::string& configPath);
+void initialize(const std::string& configPath);
+void cleanup();
 
 template<typename F>
 struct Signal {
@@ -138,6 +139,7 @@ public:
 		REASON_NICK_INVALID,
 		REASON_NICK_TAKEN,
 		REASON_NO_BASE_SUPPORT,
+		REASON_NO_TIGR_SUPPORT,
 		REASON_PID_MISSING,
 		REASON_PID_CID_LENGTH,
 		REASON_PID_CID_MISMATCH,
@@ -373,16 +375,21 @@ public:
 		STATE_NORMAL,
 		STATE_DATA
 	};
-
+	
 	enum {
 		FLAG_BOT = 0x01,
-		FLAG_OP = 0x02,				
-		FLAG_PASSWORD = 0x04,
-		FLAG_HIDDEN = 0x08,
+		FLAG_REGISTERED = 0x02,
+		FLAG_OP = 0x04,
+		FLAG_OWNER = 0x08,
 		FLAG_HUB = 0x10,
-		FLAG_EXT_AWAY = 0x20,
-		FLAG_OK_COUNT = 0x80,
-		FLAG_OK_IP = 0x100
+		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_OWNER | FLAG_HUB,
+		FLAG_PASSWORD = 0x100,
+		FLAG_HIDDEN = 0x101,
+		/** Extended away, no need to send msg */
+		FLAG_EXT_AWAY = 0x102,
+		/** Plugins can use these flags to disable various checks */
+		/** Bypass ip check */
+		FLAG_OK_IP = 0x104
 	};
 
 	//static Client* create(uint32_t sid) throw();
@@ -534,7 +541,6 @@ public:
 	bool verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt, const string& suppliedHash);
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
-	bool verifyUsers(Client& c) throw();
 
 	void setState(Client& c, Client::State newState) throw();
 	
@@ -609,12 +615,12 @@ public:
 
 	enum StrSetting { STR_FIRST,
 		HUB_NAME = STR_FIRST, SERVER_IP, LOG_FILE, DESCRIPTION,
-		LANGUAGE_FILE, REDIRECT_SERVER,
+		LANGUAGE_FILE,
 		STR_LAST };
 
 	enum IntSetting { INT_FIRST = STR_LAST + 1,
-		SERVER_PORT = INT_FIRST, LOG, MAX_USERS, KEEP_SLOW_USERS, 
-		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE, REDIRECT_FULL,
+		SERVER_PORT = INT_FIRST, LOG, KEEP_SLOW_USERS, 
+		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE, 
 		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD, 
 		LOGIN_TIMEOUT,
 		INT_LAST };

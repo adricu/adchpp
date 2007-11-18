@@ -89,7 +89,7 @@ void* Client::getPSD(int id) throw() {
 	return (i != psd.end()) ? i->second : 0;
 }
 
-void Client::onData(const vector<uint8_t>& data) throw() {
+void Client::onData(const ByteVector& data) throw() {
 	dcdebug("In (%d): %.*s\n", data.size(), data.size(), &data[0]);
 
 	size_t done = 0;
@@ -164,6 +164,7 @@ bool Client::getChangedFields(AdcCommand& cmd) const throw() {
 		cmd.addParam(string((char*)&i->first, 2));
 	return !changed.empty();
 }
+
 bool Client::getAllFields(AdcCommand& cmd) const throw() {
 	for(InfMap::const_iterator i = info.begin(); i != info.end(); ++i) 
 		cmd.addParam(string((char*)&i->first, 2), i->second);
@@ -184,7 +185,7 @@ void Client::updateFields(const AdcCommand& cmd) throw() {
 	for(StringIterC j = cmd.getParameters().begin(); j != cmd.getParameters().end(); ++j) {
 		if(j->size() < 2)
 			continue;
-		setField(j->substr(0, 2).c_str(), j->substr(2));
+		setField(j->c_str(), j->substr(2));
 	}
 }
 
@@ -249,6 +250,20 @@ void Client::disconnect(Util::Reason reason) throw() {
 void Client::onFailed() throw() {
 	ClientManager::getInstance()->onFailed(*this);
 	delete this;
+}
+
+void Client::setFlag(size_t flag) {
+	flags.setFlag(flag);
+	if(flag & MASK_CLIENT_TYPE) {
+		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
+	}
+}
+
+void Client::unsetFlag(size_t flag) {
+	flags.setFlag(flag);
+	if(flag & MASK_CLIENT_TYPE) {
+		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
+	}
 }
 
 }

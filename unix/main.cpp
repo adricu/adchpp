@@ -26,6 +26,7 @@
 
 #include <signal.h>
 
+using namespace std;
 using namespace adchpp;
 
 static const string modName = "adchpp";
@@ -69,6 +70,7 @@ static void uninit() {
 	if(!asdaemon)
 		printf("Shutting down.");
 	shutdown(&f2);
+	cleanup();
 	if(!asdaemon)
 		printf(".\n");
 
@@ -113,13 +115,13 @@ static void daemonize() {
 #include <sys/wait.h>
 
 static void runDaemon(const string& configPath) {
-	initConfig(configPath);
+	initialize(configPath);
 	daemonize();
 	init();
 	try {
-		startup(&f2);
-	} catch(const Exception& e) {
-		LOGDT(modName, "Failed to load in stage 2");
+		adchpp::startup(&f2);
+	} catch(const adchpp::Exception& e) {
+		LOGDT(modName, "Failed to start: " + e.getError());
 		uninit();
 		return;
 	}
@@ -138,7 +140,7 @@ static void runDaemon(const string& configPath) {
 static void runConsole(const string& configPath) {
 	printf("Starting");
 	init();
-	initConfig(configPath);
+	initialize(configPath);
 	LOGDT(modName, versionString + " starting from console");
 	printf(".");
 	try {

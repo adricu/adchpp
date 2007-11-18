@@ -30,7 +30,14 @@ namespace adchpp {
 	
 const char compileTime[] = __DATE__ " " __TIME__;
 
-void initConfig(const string& configPath) {
+static bool initialized = false;
+static bool running = false;
+
+void initialize(const string& configPath) {
+	if(initialized) {
+		throw Exception("Already initialized");
+	}
+	
 #ifdef _WIN32
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -47,9 +54,13 @@ void initConfig(const string& configPath) {
 	PluginManager::newInstance();
 
 	SettingsManager::getInstance()->load();
+	initialized = true;
 }
 
 void startup(void (*f)()) {
+	if(!initialized) {
+		throw Exception("adchpp not initialized");
+	}
 /*	if(!SETTING(LANGUAGE_FILE).empty()) {
 		if(File::isAbsolutePath(SETTING(LANGUAGE_FILE))) {
 			ResourceManager::getInstance()->loadLanguage(SETTING(LANGUAGE_FILE));
@@ -62,12 +73,21 @@ void startup(void (*f)()) {
 
 	if(f) f();
 	ClientManager::getInstance()->startup();
+	if(f) f();
 	SocketManager::getInstance()->startup();
 	if(f) f();
 	PluginManager::getInstance()->load();
+	if(f) f();
+	
+	running = true;
 }
 
 void shutdown(void (*f)()) {
+	if(!running) {
+		return;
+	}
+	
+	if(f) f();
 	PluginManager::getInstance()->shutdown();
 	if(f) f();
 	ClientManager::getInstance()->shutdown();
@@ -75,6 +95,17 @@ void shutdown(void (*f)()) {
 	SocketManager::getInstance()->shutdown();
 	if(f) f();
 
+	running = false;
+}
+
+void cleanup() {
+	if(!initialized) {
+		return;
+	}
+	if(running) {
+		shutdown(0);
+	}
+	
 	PluginManager::deleteInstance();
 	ClientManager::deleteInstance();
 	SocketManager::deleteInstance();
@@ -86,6 +117,8 @@ void shutdown(void (*f)()) {
 #ifdef _WIN32
 	WSACleanup();
 #endif
+
+	initialized = false;
 }
 
 //#ifdef _DEBUG

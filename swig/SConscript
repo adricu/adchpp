@@ -59,17 +59,9 @@ def buildRbModule():
 	targets.append(rb)
 
 def buildPyModule():
-	env = dev.env.Copy()
-	
+	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-classic'])
-	cxxfile = build_path + 'python_wrap.cxx'
-	f = env.CXXFile(target=cxxfile, source='python.i')
-	pyfile = build_path + 'pyadchpp.py'
-	env.SideEffect(pyfile, f[0])
-	targetfile = dev.get_target(source_path, 'pyadchpp.py')
-	env.Command(targetfile, pyfile, Copy('$TARGET', '$SOURCE'))
-	env.Depends(targetfile, pyfile)
-	
+
 	import distutils.sysconfig
 	
 	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
@@ -85,17 +77,23 @@ def buildPyModule():
 		env.Append(LIBS=["python"+"".join(sys.version[0:3].split(".")), 'adchpp'])
 	else:
 		env.Append(LIBS=['python2.4', 'adchpp'])
-		
-	pyd = env.SharedLibrary(dev.get_target(source_path, '_pyadchpp'), [cxxfile],
-						SHLIBPREFIX='')
+	
+	wrapper = build_path + 'python_wrap.cc'
+	pyfile = build_path + 'pyadchpp.py'
+	pytarget = dev.get_target(source_path, 'pyadchpp.py')
+	env.SideEffect(pyfile, wrapper)
+	env.Command(pytarget, pyfile, Copy('$TARGET', '$SOURCE'))
+	env.Depends(pytarget, pyfile)
+	
+	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
+	env.Depends(pyd, pytarget)
+
 	targets.append(pyd)
 
 def buildLuaModule():
-	env = dev.env.Copy()
+	env, target, sources = dev.prepare_build(source_path, 'luadchpp', 'lua.i')
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
-	cxxfile = build_path + 'lua_wrap.cxx'
-	f = env.CXXFile(build_path + 'lua_wrap.cxx', source='lua.i')
 	
 	env.Append(LIBS=['adchpp', 'alua'])
 	# We assume the lua from the script plugin will be used...
@@ -107,8 +105,7 @@ def buildLuaModule():
 	else:
 		env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
 
-	luadchpp = env.SharedLibrary(dev.get_target(source_path, 'luadchpp'), [cxxfile],
-						SHLIBPREFIX='')
+	luadchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(luadchpp)
 
 # buildRbModule() - needs threading sorted out

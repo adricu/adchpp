@@ -109,11 +109,12 @@ inline int compare(const T1& v1, const T1& v2) { return (v1 < v2) ? -1 : ((v1 ==
 
 class Flags {
 	public:
-		typedef int MaskType;
+		typedef size_t MaskType;
 
 		Flags() : flags(0) { }
 		Flags(const Flags& rhs) : flags(rhs.flags) { }
 		Flags(MaskType f) : flags(f) { }
+		MaskType getFlags() const { return flags; }
 		bool isSet(MaskType aFlag) const { return (flags & aFlag) == aFlag; }
 		bool isAnySet(MaskType aFlag) const { return (flags & aFlag) != 0; }
 		void setFlag(MaskType aFlag) { flags |= aFlag; }
@@ -166,6 +167,7 @@ public:
 		REASON_NICK_INVALID,
 		REASON_NICK_TAKEN,
 		REASON_NO_BASE_SUPPORT,
+		REASON_NO_TIGR_SUPPORT,
 		REASON_PID_MISSING,
 		REASON_PID_CID_LENGTH,
 		REASON_PID_CID_MISMATCH,
