@@ -21,6 +21,7 @@
 
 #include "Util.h"
 #include "Signal.h"
+#include "Singleton.h"
 
 namespace adchpp {
 
@@ -45,10 +46,7 @@ public:
 		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE, 
 		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD, 
 		LOGIN_TIMEOUT,
-		INT_LAST };
-
-	enum Int64Setting { INT64_FIRST = INT_LAST + 1,
-		INT64_LAST = INT64_FIRST, SETTINGS_LAST = INT64_LAST };
+		INT_LAST, SETTINGS_LAST = INT_LAST };
 
 	/**
 	 * Get the type of setting based on its name. By using the type info you can
@@ -72,9 +70,6 @@ public:
 	int get(IntSetting key) const {
 		return intSettings[key - INT_FIRST];
 	}
-	int64_t get(Int64Setting key) const {
-		return int64Settings[key - INT64_FIRST];
-	}
 
 	bool getBool(IntSetting key) const {
 		return (get(key) > 0);
@@ -90,17 +85,6 @@ public:
 
 	template<typename T> void set(IntSetting key, const T& value) {
 		intSettings[key - INT_FIRST] = Util::toInt(value);
-	}
-
-	void set(Int64Setting key, int64_t value) {
-		int64Settings[key - INT64_FIRST] = value;
-	}
-	void set(Int64Setting key, int value) {
-		int64Settings[key - INT64_FIRST] = value;
-	}
-	
-	template<typename T> void set(Int64Setting key, const T& value) {
-		int64Settings[key - INT64_FIRST] = Util::toInt64(value);
 	}
 
 	void set(IntSetting key, bool value) { set(key, (int)value); }

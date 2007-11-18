@@ -373,7 +373,7 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 			if(j != clients.end()) {
 				j->second->send("\n");
 			}
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, STRING(CID_TAKEN)));
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken, please try again later"));
 			c.disconnect(Util::REASON_CID_TAKEN);
 			return false;
 		}
@@ -396,7 +396,7 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
 		for(string::size_type i = 0; i < strtmp.length(); ++i) {
 			if((uint8_t)strtmp[i] < 33) {
-				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, STRING(NICK_INVALID)));
+				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, "Invalid character in nick"));
 				c.disconnect(Util::REASON_NICK_INVALID);
 				return false;
 			}
@@ -406,7 +406,7 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 			nicks.erase(oldNick);
 		
 		if(nicks.find(strtmp) != nicks.end()) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_TAKEN, STRING(NICK_TAKEN)));
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_TAKEN, "Nick taken, please pick another one"));
 			c.disconnect(Util::REASON_NICK_TAKEN);
 			return false;
 		}

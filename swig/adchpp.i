@@ -624,7 +624,6 @@ public:
 
 	enum StrSetting { STR_FIRST,
 		HUB_NAME = STR_FIRST, SERVER_IP, LOG_FILE, DESCRIPTION,
-		LANGUAGE_FILE,
 		STR_LAST };
 
 	enum IntSetting { INT_FIRST = STR_LAST + 1,
@@ -633,9 +632,6 @@ public:
 		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD, 
 		LOGIN_TIMEOUT,
 		INT_LAST };
-
-	enum Int64Setting { INT64_FIRST = INT_LAST + 1,
-		INT64_LAST = INT64_FIRST, SETTINGS_LAST = INT64_LAST };
 
 	//bool getType(const char* name, int& n, int& type);
 	const std::string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
@@ -647,17 +643,10 @@ public:
 	int getInt(IntSetting key) {
 		return self->get(key);
 	}
-	int64_t getInt64(Int64Setting key) {
-		return self->get(key);
-	}
-
 	void setString(StrSetting key, std::string const& value) {
 		self->set(key, value);
 	}
 	void setInt(IntSetting key, int value) {
-		self->set(key, value);
-	}
-	void setInt64(Int64Setting key, int64_t value) {
 		self->set(key, value);
 	}
 	void setBool(IntSetting key, bool value) {

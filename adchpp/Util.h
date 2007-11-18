@@ -19,7 +19,6 @@
 #ifndef ADCHPP_UTIL_H
 #define ADCHPP_UTIL_H
 
-#include "ResourceManager.h"
 #include "Pool.h"
 #include "Mutex.h"
 

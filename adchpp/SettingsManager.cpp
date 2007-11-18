@@ -36,7 +36,6 @@ const string SettingsManager::settingTags[] =
 {
 	// Strings
 	"HubName", "ServerIp", "LogFile", "Description", 
-	"LanguageFile",
 	"SENTRY", 
 	// Ints
 	"ServerPort", "Log", "KeepSlowUsers", 
@@ -57,7 +56,6 @@ SettingsManager::SettingsManager() throw() {
 	// set(SERVER_IP, "");
 	set(LOG_FILE, "logs/adchpp%Y%m.log");
 	set(DESCRIPTION, versionString);
-	// set(LANGUAGE_FILE, "Example.adchpp.xml");
 	set(SERVER_PORT, 2780);
 	set(LOG, 1);
 	set(KEEP_SLOW_USERS, 0);
@@ -73,16 +71,13 @@ SettingsManager::SettingsManager() throw() {
 }
 
 bool SettingsManager::getType(const char* name, int& n, int& type) {
-	for(n = 0; n < INT64_LAST; n++) {
+	for(n = 0; n < SETTINGS_LAST; n++) {
 		if(strcmp(settingTags[n].c_str(), name) == 0) {
 			if(n < STR_LAST) {
 				type = TYPE_STRING;
 				return true;
 			} else if(n < INT_LAST) {
 				type = TYPE_INT;
-				return true;
-			} else {
-				type = TYPE_INT64;
 				return true;
 			}
 		}
@@ -123,16 +118,6 @@ void SettingsManager::load(const string& aFileName)
 
 				if(xml.findChild(attr))
 					set(IntSetting(i), Util::toInt(xml.getChildData()));
-				else
-					LOGDT(className, attr + " missing from settings, using default");
-				xml.resetCurrentChild();
-			}
-			for(i=INT64_FIRST; i<INT64_LAST; i++) {
-				attr = settingTags[i];
-				dcassert(attr.find("SENTRY") == string::npos);
-
-				if(xml.findChild(attr))
-					set(Int64Setting(i), Util::toInt64(xml.getChildData()));
 				else
 					LOGDT(className, attr + " missing from settings, using default");
 				xml.resetCurrentChild();

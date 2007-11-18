@@ -2,17 +2,6 @@
 
 from build_util import Dev
 
-opts = Options('custom.py', ARGUMENTS)
-
-opts.AddOptions(
-	EnumOption('tools', 'Toolset to compile with, default = platform default (msvc under windows)', 'mingw', ['mingw', 'default']),
-	EnumOption('mode', 'Compile mode', 'debug', ['debug', 'release']),
-	BoolOption('nativestl', 'Use native STL instead of STLPort', 'yes'),
-	BoolOption('verbose', 'Show verbose command lines', 'no'),
-	BoolOption('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
-	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-')
-)
-
 gcc_flags = {
 	'common': ['-ggdb', '-Wall', '-Wextra', '-pipe', '-Wno-unused-parameter', '-Wno-missing-field-initializers', '-fexceptions'],
 	'debug': [], 
@@ -66,6 +55,21 @@ gcc_defs = {
 # --- cut ---
 
 import os,sys
+
+plugins = filter(lambda x: os.path.isfile(os.path.join('plugins', x, 'SConscript')), os.listdir('plugins'))
+
+opts = Options('custom.py', ARGUMENTS)
+
+opts.AddOptions(
+	EnumOption('tools', 'Toolset to compile with, default = platform default (msvc under windows)', 'mingw', ['mingw', 'default']),
+	EnumOption('mode', 'Compile mode', 'debug', ['debug', 'release']),
+	ListOption('plugins', 'The plugins to compile', 'all', plugins),
+	BoolOption('nativestl', 'Use native STL instead of STLPort', 'yes'),
+	BoolOption('verbose', 'Show verbose command lines', 'no'),
+	BoolOption('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
+	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-')
+)
+
 
 if sys.platform == 'win32':
 	tooldef = 'mingw'
@@ -174,6 +178,6 @@ dev.build('lua/')
 dev.build('swig/')
 
 # Plugins
-dev.build('plugins/Script/')
-dev.build('plugins/Bloom/')
+for plugin in env['plugins']:
+	dev.build('plugins/' + plugin + '/')
 

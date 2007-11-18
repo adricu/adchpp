@@ -47,7 +47,6 @@ void initialize(const string& configPath) {
 
 	Util::initialize(configPath);
 
-	ResourceManager::newInstance();
 	SettingsManager::newInstance();
 	LogManager::newInstance();
 	TimerManager::newInstance();
@@ -63,14 +62,6 @@ void startup(void (*f)()) {
 	if(!initialized) {
 		throw Exception("adchpp not initialized");
 	}
-/*	if(!SETTING(LANGUAGE_FILE).empty()) {
-		if(File::isAbsolutePath(SETTING(LANGUAGE_FILE))) {
-			ResourceManager::getInstance()->loadLanguage(SETTING(LANGUAGE_FILE));
-		} else {
-			ResourceManager::getInstance()->loadLanguage(Util::getCfgPath() + SETTING(LANGUAGE_FILE));
-		}
-	}
-*/
 	Stats::startTime = GET_TIME();
 
 	if(f) f();
@@ -114,7 +105,6 @@ void cleanup() {
 	LogManager::deleteInstance();
 	SettingsManager::deleteInstance();
 	TimerManager::deleteInstance();
-	ResourceManager::deleteInstance();
 
 #ifdef _WIN32
 	WSACleanup();

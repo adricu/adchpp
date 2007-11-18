@@ -232,15 +232,15 @@ string Util::getLocalIp() {
 string Util::formatBytes(int64_t aBytes) {
 	char buf[64];
 	if(aBytes < 1024) {
-		sprintf(buf, "%d %s", (int)(aBytes&0xffffffff), CSTRING(B));
+		sprintf(buf, "%d B", (int)(aBytes&0xffffffff));
 	} else if(aBytes < 1024*1024) {
-		sprintf(buf, "%.02f %s", (double)aBytes/(1024.0), CSTRING(KB));
+		sprintf(buf, "%.02f KiB", (double)aBytes/(1024.0));
 	} else if(aBytes < 1024*1024*1024) {
-		sprintf(buf, "%.02f %s", (double)aBytes/(1024.0*1024.0), CSTRING(MB));
+		sprintf(buf, "%.02f MiB", (double)aBytes/(1024.0*1024.0));
 	} else if(aBytes < (int64_t)1024*1024*1024*1024) {
-		sprintf(buf, "%.02f %s", (double)aBytes/(1024.0*1024.0*1024.0), CSTRING(GB));
+		sprintf(buf, "%.02f GiB", (double)aBytes/(1024.0*1024.0*1024.0));
 	} else {
-		sprintf(buf, "%.02f %s", (double)aBytes/(1024.0*1024.0*1024.0*1024.0), CSTRING(TB));
+		sprintf(buf, "%.02f TiB", (double)aBytes/(1024.0*1024.0*1024.0*1024.0));
 	}
 	
 	return buf;

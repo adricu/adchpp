@@ -19,11 +19,11 @@
 #ifndef ADCHPP_CLIENTMANAGER_H
 #define ADCHPP_CLIENTMANAGER_H
 
-#include "Util.h"
 #include "CID.h"
 #include "AdcCommand.h"
 #include "Signal.h"
 #include "Client.h"
+#include "Singleton.h"
 
 namespace adchpp {
 	

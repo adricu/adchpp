@@ -19,6 +19,7 @@
 #ifndef ADCHPP_CID_H
 #define ADCHPP_CID_H
 
+#include "Util.h"
 #include "Encoder.h"
 
 namespace adchpp {
@@ -29,10 +30,6 @@ public:
 	enum { BASE32_SIZE = 39 };
 
 	struct Hash {
-#if _MSC_VER >= 1300 
-		static const size_t bucket_size = 4; 
-		static const size_t min_buckets = 8; 
-#endif 
 		size_t operator()(const CID& c) const { return c.toHash(); }
 		bool operator()(const CID& a, const CID& b) const { return a < b; }
 	};

@@ -21,7 +21,6 @@
 
 #include "Exception.h"
 #include "Util.h"
-#include "ResourceManager.h"
 
 #ifndef _WIN32
 #include <sys/stat.h>
@@ -150,7 +149,7 @@ public:
 		if(x == -1)
 			throw FileException(Util::translateError(errno));
 		if(x < (ssize_t)len)
-			throw FileException(STRING(DISK_FULL));
+			throw FileException("Unable to write, disk full?");
 	}
 
 	/**
