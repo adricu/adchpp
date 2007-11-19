@@ -59,6 +59,11 @@ def buildRbModule():
 	targets.append(rb)
 
 def buildPyModule():
+	import sys
+	if dev.is_win32() and sys.platform != 'win32':
+		print "Cross-compiling python module not supported"
+		return
+	
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-classic'])
 

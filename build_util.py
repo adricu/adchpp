@@ -40,6 +40,9 @@ class Dev:
 				self.env['PROGSUFFIX'] = '.exe'
 				self.env['LIBPREFIX'] = 'lib'
 				self.env['LIBSUFFIX'] = '.a'
+				
+	def is_win32(self):
+		return sys.platform == 'win32' or 'mingw' in self.env['TOOLS']
 
 	def get_build_root(self):
 		return '#/build/' + self.mode + '-' + self.tools + '/'

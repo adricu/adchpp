@@ -23,8 +23,8 @@
 #include <adchpp/File.h>
 #include <adchpp/version.h>
 
-
 using namespace adchpp;
+using namespace std;
 
 static const string modName = "adchpp";
 
@@ -169,7 +169,7 @@ static void init(const string& configPath) {
 	SetUnhandledExceptionFilter(&DCUnhandledExceptionFilter);
 #endif
 	
-	initConfig(configPath);
+	initialize(configPath);
 
 	if(asService)
 		LOGDT(modName, versionString + " started as a service");
@@ -189,6 +189,7 @@ static void uninit() {
 	EXTENDEDTRACEUNINITIALIZE();
 #endif
 	printf(".\n");
+	cleanup();
 }
 
 Semaphore exitSem;

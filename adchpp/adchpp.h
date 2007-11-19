@@ -99,7 +99,7 @@ typedef unsigned __int64 uint64_t;
 #  define ADCHPP_DLL __declspec(dllimport)
 # endif // DLLEXPORT
 
-#include <Winsock2.h>
+#include <winsock2.h>
 
 #include <windows.h>
 #include <tchar.h>

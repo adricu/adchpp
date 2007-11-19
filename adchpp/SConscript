@@ -35,8 +35,8 @@ if 'HAVE_DL' in env['CPPDEFINES']:
 if 'HAVE_PTHREAD' in env['CPPDEFINES']:
     env.Append(LIBS = ['pthread'])
 
-if env['PLATFORM'] == 'win32':
-    env.Append(LIBS = ['ws2_32', 'mswsock'])
+if dev.is_win32():
+	env.Append(LIBS = ['ws2_32', 'mswsock'])
 
 if 'gcc' in env['TOOLS']:
 	env['GchSh'] = env.GchSh('adchpp.h')[0]
@@ -54,5 +54,4 @@ dev.env.Append(LIBPATH = os.path.dirname(target))
 if env['PLATFORM'] != 'win32':
     dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
    
-
 Return('ret')

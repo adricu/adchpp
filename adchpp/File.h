@@ -107,7 +107,7 @@ public:
 			throw FileException(Util::translateError(GetLastError()));
 		}
 		if(x < len) {
-			throw FileException(STRING(DISK_FULL));
+			throw FileException("Unable to write, disk full?");
 		}
 	}
 	
@@ -118,8 +118,8 @@ public:
 		}
 	}
 
-	static void deleteFile(const string& aFileName) { ::DeleteFile(aFileName.c_str()); };
-	static void renameFile(const string& source, const string& target) { ::MoveFile(source.c_str(), target.c_str()); };
+	static void deleteFile(const std::string& aFileName) { ::DeleteFile(aFileName.c_str()); };
+	static void renameFile(const std::string& source, const std::string& target) { ::MoveFile(source.c_str(), target.c_str()); };
 
 #else // WIN32
 	

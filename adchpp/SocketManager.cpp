@@ -29,7 +29,7 @@
 #include "Thread.h"
 
 #ifdef _WIN32
-#include <MSWSock.h>
+#include <mswsock.h>
 #endif
 
 #ifdef HAVE_SYS_EPOLL_H
@@ -39,6 +39,7 @@
 namespace adchpp {
 
 using namespace std;
+using namespace std::tr1;
 
 static uint32_t WRITE_TIMEOUT = 100;
 
@@ -537,7 +538,7 @@ private:
 	
 	Pool<MSOverlapped, ClearOverlapped> pool;
 	
-	typedef HASH_SET<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
+	typedef unordered_set<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that have a pending accept */

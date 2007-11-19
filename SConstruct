@@ -60,8 +60,13 @@ plugins = filter(lambda x: os.path.isfile(os.path.join('plugins', x, 'SConscript
 
 opts = Options('custom.py', ARGUMENTS)
 
+if sys.platform == 'win32':
+	tooldef = 'mingw'
+else:
+	tooldef = 'default'
+
 opts.AddOptions(
-	EnumOption('tools', 'Toolset to compile with, default = platform default (msvc under windows)', 'mingw', ['mingw', 'default']),
+	EnumOption('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default']),
 	EnumOption('mode', 'Compile mode', 'debug', ['debug', 'release']),
 	ListOption('plugins', 'The plugins to compile', 'all', plugins),
 	BoolOption('nativestl', 'Use native STL instead of STLPort', 'yes'),
@@ -70,11 +75,6 @@ opts.AddOptions(
 	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-')
 )
 
-
-if sys.platform == 'win32':
-	tooldef = 'mingw'
-else:
-	tooldef = 'default'
 
 tools = ARGUMENTS.get('tools', tooldef)
 
@@ -98,7 +98,7 @@ if('gcc' in env['TOOLS']):
 
 env.Append(CPPPATH = ["#/boost/boost/tr1/tr1/", "#/boost/"])
 
-if env['PLATFORM'] != 'win32':
+if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
 	env.Append(CCFLAGS=['-fvisibility=hidden'])
 
@@ -166,7 +166,7 @@ env = conf.Finish()
 
 dev.adchpp = dev.build('adchpp/')
 
-if env['PLATFORM'] == 'win32' or env['PLATFORM'] == 'cygwin':
+if dev.is_win32():
 	dev.build('windows/')
 else:
 	dev.build('unix/')
