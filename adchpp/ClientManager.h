@@ -146,12 +146,6 @@ public:
 
 	ADCHPP_DLL size_t getQueuedBytes() throw();
 	
-	/**
-	 * The SocketManager calls this when a new connection has been accepted.
-	 * Don't touch.
-	 */
-	void incomingConnection(const ManagedSocketPtr& ms) throw();
-	
 	void startup() throw() { updateCache(); }
 	void shutdown();
 	

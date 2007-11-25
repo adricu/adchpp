@@ -151,4 +151,10 @@ typedef unsigned __int64 uint64_t;
 # endif
 #endif
 
+// TODO Maybe do this in the implementations?
+#ifndef _
+#define _(String) String
+#define bindtextdomain(Package, Directory)
+#endif
+
 #endif // STDINC_H

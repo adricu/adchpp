@@ -20,6 +20,8 @@
 #define ADCHPP_MANAGEDSOCKET_H
 
 #include "common.h"
+
+#include "forward.h"
 #include "Socket.h"
 #include "Mutex.h"
 #include "Signal.h"
@@ -27,9 +29,6 @@
 
 namespace adchpp {
 	
-class SocketManager;
-class Writer;
-
 /**
  * An asynchronous socket managed by SocketManager.
  */
@@ -112,8 +111,6 @@ private:
 
 	ADCHPP_DLL static FastMutex writeMutex;
 };
-
-typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;
 
 }
 

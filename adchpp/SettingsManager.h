@@ -38,7 +38,6 @@ public:
 
 	enum StrSetting { STR_FIRST,
 		HUB_NAME = STR_FIRST, SERVER_IP, LOG_FILE, DESCRIPTION,
-		LANGUAGE_FILE, 
 		STR_LAST };
 
 	enum IntSetting { INT_FIRST = STR_LAST + 1,

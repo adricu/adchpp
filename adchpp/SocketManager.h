@@ -19,15 +19,15 @@
 #ifndef ADCHPP_SOCKETMANAGER_H
 #define ADCHPP_SOCKETMANAGER_H
 
+#include "common.h"
+
+#include "forward.h"
 #include "Thread.h"
 #include "Semaphores.h"
 #include "Mutex.h"
 #include "Singleton.h"
 
 namespace adchpp {
-
-class ManagedSocket;
-class Writer;
 
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
@@ -40,6 +40,9 @@ public:
 	void addWriter(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
 	void addDisconnect(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
 	void addAllWriters() throw();
+	
+	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
+	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 	
 	typedef std::tr1::unordered_map<int, size_t> ErrorMap;
 	ADCHPP_DLL void getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_);
@@ -59,6 +62,7 @@ private:
 	Semaphore processSem;
 
 	std::auto_ptr<Writer> writer;
+	IncomingHandler incomingHandler;
 
 	static const std::string className;
 

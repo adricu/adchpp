@@ -22,7 +22,6 @@
 
 #include "LogManager.h"
 #include "TimerManager.h"
-#include "ClientManager.h"
 #include "SettingsManager.h"
 #include "Semaphores.h"
 #include "ManagedSocket.h"
@@ -338,8 +337,7 @@ private:
 		active.insert(ms);
 		accepting.erase(ms);
 
-		ClientManager::getInstance()->incomingConnection(ms);
-
+		SocketManager::getInstance()->incomingHandler(ms);
 		ms->completeAccept();
 		
 		prepareRead(ms);
@@ -801,7 +799,7 @@ private:
 	
 			active.insert(ms);
 
-			ClientManager::getInstance()->incomingConnection(ms);
+			SocketManager::getInstance()->incomingHandler(ms);
 			
 			ms->completeAccept(); 
 		
@@ -1044,6 +1042,5 @@ void SocketManager::shutdown() {
 void SocketManager::getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_) {
 	writer->getErrors(acceptErrors_, readErrors_, writeErrors_);
 }
-
 
 }

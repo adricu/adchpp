@@ -42,9 +42,6 @@ const string SettingsManager::settingTags[] =
 	"MaxSendSize", "MaxBufferSize", "BufferSize", "MaxCommandSize",
 	"OverflowTimeout", "DisconnectTimeout", "FloodAdd", "FloodThreshold", 
 	"LoginTimeout",
-	"SENTRY",
-	// Int64
-	
 	"SENTRY"
 };
 

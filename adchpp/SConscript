@@ -53,5 +53,5 @@ dev.env.Append(LIBPATH = os.path.dirname(target))
 
 if env['PLATFORM'] != 'win32':
     dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
-   
+	
 Return('ret')

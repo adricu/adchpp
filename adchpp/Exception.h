@@ -50,7 +50,7 @@ public:\
 #define STANDARD_EXCEPTION(name) class ADCHPP_VISIBLE name : public Exception { \
 public:\
 	name() throw() : Exception() { } \
-	name(const string& aError) throw() : Exception(aError) { } \
+	name(const std::string& aError) throw() : Exception(aError) { } \
 	virtual ~name() throw() { } \
 }
 #endif

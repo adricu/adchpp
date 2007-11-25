@@ -72,6 +72,7 @@ opts.AddOptions(
 	BoolOption('nativestl', 'Use native STL instead of STLPort', 'yes'),
 	BoolOption('verbose', 'Show verbose command lines', 'no'),
 	BoolOption('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
+	BoolOption('nls', 'Build with internationalization support', 'yes'),
 	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-')
 )
 
@@ -153,6 +154,63 @@ SWIGScanner = SCons.Scanner.ClassicCPP(
 )
 env.Append(SCANNERS=[SWIGScanner])
 
+#
+# internationalization (taken from the ardour build files (ardour.org)
+#
+
+# po_builder: builder function to copy po files to the parent directory while updating them
+#
+# first source:  .po file
+# second source: .pot file
+#
+
+def po_builder(target,source,env):
+    args = [ 'msgmerge',
+             '--update',
+             str(target[0]),
+             str(source[0])
+             ]
+    print 'Updating ' + str(target[0])
+    return os.spawnvp (os.P_WAIT, 'msgmerge', args)
+
+po_bld = Builder (action = po_builder)
+env.Append(BUILDERS = {'PoBuild' : po_bld})
+
+# mo_builder: builder function for (binary) message catalogs (.mo)
+#
+# first source:  .po file
+#
+def mo_builder(target,source,env):
+    args = [ 'msgfmt',
+             '-c',
+             '-o',
+             target[0].get_path(),
+             source[0].get_path()
+             ]
+    return os.spawnvp (os.P_WAIT, 'msgfmt', args)
+
+mo_bld = Builder (action = mo_builder)
+env.Append(BUILDERS = {'MoBuild' : mo_bld})
+
+# pot_builder: builder function for message templates (.pot)
+#
+# source: list of C/C++ etc. files to extract messages from
+#
+def pot_builder(target,source,env):
+    args = [ 'xgettext',
+             '--keyword=_',
+             '--keyword=N_',
+             '--from-code=UTF-8',
+             '-o', target[0].get_path(),
+             '--foreign-user',
+             '--package-name="adchpp"'
+             '--copyright-holder="Jacek Sieka"' ]
+    args += [ src.get_path() for src in source ]
+    return os.spawnvp (os.P_WAIT, 'xgettext', args)
+
+pot_bld = Builder (action = pot_builder)
+env.Append(BUILDERS = {'PotBuild' : pot_bld})
+
 conf = Configure(env)
 
 if conf.CheckCHeader('sys/epoll.h'):
@@ -163,6 +221,8 @@ if conf.CheckLib('pthread', 'pthread_create'):
 	conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
 
 env = conf.Finish()
+
+dev.intl = dev.build('intl/')
 
 dev.adchpp = dev.build('adchpp/')
 

@@ -68,7 +68,7 @@ static void f2() {
 static void uninit() {
 	LOGDT(modName, versionString + " shut down");
 	if(!asdaemon)
-		printf("Shutting down.");
+		printf(_("Shutting down."));
 	shutdown(&f2);
 	cleanup();
 	if(!asdaemon)
@@ -138,7 +138,7 @@ static void runDaemon(const string& configPath) {
 }
 
 static void runConsole(const string& configPath) {
-	printf("Starting");
+	printf(_("Starting"));
 	init();
 	initialize(configPath);
 	LOGDT(modName, versionString + " starting from console");
@@ -146,13 +146,13 @@ static void runConsole(const string& configPath) {
 	try {
 		startup(&f2);
 	} catch(const Exception& e) {
-		printf("\n\nFATAL: Can't start ADCH++: %s\n", e.getError().c_str());
+		printf(_("\n\nFATAL: Can't start ADCH++: %s\n"), e.getError().c_str());
 		uninit();
 		return;
 	}
 
 
-	printf(".\n%s running, press ctrl-c to exit...\n", versionString.c_str());
+	printf(_(".\n%s running, press ctrl-c to exit...\n"), versionString.c_str());
 	int x = 0;
 	sigset_t st;
 	sigemptyset(&st);
@@ -163,7 +163,7 @@ static void runConsole(const string& configPath) {
 }
 
 static void printUsage() {
-	printf("Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]\n");
+	printf(_("Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]\n"));
 }
 
 int main(int argc, char* argv[]) {
@@ -186,13 +186,13 @@ int main(int argc, char* argv[]) {
 			return 0;
 		} else if(strcmp(argv[i], "-c") == 0) {
 			if((i + 1) == argc) {
-				fprintf(stderr, "-c <directory>\n");
+				fprintf(stderr, _("-c <directory>\n"));
 				return 1;
 			}
 			i++;
 			string cfg = argv[i];
 			if(cfg[0] != '/') {
-				fprintf(stderr, "Config dir must be an absolute path\n");
+				fprintf(stderr, _("Config dir must be an absolute path\n"));
 				return 2;
 			}
 			if(cfg[cfg.length() - 1] != '/') {
@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
 			configPath = cfg;
 		} else if(strcmp(argv[i], "-p") == 0) {
 			if((i+1) == argc) {
-				fprintf(stderr, "-p <pid-file>\n");
+				fprintf(stderr, _("-p <pid-file>\n"));
 				return 1;
 			}
 			i++;
@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
 			printUsage();
 			return 0;
 		} else {
-			fprintf(stderr, "Unknown parameter: %s\n", argv[i]);
+			fprintf(stderr, _("Unknown parameter: %s\n"), argv[i]);
 			return 4;
 		}
 	}
@@ -219,7 +219,7 @@ int main(int argc, char* argv[]) {
 		pidFileName = File::makeAbsolutePath(Util::getCfgPath(), pidFileName);
 		pidFile = fopen(pidFileName.c_str(), "w");
 		if(pidFile == NULL) {
-			fprintf(stderr, "Can't open %s for writing\n", pidFileName.c_str());
+			fprintf(stderr, _("Can't open %s for writing\n"), pidFileName.c_str());
 			return 1;
 		}
 	}
