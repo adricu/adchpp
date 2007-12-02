@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <ADCHubPlusPlus>
 	<Settings>
-<!-- Language file --> 
-		<!-- The strings in the language file is used when messages are sent out to the user by the hub -->
-		<LanguageFile type="string">Example.adchpp.xml</LanguageFile>
 
 <!-- Hub name and message of the day -->
 		<!-- This is the name of the hub as it should be reported to the clients during
@@ -26,17 +23,6 @@
 			 should listen to connections. Please change this to avoid having all hubs
 			 on the same port, which facilates hub blocking. -->
 		<ServerPort type="int">2780</ServerPort>
-
-<!-- Maximum users -->
-		<!-- The maximum number of users that should be allowed into the hub at any time, 
-			 0 = disable -->
-		<MaxUsers type="int">0</MaxUsers>
-		
-<!-- Redirection settings -->
-		<!-- The server to redirect to (if enabled) when full -->
-		<RedirectServer>adc://wza.digitalbrains.com:1416</RedirectServer>
-		<!-- Enable/disable redirect when full -->
-		<RedirectFull>0</RedirectFull>
 
 <!-- Flood protection -->
 		<FloodAdd>1</FloodAdd>

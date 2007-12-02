@@ -5,14 +5,6 @@ require("luadchpp")
 
 adchpp = luadchpp
 
--- Temporary fixes for SWIG 1.3.29
-adchpp.TYPE_BROADCAST = string.char(adchpp.TYPE_BROADCAST)
-adchpp.TYPE_DIRECT = string.char(adchpp.TYPE_DIRECT)
-adchpp.TYPE_ECHO = string.char(adchpp.TYPE_ECHO)
-adchpp.TYPE_FEATURE = string.char(adchpp.TYPE_FEATURE)
-adchpp.TYPE_INFO = string.char(adchpp.TYPE_INFO)
-adchpp.TYPE_HUB = string.char(adchpp.TYPE_HUB)
-
 -- Configuration
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
@@ -59,21 +51,21 @@ local context_direct = "[DE]"
 local context_send = "[BFD]"
 
 local command_contexts = {
-	[adchpp.CMD_STA] = context_hub,
-	[adchpp.CMD_SUP] = context_hub,
-	[adchpp.CMD_SID] = context_hub,
-	[adchpp.CMD_INF] = context_bcast,
-	[adchpp.CMD_MSG] = context_send,
-	[adchpp.CMD_SCH] = context_send,
-	[adchpp.CMD_RES] = context_direct,
-	[adchpp.CMD_CTM] = context_direct,
-	[adchpp.CMD_RCM] = context_direct,
-	[adchpp.CMD_GPA] = context_hub,
-	[adchpp.CMD_PAS] = context_hub,
-	[adchpp.CMD_QUI] = context_hub,
-	[adchpp.CMD_GET] = context_hub,
-	[adchpp.CMD_GFI] = context_hub,
-	[adchpp.CMD_SND] = context_hub,
+	[adchpp.AdcCommand_CMD_STA] = context_hub,
+	[adchpp.AdcCommand_CMD_SUP] = context_hub,
+	[adchpp.AdcCommand_CMD_SID] = context_hub,
+	[adchpp.AdcCommand_CMD_INF] = context_bcast,
+	[adchpp.AdcCommand_CMD_MSG] = context_send,
+	[adchpp.AdcCommand_CMD_SCH] = context_send,
+	[adchpp.AdcCommand_CMD_RES] = context_direct,
+	[adchpp.AdcCommand_CMD_CTM] = context_direct,
+	[adchpp.AdcCommand_CMD_RCM] = context_direct,
+	[adchpp.AdcCommand_CMD_GPA] = context_hub,
+	[adchpp.AdcCommand_CMD_PAS] = context_hub,
+	[adchpp.AdcCommand_CMD_QUI] = context_hub,
+	[adchpp.AdcCommand_CMD_GET] = context_hub,
+	[adchpp.AdcCommand_CMD_GFI] = context_hub,
+	[adchpp.AdcCommand_CMD_SND] = context_hub,
 }
 
 local user_commands = {
@@ -242,7 +234,7 @@ local function register_user(cid, nick, password, level)
 	save_users()
 end
 
-local command_processed = adchpp.DONT_DISPATCH + adchpp.DONT_SEND
+local command_processed = adchpp.ClientManager_DONT_DISPATCH + adchpp.ClientManager_DONT_SEND
 
 local function onINF(c, cmd)
 	

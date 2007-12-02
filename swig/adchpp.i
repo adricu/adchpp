@@ -278,21 +278,15 @@ public:
 		SEV_FATAL = 2
 	};
 
-#ifdef SWIGLUA
-	static const short TYPE_BROADCAST = 'B';
-	static const short TYPE_DIRECT = 'D';
-	static const short TYPE_ECHO = 'E';
-	static const short TYPE_FEATURE = 'F';
-	static const short TYPE_INFO = 'I';
-	static const short TYPE_HUB = 'H';
-#else
 	static const char TYPE_BROADCAST = 'B';
+	static const char TYPE_CLIENT = 'C';
 	static const char TYPE_DIRECT = 'D';
 	static const char TYPE_ECHO = 'E';
 	static const char TYPE_FEATURE = 'F';
 	static const char TYPE_INFO = 'I';
 	static const char TYPE_HUB = 'H';
-#endif
+	static const char TYPE_UDP = 'U';
+
 	// Known commands...
 #define C(n, a, b, c) static const unsigned int CMD_##n = (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); 
 	// Base commands
@@ -315,7 +309,7 @@ public:
 	C(CMD, 'C','M','D');
 #undef C
 
-	enum { HUB_SID = 0x41414141 };
+	enum { HUB_SID = 0xffffffff };
 
 	AdcCommand();
 	explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType);
@@ -389,9 +383,10 @@ public:
 		FLAG_BOT = 0x01,
 		FLAG_REGISTERED = 0x02,
 		FLAG_OP = 0x04,
-		FLAG_OWNER = 0x08,
-		FLAG_HUB = 0x10,
-		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_OWNER | FLAG_HUB,
+		FLAG_SU = 0x08,
+		FLAG_OWNER = 0x10,
+		FLAG_HUB = 0x20,
+		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
 		FLAG_PASSWORD = 0x100,
 		FLAG_HIDDEN = 0x101,
 		/** Extended away, no need to send msg */
@@ -459,6 +454,62 @@ public:
 	void log(const std::string& area, const std::string& msg) throw();
 	void logDateTime(const std::string& area, const std::string& msg) throw();
 };
+
+%template(SignalC) Signal<void (Client&)>;
+%template(SignalTraitsC) SignalTraits<void (Client&)>;
+%template(SignalCA) Signal<void (Client&, AdcCommand&)>;
+%template(SignalTraitsCA) SignalTraits<void (Client&, AdcCommand&)>;
+%template(SignalCAI) Signal<void (Client&, AdcCommand&, int&)>;
+%template(SignalTraitsCAI) SignalTraits<void (Client&, AdcCommand&, int&)>;
+%template(SignalCI) Signal<void (Client&, int)>;
+%template(SignalTraitsCI) SignalTraits<void (Client&, int)>;
+%template(SignalCS) Signal<void (Client&, const std::string&)>;
+%template(SignalTraitsCS) SignalTraits<void (Client&, const std::string&)>;
+%template(SignalS) Signal<void (const SimpleXML&)>;
+%template(SignalTraitsS) SignalTraits<void (const SimpleXML&)>;
+
+%template(ManagedC) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > >;
+%template(ManagedCA) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > >;
+%template(ManagedCAI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
+%template(ManagedCI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
+%template(ManagedCS) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, const std::string&)> > >;
+%template(ManagedS) boost::intrusive_ptr<ManagedConnection<Signal<const SimpleXML&> > >;
+
+%extend Signal<void (Client&)> {
+	SignalTraits<void (Client&)>::ManagedConnection connect(std::tr1::function<void (Client&)> f) {
+		return manage(self, f);
+	}
+}
+
+%extend Signal<void (Client&, AdcCommand&)> {
+	SignalTraits<void (Client&, AdcCommand&)>::ManagedConnection connect(std::tr1::function<void (Client&, AdcCommand&)> f) {
+		return manage(self, f);
+	}
+}
+
+%extend Signal<void (Client&, AdcCommand&, int&)> {
+	SignalTraits<void (Client&, AdcCommand&, int&)>::ManagedConnection connect(std::tr1::function<void (Client&, AdcCommand&, int&)> f) {
+		return manage(self, f);
+	}
+}
+
+%extend Signal<void (Client&, int)> {
+	SignalTraits<void (Client&, int)>::ManagedConnection connect(std::tr1::function<void (Client&, int)> f) {
+		return manage(self, f);
+	}
+}
+
+%extend Signal<void (Client&, const std::string&)> {
+	SignalTraits<void (Client&, const std::string&)>::ManagedConnection connect(std::tr1::function<void (Client&, const std::string&)> f) {
+		return manage(self, f);
+	}
+}
+
+%extend Signal<void (const SimpleXML&)> {
+	SignalTraits<void (const SimpleXML&)>::ManagedConnection connect(std::tr1::function<void (const SimpleXML&)> f) {
+		return manage(self, f);
+	}
+}
 
 class SocketManager {
 	public:
@@ -541,7 +592,7 @@ public:
 	
 	void enterIdentify(Client& c, bool sendData) throw();
 
-	vector<uint8_t> enterVerify(Client& c, bool sendData) throw();
+	ByteVector enterVerify(Client& c, bool sendData) throw();
 
 	bool enterNormal(Client& c, bool sendData, bool sendOwnInf) throw();
 	bool verifySUP(Client& c, AdcCommand& cmd) throw();
@@ -658,40 +709,6 @@ public:
 	typedef SignalTraits<void (const SimpleXML&)> SignalLoad;
 	SignalLoad::Signal& signalLoad();
 };
-
-%template(SignalC) Signal<void (Client&)>;
-%template(SignalCA) Signal<void (Client&, AdcCommand&)>;
-%template(SignalCAI) Signal<void (Client&, AdcCommand&, int&)>;
-%template(SignalS) Signal<void (const SimpleXML&)>;
-
-%template(ManagedC) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > >;
-%template(ManagedCAI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
-%template(ManagedCS) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, const std::string&)> > >;
-%template(ManagedCI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
-
-%extend Signal<void (Client&)> {
-	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > > connect(std::tr1::function<void (Client&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, AdcCommand&)> {
-	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > > connect(std::tr1::function<void (Client&, AdcCommand&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, AdcCommand&, int&)> {
-	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > > connect(std::tr1::function<void (Client&, AdcCommand&, int&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, std::string&)> {
-	boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, std::string&)> > > connect(std::tr1::function<void (Client&, std::string&)> f) {
-		return manage(self, f));
-	}
-}
 
 class TigerHash {
 public:

@@ -581,12 +581,18 @@ struct EPoll {
 	
 	bool get(vector<epoll_event>& events) {
 		events.resize(1024);
-		int n = epoll_wait(poll_fd, &events[0], events.size(), WRITE_TIMEOUT);
-		if(n == -1) {
-			return false;
+		while(true) {
+			int n = epoll_wait(poll_fd, &events[0], events.size(), WRITE_TIMEOUT);
+			if(n == -1) {
+				if(errno != EINTR) {
+					return false;
+				}
+				// Keep looping
+			} else {
+				events.resize(n);
+				return true;
+			}
 		}
-		events.resize(n);
-		return true;
 	}
 	
 	void remove(const ManagedSocketPtr& ms) {

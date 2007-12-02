@@ -104,7 +104,7 @@ def buildLuaModule():
 	# We assume the lua from the script plugin will be used...
 	
 	env.Append(CPPPATH=['#', '#/lua/'])
-
+	
 	if env['PLATFORM'] == 'win32':
 		env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
 	else:

@@ -5,23 +5,23 @@ typedef unsigned int size_t;
 %wrapper %{
 
 static int traceback (lua_State *L) {
-  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
-  if (!lua_istable(L, -1)) {
-  	printf("No debug table\n");
-    lua_pop(L, 1);
-    return 1;
-  }
-  lua_getfield(L, -1, "traceback");
-  if (!lua_isfunction(L, -1)) {
-  	printf("No traceback in debug\n");
-    lua_pop(L, 2);
-    return 1;
-  }
+	lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+	if (!lua_istable(L, -1)) {
+		printf("No debug table\n");
+		lua_pop(L, 1);
+		return 1;
+	}
+	lua_getfield(L, -1, "traceback");
+	if (!lua_isfunction(L, -1)) {
+		printf("No traceback in debug\n");
+		lua_pop(L, 2);
+		return 1;
+	}
 
-  lua_pushvalue(L, 1);  /* pass error message */
-  lua_pushinteger(L, 2);  /* skip this function and traceback */
-  lua_call(L, 2, 1);  /* call debug.traceback */
-  return 1;
+	lua_pushvalue(L, 1); /* pass error message */
+	lua_pushinteger(L, 2); /* skip this function and traceback */
+	lua_call(L, 2, 1); /* call debug.traceback */
+	return 1;
 }
 
 class RegistryItem : private boost::noncopyable {
@@ -92,6 +92,14 @@ public:
 		lua_pop(L, 1);
 	}
 
+	void operator()(const adchpp::SimpleXML& s) {
+		pushFunction();
+
+		SWIG_NewPointerObj(L, &s, SWIGTYPE_p_adchpp__SimpleXML, 0);
+		docall(1, 0);
+	}
+	
+
 private:
 	void pushFunction() { registryItem->push(); }
 
@@ -144,6 +152,18 @@ private:
 }
 
 %typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &, int&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::tr1::function<void (adchpp::Client &, int) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::tr1::function<void (adchpp::Client &, const std::string&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::tr1::function<void (const SimpleXML&) > {
 	$1 = LuaFunction(L);
 }
 

@@ -57,10 +57,12 @@ public:
 		ERROR_BAD_STATE = 44,
 		ERROR_FEATURE_MISSING = 45,
 		ERROR_BAD_IP = 46,
+		ERROR_NO_HUB_HASH = 47,
 		ERROR_TRANSFER_GENERIC = 50,
 		ERROR_FILE_NOT_AVAILABLE = 51,
 		ERROR_FILE_PART_NOT_AVAILABLE = 52,
-		ERROR_SLOTS_FULL = 53
+		ERROR_SLOTS_FULL = 53,
+		ERROR_NO_CLIENT_HASH = 54
 	};
 
 	enum Severity {
@@ -100,7 +102,7 @@ public:
 	C(CMD, 'C','M','D');
 #undef C
 
-	enum { HUB_SID = 0x41414141 };
+	enum { HUB_SID = 0xffffffff };
 	
 	uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c) { return (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); }
 

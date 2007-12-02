@@ -109,7 +109,6 @@ private:
 
 	std::string strSettings[STR_LAST - STR_FIRST];
 	int intSettings[INT_LAST - INT_FIRST];
-	int64_t int64Settings[/*INT64_LAST - INT64_FIRST*/1];
 	
 	SignalLoad::Signal signalLoad_;
 };

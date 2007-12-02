@@ -47,7 +47,6 @@ const string SettingsManager::settingTags[] =
 
 SettingsManager::SettingsManager() throw() {
 	memset(intSettings, 0, sizeof(intSettings));
-	memset(int64Settings, 0, sizeof(int64Settings));
 
 	set(HUB_NAME, appName);
 	// set(SERVER_IP, "");
