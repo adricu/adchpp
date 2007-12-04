@@ -265,21 +265,22 @@ bool ClientManager::verifyINF(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::verifyPassword(Client& c, const string& password, const vector<uint8_t>& salt,
+bool ClientManager::verifyPassword(Client& c, const string& password, const ByteVector& salt,
     const string& suppliedHash) {
 	TigerHash tiger;
 	tiger.update(&password[0], password.size());
 	tiger.update(&salt[0], salt.size());
 	uint8_t tmp[TigerHash::HASH_SIZE];
 	Encoder::fromBase32(suppliedHash.c_str(), tmp, TigerHash::HASH_SIZE);
-	if (memcmp(tiger.finalize(), tmp, TigerHash::HASH_SIZE) == 0)
+	if (memcmp(tiger.finalize(), tmp, TigerHash::HASH_SIZE) == 0) {
 		return true;
+	}
 
 	if (!COMPATIBILITY)
 		return false;
 
 	TigerHash tiger2;
-	// Support dc++ 0.69 for a while
+	// Support dc++ <=0.703 for a while
 	string cid = c.getCID().toBase32();
 	tiger2.update(c.getCID().data(), CID::SIZE);
 	tiger2.update(&password[0], password.size());

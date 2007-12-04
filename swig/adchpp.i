@@ -69,11 +69,14 @@ void shutdown() {
 namespace adchpp {
 	class Client;
 }
+
 %template(TErrorPair) std::pair<int, size_t>;
 %template(TErrorList) std::vector<std::pair<int, size_t> >;
 
 %template(TClientList) std::vector<adchpp::Client*>;
 %template(TStringList) std::vector<std::string>;
+
+%template(TByteVector) std::vector<uint8_t>;
 
 typedef std::vector<std::string> StringList;
 %inline%{
@@ -598,7 +601,7 @@ public:
 	bool verifySUP(Client& c, AdcCommand& cmd) throw();
 	bool verifyINF(Client& c, AdcCommand& cmd) throw();
 	bool verifyNick(Client& c, const AdcCommand& cmd) throw();
-	bool verifyPassword(Client& c, const std::string& password, const vector<uint8_t>& salt, const std::string& suppliedHash);
+	bool verifyPassword(Client& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
 

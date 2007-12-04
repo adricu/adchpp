@@ -158,14 +158,14 @@ local function make_user(cid, nick, password, level)
 end
 
 local function dump(c, code, msg)
-	answer = adchpp.AdcCommand(adchpp.CMD_STA, adchpp.TYPE_INFO, adchpp.HUB_SID)
-	answer:addParam("" .. adchpp.SEV_FATAL .. code):addParam(msg)
+	answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+	answer:addParam("" .. tostring(adchpp.AdcCommand_SEV_FATAL) .. code):addParam(msg)
 	c:send(answer)
 	c:disconnect()
 end
 
 local function reply(c, msg)
-	answer = adchpp.AdcCommand(adchpp.CMD_MSG, adchpp.TYPE_INFO, adchpp.HUB_SID)
+	answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	answer:addParam(msg)
 	c:send(answer)
 end
@@ -248,31 +248,31 @@ local function onINF(c, cmd)
 	end
 
 	if #cmd:getParam("HI", 0) > 0 then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Don't hide")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Don't hide")
 		return command_processed
 	end
 	
 	if #cmd:getParam("OP", 0) > 0 then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "I decide who's an OP")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's an OP")
 		return command_processed
 	end
 	
 	if #cmd:getParam("RG", 0) > 0 then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "I decide who's registered")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's registered")
 		return command_processed
 	end
 	
 	if #cmd:getParam("HU", 0) > 0 then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "I'm the hub, not you")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I'm the hub, not you")
 		return command_processed
 	end
 	
 	if #cmd:getParam("BO", 0) > 0 then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "You're not a bot")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You're not a bot")
 		return command_processed
 	end
 	
-	if c:getState() == adchpp.STATE_NORMAL then
+	if c:getState() == adchpp.Client_STATE_NORMAL then
 		return 0
 	end
 	
@@ -280,7 +280,7 @@ local function onINF(c, cmd)
 	local cid = cmd:getParam("ID", 0)
 	
 	if #nick == 0 or #cid == 0 then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return command_processed
 	end
 	
@@ -304,15 +304,15 @@ local function onINF(c, cmd)
 end
 
 local function onPAS(c, cmd)
-	if c:getState() ~= adchpp.STATE_VERIFY then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
+	if c:getState() ~= adchpp.Client_STATE_VERIFY then
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
 		return command_processed
 	end
 	
 	local salt = salts[c:getSID()]
 	
 	if not salt then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
 		return command_processed
 	end
 	
@@ -322,7 +322,7 @@ local function onPAS(c, cmd)
 	local user = get_user(c:getCID():toBase32(), c:getField("NI"))
 	if not user then
 		print("User sending PAS not found (?)")
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, "Can't find you now")
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Can't find you now")
 		return command_processed
 	end
 	
@@ -332,13 +332,13 @@ local function onPAS(c, cmd)
 	end
 
 	if not cm:verifyPassword(c, password, salt, cmd:getParam(0)) then
-		dump(c, adchpp.ERROR_BAD_PASSWORD, "Invalid password")
+		dump(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
 		return command_processed
 	end
 	
 	local updateOk, message = update_user(user, cid:toBase32(), nick)
 	if not updateOk then
-		dump(c, adchpp.ERROR_PROTOCOL_GENERIC, message)
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, message)
 		return command_processed
 	end
 	
@@ -351,7 +351,7 @@ local function onPAS(c, cmd)
 	
 	if user.level > 1 and c:supports("UCMD") then
 		for k, v in pairs(user_commands) do
-			ucmd = adchpp.AdcCommand(adchpp.CMD_CMD, adchpp.TYPE_INFO, adchpp.HUB_SID)
+			ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 			ucmd:addParam(k)
 			ucmd:addParam("TT", v)
 			ucmd:addParam("CT", "2")
@@ -386,7 +386,7 @@ end
 
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
-
+	print("got message")
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 	
 	if not command then
@@ -402,28 +402,28 @@ local function onMSG(c, cmd)
 	
 	if command == "test" then
 		reply(c, "Test ok")
-		return adchpp.DONT_SEND
+		return adchpp.AdcCommand_DONT_SEND
 	elseif command == "error" then
 		xxxxyyyy()
-		return adchpp.DONT_SEND
+		return adchpp.AdcCommand_DONT_SEND
 	elseif command == "help" then
 		reply(c, "+test, +help, +regme password, +regnick nick password level")
-		return adchpp.DONT_SEND
+		return adchpp.AdcCommand_DONT_SEND
 	elseif command == "regme" then
 		if not parameters:match("%S+") then
 			reply(c, "You need to supply a password without whitespace")
-			return adchpp.DONT_SEND
+			return adchpp.AdcCommand_DONT_SEND
 		end
 		
 		register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 				
 		reply(c, "You're now registered")
-		return adchpp.DONT_SEND
+		return adchpp.AdcCommand_DONT_SEND
 	elseif command == "regnick" then
 		local nick, password, level = parameters:match("^(%S+) (%S+) (%d+)")
 		if not nick or not password or not level then
 			reply(c, "You must supply nick, password and level!")
-			return adchpp.DONT_SEND
+			return adchpp.AdcCommand_DONT_SEND
 		end
 		
 		level = tonumber(level)
@@ -439,17 +439,17 @@ local function onMSG(c, cmd)
 		
 		if not my_user then
 			reply(c, "Only registered users may register others")
-			return adchpp.DONT_SEND
+			return adchpp.AdcCommand_DONT_SEND
 		end
 		
 		if level >= my_user.level then
 			reply(c, "You may only register to a lower level than your own")
-			return adchpp.DONT_SEND
+			return adchpp.AdcCommand_DONT_SEND
 		end
 		
 		if level < 1 then
 			reply(c, "Level too low")
-			return adchpp.DONT_SEND
+			return adchpp.AdcCommand_DONT_SEND
 		end
 		
 		register_user(cid, nick, password, level)
@@ -460,7 +460,7 @@ local function onMSG(c, cmd)
 			reply(other, "You've been registered with password " .. password)
 		end
 
-		return adchpp.DONT_SEND
+		return adchpp.AdcCommand_DONT_SEND
 	elseif command == "stats" then
 		local now = os.time()
 		local scripttime = os.difftime(now, start_time)
@@ -522,7 +522,7 @@ local function onMSG(c, cmd)
 		str = str .. recvCalls .. "\tReceive calls (" .. adchpp.Util_formatBytes(recvBytes/recvCalls) .. "/call)\n"
 		
 		reply(c, str)
-		return adchpp.DONT_SEND
+		return adchpp.AdcCommand_DONT_SEND
 	end
 	
 	return 0
@@ -543,7 +543,6 @@ local function onDSC(c, cmd)
 end
 
 local function onReceive(c, cmd, override)
-	
 	cmdstr = cmd:getCommandString()
 	if stats[cmdstr] then
 		stats[cmdstr] = stats[cmdstr] + 1
@@ -564,7 +563,7 @@ local function onReceive(c, cmd, override)
 		end
 	end
 	
-	if c:getState() == adchpp.STATE_NORMAL then
+	if c:getState() == adchpp.Client_STATE_NORMAL then
 		local allowed_level = command_min_levels[cmd:getCommand()]
 		if allowed_level then
 			user = get_user(c:getCID(), c:getField("NI"))
@@ -575,12 +574,13 @@ local function onReceive(c, cmd, override)
 			end
 		end
 	end		
-		
-	if cmd:getCommand() == adchpp.CMD_INF then
+	
+	print("command is " .. cmd:getCommand() .. " msg is " .. adchpp.AdcCommand_CMD_MSG)
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_INF then
 		return onINF(c, cmd)
-	elseif cmd:getCommand() == adchpp.CMD_PAS then
+	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
 		return onPAS(c, cmd)
-	elseif cmd:getCommand() == adchpp.CMD_MSG then
+	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
 		return onMSG(c, cmd)
 	elseif cmd:getCommandString() == "DSC" then
 		return onDSC(c, cmd)
