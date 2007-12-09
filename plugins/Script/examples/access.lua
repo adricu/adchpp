@@ -290,9 +290,11 @@ local function onINF(c, cmd)
 	end
 
 	if user.level > 1 then
-		cmd:addParam("OP1")
+		cmd:addParam("CT4")
+		cmd:addParam("OP1") -- old name
 	else
-		cmd:addParam("RG1")
+		cmd:addParam("CT2")
+		cmd:addParam("RG1") -- old name
 	end
 
 	if not cm:verifyINF(c, cmd) then
@@ -349,7 +351,7 @@ local function onPAS(c, cmd)
 	reply(c, "Welcome back")
 	cm:enterNormal(c, true, true)
 	
-	if user.level > 1 and c:supports("UCMD") then
+	if user.level > 1 and (c:supports("UCMD") or c:supports("UCM0") then
 		for k, v in pairs(user_commands) do
 			ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 			ucmd:addParam(k)
