@@ -172,7 +172,7 @@ public:
 		*overlapped = MSOverlapped(MSOverlapped::SHUTDOWN);
 		
 		if(!poller.post(overlapped)) {
-			LOGDT(SocketManager::className, "Fatal error while posting shutdown to completion port: " + Util::translateError(::GetLastError()));
+			LOG(SocketManager::className, "Fatal error while posting shutdown to completion port: " + Util::translateError(::GetLastError()));
 		}
 		join();
 	}
@@ -189,7 +189,7 @@ public:
 private:
 	bool init() {
 		if(!poller.init()) {
-			LOGDT(SocketManager::className, "Unable to start poller: " + Util::translateError(socket_errno));
+			LOG(SocketManager::className, "Unable to start poller: " + Util::translateError(socket_errno));
 			return false;
 		}
 
@@ -197,23 +197,23 @@ private:
 			srv.listen(SETTING(SERVER_PORT));
 			srv.setBlocking(false);
 		} catch(const SocketException& e) {
-			LOGDT(SocketManager::className, "Unable to create server socket: " + e.getError());
+			LOG(SocketManager::className, "Unable to create server socket: " + e.getError());
 			return false;
 		} 
 		
 		if(!poller.associate(srv.getSocket())) {
-			LOGDT(SocketManager::className, "Unable to associate server socket with poller: " + Util::translateError(socket_errno));
+			LOG(SocketManager::className, "Unable to associate server socket with poller: " + Util::translateError(socket_errno));
 			return false;
 		}
 
 #ifndef _WIN32
 		if(socketpair(AF_UNIX, SOCK_STREAM, 0, event) == -1) {
-			LOGDT(SocketManager::className, "Unable to create event socketpair: " + Util::translateError(errno));
+			LOG(SocketManager::className, "Unable to create event socketpair: " + Util::translateError(errno));
 			return false;
 		}
 
 		if(!poller.associate(event[1])) {
-			LOGDT(SocketManager::className, "Unable to associate event: " + Util::translateError(errno));
+			LOG(SocketManager::className, "Unable to associate event: " + Util::translateError(errno));
 			return false;
 		}
 #endif
@@ -221,7 +221,7 @@ private:
 	}
 	
 	virtual int run() {
-		LOGDT(SocketManager::className, "Writer starting");
+		LOG(SocketManager::className, "Writer starting");
 		if(!init()) {
 			return 0;
 		}
@@ -242,7 +242,7 @@ private:
 			}
 
 		}
-		LOGDT(SocketManager::className, "Writer shutting down");
+		LOG(SocketManager::className, "Writer shutting down");
 		return 0;
 	}
 
@@ -257,7 +257,7 @@ private:
 			int error = ::GetLastError();
 			if(overlapped == 0) {
 				if(error != WAIT_TIMEOUT) {
-					LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
+					LOG(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
 					return;
 				}
 			} else if(overlapped->type == MSOverlapped::ACCEPT_DONE) {
@@ -310,12 +310,12 @@ private:
 			try {
 				ms->create();
 			} catch (const SocketException& e) {
-				LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
+				LOG(SocketManager::className, "Unable to create socket: " + e.getError());
 				return;
 			}
 				
 			if(!poller.associate(ms->getSocket())) {
-				LOGDT(SocketManager::className, "Unable to associate poller: " + Util::translateError(::GetLastError()));
+				LOG(SocketManager::className, "Unable to associate poller: " + Util::translateError(::GetLastError()));
 				return;
 			}
 
@@ -331,7 +331,7 @@ private:
 				int error = ::WSAGetLastError();
 				if(error != ERROR_IO_PENDING) {
 					if(!stop) {
-						LOGDT(SocketManager::className, "Failed accepting connection: " + Util::translateError(GetLastError()));
+						LOG(SocketManager::className, "Failed accepting connection: " + Util::translateError(GetLastError()));
 					}
 					
 					pool.put(overlapped);
@@ -491,7 +491,7 @@ private:
 	void handleEvents() {
 		vector<epoll_event> events;
 		if(!poller.get(events)) {
-			LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
+			LOG(SocketManager::className, "Poller failed: " + Util::translateError(errno));
 		}
 		for(vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
 			epoll_event& ev = *i;
@@ -518,7 +518,7 @@ private:
 			ms->setIp(ms->sock.accept(srv));
 					
 			if(!poller.associate(ms)) {
-				LOGDT(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
+				LOG(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
 				return;
 			}
 	
@@ -530,7 +530,7 @@ private:
 		
 			read(ms);
 		} catch (const SocketException& e) {
-			LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
+			LOG(SocketManager::className, "Unable to create socket: " + e.getError());
 			return;
 		}
 	}
@@ -610,7 +610,7 @@ private:
 			if(err == EAGAIN || err == EINTR) {
 				return;
 			}
-			LOGDT(SocketManager::className, "Error reading from event[1]: " + Util::translateError(err));
+			LOG(SocketManager::className, "Error reading from event[1]: " + Util::translateError(err));
 			return;
 		}
 
@@ -692,7 +692,7 @@ SocketManager* SocketManager::instance = 0;
 const string SocketManager::className = "SocketManager";
 
 int SocketManager::run() {
-	LOGDT(SocketManager::className, "Starting");
+	LOG(SocketManager::className, "Starting");
 	writer->start();
 	writer->setThreadPriority(Thread::HIGH);
 	
@@ -706,14 +706,14 @@ int SocketManager::run() {
 		}
 		for(ProcessQueue::iterator i = workQueue.begin(); i != workQueue.end(); ++i) {
 			if(!(*i)) {
-				LOGDT(SocketManager::className, "Shutting down");
+				LOG(SocketManager::className, "Shutting down");
 				return 0;
 			}
 			(*i)();
 		}
 		workQueue.clear();
 	}
-	LOGDT(SocketManager::className, "ERROR; should never end up here...");
+	LOG(SocketManager::className, "ERROR; should never end up here...");
 	return 0;
 }
 

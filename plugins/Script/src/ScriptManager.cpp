@@ -39,7 +39,7 @@ ScriptManager* ScriptManager::instance = 0;
 const string ScriptManager::className = "ScriptManager";
 
 ScriptManager::ScriptManager() {
-	LOGDT(className, "Starting");
+	LOG(className, "Starting");
 	ClientManager::SignalReceive::Signal& sig = ClientManager::getInstance()->signalReceive();
 	receiveConn = manage(&sig, std::tr1::bind(&ScriptManager::onReceive, this, _1, _2, _3));
 	
@@ -47,7 +47,7 @@ ScriptManager::ScriptManager() {
 }
 
 ScriptManager::~ScriptManager() {
-	LOGDT(className, "Shutting down");
+	LOG(className, "Shutting down");
 	clearEngines();
 }
 
@@ -74,7 +74,7 @@ void ScriptManager::load() {
 		}
 		xml.stepOut();
 	} catch(const Exception& e) {
-		LOGDT(className, "Failed to load settings: " + e.getError());
+		LOG(className, "Failed to load settings: " + e.getError());
 		return;
 	}
 }

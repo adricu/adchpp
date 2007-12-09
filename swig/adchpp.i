@@ -455,7 +455,6 @@ class LogManager
 {
 public:
 	void log(const std::string& area, const std::string& msg) throw();
-	void logDateTime(const std::string& area, const std::string& msg) throw();
 };
 
 %template(SignalC) Signal<void (Client&)>;

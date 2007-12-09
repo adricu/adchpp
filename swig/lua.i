@@ -179,4 +179,3 @@ private:
 		return std::string();
 	}
 }
-

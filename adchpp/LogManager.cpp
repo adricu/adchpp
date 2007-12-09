@@ -29,8 +29,7 @@ using namespace std;
 
 LogManager* LogManager::instance = 0;
 
-void LogManager::logDateTime(const string& area, const string& msg) throw() 
-{
+void LogManager::log(const string& area, const string& msg) throw() {
 	char buf[64];
 	time_t now = time(NULL);
 	size_t s = strftime(buf, 64, "%Y-%m-%d %H:%M:%S: ", localtime(&now));
@@ -40,7 +39,6 @@ void LogManager::logDateTime(const string& area, const string& msg) throw()
 	tmp += msg;
 	dolog(tmp);
 }
-
 
 void LogManager::dolog(const string& msg) throw() {
 	dcdebug("Logging: %s\n", msg.c_str());

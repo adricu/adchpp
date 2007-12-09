@@ -241,7 +241,6 @@ local function onINF(c, cmd)
 	for field, regex in pairs(inf_fields) do
 		val = cmd:getParam(field, 0)
 		if #val > 0 and hasVal and not val:match(regex) then
-			print("Bad INF " .. field)
 			reply(c, "Field " .. field .. " has an invalid value, removed")
 			cmd:delParam(field, 0)
 		end
@@ -249,6 +248,11 @@ local function onINF(c, cmd)
 
 	if #cmd:getParam("HI", 0) > 0 then
 		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Don't hide")
+		return command_processed
+	end
+	
+	if #cmd:getParam("CT", 0) > 0 then
+		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide what type you are")
 		return command_processed
 	end
 	
@@ -323,7 +327,6 @@ local function onPAS(c, cmd)
 	
 	local user = get_user(c:getCID():toBase32(), c:getField("NI"))
 	if not user then
-		print("User sending PAS not found (?)")
 		dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Can't find you now")
 		return command_processed
 	end
@@ -388,7 +391,6 @@ end
 
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
-	print("got message")
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 	
 	if not command then
@@ -514,7 +516,7 @@ local function onDSC(c, cmd)
 	
 	victim = cm:getClient(adchpp.AdcCommand_toSID(sid))
 	if not victim then
-		print "Victim not found"
+		reply(c, "Victim not found")
 		return command_processed
 	end
 	
@@ -538,7 +540,6 @@ local function onReceive(c, cmd, override)
 	local allowed_type = command_contexts[cmd:getCommand()]
 	if allowed_type then
 		if not cmd:getType():match(allowed_type) then
-			print("Invalid context for " .. cmd:getCommandString())
 			reply(c, "Invalid context for " .. cmd:getCommandString())
 			return command_processed
 		end
@@ -549,14 +550,12 @@ local function onReceive(c, cmd, override)
 		if allowed_level then
 			user = get_user(c:getCID(), c:getField("NI"))
 			if not user or user.level < allowed_level then
-				print("unallowed")
 				reply(c, "You don't have access to " .. cmd:getCommandString())
 				return command_processed
 			end
 		end
 	end		
 	
-	print("command is " .. cmd:getCommand() .. " msg is " .. adchpp.AdcCommand_CMD_MSG)
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_INF then
 		return onINF(c, cmd)
 	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then

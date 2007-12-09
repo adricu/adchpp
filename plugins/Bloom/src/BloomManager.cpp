@@ -28,14 +28,14 @@ BloomManager* BloomManager::instance = 0;
 const string BloomManager::className = "BloomManager";
 
 BloomManager::BloomManager() {
-	LOGDT(className, "Starting");
+	LOG(className, "Starting");
 	ClientManager* cm = ClientManager::getInstance();
 	receiveConn = manage(&cm->signalReceive(), std::tr1::bind(&BloomManager::onReceive, this, _1, _2, _3));
 	disconnectConn = manage(&cm->signalDisconnected(), std::tr1::bind(&BloomManager::onDisconnected, this, _1));
 }
 
 BloomManager::~BloomManager() {
-	LOGDT(className, "Shutting down");
+	LOG(className, "Shutting down");
 }
 
 static const std::string FEATURE = "BLOM";

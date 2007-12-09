@@ -35,23 +35,13 @@ public:
 	 * @param area Name of the module that generated the error.
 	 * @param msg Message to log.
 	 */
-	void log(const std::string& area, const std::string& msg) throw() {
-		std::string tmp(area);
-		tmp += ": ";
-		tmp += msg;
-		dolog(tmp);
-	}
+	ADCHPP_DLL void log(const std::string& area, const std::string& msg) throw();
 	
-	/**
-	 * Same as log, but prepends the current date and time.
-	 * @see log
-	 */	 
-	ADCHPP_DLL void logDateTime(const std::string& area, const std::string& msg) throw();
 private:
 	friend class Singleton<LogManager>;
 	ADCHPP_DLL static LogManager* instance;
 	FastMutex mtx;
-
+	
 	LogManager() throw() { }
 	virtual ~LogManager() throw() { }
 	
@@ -59,7 +49,6 @@ private:
 };
 
 #define LOG(area, msg) LogManager::getInstance()->log(area, msg)
-#define LOGDT(area, msg) LogManager::getInstance()->logDateTime(area, msg)
 
 }
 

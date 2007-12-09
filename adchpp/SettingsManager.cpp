@@ -105,7 +105,7 @@ void SettingsManager::load(const string& aFileName)
 				if(xml.findChild(attr))
 					set(StrSetting(i), xml.getChildData());
 				else
-					LOGDT(className, attr + " missing from settings, using default");
+					LOG(className, attr + " missing from settings, using default");
 				xml.resetCurrentChild();
 			}
 			for(i=INT_FIRST; i<INT_LAST; i++) {
@@ -115,7 +115,7 @@ void SettingsManager::load(const string& aFileName)
 				if(xml.findChild(attr))
 					set(IntSetting(i), Util::toInt(xml.getChildData()));
 				else
-					LOGDT(className, attr + " missing from settings, using default");
+					LOG(className, attr + " missing from settings, using default");
 				xml.resetCurrentChild();
 			}
 			

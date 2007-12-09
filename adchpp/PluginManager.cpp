@@ -86,7 +86,7 @@ bool PluginManager::loadPlugin(const string& file) {
 #endif
 
 	if(h == NULL) {
-		LOGDT(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
+		LOG(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
 		return false;
 	}
 	
@@ -103,7 +103,7 @@ bool PluginManager::loadPlugin(const string& file) {
 				h = PM_LOAD_LIBRARY(file.c_str());
 			}
 			if(h == NULL) {
-				LOGDT(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
+				LOG(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
 				return false;
 			}
 #endif
@@ -113,21 +113,21 @@ bool PluginManager::loadPlugin(const string& file) {
 			if(l != NULL && u != NULL) {
 				int i = l();
 				if(i != 0) {
-					LOGDT(className, "Failed to load plugin " + Util::toAcp(file) + " (Error " + Util::toString(i) + ")");
+					LOG(className, "Failed to load plugin " + Util::toAcp(file) + " (Error " + Util::toString(i) + ")");
 				} else {
 					// Wonderful, we have a plugin...
 					active.push_back(PluginInfo(h, v, l, u));
-					LOGDT(className, Util::toAcp(file) + " loaded");
+					LOG(className, Util::toAcp(file) + " loaded");
 					return true;
 				}
 			} else {
-				LOGDT(className, Util::toAcp(file) + " is not a valid ADCH++ plugin");
+				LOG(className, Util::toAcp(file) + " is not a valid ADCH++ plugin");
 			}
 		} else {
-			LOGDT(className, Util::toAcp(file) + " is for another version of ADCH++ (" + Util::toString(ver) + "), please get the correct one from the author");
+			LOG(className, Util::toAcp(file) + " is for another version of ADCH++ (" + Util::toString(ver) + "), please get the correct one from the author");
 		}
 	} else {
-		LOGDT(className, Util::toAcp(file) + " is not a valid ADCH++ plugin");
+		LOG(className, Util::toAcp(file) + " is not a valid ADCH++ plugin");
 	}
 
 	PM_UNLOAD_LIBRARY(h);

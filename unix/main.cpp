@@ -66,7 +66,7 @@ static void f2() {
 }
 
 static void uninit() {
-	LOGDT(modName, versionString + " shut down");
+	LOG(modName, versionString + " shut down");
 	if(!asdaemon)
 		printf(_("Shutting down."));
 	shutdown(&f2);
@@ -86,19 +86,19 @@ static void uninit() {
 static void daemonize() {
 	switch(fork()) {
 	case -1:
-		LOGDT(modName, string("First fork failed: ") + strerror(errno));
+		LOG(modName, string("First fork failed: ") + strerror(errno));
 		exit(5);
 	case 0: break;
 	default: _exit(0);
 	}
 
 	if(setsid() < 0) {
-		LOGDT(modName, string("setsid failed: ") + strerror(errno));
+		LOG(modName, string("setsid failed: ") + strerror(errno));
 		exit(6);
 	}
 	switch(fork()) {
 		case -1:
-			LOGDT(modName, string("Second fork failed: ") + strerror(errno));
+			LOG(modName, string("Second fork failed: ") + strerror(errno));
 			exit(7);
 		case 0: break;
 		default: exit(0);
@@ -121,11 +121,11 @@ static void runDaemon(const string& configPath) {
 	try {
 		adchpp::startup(&f2);
 	} catch(const adchpp::Exception& e) {
-		LOGDT(modName, "Failed to start: " + e.getError());
+		LOG(modName, "Failed to start: " + e.getError());
 		uninit();
 		return;
 	}
-	LOGDT(modName, versionString + " started as a daemon");
+	LOG(modName, versionString + " started as a daemon");
 	// Now what?
 	int x = 0;
 	sigset_t st;
@@ -141,7 +141,7 @@ static void runConsole(const string& configPath) {
 	printf(_("Starting"));
 	init();
 	initialize(configPath);
-	LOGDT(modName, versionString + " starting from console");
+	LOG(modName, versionString + " starting from console");
 	printf(".");
 	try {
 		startup(&f2);

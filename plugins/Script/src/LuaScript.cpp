@@ -87,9 +87,9 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 	int error = luaL_loadfile(l, filename.c_str()) || lua_pcall(l, 0, 0, 0);	
 	
 	if(error) {
-		LOGDT(className, string("Error loading file: ") + lua_tostring(l, -1));
+		LOG(className, string("Error loading file: ") + lua_tostring(l, -1));
 	} else {
-		LOGDT(className, "Loaded " + filename);
+		LOG(className, "Loaded " + filename);
 	}
 	chdir(old_dir);
 }

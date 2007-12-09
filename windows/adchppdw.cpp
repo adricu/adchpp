@@ -28,7 +28,7 @@ using namespace std;
 
 static const string modName = "adchpp";
 
-#define LOGERROR(func) LOGDT(modName, func " failed: " + Util::translateError(GetLastError()))
+#define LOGERROR(func) LOG(modName, func " failed: " + Util::translateError(GetLastError()))
 #define PRINTERROR(func) fprintf(stderr, func " failed: 0x%x, %s", GetLastError(), Util::translateError(GetLastError()).c_str())
 
 #ifdef _MSC_VER
@@ -172,9 +172,9 @@ static void init(const string& configPath) {
 	initialize(configPath);
 
 	if(asService)
-		LOGDT(modName, versionString + " started as a service");
+		LOG(modName, versionString + " started as a service");
 	else
-		LOGDT(modName, versionString + " started from console");
+		LOG(modName, versionString + " started from console");
 }
 
 static void f2() {
@@ -182,7 +182,7 @@ static void f2() {
 }
 
 static void uninit() {
-	LOGDT(modName, versionString + " shut down");
+	LOG(modName, versionString + " shut down");
 	printf("Shutting down.");
 	shutdown(&f2);
 #if defined(_MSC_VER) && !defined(NDEBUG)
@@ -202,7 +202,7 @@ void WINAPI handler(DWORD code) {
 	case SERVICE_CONTROL_SHUTDOWN: // Fallthrough
 	case SERVICE_CONTROL_STOP: ss.dwCurrentState = SERVICE_STOP_PENDING; exitSem.signal(); break;
 	case SERVICE_CONTROL_INTERROGATE: break;
-	default: LOGDT(modName, "Unknown service handler code " + Util::toString(code));
+	default: LOG(modName, "Unknown service handler code " + Util::toString(code));
 	}
 
 	if(!SetServiceStatus(ssh, &ss)) {
@@ -243,7 +243,7 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 	try {
 		startup(&f);		
 	} catch(const Exception& e) {
-		LOGDT(modName, "ADCH++ startup failed because: " + e.getError());
+		LOG(modName, "ADCH++ startup failed because: " + e.getError());
 		
 		uninit();
 		
