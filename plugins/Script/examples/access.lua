@@ -483,27 +483,6 @@ local function onMSG(c, cmd)
 			end
 		end
 		
-		sm = adchpp.getSocketManager()
-		a = sm:getAcceptErrors()
-		r = sm:getReadErrors()
-		w = sm:getWriteErrors()
-		str = str .. "\nSocket errors: \n"
-		str = str .. " - Accept errors: \n"
-		for i = 0, a:size()-1 do
-			e = a[i]
-			str = str .. e.first .. "\t" .. e.second .. "\t" .. adchpp.Util_translateError(e.first) .. "\n"
-		end
-		str = str .. " - Read errors: \n"
-		for i = 0, r:size()-1 do
-			e = r[i]
-			str = str .. e.first .. "\t" .. e.second .. "\t" .. adchpp.Util_translateError(e.first) .. "\n"
-		end
-		str = str .. " - Write errors: \n"
-		for i = 0, w:size()-1 do
-			e = w[i]
-			str = str .. e.first .. "\t" .. e.second .. "\t" .. adchpp.Util_translateError(e.first) .. "\n"
-		end
-		
 		local queued = cm:getQueuedBytes()
 		local queueBytes = adchpp.Stats_queueBytes
 		local queueCalls = adchpp.Stats_queueCalls

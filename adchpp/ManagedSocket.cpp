@@ -34,6 +34,8 @@ FastMutex ManagedSocket::writeMutex;
 ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0)
 #ifdef _WIN32
 , writeBuf(0)
+#else
+, blocked(false)
 #endif
 {
 }
@@ -92,8 +94,12 @@ bool ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = fal
 }
 
 ByteVector* ManagedSocket::prepareWrite() {
-	ByteVector* buffer = 0;
+	if(isBlocked()) {
+		return 0;
+	}
 
+	ByteVector* buffer = 0;
+	
 	{
 		FastMutex::Lock l(writeMutex);
 
@@ -153,11 +159,11 @@ bool ManagedSocket::completeRead(ByteVector* buf) throw() {
 }
 
 void ManagedSocket::completeAccept() throw() {
-	SocketManager::getInstance()->addJob(std::tr1::bind(&ManagedSocket::processIncoming, this));
+	SocketManager::getInstance()->addJob(connectedHandler);
 }
 
-void ManagedSocket::failSocket() throw() {
-	SocketManager::getInstance()->addJob(std::tr1::bind(&ManagedSocket::processFail, this));
+void ManagedSocket::failSocket(int) throw() {
+	SocketManager::getInstance()->addJob(failedHandler);
 }
 
 void ManagedSocket::disconnect(Util::Reason reason) throw() {
@@ -165,22 +171,14 @@ void ManagedSocket::disconnect(Util::Reason reason) throw() {
 		return;
 	}
 
-	disc = GET_TICK();
+	disc = GET_TICK() + SETTING(DISCONNECT_TIMEOUT);
 	Util::reasons[reason]++;
 	SocketManager::getInstance()->addDisconnect(this);
-}
-
-void ManagedSocket::processIncoming() throw() {
-	connectedHandler();
 }
 
 void ManagedSocket::processData(ByteVector* buf) throw() {
 	dataHandler(*buf);
 	Util::freeBuf = buf;
-}
-
-void ManagedSocket::processFail() throw() {
-	failedHandler();
 }
 
 }

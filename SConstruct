@@ -213,6 +213,8 @@ env.Append(BUILDERS = {'PotBuild' : pot_bld})
 
 conf = Configure(env)
 
+if conf.CheckCHeader('poll.h'):
+	conf.env.Append(CPPDEFINES='HAVE_POLL_H')
 if conf.CheckCHeader('sys/epoll.h'):
 	conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
 if conf.CheckLib('dl', 'dlopen'):

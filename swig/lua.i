@@ -1,5 +1,6 @@
 %module luadchpp
 
+
 typedef unsigned int size_t;
 
 %wrapper %{

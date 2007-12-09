@@ -20,6 +20,10 @@
 
 #include "Socket.h"
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+
 namespace adchpp {
 
 using namespace std;
@@ -37,13 +41,12 @@ void Socket::create(int aType /* = TYPE_TCP */) throw(SocketException) {
 		{
 #ifdef _WIN32
 			checksocket(sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED));
-			setBlocking(false);
 			DWORD x = 0;
 			setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char*)&x, sizeof(x));
 #else
 			checksocket(sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
-			setBlocking(false);
 #endif
+			setBlocking(false);
 		}
 		break;
 	case TYPE_UDP:
@@ -75,12 +78,13 @@ void Socket::listen(short aPort) throw(SocketException) {
 #else
 	sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 #endif
-	int x = 1;
-	::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(int));
 	
 	if(sock == (socket_t)-1) {
 		throw SocketException(socket_errno);
 	}
+
+	int x = 1;
+	::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(int));
 
 	tcpaddr.sin_family = AF_INET;
 	tcpaddr.sin_port = htons(aPort);
@@ -254,25 +258,21 @@ int Socket::wait(uint32_t millis, int waitFor) throw(SocketException) {
 	if(waitFor & WAIT_READ || waitFor & WAIT_CONNECT) {
 		fd.events |= POLLIN;
 	}
-	if(waifFor & WAIT_WRITE) {
+	if(waitFor & WAIT_WRITE) {
 		fd.events |= POLLOUT;
 	}
 	
-	int result = poll(&fd, 1, millis));
+	int result = poll(&fd, 1, millis);
 	if(result == 1) {
 		if(fd.revents & POLLERR) {
 			int y = 0;
 			socklen_t z = sizeof(y);
 			checksockerr(getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&y, &z));
-			if(y != 0) {
-				throw SocketException(y);
-			}
-			// Should never happen
-			throw SocketException("Unknown socket error");
+			throw SocketException(y);
 		}			
 
 		int ret = 0;
-		if(fr.revents & POLLIN) {
+		if(fd.revents & POLLIN) {
 			ret |= waitFor & (WAIT_READ | WAIT_CONNECT);
 		}
 		if(fd.revents & POLLOUT) {
@@ -384,9 +384,8 @@ int Socket::getLocalPort() throw() {
 void Socket::disconnect() throw() {
 	if(sock != INVALID_SOCKET) {
 		closesocket(sock);
+		sock = INVALID_SOCKET;
 	}
-
-	sock = INVALID_SOCKET;
 }
 
 }

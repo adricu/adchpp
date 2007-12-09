@@ -48,12 +48,9 @@ static uint32_t WRITE_TIMEOUT = 100;
 
 struct MSOverlapped : OVERLAPPED {
 	enum Types {
-		ACCEPT,
+		ACCEPT_DONE,
 		READ_DONE,
 		WRITE_DONE,
-		WRITE_WAITING,
-		WRITE_ALL,
-		DISCONNECT,
 		SHUTDOWN
 	} type;
 	ManagedSocketPtr ms;
@@ -69,17 +66,17 @@ struct ClearOverlapped {
 	}
 };
 
-class CompletionPort {
+class Poller {
 public:
-	CompletionPort() : handle(INVALID_HANDLE_VALUE) { 
+	Poller() : handle(INVALID_HANDLE_VALUE) { 
 	}
 	
-	~CompletionPort() { 
+	~Poller() { 
 		if(handle != INVALID_HANDLE_VALUE) 
 			::CloseHandle(handle); 
 	}
 	
-	bool create() {
+	bool init() {
 		handle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
 		return handle != NULL;
 	}
@@ -102,456 +99,14 @@ private:
 	HANDLE handle;
 };
 
-class Writer : public Thread {
-public:
-	static const size_t PREPARED_SOCKETS = 32;
-	
-	Writer() : stop(false) {
-	}
-	
-	void addWriter(ManagedSocketPtr /*ms */) {
-		if(stop)
-			return;
-#if 0
-		MSOverlapped* overlapped = pool.get();
-		*overlapped = MSOverlapped(MSOverlapped::WRITE_WAITING, ms);
-		
-		if(!port.post(overlapped)) {
-			LOGDT(SocketManager::className, "Fatal error while posting write to completion port: " + Util::translateError(::GetLastError()));
-		}
-#endif			
-	}
-	
-	void addAllWriters() {
-		if(stop)
-			return;
-#if 0			
-		MSOverlapped* overlapped = pool.get();
-		*overlapped = MSOverlapped(MSOverlapped::WRITE_ALL);
-		
-		if(!port.post(overlapped)) {
-			LOGDT(SocketManager::className, "Fatal error while posting writeAll to completion port: " + Util::translateError(::GetLastError()));
-		}
-#endif			
-	}
-	
-	void addDisconnect(ManagedSocketPtr ms) {
-		if(stop)
-			return;
-			
-		MSOverlapped* overlapped = pool.get();
-		*overlapped = MSOverlapped(MSOverlapped::DISCONNECT, ms);
-		
-		if(!port.post(overlapped)) {
-			LOGDT(SocketManager::className, "Fatal error while posting disconnect to completion port: " + Util::translateError(::GetLastError()));
-		}			
-	}			
-	
-	void shutdown() {
-		stop = true;
-		
-		MSOverlapped* overlapped = pool.get();
-		*overlapped = MSOverlapped(MSOverlapped::SHUTDOWN);
-		
-		if(!port.post(overlapped)) {
-			LOGDT(SocketManager::className, "Fatal error while posting shutdown to completion port: " + Util::translateError(::GetLastError()));
-		}
-		join();
-	}
-
-	void getErrors(SocketManager::ErrorMap& acceptErrors_, SocketManager::ErrorMap& readErrors_, SocketManager::ErrorMap& writeErrors_) {
-		FastMutex::Lock l(errorMutex);
-		acceptErrors_ = acceptErrors;
-		readErrors_ = readErrors;
-		writeErrors_ = writeErrors;
-	}
-	
-private:
-	bool init() {
-		if(!port.create()) {
-			LOGDT(SocketManager::className, "Unable to create IO Completion port: " + Util::translateError(::GetLastError()));
-			return false;
-		}
-
-		try {
-			srv.listen(static_cast<short>(SETTING(SERVER_PORT)));
-		} catch(const SocketException& e) {
-			LOGDT(SocketManager::className, "Unable to create server socket: " + e.getError());
-			return false;
-		} 
-		
-		if(!port.associate(srv.getSocket())) {
-			LOGDT(SocketManager::className, "Unable to associate IO Completion port: " + Util::translateError(::GetLastError()));
-			return false;
-		}
-	
-		return true;
-	}
-	
-	virtual int run() {
-		LOGDT(SocketManager::className, "Writer starting");
-		if(!init()) {
-			return 0;
-		}
-		
-		prepareAccept();
-		
-		DWORD bytes = 0;
-		MSOverlapped* overlapped = 0;
-		
-		uint32_t lastWrite = 0;
-		
-		while(!stop || !accepting.empty() || !active.empty()) {
-			bool ret = port.get(&bytes, &overlapped);
-			//dcdebug("Event: %x, %x, %x, %x, %x, %x\n", (unsigned int)ret, (unsigned int)bytes, (unsigned int)ms, (unsigned int)overlapped, (unsigned int)overlapped->ms, (unsigned int)overlapped->type);
-			
-			if(!ret) {
-				int error = ::GetLastError();
-				if(overlapped == 0) {
-					if(error != WAIT_TIMEOUT) {
-						LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
-						return error;
-					}
-				} else if(overlapped->type == MSOverlapped::ACCEPT) {
-					dcdebug("Error accepting: %s\n", Util::translateError(error).c_str());
-					failAccept(overlapped->ms, error);
-				} else if(overlapped->type == MSOverlapped::READ_DONE) {
-					dcdebug("Error reading: %s\n", Util::translateError(error).c_str());
-					failRead(overlapped->ms, error);
-				} else if(overlapped->type == MSOverlapped::WRITE_DONE) {
-					dcdebug("Error writing: %s\n", Util::translateError(error).c_str());
-					failWrite(overlapped->ms, error);
-				} else {
-					dcdebug("Unknown error %d when waiting\n", overlapped->type);
-				}
-			} else {	
-				switch(overlapped->type) {
-					case MSOverlapped::ACCEPT: {
-						checkDisconnects();
-						handleAccept(overlapped->ms);
-						break;
-					}
-					case MSOverlapped::READ_DONE: {
-						handleReadDone(overlapped->ms);
-						break;
-					}
-					case MSOverlapped::WRITE_DONE: {
-						handleWriteDone(overlapped->ms, bytes);
-						break;
-					}
-					case MSOverlapped::WRITE_WAITING: {
-						prepareWrite(overlapped->ms);
-						break;
-					}
-					case MSOverlapped::WRITE_ALL: {
-						writeAll();
-						break;
-					}
-					case MSOverlapped::DISCONNECT: {
-						handleDisconnect(overlapped->ms);
-						break;
-					}
-					case MSOverlapped::SHUTDOWN: {
-						handleShutdown();
-						break;
-					} 
-				}
-			}
-			if(overlapped != 0) {
-				pool.put(overlapped);
-			}
-			
-			uint32_t now = GET_TICK();
-			if(now > lastWrite + WRITE_TIMEOUT) {
-				checkDisconnects();
-				writeAll();
-				lastWrite = now;
-			}
-
-		}
-		LOGDT(SocketManager::className, "Writer shutting down");
-		return 0;
-	}
-
-	void prepareAccept() throw() {
-		if(stop)
-			return;
-		
-		if(accepting.size() > PREPARED_SOCKETS / 2) {
-			return;
-		}
-		
-		while(accepting.size() < PREPARED_SOCKETS) {
-			ManagedSocketPtr ms(new ManagedSocket());
-			try {
-				ms->create();
-			} catch (const SocketException& e) {
-				LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
-				return;
-			}
-				
-			if(!port.associate(ms->getSocket())) {
-				LOGDT(SocketManager::className, "Unable to associate IO Completion port: " + Util::translateError(::GetLastError()));
-				return;
-			}
-
-			DWORD x = 0;
-
-			ms->writeBuf = Util::freeBuf;
-			ms->writeBuf->resize(ACCEPT_BUF_SIZE);
-			
-			MSOverlapped* overlapped = pool.get();
-			*overlapped = MSOverlapped(MSOverlapped::ACCEPT, ms);
-
-			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), &(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
-				int error = ::WSAGetLastError();
-				if(error != ERROR_IO_PENDING) {
-					if(!stop) {
-						LOGDT(SocketManager::className, "Failed accepting connection: " + Util::translateError(GetLastError()));
-					}
-					
-					pool.put(overlapped);
-					
-					FastMutex::Lock l(errorMutex);
-					acceptErrors[error]++;
-					
-					return;
-				}
-			}
-			
-			accepting.insert(ms);
-		}
-	}
-
-	void handleAccept(const ManagedSocketPtr& ms) throw() {
-		struct sockaddr_in *local, *remote;
-		int sz1 = sizeof(local), sz2 = sizeof(remote);
-		
-		::GetAcceptExSockaddrs(&(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, reinterpret_cast<sockaddr**>(&local), &sz1, reinterpret_cast<sockaddr**>(&remote), &sz2);
-		
-		ms->setIp(inet_ntoa(remote->sin_addr));
-	
-		Util::freeBuf = ms->writeBuf;
-		ms->writeBuf = 0;
-	
-		active.insert(ms);
-		accepting.erase(ms);
-
-		SocketManager::getInstance()->incomingHandler(ms);
-		ms->completeAccept();
-		
-		prepareRead(ms);
-		// Prepare a new socket to replace this one...
-		prepareAccept();	
-	}
-	
-	void failAccept(ManagedSocketPtr& ms, int error) throw() {
-		accepting.erase(ms);
-		
-		
-		prepareAccept();
-		
-		FastMutex::Lock l(errorMutex);
-		acceptErrors[error]++;
-	}
-	
-	void prepareRead(const ManagedSocketPtr& ms) throw() {
-		if(stop)
-			return;
-			
-		DWORD x = 0;
-		DWORD flags = 0;
-		WSABUF wsabuf = { 0, 0 };
-		
-		MSOverlapped* overlapped = pool.get();
-		*overlapped = MSOverlapped(MSOverlapped::READ_DONE, ms);
-		
-		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
-			int error = ::WSAGetLastError();
-			if(error != WSA_IO_PENDING) {
-				dcdebug("Error preparing read: %s\n", Util::translateError(error).c_str());
-				failRead(ms, error);
-			}
-		}
-	}
-	
-	void handleReadDone(const ManagedSocketPtr& ms) throw() {
-		ByteVector* readBuf = Util::freeBuf;
-		
-		if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
-			readBuf->resize(SETTING(BUFFER_SIZE));
-		
-		WSABUF wsa = { (u_long)readBuf->size(), (char*)&(*readBuf)[0] };
-		
-		DWORD bytes = 0;
-		DWORD flags = 0;
-		
-		if(::WSARecv(ms->getSocket(), &wsa, 1, &bytes, &flags, 0, 0) == SOCKET_ERROR) {
-			Util::freeBuf = readBuf;
-			int error = ::WSAGetLastError();
-			if(error != WSAEWOULDBLOCK) {
-				// Socket failed...
-				failRead(ms, error);
-				return;
-			}
-			
-			prepareRead(ms);
-			return;
-		}
-		
-		if(bytes == 0) {
-			Util::freeBuf = readBuf;
-			failRead(ms, 0);
-			return;
-		}
-		
-		readBuf->resize(bytes);
-		ms->completeRead(readBuf);
-		
-		prepareRead(ms);
-	}
-	
-	void failRead(const ManagedSocketPtr& ms, int error) throw() {
-		if(active.find(ms) == active.end()) {
-			return;
-		}
-		
-		if(error != 0) {
-			FastMutex::Lock l(errorMutex);
-			readErrors[error]++;
-		}
-		 
-		ms->close();
-
-		SocketSet::iterator i = disconnecting.find(ms);
-		if(i == disconnecting.end()) {
-			ms->failSocket();
-		} else {
-			disconnecting.erase(i);
-		}
-			
-		active.erase(ms);
-	}
-	
-	void prepareWrite(const ManagedSocketPtr& ms) throw() {
-		if(stop || ms->writeBuf) {
-			return;
-		}
-		
-		ms->writeBuf = ms->prepareWrite();
-		
-		if(!ms->writeBuf) {
-			if(ms->disc) {
-				ms->close();
-			}
-			return;
-		}
-		
-		ms->wsabuf.len = ms->writeBuf->size();
-		ms->wsabuf.buf = reinterpret_cast<char*>(&(*ms->writeBuf)[0]);
-
-		MSOverlapped* overlapped = pool.get();
-		*overlapped = MSOverlapped(MSOverlapped::WRITE_DONE, ms);
-		
-		DWORD x = 0;
-		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
-			int error = ::WSAGetLastError();
-			if(error != WSA_IO_PENDING) {
-				failWrite(ms, error);
-				pool.put(overlapped);
-			}
-		}
-		return;
-	}
-	
-	void handleWriteDone(const ManagedSocketPtr& ms, DWORD bytes) throw() {
-		ByteVector* buf = ms->writeBuf;
-		ms->writeBuf = 0;
-		
-		if(!buf) {
-			dcdebug("No buffer in handleWriteDone??\n");
-			return;
-		}
-		if(ms->completeWrite(buf, bytes)) {
-			prepareWrite(ms);
-		}
-	}
-	
-	void failWrite(const ManagedSocketPtr& ms, int error) throw() {
-		Util::freeBuf = ms->writeBuf;
-		ms->writeBuf = 0;
-		
-		FastMutex::Lock l(errorMutex);
-		writeErrors[error]++;
-	}
-	
-	void writeAll() throw() {
-		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
-			prepareWrite(*i);
-		}
-	}
-	
-	void handleDisconnect(const ManagedSocketPtr& ms) throw() {
-		if(active.find(ms) == active.end()) {
-			return;
-		}
-		
-		if(disconnecting.find(ms) != disconnecting.end()) {
-			return;
-		}
- 
-		prepareWrite(ms);
-		disconnecting.insert(ms);
-		ms->failSocket();
-	}
-	
-	void checkDisconnects() throw() {
-		uint32_t now = GET_TICK();
-		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
-			const ManagedSocketPtr& ms = *i;
-			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
-				ms->close();
-			}
-		}
-	}
-	
-	void handleShutdown() throw() {
-		for(SocketSet::iterator i = accepting.begin(); i != accepting.end(); ++i) {
-			(*i)->close();
-		}
-		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
-			(*i)->close();
-		}
-	}
-	
-	FastMutex errorMutex;
-	SocketManager::ErrorMap acceptErrors;
-	SocketManager::ErrorMap readErrors;
-	SocketManager::ErrorMap writeErrors;
-	
-	CompletionPort port;
-	Socket srv;
-	
-	bool stop;
-	
-	Pool<MSOverlapped, ClearOverlapped> pool;
-	
-	typedef unordered_set<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
-	/** Sockets that have a pending read */
-	SocketSet active;
-	/** Sockets that have a pending accept */
-	SocketSet accepting;
-	/** Sockets that are being written to but should be disconnected if timeout it reached */
-	SocketSet disconnecting;
-};
 
 #elif defined(HAVE_SYS_EPOLL_H)
 
-struct EPoll {
-	EPoll() : poll_fd(-1) { 
+struct Poller {
+	Poller() : poll_fd(-1) { 
 	}
 	
-	~EPoll() { 
+	~Poller() { 
 		if(poll_fd != -1) {
 			close(poll_fd);
 		}
@@ -580,6 +135,7 @@ struct EPoll {
 	}
 	
 	bool get(vector<epoll_event>& events) {
+		events.clear();
 		events.resize(1024);
 		while(true) {
 			int n = epoll_wait(poll_fd, &events[0], events.size(), WRITE_TIMEOUT);
@@ -595,90 +151,48 @@ struct EPoll {
 		}
 	}
 	
-	void remove(const ManagedSocketPtr& ms) {
-		// Buggy pre-2.6.9 kernels require non-null for last param
-		epoll_event e;
-		epoll_ctl(poll_fd, EPOLL_CTL_DEL, ms->getSocket(), &e);
-	}
-	
 	int poll_fd;
 };
 
-struct Event {
-	enum Type {
-		WRITE,
-		WRITE_ALL,
-		DISCONNECT,
-		REMOVE,
-		SHUTDOWN
-	} event;
-	ManagedSocketPtr ms;
-	
-	Event(Type event_, const ManagedSocketPtr& ms_) : event(event_), ms(ms_) { }
-	Event() : event(WRITE), ms(0) { }
-};
-
-struct ClearEvent {
-	void operator()(Event& evt) {
-		evt.ms = 0;
-	}
-};
+#else
+#error No socket implementation for your platform
+#endif // _WIN32
 
 class Writer : public Thread {
 public:
+	
 	Writer() : stop(false) {
 	}
-	
-	void addWriter(const ManagedSocketPtr& ms) {
-		if(stop)
-			return;
-/*		
-		Event* ev = pool.get();
-		*ev = Event(Event::WRITE, ms);
-		::write(event[0], &ev, sizeof(ev));*/
+
+#ifdef _WIN32
+	void shutdown() {
+		stop = true;
+		
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::SHUTDOWN);
+		
+		if(!poller.post(overlapped)) {
+			LOGDT(SocketManager::className, "Fatal error while posting shutdown to completion port: " + Util::translateError(::GetLastError()));
+		}
+		join();
 	}
-	
-	void addAllWriters() {
-		if(stop)
-			return;
-/*		Event* ev = pool.get();
-		*ev = Event(Event::WRITE_ALL, 0);
-		::write(event[0], &ev, sizeof(ev));*/
-	}
-	
-	void addDisconnect(const ManagedSocketPtr& ms) {
-		if(stop)
-			return;
-			
-		Event* ev = pool.get();
-		*ev = Event(Event::DISCONNECT, ms);
-		::write(event[0], &ev, sizeof(ev));
-	}			
-	
+#else
 	void shutdown() {
 		stop = true;
 
-		Event* ev = pool.get();
-		*ev = Event(Event::SHUTDOWN, 0);
+		char ev = 0;
 		::write(event[0], &ev, sizeof(ev));
 
 		join();
 	}
-	
-	void getErrors(SocketManager::ErrorMap& acceptErrors_, SocketManager::ErrorMap& readErrors_, SocketManager::ErrorMap& writeErrors_) {
-		FastMutex::Lock l(errorMutex);
-		acceptErrors_ = acceptErrors;
-		readErrors_ = readErrors;
-		writeErrors_ = writeErrors;
-	}
-	
+#endif	
 private:
 	bool init() {
 		if(!poller.init()) {
-			LOGDT(SocketManager::className, "Unable to create initialize epoll: " + Util::translateError(errno));
+			LOGDT(SocketManager::className, "Unable to start poller: " + Util::translateError(socket_errno));
 			return false;
-		}			
-		
+		}
+
 		try {
 			srv.listen(SETTING(SERVER_PORT));
 			srv.setBlocking(false);
@@ -688,18 +202,21 @@ private:
 		} 
 		
 		if(!poller.associate(srv.getSocket())) {
-			LOGDT(SocketManager::className, "Unable to set epoll: " + Util::translateError(errno));
+			LOGDT(SocketManager::className, "Unable to associate server socket with poller: " + Util::translateError(socket_errno));
 			return false;
 		}
-		
+
+#ifndef _WIN32
 		if(socketpair(AF_UNIX, SOCK_STREAM, 0, event) == -1) {
 			LOGDT(SocketManager::className, "Unable to create event socketpair: " + Util::translateError(errno));
 			return false;
 		}
+
 		if(!poller.associate(event[1])) {
 			LOGDT(SocketManager::className, "Unable to associate event: " + Util::translateError(errno));
 			return false;
 		}
+#endif
 		return true;
 	}
 	
@@ -710,90 +227,292 @@ private:
 		}
 		
 		uint32_t lastWrite = 0;
-		std::vector<epoll_event> events;
+		
+#ifdef _WIN32
+		prepareAccept();	
+#endif
 		while(!stop || !active.empty()) {
-			events.clear();
-			
-			if(!poller.get(events)) {
-				LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
-			}
-			bool doevents = false;
-			for(std::vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
-				epoll_event& ev = *i;
-				if(ev.data.fd == srv.getSocket()) {
-					accept();
-				} else if(ev.data.fd == event[1]) {
-					doevents = true;
-				} else {
-					ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr));
-					if(ev.events & (EPOLLIN | EPOLLHUP | EPOLLERR)) {
-						if(!read(ms))
-							continue;
-					}
-					if(ev.events & EPOLLOUT) {
-						write(ms);
-					}
-				}
-			}
-			
-			if(doevents) {
-				handleEvents();	
-			}
+			handleEvents();
 			
 			uint32_t now = GET_TICK();
 			if(now > lastWrite + WRITE_TIMEOUT) {
-				checkDisconnects();
 				writeAll();
+				removeDisconnected();
 				lastWrite = now;
 			}
+
 		}
 		LOGDT(SocketManager::className, "Writer shutting down");
 		return 0;
 	}
-	
+
+#ifdef _WIN32
 	void handleEvents() {
-		while(true) {
-			size_t start = ev.size();
-			ev.resize(64 * sizeof(Event*));
-			int bytes = ::recv(event[1], &ev[0] + start, ev.size() - start, MSG_DONTWAIT);
-			if(bytes == -1) {
-				ev.resize(start);
-				int err = errno;
-				if(err == EAGAIN) {
+		DWORD bytes = 0;
+		MSOverlapped* overlapped = 0;
+		bool ret = poller.get(&bytes, &overlapped);
+		//dcdebug("Event: %x, %x, %x, %x, %x, %x\n", (unsigned int)ret, (unsigned int)bytes, (unsigned int)ms, (unsigned int)overlapped, (unsigned int)overlapped->ms, (unsigned int)overlapped->type);
+		
+		if(!ret) {
+			int error = ::GetLastError();
+			if(overlapped == 0) {
+				if(error != WAIT_TIMEOUT) {
+					LOGDT(SocketManager::className, "Fatal error while getting status from completion port: " + Util::translateError(error));
 					return;
 				}
-				LOGDT(SocketManager::className, "Error reading from event[1]: " + Util::translateError(err));
+			} else if(overlapped->type == MSOverlapped::ACCEPT_DONE) {
+				dcdebug("Error accepting: %s\n", Util::translateError(error).c_str());
+				failAccept(overlapped->ms, error);
+			} else if(overlapped->type == MSOverlapped::READ_DONE) {
+				dcdebug("Error reading: %s\n", Util::translateError(error).c_str());
+				disconnect(overlapped->ms, error);
+			} else if(overlapped->type == MSOverlapped::WRITE_DONE) {
+				dcdebug("Error writing: %s\n", Util::translateError(error).c_str());
+				failWrite(overlapped->ms, error);
+			} else {
+				dcdebug("Unknown error %d when waiting\n", overlapped->type);
+			}
+		} else {	
+			switch(overlapped->type) {
+				case MSOverlapped::ACCEPT_DONE: {
+					handleAccept(overlapped->ms);
+					break;
+				}
+				case MSOverlapped::READ_DONE: {
+					handleReadDone(overlapped->ms);
+					break;
+				}
+				case MSOverlapped::WRITE_DONE: {
+					handleWriteDone(overlapped->ms, bytes);
+					break;
+				}
+				case MSOverlapped::SHUTDOWN: {
+					handleShutdown();
+					break;
+				} 
+			}
+		}
+		if(overlapped != 0) {
+			pool.put(overlapped);
+		}
+	}
+
+	void prepareAccept() throw() {
+		if(stop)
+			return;
+		
+		if(accepting.size() > PREPARED_SOCKETS / 2) {
+			return;
+		}
+		
+		while(accepting.size() < PREPARED_SOCKETS) {
+			ManagedSocketPtr ms(new ManagedSocket());
+			try {
+				ms->create();
+			} catch (const SocketException& e) {
+				LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
 				return;
 			}
-			ev.resize(bytes);
-			size_t events = bytes / sizeof(Event*);
-			for(size_t i = 0; i < events; ++i) {
-				Event** ee = reinterpret_cast<Event**>(&ev[i*sizeof(Event*)]);
-				Event* e = *ee;
-				switch(e->event) {
-					case Event::WRITE: {
-						write(e->ms);
-					} break;
-					case Event::WRITE_ALL: {
-						writeAll();
-					} break;
-					case Event::DISCONNECT: {
-						disconnect(e->ms);
-					} break;
-					case Event::REMOVE: {
-						failRead(e->ms, 0);
-					} break;
-					case Event::SHUTDOWN: {
-						handleShutdown();
-					} break;
-				}
-				pool.put(e);
+				
+			if(!poller.associate(ms->getSocket())) {
+				LOGDT(SocketManager::className, "Unable to associate poller: " + Util::translateError(::GetLastError()));
+				return;
 			}
-			ev.erase(ev.begin(), ev.begin() + events*sizeof(Event*));
-		}	
+
+			DWORD x = 0;
+
+			ms->writeBuf = Util::freeBuf;
+			ms->writeBuf->resize(ACCEPT_BUF_SIZE);
+			
+			MSOverlapped* overlapped = pool.get();
+			*overlapped = MSOverlapped(MSOverlapped::ACCEPT_DONE, ms);
+
+			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), &(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
+				int error = ::WSAGetLastError();
+				if(error != ERROR_IO_PENDING) {
+					if(!stop) {
+						LOGDT(SocketManager::className, "Failed accepting connection: " + Util::translateError(GetLastError()));
+					}
+					
+					pool.put(overlapped);
+					
+					return;
+				}
+			}
+			
+			accepting.insert(ms);
+		}
+	}
+
+	void handleAccept(const ManagedSocketPtr& ms) throw() {
+		struct sockaddr_in *local, *remote;
+		int sz1 = sizeof(local), sz2 = sizeof(remote);
+		
+		::GetAcceptExSockaddrs(&(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, reinterpret_cast<sockaddr**>(&local), &sz1, reinterpret_cast<sockaddr**>(&remote), &sz2);
+		
+		ms->setIp(inet_ntoa(remote->sin_addr));
+	
+		Util::freeBuf = ms->writeBuf;
+		ms->writeBuf = 0;
+	
+		active.insert(ms);
+		accepting.erase(ms);
+
+		SocketManager::getInstance()->incomingHandler(ms);
+		ms->completeAccept();
+		
+		read(ms);
+		// Prepare a new socket to replace this one...
+		prepareAccept();	
 	}
 	
-	void accept() throw() {
+	void failAccept(ManagedSocketPtr& ms, int error) throw() {
+		accepting.erase(ms);
+		
+		prepareAccept();
+	}
+
+	void read(const ManagedSocketPtr& ms) throw() {
+		if(stop)
+			return;
+			
+		DWORD x = 0;
+		DWORD flags = 0;
+		WSABUF wsabuf = { 0, 0 };
+		
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::READ_DONE, ms);
+		
+		if(::WSARecv(ms->getSocket(), &wsabuf, 1, &x, &flags, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
+			int error = ::WSAGetLastError();
+			if(error != WSA_IO_PENDING) {
+				dcdebug("Error preparing read: %s\n", Util::translateError(error).c_str());
+				disconnect(ms, error);
+			}
+		}
+	}
+	
+	void handleReadDone(const ManagedSocketPtr& ms) throw() {
+		ByteVector* readBuf = Util::freeBuf;
+		
+		if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
+			readBuf->resize(SETTING(BUFFER_SIZE));
+		
+		WSABUF wsa = { (u_long)readBuf->size(), (char*)&(*readBuf)[0] };
+		
+		DWORD bytes = 0;
+		DWORD flags = 0;
+		
+		if(::WSARecv(ms->getSocket(), &wsa, 1, &bytes, &flags, 0, 0) == SOCKET_ERROR) {
+			Util::freeBuf = readBuf;
+			int error = ::WSAGetLastError();
+			if(error != WSAEWOULDBLOCK) {
+				// Socket failed...
+				disconnect(ms, error);
+				return;
+			}
+			
+			read(ms);
+			return;
+		}
+		
+		if(bytes == 0) {
+			Util::freeBuf = readBuf;
+			disconnect(ms, 0);
+			return;
+		}
+		
+		readBuf->resize(bytes);
+		ms->completeRead(readBuf);
+		
+		read(ms);
+	}
+	
+	void write(const ManagedSocketPtr& ms) throw() {
+		if(stop || !(*ms)) {
+			return;
+		}
+		
+		ms->writeBuf = ms->prepareWrite();
+		
+		if(!ms->writeBuf) {
+			uint32_t now = GET_TICK();
+
+			if(ms->disc || (ms->isBlocked() && ms->disc < now)) {
+				disconnect(ms, 0);
+			}
+			return;
+		}
+		
+		ms->wsabuf.len = ms->writeBuf->size();
+		ms->wsabuf.buf = reinterpret_cast<char*>(&(*ms->writeBuf)[0]);
+
+		MSOverlapped* overlapped = pool.get();
+		*overlapped = MSOverlapped(MSOverlapped::WRITE_DONE, ms);
+		
+		DWORD x = 0;
+		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
+			int error = ::WSAGetLastError();
+			if(error != WSA_IO_PENDING) {
+				pool.put(overlapped);
+				disconnect(ms, error);
+			}
+		}
+	}
+	
+	void handleWriteDone(const ManagedSocketPtr& ms, DWORD bytes) throw() {
+		ByteVector* buf = ms->writeBuf;
+		ms->writeBuf = 0;
+		
+		if(!buf) {
+			dcdebug("No buffer in handleWriteDone??\n");
+			return;
+		}
+		ms->completeWrite(buf, bytes);
+	}
+	
+	void failWrite(const ManagedSocketPtr& ms, int error) throw() {
+		Util::freeBuf = ms->writeBuf;
+		ms->writeBuf = 0;
+		disconnect(ms, error);
+	}
+
+	void handleShutdown() throw() {
+		for(SocketSet::iterator i = accepting.begin(); i != accepting.end(); ++i) {
+			(*i)->close();
+		}
+		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
+			disconnect(*i, 0);
+		}
+	}
+
+#else
+	
+	void handleEvents() {
+		vector<epoll_event> events;
+		if(!poller.get(events)) {
+			LOGDT(SocketManager::className, "Poller failed: " + Util::translateError(errno));
+		}
+		for(vector<epoll_event>::iterator i = events.begin(); i != events.end(); ++i) {
+			epoll_event& ev = *i;
+			if(ev.data.fd == srv.getSocket()) {
+				accept();
+			} else if(ev.data.fd == event[1]) {
+				handleShutdown();
+			} else {
+				ManagedSocketPtr ms(reinterpret_cast<ManagedSocket*>(ev.data.ptr));
+				if(ev.events & (EPOLLIN | EPOLLHUP | EPOLLERR)) {
+					if(!read(ms))
+						continue;
+				}
+				if(ev.events & EPOLLOUT) {
+					ms->setBlocked(false);
+				}
+			}
+		}
+	}
+
+	void accept() {
 		ManagedSocketPtr ms(new ManagedSocket());
 		try {
 			ms->setIp(ms->sock.accept(srv));
@@ -812,15 +531,11 @@ private:
 			read(ms);
 		} catch (const SocketException& e) {
 			LOGDT(SocketManager::className, "Unable to create socket: " + e.getError());
-			if(e.getErrorCode() != 0) {
-				FastMutex::Lock l(errorMutex);
-				acceptErrors[e.getErrorCode()]++;
-			}
 			return;
 		}
 	}
 	
-	bool read(const ManagedSocketPtr& ms) throw() {
+	bool read(const ManagedSocketPtr& ms) {
 		if(stop || !(*ms))
 			return false;
 			
@@ -834,14 +549,16 @@ private:
 				Util::freeBuf = readBuf;
 				
 				int error = errno;
-				if(error != EAGAIN) {
-					failRead(ms, error);
+				if(error != EAGAIN && error != EINTR) {
+					ms->close();
+					disconnect(ms, error);
 					return false;
 				}
 				break;
 			} else if(bytes == 0) {
 				Util::freeBuf = readBuf;
-				failRead(ms, 0);
+				ms->close();
+				disconnect(ms, 0);
 				return false;
 			}
 			
@@ -851,28 +568,7 @@ private:
 		return true;
 	}
 	
-	void failRead(const ManagedSocketPtr& ms, int error) throw() {
-		if(!(*ms)) {
-			return;
-		}
-		
-		SocketSet::iterator i = disconnecting.find(ms);
-		if(i == disconnecting.end()) {
-			ms->failSocket();
-		} else {
-			disconnecting.erase(i);
-		}
-
-		poller.remove(ms);		
-		ms->close();
-		active.erase(ms);
-		if(error != 0) {
-			FastMutex::Lock l(errorMutex);
-			readErrors[error]++;
-		}
-	}
-	
-	void write(const ManagedSocketPtr& ms) throw() {
+	void write(const ManagedSocketPtr& ms) {
 		if(stop || !(*ms)) {
 			return;
 		}
@@ -881,8 +577,9 @@ private:
 			ByteVector* writeBuf = ms->prepareWrite();
 			
 			if(!writeBuf) {
-				if(ms->disc) {
-					addRemove(ms);
+				uint32_t now = GET_TICK();
+				if(ms->disc || (ms->isBlocked() && ms->disc < now)) {
+					disconnect(ms, 0);
 				}
 				return;
 			}
@@ -895,7 +592,7 @@ private:
 					return;
 				}
 				Util::freeBuf = writeBuf;
-				failWrite(ms, error);
+				disconnect(ms, error);
 				return;
 			}
 			if(!ms->completeWrite(writeBuf, bytes)) {
@@ -903,86 +600,87 @@ private:
 			}
 		}
 	}
-	
-	void failWrite(const ManagedSocketPtr& ms, int error) throw() {
-		addRemove(ms);
-		if(error != 0) {
-			FastMutex::Lock l(errorMutex);
-			writeErrors[error]++;
+
+	void handleShutdown() {
+		char buf;
+		int bytes = ::recv(event[1], &buf, 1, MSG_DONTWAIT);
+		if(bytes == -1) {
+			
+			int err = errno;
+			if(err == EAGAIN || err == EINTR) {
+				return;
+			}
+			LOGDT(SocketManager::className, "Error reading from event[1]: " + Util::translateError(err));
+			return;
+		}
+
+		srv.disconnect();
+		
+		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
+			disconnect(*i, 0);
 		}
 	}
+
+#endif
 	
 	void writeAll() throw() {
-		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
+		if(active.empty()) {
+			return;
+		}
+		SocketSet::iterator start = active.begin();
+		SocketSet::iterator end = active.end();
+		SocketSet::iterator mid = start;
+		// Start at a random position each time in order not to favorise the first sockets...
+		std::advance(mid, Util::rand(active.size()));
+		
+		for(SocketSet::iterator i = mid; i != end; ++i) {
+			write(*i);
+		}
+		for(SocketSet::iterator i = start; i != mid; ++i) {
 			write(*i);
 		}
 	}
 	
-	void disconnect(const ManagedSocketPtr& ms) throw() {
-		if(!(*ms)) 
-			return;
-		
+	void disconnect(const ManagedSocketPtr& ms, int error) {
 		if(disconnecting.find(ms) != disconnecting.end()) {
 			return;
 		}
-
+ 
 		disconnecting.insert(ms);
-		ms->failSocket();
-		write(ms);
+		
+		ms->failSocket(error);
 	}
 	
-	void checkDisconnects() throw() {
-		uint32_t now = GET_TICK();
+	void removeDisconnected() {
 		for(SocketSet::iterator i = disconnecting.begin(); i != disconnecting.end(); ++i) {
-			const ManagedSocketPtr& ms = *i;
-			if(ms->disc + (uint32_t)SETTING(DISCONNECT_TIMEOUT) < now) {
-				ms->shutdown();
-			}
+			(*i)->close();
+			active.erase(*i);
 		}
 	}
 	
-	void handleShutdown() throw() {
-		srv.disconnect();
-		
-		for(SocketSet::iterator i = active.begin(); i != active.end(); ++i) {
-			addRemove(*i);
-		}
-	}
-	
-	// This is needed because calling close() on the socket
-	// will remove it from the epoll set (so the main loop won't
-	// be notified)
-	void addRemove(const ManagedSocketPtr& ms) {
-		Event* ev = pool.get();
-		*ev = Event(Event::REMOVE, ms);
-		::write(event[0], &ev, sizeof(ev));
-	}
-		
-	EPoll poller;
+	Poller poller;
 	Socket srv;
 	
-	FastMutex errorMutex;
-	SocketManager::ErrorMap acceptErrors;
-	SocketManager::ErrorMap readErrors;
-	SocketManager::ErrorMap writeErrors;
-
 	bool stop;
-
-	int event[2];
-	std::vector<uint8_t> ev;
 	
-	Pool<Event, ClearEvent> pool;
-		
-	typedef std::tr1::unordered_set<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
+	typedef unordered_set<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that are being written to but should be disconnected if timeout it reached */
 	SocketSet disconnecting;
-};
-
+	
+#ifdef _WIN32
+	Pool<MSOverlapped, ClearOverlapped> pool;
+	static const size_t PREPARED_SOCKETS = 32;
+	
+	/** Sockets that have a pending accept */
+	SocketSet accepting;
 #else
-#error No socket implementation for your platform
-#endif // _WIN32
+	int event[2];
+
+#endif
+};
+	
 	
 SocketManager::SocketManager() : writer(new Writer()) { 
 }
@@ -998,10 +696,12 @@ int SocketManager::run() {
 	writer->start();
 	writer->setThreadPriority(Thread::HIGH);
 	
+	ProcessQueue workQueue;
+
 	while(true) {
 		processSem.wait();
 		{
-			FastMutex::Lock l(processCS);
+			FastMutex::Lock l(processMutex);
 			workQueue.swap(processQueue);
 		}
 		for(ProcessQueue::iterator i = workQueue.begin(); i != workQueue.end(); ++i) {
@@ -1018,19 +718,16 @@ int SocketManager::run() {
 }
 
 void SocketManager::addWriter(const ManagedSocketPtr& ms) throw() {
-	writer->addWriter(ms);
 }
 
 void SocketManager::addAllWriters() throw() {
-	writer->addAllWriters();	
 }
 
 void SocketManager::addDisconnect(const ManagedSocketPtr& ms) throw() {
-	writer->addDisconnect(ms);
 }
 
 void SocketManager::addJob(const Callback& callback) throw() { 
-	FastMutex::Lock l(processCS);
+	FastMutex::Lock l(processMutex);
 
 	processQueue.push_back(callback);
 	processSem.signal(); 
@@ -1043,10 +740,6 @@ void SocketManager::shutdown() {
 	join();
 	
 	writer.release();
-}
-
-void SocketManager::getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_) {
-	writer->getErrors(acceptErrors_, readErrors_, writeErrors_);
 }
 
 }

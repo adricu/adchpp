@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 
-sys.path.append('../build/debug-mingw/bin')
+sys.path.append('../build/debug-default/bin')
 
 CLIENTS = 100
 
@@ -60,7 +60,7 @@ class Client(object):
 	def login(self, ipport):
 		self.connect(ipport)
 		cmd = AdcCommand(AdcCommand.CMD_SUP, AdcCommand.TYPE_HUB, 0)
-		cmd.addParam("ADBASE")
+		cmd.addParam("ADBASE").addParam("ADTIGR")
 		self.command(cmd)
 		self.expect(AdcCommand.CMD_SUP)
 		sid = self.expect(AdcCommand.CMD_SID)

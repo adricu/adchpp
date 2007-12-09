@@ -516,35 +516,6 @@ public:
 
 class SocketManager {
 	public:
-	%extend {
-		std::vector<std::pair<int, size_t> > getAcceptErrors() {
-			std::vector<std::pair<int, size_t> > tmp;
-			adchpp::SocketManager::ErrorMap a, r, w;
-			self->getErrors(a, r, w);
-			for(SocketManager::ErrorMap::iterator i = a.begin(); i != a.end(); ++i) {
-				tmp.push_back(std::make_pair(i->first, i->second));
-			}
-			return tmp;
-		}
-		std::vector<std::pair<int, size_t> > getReadErrors() {
-			std::vector<std::pair<int, size_t> > tmp;
-			adchpp::SocketManager::ErrorMap a, r, w;
-			self->getErrors(a, r, w);
-			for(SocketManager::ErrorMap::iterator i = r.begin(); i != r.end(); ++i) {
-				tmp.push_back(std::make_pair(i->first, i->second));
-			}
-			return tmp;
-		}
-		std::vector<std::pair<int, size_t> > getWriteErrors() {
-			std::vector<std::pair<int, size_t> > tmp;
-			adchpp::SocketManager::ErrorMap a, r, w;
-			self->getErrors(a, r, w);
-			for(SocketManager::ErrorMap::iterator i = w.begin(); i != w.end(); ++i) {
-				tmp.push_back(std::make_pair(i->first, i->second));
-			}
-			return tmp;
-		}
-	}
 };
 
 class ClientManager 

@@ -23,8 +23,8 @@
 
 #include "forward.h"
 #include "Thread.h"
-#include "Semaphores.h"
 #include "Mutex.h"
+#include "Semaphores.h"
 #include "Singleton.h"
 
 namespace adchpp {
@@ -37,15 +37,13 @@ public:
 	void startup() throw(ThreadException) { start(); }
 	void shutdown();
 
-	void addWriter(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
-	void addDisconnect(const boost::intrusive_ptr<ManagedSocket>& ms) throw();
+	void addWriter(const ManagedSocketPtr& ms) throw();
+	void addDisconnect(const ManagedSocketPtr& ms) throw();
 	void addAllWriters() throw();
 	
 	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 	
-	typedef std::tr1::unordered_map<int, size_t> ErrorMap;
-	ADCHPP_DLL void getErrors(ErrorMap& acceptErrors_, ErrorMap& readErrors_, ErrorMap& writeErrors_);
 private:
 	friend class ManagedSocket;
 	friend class Writer;
@@ -54,10 +52,9 @@ private:
 
 	typedef std::vector<Callback> ProcessQueue;
 
-	FastMutex processCS;
+	FastMutex processMutex;
 	
 	ProcessQueue processQueue;
-	ProcessQueue workQueue;
 
 	Semaphore processSem;
 

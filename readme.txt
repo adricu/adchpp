@@ -18,7 +18,7 @@ A brain (to understand the readme and setup)
 gcc 4.2+ (linux or mingw)
 boost (http://www.boost.org)
 scons (http://www.scons.org)
-swig 1.3.31
+swig 1.3.33
 
 ** Important!! The hub will _NOT_ run on Win9x/ME. **
 

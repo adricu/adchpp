@@ -123,6 +123,7 @@ void Util::decodeUrl(const string& url, string& aServer, short& aPort, string& a
 	// Only the server should be left now...
 	aServer = url.substr(i, k-i);
 }
+
 string Util::toAcp(const wstring& wString) {
 	if(wString.empty())
 		return emptyString;

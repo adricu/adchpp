@@ -73,15 +73,13 @@ private:
 	void completeAccept() throw();
 	bool completeWrite(ByteVector* buf, size_t written) throw();
 	bool completeRead(ByteVector* buf) throw();
-	void failSocket() throw();
+	void failSocket(int error) throw();
 	
 	void shutdown() { sock.shutdown(); }
 	void close() { sock.disconnect(); }
 	
 	// Functions processing events
-	void processIncoming() throw();
 	void processData(ByteVector* buf) throw();
-	void processFail() throw();
 	
 	// No copies
 	ManagedSocket(const ManagedSocket&);
@@ -103,6 +101,12 @@ private:
 	ByteVector* writeBuf;
 	/** WSABUF for data being sent */
 	WSABUF wsabuf;
+	
+	bool isBlocked() { return writeBuf != 0; }
+#else
+	bool blocked;
+	bool isBlocked() { return blocked; }
+	void setBlocked(bool blocked_) { blocked = blocked_; }
 #endif
 
 	ConnectedHandler connectedHandler;
