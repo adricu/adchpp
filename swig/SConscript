@@ -63,11 +63,11 @@ def buildPyModule():
 	if dev.is_win32() and sys.platform != 'win32':
 		print "Cross-compiling python module not supported"
 		return
-	
+
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-classic'])
 
-	import distutils.sysconfig
+	import distutils.sysconfig,distutils.cygwinccompiler
 	
 	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
 	if '_DEBUG' in env['CPPDEFINES']:
@@ -75,10 +75,17 @@ def buildPyModule():
 	if '/MDd' in env['CCFLAGS']:
 		env['CCFLAGS'].remove('/MDd')
 		env['CCFLAGS'].append('/MD')
-	
+
+	if 'mingw' in env['TOOLS']:
+		compiler = distutils.cygwinccompiler.Mingw32CCompiler()
+		env.Append(LIBS=compiler.dll_libraries)
+
 	import os,distutils,sys
 	if env['PLATFORM'] == 'win32':
-		env.Append(LIBPATH=[os.path.join(distutils.sysconfig.get_config_var('prefix'),"libs")])
+		if 'mingw' in env['TOOLS']:
+			env.Append(LIBPATH=[distutils.sysconfig.get_config_var('prefix')])
+		else:
+			env.Append(LIBPATH=[os.path.join(distutils.sysconfig.get_config_var('prefix'),"libs")])
 		env.Append(LIBS=["python"+"".join(sys.version[0:3].split(".")), 'adchpp'])
 	else:
 		env.Append(LIBS=['python2.4', 'adchpp'])
