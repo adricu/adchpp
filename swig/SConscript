@@ -82,12 +82,8 @@ def buildPyModule():
 		libpath = os.path.join(pyprefix, "libs")
 		version = '25' # We only support 2.5.x for now
 
-		if 'mingw' in env['TOOLS']:
-			sources += [File(os.path.join(libpath, "python" + version + ".lib"))]
-			env.Append(LIBS=['msvcr71'])
-		else:
-			env.Append(LIBPATH=[libpath])
-			env.Append(LIBS=["python"+version])
+		env.Append(LIBPATH=[libpath])
+		env.Append(LIBS=["python"+version, "msvcr71"])
 		env.Append(CPPPATH=[incpath])
 	else:
 		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
