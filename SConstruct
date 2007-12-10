@@ -54,7 +54,7 @@ gcc_defs = {
 
 # --- cut ---
 
-import os,sys
+import os,sys,distutils.sysconfig
 
 plugins = filter(lambda x: os.path.isfile(os.path.join('plugins', x, 'SConscript')), os.listdir('plugins'))
 
@@ -73,9 +73,9 @@ opts.AddOptions(
 	BoolOption('verbose', 'Show verbose command lines', 'no'),
 	BoolOption('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
 	BoolOption('nls', 'Build with internationalization support', 'yes'),
-	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-')
+	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-'),
+	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix'))
 )
-
 
 tools = ARGUMENTS.get('tools', tooldef)
 

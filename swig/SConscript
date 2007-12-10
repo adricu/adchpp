@@ -1,3 +1,5 @@
+# vim: set filetype: py
+
 Import('dev source_path')
 
 targets = []
@@ -60,36 +62,38 @@ def buildRbModule():
 
 def buildPyModule():
 	import sys
-	if dev.is_win32() and sys.platform != 'win32':
-		print "Cross-compiling python module not supported"
-		return
 
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-classic'])
 
-	import distutils.sysconfig,distutils.cygwinccompiler
+	import distutils.sysconfig
 	
-	env.Append(CPPPATH=['#', distutils.sysconfig.get_python_inc()])
+	env.Append(CPPPATH=['#'])
 	if '_DEBUG' in env['CPPDEFINES']:
 		env['CPPDEFINES'].remove('_DEBUG')
 	if '/MDd' in env['CCFLAGS']:
 		env['CCFLAGS'].remove('/MDd')
 		env['CCFLAGS'].append('/MD')
 
-	if 'mingw' in env['TOOLS']:
-		compiler = distutils.cygwinccompiler.Mingw32CCompiler()
-		env.Append(LIBS=compiler.dll_libraries)
-
 	import os,distutils,sys
-	if env['PLATFORM'] == 'win32':
+	if dev.is_win32(): 
+		pyprefix = env['python']
+		incpath = os.path.join(pyprefix, "include")
+		libpath = os.path.join(pyprefix, "libs")
+		version = '25' # We only support 2.5.x for now
+
 		if 'mingw' in env['TOOLS']:
-			env.Append(LIBPATH=[distutils.sysconfig.get_config_var('prefix')])
+			sources += [File(os.path.join(libpath, "python" + version + ".lib"))]
+			env.Append(LIBS=['msvcr71'])
 		else:
-			env.Append(LIBPATH=[os.path.join(distutils.sysconfig.get_config_var('prefix'),"libs")])
-		env.Append(LIBS=["python"+"".join(sys.version[0:3].split(".")), 'adchpp'])
+			env.Append(LIBPATH=[libpath])
+			env.Append(LIBS=["python"+version])
+		env.Append(CPPPATH=[incpath])
 	else:
-		env.Append(LIBS=['python2.4', 'adchpp'])
+		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
+		env.Append(LIBS=['python2.4'])
 	
+	env.Append(LIBS=['adchpp'])
 	wrapper = build_path + 'python_wrap.cc'
 	pyfile = build_path + 'pyadchpp.py'
 	pytarget = dev.get_target(source_path, 'pyadchpp.py')
@@ -126,3 +130,4 @@ buildPyModule()
 buildLuaModule()
 
 Return('targets')
+
