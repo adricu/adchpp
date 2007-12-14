@@ -87,7 +87,7 @@ def buildPyModule():
 		env.Append(CPPPATH=[incpath])
 	else:
 		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
-		env.Append(LIBS=['python2.4'])
+		env.Append(LIBS=['python' + sys.version[0:3]])
 	
 	env.Append(LIBS=['adchpp'])
 	wrapper = build_path + 'python_wrap.cc'

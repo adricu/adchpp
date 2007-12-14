@@ -3,7 +3,8 @@ See license.txt
 
 -- Introduction --
 
-ADCH++ is a hub for the ADC network. 
+ADCH++ is a hub for the ADC network. It implements the ADC protocol, which can
+be found here: http://dcplusplus.sf.net/ADC.html.
 
 -- Requirements --
 
@@ -16,7 +17,6 @@ A computer that can run the above mentioned OS.
 An administrator/root account (to install as service / run on port < 1024 on unix).
 A brain (to understand the readme and setup)
 gcc 4.2+ (linux or mingw)
-boost (http://www.boost.org)
 scons (http://www.scons.org)
 swig 1.3.33
 
@@ -25,10 +25,11 @@ swig 1.3.33
 On the client side, I've only tested with DC++.
 
 -- Building --
-Install boost, swig and scons. Ensure that your compiler is available in the
+Install swig and scons. Ensure that your compiler is available in the
 PATH.  To build with gcc (*nix, mingw), run "scons" in the adchpp root folder.
 To build with msvc (windows), run "scons tools=default" in the adchpp root
 folder. To build a release build, add "mode=release" to the build line.
+For additional build options, type "scons -h".
 
 -- Command line options --
 

@@ -49,9 +49,10 @@ local context_hub = "[H]"
 local context_bcast = "[BF]"
 local context_direct = "[DE]"
 local context_send = "[BFD]"
+local context_hubdirect = "[HDE]"
 
 local command_contexts = {
-	[adchpp.AdcCommand_CMD_STA] = context_hub,
+	[adchpp.AdcCommand_CMD_STA] = context_hubdirect,
 	[adchpp.AdcCommand_CMD_SUP] = context_hub,
 	[adchpp.AdcCommand_CMD_SID] = context_hub,
 	[adchpp.AdcCommand_CMD_INF] = context_bcast,
