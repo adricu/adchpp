@@ -64,7 +64,7 @@ private:
 	friend class Singleton<BloomManager>;
 	static BloomManager* instance;
 	
-	typedef std::tr1::unordered_map<CID, HashBloom, CID::Hash> BloomMap;
+	typedef std::tr1::unordered_map<CID, HashBloom> BloomMap;
 	BloomMap blooms;
 	
 	ClientManager::SignalReceive::ManagedConnection receiveConn;

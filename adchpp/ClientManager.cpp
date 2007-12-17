@@ -431,10 +431,10 @@ void ClientManager::enterIdentify(Client& c, bool sendData) throw() {
 	setState(c, Client::STATE_IDENTIFY);
 }
 
-vector<uint8_t> ClientManager::enterVerify(Client& c, bool sendData) throw() {
+ByteVector ClientManager::enterVerify(Client& c, bool sendData) throw() {
 	dcassert(c.getState() == Client::STATE_IDENTIFY);
 	dcdebug("%s entering VERIFY\n", AdcCommand::fromSID(c.getSID()).c_str());
-	vector<uint8_t> challenge;
+	ByteVector challenge;
 	if (sendData) {
 		for (int i = 0; i < 32/4; ++i) {
 			uint32_t r = Util::rand();

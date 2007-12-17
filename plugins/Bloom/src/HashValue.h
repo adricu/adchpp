@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2006 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2001-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,23 +16,15 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#if !defined(HASH_VALUE_H)
-#define HASH_VALUE_H
+#ifndef BLOOM_HASH_VALUE_H
+#define BLOOM_HASH_VALUE_H
 
 #include <adchpp/TigerHash.h>
+#include <adchpp/Encoder.h>
 
 template<class Hasher>
 struct HashValue {
 	static const size_t SIZE = Hasher::HASH_SIZE;
-
-	struct Hash {
-#ifdef _MSC_VER
-		static const size_t bucket_size = 4;
-		static const size_t min_buckets = 8;
-#endif
-		size_t operator()(const HashValue& rhs) const { return *(size_t*)&rhs; }
-		bool operator()(const HashValue& a, const HashValue& b) const { return a < b; }
-	};
 
 	HashValue() { }
 	explicit HashValue(uint8_t* aData) { memcpy(data, aData, SIZE); }
@@ -48,6 +40,15 @@ struct HashValue {
 
 	uint8_t data[SIZE];
 };
+
+namespace std { namespace tr1 {
+template<>
+template<typename T>
+struct hash<HashValue<T> > {
+	size_t operator()(const HashValue<T>& rhs) const { return *(size_t*)rhs.data; }
+};
+}
+}
 
 typedef HashValue<TigerHash> TTHValue;
 

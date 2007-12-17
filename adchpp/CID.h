@@ -29,10 +29,6 @@ public:
 	enum { SIZE = 192 / 8 };
 	enum { BASE32_SIZE = 39 };
 
-	struct Hash {
-		size_t operator()(const CID& c) const { return c.toHash(); }
-		bool operator()(const CID& a, const CID& b) const { return a < b; }
-	};
 	CID() { memset(cid, 0, sizeof(cid)); }
 	explicit CID(const uint8_t* data) { memcpy(cid, data, sizeof(cid)); }
 	explicit CID(const std::string& base32) { Encoder::fromBase32(base32.c_str(), cid, sizeof(cid)); }
@@ -60,6 +56,16 @@ private:
 	uint8_t cid[SIZE];
 };
 
+}
+
+namespace std { namespace tr1 {
+template<>
+struct hash<adchpp::CID> {
+	size_t operator()(const adchpp::CID& rhs) const {
+		return *reinterpret_cast<const size_t*>(rhs.data());
+	}
+};
+}
 }
 
 #endif

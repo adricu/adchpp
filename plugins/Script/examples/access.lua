@@ -355,7 +355,7 @@ local function onPAS(c, cmd)
 	reply(c, "Welcome back")
 	cm:enterNormal(c, true, true)
 	
-	if user.level > 1 and (c:supports("UCMD") or c:supports("UCM0") then
+	if user.level > 1 and (c:supports("UCMD") or c:supports("UCM0")) then
 		for k, v in pairs(user_commands) do
 			ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 			ucmd:addParam(k)

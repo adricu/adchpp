@@ -176,7 +176,7 @@ private:
 	ClientMap clients;
 	typedef std::tr1::unordered_map<std::string, uint32_t> NickMap;
 	NickMap nicks;
-	typedef std::tr1::unordered_map<CID, uint32_t, CID::Hash>  CIDMap;
+	typedef std::tr1::unordered_map<CID, uint32_t>  CIDMap;
 	CIDMap cids;
 	typedef std::tr1::unordered_set<uint32_t> SIDSet;
 	SIDSet sids;
