@@ -2,14 +2,10 @@
 #include "HashBloom.h"
 
 size_t HashBloom::get_k(size_t n) {
-	const size_t bits = TTHValue::SIZE * 8;
-	for(size_t k = static_cast<size_t>(sqrt(bits)); k > 1; --k) {
-		// We only want the k's where the bits will end up on a byte boundary to ease hash implementation 
-		if((bits % k) == 0 && (bits / k) % 8 == 0) {
-			uint64_t m = get_m(n, k);
-			if(m >> (TTHValue::SIZE * 8 / k) == 0) {
-				return k;
-			}
+	for(size_t k = TTHValue::SIZE/3; k > 1; --k) {
+		uint64_t m = get_m(n, k);
+		if(m >> 24 == 0) {
+			return k;
 		}
 	}
 	return 1;
@@ -29,13 +25,15 @@ void HashBloom::add(const TTHValue& tth) {
 
 bool HashBloom::match(const TTHValue& tth) const {
 	if(bloom.empty()) {
-		return true;
+		return false;
 	}
 	for(size_t i = 0; i < k; ++i) {
 		if(!bloom[pos(tth, i)]) {
+			printf("no match\n");
 			return false;
 		}
 	}
+	printf("match\n");
 	return true;
 }
 
@@ -49,6 +47,12 @@ void HashBloom::reset(size_t k_) {
 }
 
 size_t HashBloom::pos(const TTHValue& tth, size_t n) const {
-	return (*(size_t*)(tth.data + (TTHValue::SIZE / k) * n)) % bloom.size();
+	uint32_t x = 0;
+	for(size_t i = n*3; i < TTHValue::SIZE; i += 3*k) {
+		x ^= static_cast<uint32_t>(tth.data[i]) << 2*8;
+		x ^= static_cast<uint32_t>(tth.data[i+1]) << 8;
+		x ^= static_cast<uint32_t>(tth.data[i+2]);
+	}
+	return x % bloom.size();
 }
 

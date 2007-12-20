@@ -57,7 +57,7 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 			size_t k = HashBloom::get_k(n);
 			size_t m = HashBloom::get_m(n, k);
 			
-			HashBloom bloom = blooms[c.getCID()];
+			HashBloom& bloom = blooms[c.getCID()];
 		
 			bloom.reset(k);
 			
@@ -95,7 +95,7 @@ void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
 	HashBloom& bloom = blooms[c.getCID()];
 	for(size_t i = 0; i < len; ++i) {
 		for(size_t j = 0; j < 8; ++j) {
-			bloom.push_back(data[i] & 1 << j);
+			bloom.push_back(data[i] & (1 << j));
 		}
 	}
 }

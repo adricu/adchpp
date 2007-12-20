@@ -9,8 +9,8 @@
 #define strver(s) #s
 
 #define APPNAME "ADCH++"
-#define VERSIONSTRING "2.0." xstrver(ADCHPP_REVISION)
-#define VERSIONFLOAT 2.0
+#define VERSIONSTRING "2.1.0 (r" xstrver(ADCHPP_REVISION) ")"
+#define VERSIONFLOAT 2.1
 
 #ifndef NDEBUG
 #define BUILDSTRING "Debug"
@@ -27,5 +27,5 @@ using namespace std;
 string appName = APPNAME;
 string versionString = FULLVERSIONSTRING;
 float versionFloat = VERSIONFLOAT;
-	
+
 }
