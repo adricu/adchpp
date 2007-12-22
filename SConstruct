@@ -117,7 +117,6 @@ elif 'gcc' in env['TOOLS']:
 if env['savetemps'] and 'gcc' in env['TOOLS']:
 	env.Append(CCFLAGS = ['-save-temps', '-fverbose-asm'])
 
-
 if env['CC'] == 'cl':
 	flags = msvc_flags
 	xxflags = msvc_xxflags

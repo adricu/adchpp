@@ -6,10 +6,16 @@ require("luadchpp")
 adchpp = luadchpp
 
 -- Configuration
+
+-- Where to read/write user database
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
+-- Maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed
+local max_users = -1
+
+-- Users with level lower than the specified will not be allowed to run command at all
 local command_min_levels = {
---	[adchpp.CMD_DSC] = 2
+--	[adchpp.AdcCommand.CMD_MSG] = 2
 }
 
 -- Regexes for the various fields. 
@@ -159,16 +165,36 @@ local function make_user(cid, nick, password, level)
 end
 
 local function dump(c, code, msg)
+	print("dumping")
+	print(code)
+	print(msg)
 	answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	answer:addParam("" .. tostring(adchpp.AdcCommand_SEV_FATAL) .. code):addParam(msg)
 	c:send(answer)
-	c:disconnect()
+	c:disconnect(0)
 end
 
 local function reply(c, msg)
 	answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	answer:addParam(msg)
 	c:send(answer)
+end
+
+local function check_max_users()
+	
+	if max_users == -1 then
+		return
+	end
+	
+	if max_users == 0 then
+		return adchpp.AdcCommand_ERROR_REGGED_ONLY, "Only registered users are allowed in here"
+	end
+
+	local count = cm:getClients():size()
+	if count >= max_users then
+		return adchpp.AdcCommand_ERROR_HUB_FULL, "Hub full, please try again later"
+	end
+	return
 end
 
 local function get_user(cid, nick)
@@ -291,6 +317,11 @@ local function onINF(c, cmd)
 	
 	local user = get_user(cid, nick)
 	if not user then
+		local code, err = check_max_users()
+		if code then
+			dump(c, code, err)
+			return command_processed
+		end
 		return 0
 	end
 

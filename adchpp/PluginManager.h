@@ -205,7 +205,7 @@ public:
 	}
 	/** @internal */
 	void shutdown();
-
+	
 private:
 	virtual ~PluginManager() throw();
 

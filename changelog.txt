@@ -1,3 +1,2 @@
--- 2.0  --
-* Initial release
-
+-- 2.1 --
+ * Initial ADC 1.0 release

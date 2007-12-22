@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <ScriptPlugin>
-	<Engine scriptPath="Scripts/">
+	<Engine language="lua" scriptPath="Scripts/">
 		<Script>access.lua</Script>
 	</Engine>
 </ScriptPlugin>

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \"adchpp\"--copyright-holder=\"Jacek Sieka\"\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-09 20:22+0100\n"
+"POT-Creation-Date: 2007-12-22 23:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -45,27 +45,27 @@ msgstr ""
 msgid "Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]\n"
 msgstr ""
 
-#: unix/main.cpp:189
+#: unix/main.cpp:188
 #, c-format
 msgid "-c <directory>\n"
 msgstr ""
 
-#: unix/main.cpp:195
+#: unix/main.cpp:194
 #, c-format
 msgid "Config dir must be an absolute path\n"
 msgstr ""
 
-#: unix/main.cpp:204
+#: unix/main.cpp:203
 #, c-format
 msgid "-p <pid-file>\n"
 msgstr ""
 
-#: unix/main.cpp:213
+#: unix/main.cpp:212
 #, c-format
 msgid "Unknown parameter: %s\n"
 msgstr ""
 
-#: unix/main.cpp:222
+#: unix/main.cpp:221
 #, c-format
 msgid "Can't open %s for writing\n"
 msgstr ""

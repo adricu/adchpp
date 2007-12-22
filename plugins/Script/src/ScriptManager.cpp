@@ -62,9 +62,15 @@ void ScriptManager::load() {
 		xml.fromXML(File(Util::getCfgPath() + "Script.xml", File::READ).read());
 		xml.stepIn();
 		while(xml.findChild("Engine")) {
-			std::string scriptPath = xml.getChildAttrib("scriptPath");
+			const std::string& scriptPath = xml.getChildAttrib("scriptPath");
+			const std::string& language = xml.getChildAttrib("language");
 			
-			engines.push_back(new LuaEngine);
+			if(language.empty() || language == "lua") {
+				engines.push_back(new LuaEngine);
+			} else {
+				LOG(className, "Unrecognised language " + language);
+				continue;
+			}
 			
 			xml.stepIn();
 			while(xml.findChild("Script")) {
@@ -83,7 +89,6 @@ void ScriptManager::reload() {
 	clearEngines();
 	load();
 }
-
 
 void ScriptManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 	

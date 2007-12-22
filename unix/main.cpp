@@ -168,7 +168,6 @@ static void printUsage() {
 
 int main(int argc, char* argv[]) {
 
-	// IMHO, argv[0] is the program name...		
 	char buf[PATH_MAX + 1];
 	char* path = buf;
 	if (readlink("/proc/self/exe", buf, sizeof (buf)) == -1) {

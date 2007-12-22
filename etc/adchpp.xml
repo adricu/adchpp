@@ -6,7 +6,7 @@
 		<!-- This is the name of the hub as it should be reported to the clients during
 			 login and to the hub registration services. -->
 		<HubName type="string">ADCH++</HubName>
-		<Description>ADCH++ Test hub</Description>
+		<Description type="string">ADCH++ Test hub</Description>
 
 <!-- Logging -->
 		<!-- Enable/disable logging -->

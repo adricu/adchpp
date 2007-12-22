@@ -89,7 +89,7 @@ public:
 	void set(IntSetting key, bool value) { set(key, (int)value); }
 
 	void load() {
-		load(Util::getCfgPath() + _T("adchpp.xml"));
+		load(Util::getCfgPath() + "adchpp.xml");
 	}
 
 	void load(const std::string& aFileName);
