@@ -19,10 +19,7 @@
 #ifndef BLOOM_MANAGER_H
 #define BLOOM_MANAGER_H
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
+#include <tuple>
 #include <adchpp/Exception.h>
 #include <adchpp/Singleton.h>
 #include <adchpp/ClientManager.h>
@@ -55,21 +52,33 @@ public:
 
 	virtual int getVersion() { return 0; }
 	
-	void onReceive(Client& c, AdcCommand& cmd, int&);
-	void onData(Client& c, const uint8_t* data, size_t len);
-	void onDisconnected(Client& c);
-	
 	static const std::string className;
 private:
 	friend class Singleton<BloomManager>;
 	static BloomManager* instance;
 	
-	typedef std::tr1::unordered_map<CID, HashBloom> BloomMap;
+	typedef std::tr1::unordered_map<uint32_t, HashBloom> BloomMap;
 	BloomMap blooms;
+	
+	// bytes, m, k
+	typedef std::tr1::tuple<ByteVector, size_t, size_t> PendingItem;
+	typedef std::tr1::unordered_map<uint32_t, PendingItem> PendingMap;
+	PendingMap pending;
+
+	int64_t searches;
+	int64_t tthSearches;
+	int64_t stopped;
 	
 	ClientManager::SignalReceive::ManagedConnection receiveConn;
 	ClientManager::SignalDisconnected::ManagedConnection disconnectConn;
+	ClientManager::SignalSend::ManagedConnection sendConn;
 
+	int64_t getBytes() const;
+	void onReceive(Client& c, AdcCommand& cmd, int&);
+	void onSend(Client& c, const AdcCommand& cmd, int&);
+	void onData(Client& c, const uint8_t* data, size_t len);
+	void onDisconnected(Client& c);
+	
 };
 
 #endif //ACCESSMANAGER_H

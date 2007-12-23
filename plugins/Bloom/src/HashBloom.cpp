@@ -41,9 +41,15 @@ void HashBloom::push_back(bool v) {
 	bloom.push_back(v);
 }
 
-void HashBloom::reset(size_t k_) {
-	bloom.resize(0);
+void HashBloom::reset(ByteVector& v, size_t k_) {
 	k = k_;
+	
+	bloom.resize(v.size() * 8);
+	for(size_t i = 0; i < v.size(); ++i) {
+		for(size_t j = 0; j < 8; ++j) {
+			bloom[i*8 + j] = ((v[i] >> j) != 0);
+		}
+	}
 }
 
 size_t HashBloom::pos(const TTHValue& tth, size_t n) const {

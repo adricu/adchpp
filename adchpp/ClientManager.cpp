@@ -50,19 +50,23 @@ ClientManager::~ClientManager() throw() {
 
 void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) throw() {
 	const string& txt = cmd.toString();
-
+	
+	bool all = false;
 	switch (cmd.getType()) {
-	case AdcCommand::TYPE_FEATURE:
-	case AdcCommand::TYPE_BROADCAST: {
-		bool all = (cmd.getType() == AdcCommand::TYPE_BROADCAST);
+	case AdcCommand::TYPE_BROADCAST: all = true; // Fallthrough
+	case AdcCommand::TYPE_FEATURE: {
 		FastMutex::Lock l(ManagedSocket::getWriteMutex());
 		for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
-			if (all || !i->second->isFiltered(cmd.getFeatures()))
-				i->second->fastSend(txt, lowPrio);
+			if (all || !i->second->isFiltered(cmd.getFeatures())) {
+				int override = 0;
+				signalSend_(*i->second, cmd, override);
+				if(!(override & DONT_SEND)) {
+					i->second->fastSend(txt, lowPrio);
+				}
+			}
 		}
-	}
 		SocketManager::getInstance()->addAllWriters();
-		break;
+	} break;
 	case AdcCommand::TYPE_DIRECT: // Fallthrough
 	case AdcCommand::TYPE_ECHO: {
 		ClientIter i = clients.find(cmd.getTo());
@@ -75,8 +79,7 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 				}
 			}
 		}
-	}
-		break;
+	} break;
 	}
 }
 

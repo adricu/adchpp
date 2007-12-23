@@ -152,7 +152,7 @@ public:
 	typedef SignalTraits<void (Client&)> SignalConnected;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
 	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
-	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalSend;
+	typedef SignalTraits<void (Client&, const AdcCommand&, int&)> SignalSend;
 	typedef SignalTraits<void (Client&, int)> SignalState;
 	typedef SignalTraits<void (Client&)> SignalDisconnected;
 

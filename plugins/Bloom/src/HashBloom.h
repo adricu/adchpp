@@ -22,8 +22,10 @@ public:
 	
 	void add(const TTHValue& tth);
 	bool match(const TTHValue& tth) const;
-	void reset(size_t k);
+	void reset(ByteVector& v, size_t k);
 	void push_back(bool v);
+	
+	size_t size() const { return bloom.size(); }
 private:	
 	
 	size_t pos(const TTHValue& tth, size_t n) const;

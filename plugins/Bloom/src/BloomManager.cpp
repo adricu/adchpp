@@ -25,16 +25,18 @@
 #include <adchpp/Util.h>
 
 using namespace std;
+using namespace std::tr1;
 using namespace std::tr1::placeholders;
 using namespace adchpp;
 
 BloomManager* BloomManager::instance = 0;
 const string BloomManager::className = "BloomManager";
 
-BloomManager::BloomManager() {
+BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
 	LOG(className, "Starting");
 	ClientManager* cm = ClientManager::getInstance();
 	receiveConn = manage(&cm->signalReceive(), std::tr1::bind(&BloomManager::onReceive, this, _1, _2, _3));
+	sendConn = manage(&cm->signalSend(), std::tr1::bind(&BloomManager::onSend, this, _1, _2, _3));
 	disconnectConn = manage(&cm->signalDisconnected(), std::tr1::bind(&BloomManager::onDisconnected, this, _1));
 }
 
@@ -56,10 +58,9 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 			
 			size_t k = HashBloom::get_k(n);
 			size_t m = HashBloom::get_m(n, k);
-			
-			HashBloom& bloom = blooms[c.getCID()];
-		
-			bloom.reset(k);
+			blooms.erase(c.getSID());
+
+			pending[c.getSID()] = make_tuple(ByteVector(), m, k);
 			
 			AdcCommand get(AdcCommand::CMD_GET);
 			get.addParam("blom");
@@ -77,29 +78,83 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 			return;
 		}
 		
+		PendingMap::const_iterator i = pending.find(c.getSID());
+		if(i == pending.end()) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Unexpected bloom filter update"));
+			c.disconnect(Util::REASON_BAD_STATE);
+			override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
+			return;
+		}
+		
 		int64_t bytes = Util::toInt(cmd.getParam(3));
 		
-		c.setDataMode(std::tr1::bind(&BloomManager::onData, this, _1, _2, _3), bytes);
-		override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
-	} else if(cmd.getCommand() == AdcCommand::CMD_SCH && cmd.getParam("TR", 0, tmp)) {
-		BloomMap::const_iterator i = blooms.find(c.getCID());
-		if(i != blooms.end() && !i->second.match(TTHValue(tmp))) {
-			// Stop it
-			dcdebug("Stopping search\n");
+		if(bytes != static_cast<int64_t>(get<1>(i->second) / 8)) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid number of bytes"));
+			c.disconnect(Util::REASON_PLUGIN);
 			override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
+			pending.erase(c.getSID());
+			return;
+		}
+
+		c.setDataMode(bind(&BloomManager::onData, this, _1, _2, _3), bytes);
+		override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
+	} else if(cmd.getCommand() == AdcCommand::CMD_MSG && cmd.getParameters().size() >= 1) {
+		if(cmd.getParam(0).compare(0, 6, "+stats") == 0) {
+			string stats = "\nBloom filter statistics:";
+			stats += "\nTotal outgoing searches: " + Util::toString(searches);
+			stats += "\nOutgoing TTH searches: " + Util::toString(tthSearches) + " (" + Util::toString(tthSearches * 100. / searches) + "% of total)";
+			stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
+			int64_t bytes = getBytes();
+			size_t clients = ClientManager::getInstance()->getClients().size();
+			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
+			stats += "\nApproximate memory usage: " + Util::formatBytes(bytes) + ", " + Util::formatBytes(static_cast<double>(bytes) / clients) + "/client";
+			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));			
+			override |= ClientManager::DONT_SEND;
 		}
 	}
 }
 
-void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
-	HashBloom& bloom = blooms[c.getCID()];
-	for(size_t i = 0; i < len; ++i) {
-		for(size_t j = 0; j < 8; ++j) {
-			bloom.push_back(data[i] & (1 << j));
+void BloomManager::onSend(Client& c, const AdcCommand& cmd, int& override) {
+	if(cmd.getCommand() == AdcCommand::CMD_SCH) {
+		searches++;
+		string tmp;
+		if(cmd.getParam("TR", 0, tmp)) {
+			tthSearches++;
+			BloomMap::const_iterator i = blooms.find(c.getSID());
+			if(i != blooms.end() && !i->second.match(TTHValue(tmp))) {
+				// Stop it
+				stopped++;
+				dcdebug("Stopping search\n");
+				override |= ClientManager::DONT_SEND;
+			}
 		}
+	}  
+}
+int64_t BloomManager::getBytes() const {
+	int64_t bytes = 0;
+	for(BloomMap::const_iterator i = blooms.begin(); i != blooms.end(); ++i) {
+		bytes += i->second.size() / 8;
+	}
+	return bytes;
+}
+
+void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
+	PendingMap::iterator i = pending.find(c.getSID());
+	if(i == pending.end()) {
+		// Shouldn't happen
+		return;
+	}
+	ByteVector& v = get<0>(i->second);
+	v.insert(v.end(), data, data + len);
+	
+	if(v.size() == get<1>(i->second) / 8) {
+		HashBloom& bloom = blooms[c.getSID()];
+		bloom.reset(v, get<2>(i->second));
+		pending.erase(i);
 	}
 }
 
 void BloomManager::onDisconnected(Client& c) {
-	blooms.erase(c.getCID());
+	blooms.erase(c.getSID());
+	pending.erase(c.getSID());
 }
