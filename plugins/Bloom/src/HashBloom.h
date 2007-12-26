@@ -15,7 +15,7 @@
  */
 class HashBloom {
 public:
-	/** Return the largest k such that get_m returns a value smaller than 2^(TTHValue::SIZE/k) */
+	/** Return a suitable value for k based on n */
 	static size_t get_k(size_t n);
 	/** Optimal number of bits to allocate for n elements when using k hashes */
 	static uint64_t get_m(size_t n, size_t k);

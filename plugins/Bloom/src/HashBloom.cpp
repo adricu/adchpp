@@ -29,11 +29,9 @@ bool HashBloom::match(const TTHValue& tth) const {
 	}
 	for(size_t i = 0; i < k; ++i) {
 		if(!bloom[pos(tth, i)]) {
-			printf("no match\n");
 			return false;
 		}
 	}
-	printf("match\n");
 	return true;
 }
 
