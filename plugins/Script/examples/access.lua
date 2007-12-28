@@ -438,28 +438,28 @@ local function onMSG(c, cmd)
 	
 	if command == "test" then
 		reply(c, "Test ok")
-		return adchpp.AdcCommand_DONT_SEND
+		return adchpp.ClientManager_DONT_SEND
 	elseif command == "error" then
 		xxxxyyyy()
-		return adchpp.AdcCommand_DONT_SEND
+		return adchpp.ClientManager_DONT_SEND
 	elseif command == "help" then
 		reply(c, "+test, +help, +regme password, +regnick nick password level")
-		return adchpp.AdcCommand_DONT_SEND
+		return adchpp.ClientManager_DONT_SEND
 	elseif command == "regme" then
 		if not parameters:match("%S+") then
 			reply(c, "You need to supply a password without whitespace")
-			return adchpp.AdcCommand_DONT_SEND
+			return adchpp.ClientManager_DONT_SEND
 		end
 		
 		register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 				
 		reply(c, "You're now registered")
-		return adchpp.AdcCommand_DONT_SEND
+		return adchpp.ClientManager_DONT_SEND
 	elseif command == "regnick" then
 		local nick, password, level = parameters:match("^(%S+) (%S+) (%d+)")
 		if not nick or not password or not level then
 			reply(c, "You must supply nick, password and level!")
-			return adchpp.AdcCommand_DONT_SEND
+			return adchpp.ClientManager_DONT_SEND
 		end
 		
 		level = tonumber(level)
@@ -475,17 +475,17 @@ local function onMSG(c, cmd)
 		
 		if not my_user then
 			reply(c, "Only registered users may register others")
-			return adchpp.AdcCommand_DONT_SEND
+			return adchpp.ClientManager_DONT_SEND
 		end
 		
 		if level >= my_user.level then
 			reply(c, "You may only register to a lower level than your own")
-			return adchpp.AdcCommand_DONT_SEND
+			return adchpp.ClientManager_DONT_SEND
 		end
 		
 		if level < 1 then
 			reply(c, "Level too low")
-			return adchpp.AdcCommand_DONT_SEND
+			return adchpp.ClientManager_DONT_SEND
 		end
 		
 		register_user(cid, nick, password, level)
@@ -496,7 +496,7 @@ local function onMSG(c, cmd)
 			reply(other, "You've been registered with password " .. password)
 		end
 
-		return adchpp.AdcCommand_DONT_SEND
+		return adchpp.ClientManager_DONT_SEND
 	elseif command == "stats" then
 		local now = os.time()
 		local scripttime = os.difftime(now, start_time)
@@ -537,7 +537,7 @@ local function onMSG(c, cmd)
 		str = str .. recvCalls .. "\tReceive calls (" .. adchpp.Util_formatBytes(recvBytes/recvCalls) .. "/call)\n"
 		
 		reply(c, str)
-		return adchpp.AdcCommand_DONT_SEND
+		return adchpp.ClientManager_DONT_SEND
 	end
 	
 	return 0
@@ -558,6 +558,7 @@ local function onDSC(c, cmd)
 end
 
 local function onReceive(c, cmd, override)
+
 	cmdstr = cmd:getCommandString()
 	if stats[cmdstr] then
 		stats[cmdstr] = stats[cmdstr] + 1
