@@ -15,7 +15,7 @@ local max_users = -1
 
 -- Users with level lower than the specified will not be allowed to run command at all
 local command_min_levels = {
---	[adchpp.AdcCommand.CMD_MSG] = 2
+	[adchpp.AdcCommand_CMD_MSG] = 2
 }
 
 -- Regexes for the various fields. 
