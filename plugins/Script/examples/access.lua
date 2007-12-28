@@ -96,6 +96,8 @@ local stats = { }
 
 local cm = adchpp.getCM()
 
+function hasbit(x, p) return x % (p + p) >= p end
+
 local function load_users()
 	users.cids = { }
 	users.nicks = { }
@@ -424,7 +426,7 @@ end
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
-	
+
 	if not command then
 		return 0
 	end
@@ -514,8 +516,8 @@ local function onMSG(c, cmd)
 		
 		str = str .. "\nDisconnect reasons: \n"
 		for k, v in pairs(adchpp) do
-			if k:sub(1, 7) == "REASON_" and k ~= "REASON_LAST" then
-				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k .. "\n"
+			if k:sub(1, 12) == "Util_REASON_" and k ~= "Util_REASON_LAST" then
+				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k:sub(6) .. "\n"
 			end
 		end
 		
@@ -558,7 +560,6 @@ local function onDSC(c, cmd)
 end
 
 local function onReceive(c, cmd, override)
-
 	cmdstr = cmd:getCommandString()
 	if stats[cmdstr] then
 		stats[cmdstr] = stats[cmdstr] + 1
@@ -566,7 +567,7 @@ local function onReceive(c, cmd, override)
 		stats[cmdstr] = 1
 	end
 
-	if override > 0 then
+	if hasbit(override, adchpp.ClientManager_DONT_DISPATCH) then
 		return 0
 	end
 	
