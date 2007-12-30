@@ -163,15 +163,6 @@ int Socket::read(void* aBuffer, size_t aBufLen) throw(SocketException) {
 	return len;
 }
 
-void Socket::write(const char* aBuffer, size_t aLen) throw(SocketException) {
-	size_t pos = writeNB(aBuffer, aLen);
-	while(pos < aLen) {
-		// Try once every second at least, you never know...
-		wait(1000, WAIT_WRITE);
-		pos += writeNB(aBuffer + pos, aLen - pos);
-	}
-}
-
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
@@ -187,13 +178,13 @@ void Socket::write(const char* aBuffer, size_t aLen) throw(SocketException) {
  * @return 0 if socket would block, otherwise the number of bytes written
  * @throw SocketExcpetion Send failed.
  */
-int Socket::writeNB(const char* aBuffer, size_t aLen) throw(SocketException) {
+int Socket::write(const void* aBuffer, size_t aLen) throw(SocketException) {
 	dcdebug("Writing %db: %.100s\n", aLen, aBuffer);
 	dcassert(aLen > 0);
 
-	int i = ::send(sock, aBuffer, (int)aLen, MSG_NOSIGNAL | MSG_DONTWAIT);
+	int i = ::send(sock,(char*)aBuffer, (int)aLen, MSG_NOSIGNAL | MSG_DONTWAIT);
 	if(i == SOCKET_ERROR) {
-		if(socket_errno == EWOULDBLOCK) {
+		if(socket_errno == EWOULDBLOCK || socket_errno == EINTR || socket_errno == EAGAIN) {
 			return 0;
 		}
 		checksockerr(i);
@@ -211,7 +202,7 @@ int Socket::writeNB(const char* aBuffer, size_t aLen) throw(SocketException) {
  * @param aLen Data length
  * @throw SocketExcpetion Send failed.
  */
-void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t aLen) throw(SocketException) {
+void Socket::writeTo(const string& aIp, short aPort, const void* aBuffer, size_t aLen) throw(SocketException) {
 	if(sock == INVALID_SOCKET) {
 		create(TYPE_UDP);
 	}
@@ -238,7 +229,7 @@ void Socket::writeTo(const string& aIp, short aPort, const char* aBuffer, size_t
 		serv_addr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
 	}
 
-	int i = ::sendto(sock, aBuffer, (int)aLen, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+	int i = ::sendto(sock, (char*)aBuffer, (int)aLen, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
 	checksockerr(i);
 }
 

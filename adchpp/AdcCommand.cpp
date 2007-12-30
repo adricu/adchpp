@@ -24,9 +24,9 @@ namespace adchpp {
 
 using namespace std;
 
-AdcCommand::AdcCommand() : cmdInt(0), str(0), from(0), type(0) { }
+AdcCommand::AdcCommand() : cmdInt(0), from(0), type(0) { }
 
-AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), str(&tmp), from(HUB_SID), type(aType) {
+AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), from(HUB_SID), type(aType) {
 	addParam(Util::toString(sev * 100 + err));
 	addParam(desc);
 }
@@ -44,28 +44,30 @@ void AdcCommand::escape(const string& s, string& out) {
 	}
 }
 
-void AdcCommand::parse(const string& aLine) throw(ParseException) {
-	if(aLine.length() < 5) {
+void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
+	if(len < 5) {
 		throw ParseException("Command too short");
 	}
 	
-	type = aLine[0];
+	type = buf[0];
 	
 	if(type != TYPE_BROADCAST && type != TYPE_CLIENT && type != TYPE_DIRECT && type != TYPE_ECHO && type != TYPE_FEATURE && type != TYPE_INFO && type != TYPE_HUB && type != TYPE_UDP) {
 		throw ParseException("Invalid type");
 	}
 	
-	cmd[0] = aLine[1];
-	cmd[1] = aLine[2];
-	cmd[2] = aLine[3];
+	cmd[0] = buf[1];
+	cmd[1] = buf[2];
+	cmd[2] = buf[3];
 	
-	if(aLine[4] != ' ') {
+	if(buf[4] != ' ') {
 		throw ParseException("Missing space after command");
 	}
 
-	string::size_type len = aLine.length() - 1; // aLine contains trailing LF
+	// Skip trailing LF
+	len--;
 	
-	const char* buf = aLine.c_str();
+	parameters.reserve(8);
+	
 	string cur;
 	cur.reserve(64);
 
@@ -158,9 +160,18 @@ void AdcCommand::parse(const string& aLine) throw(ParseException) {
 	}
 }
 
-const string& AdcCommand::toString() const {
-	if(!str->empty())
-		return *str;
+const BufferPtr& AdcCommand::getBuffer() const {
+	if(!buffer) {
+		buffer = BufferPtr(new Buffer(toString()));
+	}
+	return buffer;
+}
+
+string AdcCommand::toString() const {
+	if(buffer) {
+		return string((char*)buffer->data(), buffer->size());
+	}
+	string tmp;
 
 	tmp.reserve(128);
 
@@ -206,7 +217,7 @@ bool AdcCommand::delParam(const char* name, size_t start) {
 	for(string::size_type i = start; i < getParameters().size(); ++i) {
 		if(toCode(name) == toCode(getParameters()[i].c_str())) {
 			getParameters().erase(getParameters().begin() + i);
-			resetString();
+			resetBuffer();
 			return true;
 		}
 	}

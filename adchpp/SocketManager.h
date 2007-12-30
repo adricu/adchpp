@@ -37,10 +37,6 @@ public:
 	void startup() throw(ThreadException) { start(); }
 	void shutdown();
 
-	void addWriter(const ManagedSocketPtr& ms) throw();
-	void addDisconnect(const ManagedSocketPtr& ms) throw();
-	void addAllWriters() throw();
-	
 	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 	

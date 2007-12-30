@@ -26,9 +26,10 @@
 #include "Mutex.h"
 #include "Signal.h"
 #include "Util.h"
+#include "Buffer.h"
 
 namespace adchpp {
-	
+
 /**
  * An asynchronous socket managed by SocketManager.
  */
@@ -37,16 +38,16 @@ public:
 	void create() throw(SocketException) { sock.create(); }
 
 	/** Asynchronous write */
-	ADCHPP_DLL void write(const char* buf, size_t len) throw();
+	ADCHPP_DLL void write(const BufferPtr& buf) throw();
 	
 	/** Asynchronous write, assumes that buffers are locked */
-	ADCHPP_DLL bool fastWrite(const char* buf, size_t len, bool lowPrio = false) throw();
+	ADCHPP_DLL void fastWrite(const BufferPtr& buf, bool lowPrio = false) throw();
 	
 	/** Returns the lock used for the write buffers */
 	static FastMutex& getWriteMutex() { return writeMutex; }
 	
 	/** Returns the number of bytes in the output buffer; buffers must be locked */
-	size_t getQueuedBytes() { return outBuf ? outBuf->size() : 0; }
+	size_t getQueuedBytes() const;
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
@@ -56,7 +57,7 @@ public:
 	
 	typedef std::tr1::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
-	typedef std::tr1::function<void(const ByteVector&)> DataHandler;
+	typedef std::tr1::function<void(const BufferPtr&)> DataHandler;
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
 	typedef std::tr1::function<void()> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
@@ -69,17 +70,17 @@ private:
 	~ManagedSocket() throw();
 	
 	// Functions for Writer (called from Writer thread)
-	ByteVector* prepareWrite();
+	void prepareWrite(BufferList& buffers);
 	void completeAccept() throw();
-	bool completeWrite(ByteVector* buf, size_t written) throw();
-	bool completeRead(ByteVector* buf) throw();
+	bool completeWrite(BufferList& buffers, size_t written) throw();
+	bool completeRead(const BufferPtr& buf) throw();
 	void failSocket(int error) throw();
 	
 	void shutdown() { sock.shutdown(); }
 	void close() { sock.disconnect(); }
 	
 	// Functions processing events
-	void processData(ByteVector* buf) throw();
+	void processData(const BufferPtr& buf) throw();
 	
 	// No copies
 	ManagedSocket(const ManagedSocket&);
@@ -88,8 +89,9 @@ private:
 	friend class Writer;
 
 	Socket sock;
+	
 	/** Output buffer, for storing data that's waiting to be transmitted */
-	ByteVector* outBuf;
+	BufferList outBuf;
 	/** Overflow timer, the buffer is allowed to overflow for 1 minute, then disconnect */
 	uint32_t overFlow;
 	/** Disconnection scheduled for this socket */
@@ -98,11 +100,11 @@ private:
 	std::string ip;
 #ifdef _WIN32
 	/** Data currently being sent by WSASend, 0 if not sending */
-	ByteVector* writeBuf;
-	/** WSABUF for data being sent */
-	WSABUF wsabuf;
+	BufferList writeBuf;
+	/** Buffer containing WSABUF's for data being sent */
+	BufferPtr wsabuf;
 	
-	bool isBlocked() { return writeBuf != 0; }
+	bool isBlocked() { return !writeBuf.empty(); }
 #else
 	bool blocked;
 	bool isBlocked() { return blocked; }

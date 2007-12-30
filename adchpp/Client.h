@@ -68,16 +68,14 @@ public:
 	const StringList& getSupportList() const throw() { return supportList; }
 	bool supports(const std::string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
 
-	void send(const char* command, size_t len) throw() {
-		dcassert(socket != NULL);
-		socket->write(command, len);
-	}
-	void send(const AdcCommand& cmd) throw() { send(cmd.toString()); }
+	void send(const char* command, size_t len) throw() { send(BufferPtr(new Buffer(command, len))); }
+	
+	void send(const AdcCommand& cmd) throw() { send(cmd.getBuffer()); }
 	void send(const std::string& command) throw() { send(command.c_str(), command.length()); }
-	void send(const char* command) throw() { socket->write(command, strlen(command)); }
-
-	void fastSend(const std::string& command, bool lowPrio = false) throw() {
-		socket->fastWrite(command.c_str(), command.length(), lowPrio);
+	void send(const BufferPtr& command) throw() { socket->write(command); }
+	
+	void fastSend(const BufferPtr& command, bool lowPrio = false) throw() {
+		socket->fastWrite(command, lowPrio);
 	}
 	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
 	
@@ -97,7 +95,7 @@ public:
 	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
 	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
 	ADCHPP_DLL bool getAllFields(AdcCommand& cmd) const throw();
-	ADCHPP_DLL const std::string& getINF() const throw();
+	ADCHPP_DLL const BufferPtr& getINF() const throw();
 	
 	void resetChanged() { changed.clear(); }
 
@@ -169,20 +167,21 @@ private:
 	bool disconnecting;
 	
 	PSDList psd;
-	std::string line;
+	BufferPtr buffer;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;
 	
 	time_t floodTimer;
 	
 	/** Latest INF cached */
-	mutable std::string INF;
+	mutable BufferPtr INF;
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
 	
 	void onConnected() throw();
-	void onData(const ByteVector&) throw();
+	void onData(const BufferPtr&) throw();
 	void onFailed() throw();
+	
 };
 
 }

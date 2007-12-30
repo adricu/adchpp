@@ -321,13 +321,13 @@ private:
 
 			DWORD x = 0;
 
-			ms->writeBuf = Util::freeBuf;
-			ms->writeBuf->resize(ACCEPT_BUF_SIZE);
+			ms->writeBuf.push_back(BufferPtr(new Buffer(ACCEPT_BUF_SIZE)));
+			ms->writeBuf.back()->resize(ACCEPT_BUF_SIZE);
 			
 			MSOverlapped* overlapped = pool.get();
 			*overlapped = MSOverlapped(MSOverlapped::ACCEPT_DONE, ms);
 
-			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), &(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
+			if(!::AcceptEx(srv.getSocket(), ms->getSocket(), ms->writeBuf.back()->data(), 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, &x, overlapped)) {
 				int error = ::WSAGetLastError();
 				if(error != ERROR_IO_PENDING) {
 					if(!stop) {
@@ -348,12 +348,11 @@ private:
 		struct sockaddr_in *local, *remote;
 		int sz1 = sizeof(local), sz2 = sizeof(remote);
 		
-		::GetAcceptExSockaddrs(&(*ms->writeBuf)[0], 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, reinterpret_cast<sockaddr**>(&local), &sz1, reinterpret_cast<sockaddr**>(&remote), &sz2);
+		::GetAcceptExSockaddrs(ms->writeBuf.back()->data(), 0, ACCEPT_BUF_SIZE/2, ACCEPT_BUF_SIZE/2, reinterpret_cast<sockaddr**>(&local), &sz1, reinterpret_cast<sockaddr**>(&remote), &sz2);
 		
 		ms->setIp(inet_ntoa(remote->sin_addr));
 	
-		Util::freeBuf = ms->writeBuf;
-		ms->writeBuf = 0;
+		ms->writeBuf.clear();
 	
 		active.insert(ms);
 		accepting.erase(ms);
@@ -393,18 +392,14 @@ private:
 	}
 	
 	void handleReadDone(const ManagedSocketPtr& ms) throw() {
-		ByteVector* readBuf = Util::freeBuf;
+		BufferPtr readBuf(new Buffer(SETTING(BUFFER_SIZE)));
 		
-		if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
-			readBuf->resize(SETTING(BUFFER_SIZE));
-		
-		WSABUF wsa = { (u_long)readBuf->size(), (char*)&(*readBuf)[0] };
+		WSABUF wsa = { (u_long)readBuf->size(), (char*)readBuf->data() };
 		
 		DWORD bytes = 0;
 		DWORD flags = 0;
 		
 		if(::WSARecv(ms->getSocket(), &wsa, 1, &bytes, &flags, 0, 0) == SOCKET_ERROR) {
-			Util::freeBuf = readBuf;
 			int error = ::WSAGetLastError();
 			if(error != WSAEWOULDBLOCK) {
 				// Socket failed...
@@ -417,7 +412,6 @@ private:
 		}
 		
 		if(bytes == 0) {
-			Util::freeBuf = readBuf;
 			disconnect(ms, 0);
 			return;
 		}
@@ -429,13 +423,13 @@ private:
 	}
 	
 	void write(const ManagedSocketPtr& ms) throw() {
-		if(stop || !(*ms)) {
+		if(stop || !(*ms) || !ms->writeBuf.empty()) {
 			return;
 		}
 		
-		ms->writeBuf = ms->prepareWrite();
+		ms->prepareWrite(ms->writeBuf);
 		
-		if(!ms->writeBuf) {
+		if(ms->writeBuf.empty()) {
 			uint32_t now = GET_TICK();
 
 			if(ms->disc || (ms->isBlocked() && ms->disc < now)) {
@@ -444,14 +438,17 @@ private:
 			return;
 		}
 		
-		ms->wsabuf.len = ms->writeBuf->size();
-		ms->wsabuf.buf = reinterpret_cast<char*>(&(*ms->writeBuf)[0]);
-
+		ms->wsabuf->resize(sizeof(WSABUF) * ms->writeBuf.size());
+		for(size_t i = 0; i < ms->writeBuf.size(); ++i) {
+			WSABUF wsa = { (u_long)ms->writeBuf[i]->size(), (char*)ms->writeBuf[i]->data() };
+			memcpy(ms->wsabuf->data() + i * sizeof(WSABUF), &wsa, sizeof(WSABUF));
+		}
+	
 		MSOverlapped* overlapped = pool.get();
 		*overlapped = MSOverlapped(MSOverlapped::WRITE_DONE, ms);
 		
 		DWORD x = 0;
-		if(::WSASend(ms->getSocket(), &ms->wsabuf, 1, &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
+		if(::WSASend(ms->getSocket(), (WSABUF*)ms->wsabuf->data(), ms->writeBuf.size(), &x, 0, reinterpret_cast<LPWSAOVERLAPPED>(overlapped), 0) != 0) {
 			int error = ::WSAGetLastError();
 			if(error != WSA_IO_PENDING) {
 				pool.put(overlapped);
@@ -461,19 +458,10 @@ private:
 	}
 	
 	void handleWriteDone(const ManagedSocketPtr& ms, DWORD bytes) throw() {
-		ByteVector* buf = ms->writeBuf;
-		ms->writeBuf = 0;
-		
-		if(!buf) {
-			dcdebug("No buffer in handleWriteDone??\n");
-			return;
-		}
-		ms->completeWrite(buf, bytes);
+		ms->completeWrite(ms->writeBuf, bytes);
 	}
 	
 	void failWrite(const ManagedSocketPtr& ms, int error) throw() {
-		Util::freeBuf = ms->writeBuf;
-		ms->writeBuf = 0;
 		disconnect(ms, error);
 	}
 
@@ -516,6 +504,7 @@ private:
 		ManagedSocketPtr ms(new ManagedSocket());
 		try {
 			ms->setIp(ms->sock.accept(srv));
+			ms->sock.setBlocking(false);
 					
 			if(!poller.associate(ms)) {
 				LOG(SocketManager::className, "Unable to associate EPoll: " + Util::translateError(errno));
@@ -540,14 +529,10 @@ private:
 			return false;
 			
 		for(;;) {
-			ByteVector* readBuf = Util::freeBuf;
-			if(readBuf->size() < (size_t)SETTING(BUFFER_SIZE))
-				readBuf->resize(SETTING(BUFFER_SIZE));
-				
-			ssize_t bytes = ::recv(ms->getSocket(), &(*readBuf)[0], readBuf->size(), MSG_DONTWAIT);
+			BufferPtr buf(new Buffer(SETTING(BUFFER_SIZE)));
+			
+			ssize_t bytes = ::recv(ms->getSocket(), buf->data(), buf->size(), MSG_DONTWAIT);
 			if(bytes == -1) {
-				Util::freeBuf = readBuf;
-				
 				int error = errno;
 				if(error != EAGAIN && error != EINTR) {
 					ms->close();
@@ -556,14 +541,13 @@ private:
 				}
 				break;
 			} else if(bytes == 0) {
-				Util::freeBuf = readBuf;
 				ms->close();
 				disconnect(ms, 0);
 				return false;
 			}
 			
-			readBuf->resize(bytes);
-			ms->completeRead(readBuf);
+			buf->resize(bytes);
+			ms->completeRead(buf);
 		}
 		return true;
 	}
@@ -572,30 +556,33 @@ private:
 		if(stop || !(*ms)) {
 			return;
 		}
-		
+		BufferList buffers;
 		while(true) {
-			ByteVector* writeBuf = ms->prepareWrite();
-			
-			if(!writeBuf) {
+			ms->prepareWrite(buffers);
+			if(buffers.empty()) {
 				uint32_t now = GET_TICK();
 				if(ms->disc || (ms->isBlocked() && ms->disc < now)) {
 					disconnect(ms, 0);
 				}
 				return;
 			}
-			
-			ssize_t bytes = ::send(ms->getSocket(), &(*writeBuf)[0], writeBuf->size(), MSG_NOSIGNAL | MSG_DONTWAIT);
+			std::vector<iovec> iov(buffers.size());
+			for(size_t i = 0; i < buffers.size(); ++i) {
+				iov[i].iov_base = buffers[i]->data();
+				iov[i].iov_len = buffers[i]->size();
+			}
+			ssize_t bytes = ::writev(ms->getSocket(), &iov[0], iov.size());
 			if(bytes == -1) {
 				int error = errno;
 				if(error == EAGAIN) {
-					ms->completeWrite(writeBuf, 0);
+					ms->completeWrite(buffers, 0);
 					return;
 				}
-				Util::freeBuf = writeBuf;
+				//Util::freeBuf = writeBuf;
 				disconnect(ms, error);
 				return;
 			}
-			if(!ms->completeWrite(writeBuf, bytes)) {
+			if(!ms->completeWrite(buffers, bytes)) {
 				break;
 			}
 		}
@@ -715,15 +702,6 @@ int SocketManager::run() {
 	}
 	LOG(SocketManager::className, "ERROR; should never end up here...");
 	return 0;
-}
-
-void SocketManager::addWriter(const ManagedSocketPtr& ms) throw() {
-}
-
-void SocketManager::addAllWriters() throw() {
-}
-
-void SocketManager::addDisconnect(const ManagedSocketPtr& ms) throw() {
 }
 
 void SocketManager::addJob(const Callback& callback) throw() { 

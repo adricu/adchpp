@@ -31,7 +31,7 @@ using namespace std;
 
 FastMutex ManagedSocket::writeMutex;
 
-ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0)
+ManagedSocket::ManagedSocket() throw() : overFlow(0), disc(0)
 #ifdef _WIN32
 , writeBuf(0)
 #else
@@ -42,6 +42,7 @@ ManagedSocket::ManagedSocket() throw() : outBuf(0), overFlow(0), disc(0)
 
 ManagedSocket::~ManagedSocket() throw() {
 	dcdebug("ManagedSocket deleted\n");
+#if 0
 	if(outBuf) {
 		dcdebug("Left (%d): %.*s\n", outBuf->size(), outBuf->size(), &(*outBuf)[0]);
 		Util::freeBuf = outBuf;
@@ -53,105 +54,118 @@ ManagedSocket::~ManagedSocket() throw() {
 		Util::freeBuf = writeBuf;
 	}
 #endif
+#endif
 }
 
-void ManagedSocket::write(const char* buf, size_t len) throw() {
-	bool add = false;
-	{
-		FastMutex::Lock l(writeMutex);
-		add = fastWrite(buf, len);
-	}
-	if(add) {
-		SocketManager::getInstance()->addWriter(this);
-	}
+void ManagedSocket::write(const BufferPtr& buf) throw() {
+	FastMutex::Lock l(writeMutex);
+	fastWrite(buf);
 }
 
-bool ManagedSocket::fastWrite(const char* buf, size_t len, bool lowPrio /* = false */) throw() {
-	if((len == 0) || (disc > 0))
-		return false;
-	
-	bool add = false;
-	if(outBuf == 0) {
-		add = true;
-		outBuf = Util::freeBuf;
+static size_t sum(const BufferList& l) {
+	size_t bytes = 0;
+	for(BufferList::const_iterator i = l.begin(); i != l.end(); ++i) {
+		bytes += (*i)->size();
 	}
+	return bytes;
+}
+
+size_t ManagedSocket::getQueuedBytes() const {
+	return sum(outBuf);
+}
+
+void ManagedSocket::fastWrite(const BufferPtr& buf, bool lowPrio /* = false */) throw() {
+	if((buf->size() == 0) || (disc > 0))
+		return;
 	
-	if(outBuf->size() + len > (uint32_t)SETTING(MAX_BUFFER_SIZE)) {
+	size_t queued = getQueuedBytes();
+	
+	if(queued + buf->size() > (size_t)SETTING(MAX_BUFFER_SIZE)) {
 		if(lowPrio && SETTING(KEEP_SLOW_USERS)) {
-			return false;
+			return;
 		} else if(overFlow > 0 && overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {
 			disconnect(Util::REASON_WRITE_OVERFLOW);
-			return false;
+			return;
 		} else {
 			overFlow = GET_TICK();
 		}
 	}
 	
-	Stats::queueBytes += len;
+	Stats::queueBytes += buf->size();
 	Stats::queueCalls++;
-	outBuf->insert(outBuf->end(), buf, buf + len);
-	return add;
+	outBuf.push_back(buf);
 }
 
-ByteVector* ManagedSocket::prepareWrite() {
+void ManagedSocket::prepareWrite(BufferList& buffers) {
 	if(isBlocked()) {
-		return 0;
+		return;
 	}
-
-	ByteVector* buffer = 0;
 	
-	{
-		FastMutex::Lock l(writeMutex);
-
-		if(outBuf == 0) {
-			return 0;
-		}		
-
-		if(SETTING(MAX_SEND_SIZE) > 0 && (outBuf->size() > (size_t)SETTING(MAX_SEND_SIZE))) {
-			// Damn, we take a copy and leave the rest...
-			buffer = Util::freeBuf;
-			buffer->insert(buffer->end(), outBuf->begin(), outBuf->begin() + SETTING(MAX_SEND_SIZE));
-			outBuf->erase(outBuf->begin(), outBuf->begin() + SETTING(MAX_SEND_SIZE));
-		} else {
-			buffer = outBuf;
-			outBuf = 0;
-		}
+	FastMutex::Lock l(writeMutex);		
+	size_t queued = getQueuedBytes();
+	if(queued == 0) {
+		return;
 	}
-	return buffer;
+	
+	size_t max_send = static_cast<size_t>(SETTING(MAX_SEND_SIZE));
+	
+	if((max_send > 0) && (queued > max_send)) {
+		// Copy as many buffers as possible
+		// TODO The last copied buffer should be split...
+		size_t done = 0;
+		BufferList::iterator i;
+		for(i = outBuf.begin(); i != outBuf.end(); ++i) {
+			buffers.push_back(*i);
+			done += (*i)->size();
+			if(done > max_send) {
+					break;
+			}
+		}
+		outBuf.erase(outBuf.begin(), i);
+	} else {
+		buffers.swap(outBuf);
+	}
 }
 
-bool ManagedSocket::completeWrite(ByteVector* buf, size_t written) throw() {
+bool ManagedSocket::completeWrite(BufferList& buffers, size_t written) throw() {
 
 	Stats::sendBytes += written;
 	Stats::sendCalls++;
 
-	bool moreData;
-	{
-		FastMutex::Lock l(writeMutex);
+	size_t done = 0;
+	BufferList::iterator i = buffers.begin();
+	for(; i != buffers.end(); ++i) {
+		if(done + (*i)->size() > written) {
+			break;
+		}
+		done += (*i)->size();
+	}
+	
+	FastMutex::Lock l(writeMutex);
+	
+	if(done != written) {
+		// i points to the first not fully written buffer..
+		size_t diff = written - done;
+		if(diff != 0) {
+			(*i)->erase_first(diff);
+		}
 		
-		if(written != buf->size()) {
-			if(outBuf == 0) {
-				buf->erase(buf->begin(), buf->begin() + written);
-				outBuf = buf;
-				buf = 0;
-			} else {
-				outBuf->insert(outBuf->begin(), buf->begin() + written, buf->end());
-			}
-		} 
-		moreData = (outBuf != 0) || disc > 0;
-		if( !outBuf || (outBuf->size() < (size_t)SETTING(MAX_BUFFER_SIZE)) )
+		outBuf.insert(outBuf.begin(), i, buffers.end());
+	}
+
+	buffers.clear();
+	
+	size_t left = getQueuedBytes();
+	if(overFlow > 0) {
+		if(left < static_cast<size_t>(SETTING(MAX_BUFFER_SIZE))) {
 			overFlow = 0;
-			
+		}
 	}
 	
-	if(buf) {
-		Util::freeBuf = buf;
-	}
-	
-	return moreData;
+	return left > 0 || disc > 0;
 }
 
-bool ManagedSocket::completeRead(ByteVector* buf) throw() {
+bool ManagedSocket::completeRead(const BufferPtr& buf) throw() {
 	Stats::recvBytes += buf->size();
 	Stats::recvCalls++;
 	SocketManager::getInstance()->addJob(std::tr1::bind(&ManagedSocket::processData, this, buf));
@@ -163,6 +177,7 @@ void ManagedSocket::completeAccept() throw() {
 }
 
 void ManagedSocket::failSocket(int) throw() {
+	sock.disconnect();
 	SocketManager::getInstance()->addJob(failedHandler);
 }
 
@@ -173,12 +188,10 @@ void ManagedSocket::disconnect(Util::Reason reason) throw() {
 
 	disc = GET_TICK() + SETTING(DISCONNECT_TIMEOUT);
 	Util::reasons[reason]++;
-	SocketManager::getInstance()->addDisconnect(this);
 }
 
-void ManagedSocket::processData(ByteVector* buf) throw() {
-	dataHandler(*buf);
-	Util::freeBuf = buf;
+void ManagedSocket::processData(const BufferPtr& buf) throw() {
+	dataHandler(buf);
 }
 
 }

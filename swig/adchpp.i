@@ -327,8 +327,8 @@ public:
 	StringList& getParameters();
 	//const StringList& getParameters() const;
 
-	const std::string& toString() const;
-	void resetString();
+	std::string toString() const;
+	void resetBuffer();
 
 	AdcCommand& addParam(const std::string& name, const std::string& value);
 	AdcCommand& addParam(const std::string& str);

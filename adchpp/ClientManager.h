@@ -69,9 +69,10 @@ public:
 
 	/** Send a command to the clients according to its type */
 	ADCHPP_DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
+	void sendToAll(const AdcCommand& cmd) throw() { sendToAll(cmd.getBuffer()); }
 	/** Send command to all regardless of type */
-	void sendToAll(const AdcCommand& cmd) throw() { sendToAll(cmd.toString()); }
-	ADCHPP_DLL void sendToAll(const std::string& cmd) throw();
+	void sendToAll(const std::string& cmd) throw() { sendToAll(BufferPtr(new Buffer(cmd))); }
+	ADCHPP_DLL void sendToAll(const BufferPtr& buffer) throw();
 	/** Send command to a single client regardless of type */
 	ADCHPP_DLL void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
@@ -188,8 +189,8 @@ private:
 
 	// Strings used in various places along the pipeline...rebuilt in updateCache()...
 	struct Strings {
-		std::string sup;
-		std::string inf;
+		BufferPtr sup;
+		BufferPtr inf;
 	} strings;
 
 	friend class Singleton<ClientManager>;

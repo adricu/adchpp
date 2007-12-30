@@ -107,12 +107,11 @@ public:
 	virtual void bind(short aPort) throw(SocketException);
 	virtual void connect(const std::string& aIp, short aPort) throw(SocketException);
 	void connect(const std::string& aIp, const std::string& aPort) throw(SocketException) { connect(aIp, (short)Util::toInt(aPort)); }
+	int read(void* aBuffer, size_t aBufLen) throw(SocketException); 
 	virtual std::string accept(const Socket& aSocket) throw(SocketException);
-	virtual void write(const char* aBuffer, size_t aLen) throw(SocketException);
+	virtual int write(const void* aBuffer, size_t aLen) throw(SocketException);
 	void write(const std::string& aData) throw(SocketException) { write(aData.data(), aData.length()); }
-	virtual int writeNB(const char* aBuffer, size_t aLen) throw(SocketException);
-	int writeNB(const std::string& aData) throw(SocketException) { return writeNB(aData.data(), aData.length()); }
-	virtual void writeTo(const std::string& aIp, short aPort, const char* aBuffer, size_t aLen) throw(SocketException);
+	virtual void writeTo(const std::string& aIp, short aPort, const void* aBuffer, size_t aLen) throw(SocketException);
 	void writeTo(const std::string& aIp, short aPort, const std::string& aData) throw(SocketException) { writeTo(aIp, aPort, aData.data(), aData.length()); }
 	virtual void disconnect() throw();
 
@@ -120,7 +119,6 @@ public:
 
 	void shutdown() { ::shutdown(sock, SD_BOTH); }
 	
-	int read(void* aBuffer, size_t aBufLen) throw(SocketException); 
 	int wait(uint32_t millis, int waitFor) throw(SocketException);
 	
 	static std::string resolve(const std::string& aDns);

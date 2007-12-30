@@ -49,7 +49,7 @@ ClientManager::~ClientManager() throw() {
 }
 
 void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) throw() {
-	const string& txt = cmd.toString();
+	const BufferPtr& buf = cmd.getBuffer();
 	
 	bool all = false;
 	switch (cmd.getType()) {
@@ -61,21 +61,20 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 				int override = 0;
 				signalSend_(*i->second, cmd, override);
 				if(!(override & DONT_SEND)) {
-					i->second->fastSend(txt, lowPrio);
+					i->second->fastSend(buf, lowPrio);
 				}
 			}
 		}
-		SocketManager::getInstance()->addAllWriters();
 	} break;
 	case AdcCommand::TYPE_DIRECT: // Fallthrough
 	case AdcCommand::TYPE_ECHO: {
 		ClientIter i = clients.find(cmd.getTo());
 		if (i != clients.end()) {
-			i->second->send(txt);
+			i->second->send(buf);
 			if (COMPATIBILITY || cmd.getType() == AdcCommand::TYPE_ECHO) {
 				i = clients.find(cmd.getFrom());
 				if (i != clients.end()) {
-					i->second->send(txt);
+					i->second->send(buf);
 				}
 			}
 		}
@@ -83,14 +82,11 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 	}
 }
 
-void ClientManager::sendToAll(const string& cmd) throw() {
-	{
-		FastMutex::Lock l(ManagedSocket::getWriteMutex());
-		for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
-			i->second->fastSend(cmd);
-		}
+void ClientManager::sendToAll(const BufferPtr& buf) throw() {
+	FastMutex::Lock l(ManagedSocket::getWriteMutex());
+	for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
+		i->second->fastSend(buf);
 	}
-	SocketManager::getInstance()->addAllWriters();
 }
 
 size_t ClientManager::getQueuedBytes() throw() {
@@ -106,7 +102,7 @@ size_t ClientManager::getQueuedBytes() throw() {
 void ClientManager::sendTo(const AdcCommand& cmd, const uint32_t& to) throw() {
 	ClientIter i = clients.find(to);
 	if (i != clients.end()) {
-		i->second->send(cmd.toString());
+		i->second->send(cmd.getBuffer());
 	}
 }
 
@@ -115,7 +111,7 @@ void ClientManager::updateCache() throw() {
 	AdcCommand s(AdcCommand::CMD_SUP);
 	for (StringIter i = supports.begin(); i != supports.end(); ++i)
 		s.addParam("AD" + *i);
-	strings.sup = s.toString();
+	strings.sup = s.getBuffer();
 
 	strings.inf = AdcCommand(AdcCommand::CMD_INF)
 	.addParam("NI", SETTING(HUB_NAME))
@@ -124,7 +120,7 @@ void ClientManager::updateCache() throw() {
 	.addParam("VE", versionString)
 	.addParam("CT5")
 	.addParam("HU1") // ADC <=0.13
-	    .toString();
+	.getBuffer();
 }
 
 bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
@@ -202,7 +198,7 @@ void ClientManager::onBadLine(Client& c, const string& aLine) throw() {
 }
 
 void ClientManager::badState(Client& c, const AdcCommand& cmd) throw() {
-	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command").addParam("FC", cmd.toString().substr(0, 4)));
+	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command").addParam("FC", cmd.getFourCC()));
 	c.disconnect(Util::REASON_BAD_STATE);
 }
 
@@ -323,7 +319,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 			} else if (j->compare(2, j->size()-2, "0.0.0.0") == 0) {
 				c.setField("I4", c.getIp());
 				*j = "I4" + c.getIp();
-				cmd.resetString();
+				cmd.resetBuffer();
 			} else if (j->size()-2 != c.getIp().size() || j->compare(2, j->size()-2, c.getIp()) != 0) {
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam("IP", c.getIp()));
 				c.disconnect(Util::REASON_INVALID_IP);
@@ -453,13 +449,11 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 	dcassert(c.getState() == Client::STATE_IDENTIFY || c.getState() == Client::STATE_VERIFY);
 	dcdebug("%s entering NORMAL\n", AdcCommand::fromSID(c.getSID()).c_str());
 
-	if (sendData) {
-		string str;
-		for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
-			str += i->second->getINF();
+	if(sendData) {
+		for(ClientIter i = clients.begin(); i != clients.end(); ++i) {
+			c.send(i->second->getINF());
 		}
-		c.send(str);
-		if (sendOwnInf) {
+		if(sendOwnInf) {
 			sendToAll(c.getINF());
 			c.send(c.getINF());
 		}

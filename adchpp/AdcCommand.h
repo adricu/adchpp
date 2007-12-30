@@ -22,6 +22,7 @@
 #include "common.h"
 #include "Exception.h"
 #include "Util.h"
+#include "Buffer.h"
 
 namespace adchpp {
 
@@ -108,32 +109,36 @@ public:
 
 	ADCHPP_DLL AdcCommand();
 	ADCHPP_DLL explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType = TYPE_INFO);
-	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), str(&tmp), from(aFrom), type(aType) { }
-	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), str(&aLine), type(0) { parse(aLine); }
-	AdcCommand(const AdcCommand& rhs) : parameters(rhs.parameters), cmdInt(rhs.cmdInt), str(&tmp), from(rhs.from), to(rhs.to), type(rhs.type) { }
+	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), from(aFrom), type(aType) { }
+	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), type(0) { parse(aLine); }
+	explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException) : buffer(buffer_), cmdInt(0), type(0) { parse((const char*)buffer->data(), buffer->size()); }
+	AdcCommand(const AdcCommand& rhs) : parameters(rhs.parameters), cmdInt(rhs.cmdInt), from(rhs.from), to(rhs.to), type(rhs.type) { }
 
-	ADCHPP_DLL void parse(const std::string& aLine) throw(ParseException);
+	void parse(const std::string& str) throw(ParseException) { parse(str.data(), str.size()); }
+	ADCHPP_DLL void parse(const char* buf, size_t len) throw(ParseException);
 	uint32_t getCommand() const { return cmdInt; }
 	char getType() const { return type; }
-
+	std::string getFourCC() const { std::string tmp(4, 0); tmp[0] = type; tmp[1] = cmd[0]; tmp[2] = cmd[1]; tmp[3] = cmd[2]; return tmp; }
 	StringList& getParameters() { return parameters; }
 	const StringList& getParameters() const { return parameters; }
-
-	ADCHPP_DLL const std::string& toString() const;
-	void resetString() { tmp.clear(); str = &tmp; }
+	ADCHPP_DLL std::string toString() const;
 
 	AdcCommand& addParam(const std::string& name, const std::string& value) {
 		parameters.push_back(name);
 		parameters.back() += value;
 		return *this;
 	}
+
 	AdcCommand& addParam(const std::string& param) {
 		parameters.push_back(param);
 		return *this;
 	}
+	
 	const std::string& getParam(size_t n) const {
 		return getParameters().size() > n ? getParameters()[n] : Util::emptyString;
 	}
+	
+	void resetBuffer() { buffer = BufferPtr(); }
 	
 	const std::string& getFeatures() const { return features; }
 
@@ -148,6 +153,8 @@ public:
 
 	ADCHPP_DLL static void escape(const std::string& s, std::string& out);
 
+	ADCHPP_DLL const BufferPtr& getBuffer() const;
+	
 	uint32_t getTo() const { return to; }
 	void setTo(uint32_t aTo) { to = aTo; }
 	uint32_t getFrom() const { return from; }
@@ -161,14 +168,15 @@ private:
 
 	StringList parameters;
 	std::string features;
+
+	mutable BufferPtr buffer;
+	
 	union {
 		char cmdChar[4];
 		uint8_t cmd[4];
 		uint32_t cmdInt;
 	};
-	const std::string* str;
-	mutable std::string tmp;
-
+	
 	uint32_t from;
 	uint32_t to;
 	char type;

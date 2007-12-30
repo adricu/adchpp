@@ -43,19 +43,19 @@ namespace {
 	// Lightweight call forwarders, instead of tr1::bind
 	struct Handler {
 		Handler(void (Client::*f)(), Client* c_) : c(c_), f0(f) { }
-		Handler(void (Client::*f)(const ByteVector&), Client* c_) : c(c_), f1(f) { }
+		Handler(void (Client::*f)(const BufferPtr&), Client* c_) : c(c_), f1(f) { }
 		
 		void operator()() throw() {
 			(c->*f0)();
 		}
-		void operator()(const ByteVector& bv) throw() {
+		void operator()(const BufferPtr& bv) throw() {
 			(c->*f1)(bv);
 		}
 		
 		Client* c;
 		union {
 			void (Client::*f0)();
-			void (Client::*f1)(const ByteVector&);
+			void (Client::*f1)(const BufferPtr&);
 		};
 	};
 }
@@ -90,43 +90,59 @@ void* Client::getPSD(int id) throw() {
 	return (i != psd.end()) ? i->second : 0;
 }
 
-void Client::onData(const ByteVector& data) throw() {
-	dcdebug("In (%d): %.*s\n", data.size(), data.size(), &data[0]);
-
+void Client::onData(const BufferPtr& buf) throw() {
+	uint8_t* data = buf->data();
 	size_t done = 0;
-	size_t len = data.size();
+	size_t len = buf->size();
 	while(!disconnecting && done < len) {
 		if(dataBytes > 0) {
 			size_t n = (size_t)min(dataBytes, (int64_t)(len - done));
-			dataHandler(*this, &data[done], n);
+			dataHandler(*this, data + done, n);
 			dataBytes -= n;
 			done += n;
 		} else {
 			size_t j = done;
 			while(j < len && data[j] != '\n')
 				++j;
-				
+			
 			if(j == len) {
-				line.append((char*)&data[done], j - done);
+				if(!buffer) {
+					if(done == 0) {
+						buffer = buf;
+					} else {
+						buffer = BufferPtr(new Buffer(data + done, len - done));
+					}
+				} else {
+					buffer->append(data + done, data + len);
+				}
 				return;
+			} else if(!buffer) {
+				if(done == 0 && j == len-1) {
+					buffer = buf;
+				} else {
+					buffer = BufferPtr(new Buffer(data + done, j - done + 1));
+				}
+			} else {
+				buffer->append(data + done, data + j + 1);
 			}
-			line.append((char*)&data[done], j - done + 1); // include LF
 			
 			done = j + 1;
+			
+			size_t max_cmd_size = static_cast<size_t>(SETTING(MAX_COMMAND_SIZE));
 
-			if(SETTING(MAX_COMMAND_SIZE) > 0 && line.size() > (size_t)SETTING(MAX_COMMAND_SIZE)) {
+			if(max_cmd_size > 0 && buffer->size() > max_cmd_size) {
 				send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Command too long"));
 				disconnect(Util::REASON_MAX_COMMAND_SIZE);
 				return;
 			}
 
-			if(line.size() == 1) {
-				line.clear();
+			if(buffer->size() == 1) {
+				buffer = BufferPtr();
 				continue;
 			}
 			
 			try {
-				AdcCommand cmd(line);
+				AdcCommand cmd(buffer);
 	
 				if(cmd.getType() == 'H') {
 					cmd.setFrom(getSID());
@@ -136,9 +152,9 @@ void Client::onData(const ByteVector& data) throw() {
 				}
 				ClientManager::getInstance()->onReceive(*this, cmd);
 			} catch(const ParseException&) {
-				ClientManager::getInstance()->onBadLine(*this, line);
+				ClientManager::getInstance()->onBadLine(*this, string((char*)buffer->data(), buffer->size()));
 			}
-			line.clear();
+			buffer = BufferPtr();
 		}
 	}
 }	
@@ -157,7 +173,7 @@ void Client::setField(const char* name, const string& value) throw() {
 	    info[code] = value;
     }
     changed[code] = value;
-    INF.clear();
+    INF = BufferPtr();
 }
 
 bool Client::getChangedFields(AdcCommand& cmd) const throw() {
@@ -172,11 +188,11 @@ bool Client::getAllFields(AdcCommand& cmd) const throw() {
 	return !info.empty();
 }
 
-const string& Client::getINF() const throw() {
-	if(INF.empty()) {
+const BufferPtr& Client::getINF() const throw() {
+	if(!INF) {
 		AdcCommand cmd(AdcCommand::CMD_INF, AdcCommand::TYPE_BROADCAST, getSID());
 		getAllFields(cmd);
-		INF = cmd.toString();
+		INF = cmd.getBuffer();
 	}
 	return INF;	
 }
@@ -243,7 +259,6 @@ bool Client::isFlooding(time_t addSeconds) {
 void Client::disconnect(Util::Reason reason) throw() {
 	if(socket && !disconnecting) {
 		disconnecting = true;
-		line.clear();
 		socket->disconnect(reason);
 	}
 }

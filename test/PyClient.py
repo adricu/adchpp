@@ -5,7 +5,7 @@ sys.path.append('../build/debug-default/bin')
 
 CLIENTS = 100
 
-import socket, threading, time
+import socket, threading, time, random, sys
 
 from pyadchpp import ParseException, Util_initialize, CID, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
 
@@ -27,8 +27,8 @@ class Client(object):
 	
 	def command(self, cmd):
 		s = cmd.toString()
-		print self.nick, "sending", s
-		self.sock.send(cmd.toString())
+		print self.nick, "sending", len(s), s
+		self.sock.send(s)
 	
 	def get_command(self):
 		index = self.line.find('\n')
@@ -110,7 +110,6 @@ class Client(object):
 			print "Client " + self.nick + " died, line was:", self.lastline
 		self.running = False
 try:
-	import sys
 	if len(sys.argv) > 2:
 		ip = sys.argv[1]
 		port = int(sys.argv[2])
@@ -132,7 +131,6 @@ try:
 		t.start()
 	
 	time.sleep(5)
-	import random
 	tests = []
 	for k,v in Client.__dict__.iteritems():
 		if len(k) < 4 or k[0:4] != "test":
@@ -140,7 +138,7 @@ try:
 		tests.append(v)
 	print tests
 	while len(clients) > 0:
-		time.sleep(1)
+		#time.sleep(1)
 		for c in clients:
 			if not c.running:
 				clients.remove(c)
