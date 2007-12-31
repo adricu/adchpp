@@ -63,7 +63,6 @@ string Util::emptyString;
 string Util::cfgPath;
 size_t Util::reasons[REASON_LAST];
 
-Pool<ByteVector, Util::Clear> Util::freeBuf;
 
 static void sgenrand(unsigned long seed);
 
@@ -72,14 +71,6 @@ void Util::initialize(const string& configPath) {
 	sgenrand((unsigned long)time(NULL));
 	
 	setCfgPath(configPath);
-}
-
-void Util::Clear::operator()(ByteVector& v) {
-	if(v.capacity() > static_cast<size_t>(SETTING(BUFFER_SIZE))) {
-		ByteVector().swap(v);
-	} else {
-	 	v.clear();
-	}
 }
 
 /**

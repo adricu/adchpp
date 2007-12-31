@@ -42,6 +42,11 @@ public:
 	LuaFunction(const LuaFunction& rhs) : L(rhs.L), registryItem(rhs.registryItem) { }
 	LuaFunction& operator=(const LuaFunction& rhs) { L = rhs.L; registryItem = rhs.registryItem; return *this; }
 
+	void operator()() {
+		pushFunction();
+		docall(0, 0);
+	}
+	
 	void operator()(adchpp::Client& c) {
 		pushFunction();
 
@@ -142,6 +147,10 @@ private:
 }
 %typemap(out) int64_t,uint64_t,const int64_t&, const uint64_t& {
    lua_pushnumber(L, (lua_Number)$1); SWIG_arg++;
+}
+
+%typemap(in) std::tr1::function<void () > {
+	$1 = LuaFunction(L);
 }
 
 %typemap(in) std::tr1::function<void (adchpp::Client &) > {

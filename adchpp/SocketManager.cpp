@@ -578,7 +578,6 @@ private:
 					ms->completeWrite(buffers, 0);
 					return;
 				}
-				//Util::freeBuf = writeBuf;
 				disconnect(ms, error);
 				return;
 			}
@@ -650,7 +649,7 @@ private:
 	
 	bool stop;
 	
-	typedef unordered_set<ManagedSocketPtr, PointerHash<ManagedSocket> > SocketSet;
+	typedef unordered_set<ManagedSocketPtr> SocketSet;
 	/** Sockets that have a pending read */
 	SocketSet active;
 	/** Sockets that are being written to but should be disconnected if timeout it reached */

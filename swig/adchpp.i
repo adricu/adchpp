@@ -718,6 +718,8 @@ public:
 class PluginManager 
 {
 public:
+	void attention(const std::tr1::function<void()>& f);
+
 	//typedef HASH_MAP<std::string, Plugin*> Registry;
 	//typedef Registry::iterator RegistryIter;
 

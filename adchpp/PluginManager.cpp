@@ -52,6 +52,7 @@
 namespace adchpp {
 	
 using namespace std;
+using namespace std::tr1;
 using namespace std::tr1::placeholders;
 
 PluginManager* PluginManager::instance = 0;
@@ -63,6 +64,10 @@ PluginManager::PluginManager() throw() : pluginIds(0) {
 
 PluginManager::~PluginManager() throw() { 
 	
+}
+
+void PluginManager::attention(const function<void()>& f) {
+	SocketManager::getInstance()->addJob(f);
 }
 
 bool PluginManager::loadPlugin(const string& file) {

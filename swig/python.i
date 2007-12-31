@@ -5,6 +5,9 @@
 #undef socklen_t
 %}
 
+%typemap(in) std::tr1::function<void ()> {
+	$1 = PyHandle($input, false);
+}
 %typemap(in) std::tr1::function<void (adchpp::Client&)> {
 	$1 = PyHandle($input, false);
 }

@@ -22,6 +22,15 @@
 #include "Pool.h"
 #include "Mutex.h"
 
+namespace std { namespace tr1 {
+
+template<typename T>
+struct hash<boost::intrusive_ptr<T> > {
+	size_t operator()(const boost::intrusive_ptr<T>& t) const { return hash<T*>()(t.get()); }
+};
+
+} }
+
 namespace adchpp { 
 
 struct intrusive_ptr_base {
@@ -79,24 +88,6 @@ private:
 struct DeleteFunction {
 	template<typename T>
 	void operator()(T* ptr) { delete ptr; }
-};
-
-/** A generic hash for pointers */
-template<class T>
-struct PointerHash {
-#if _MSC_VER >= 1300 
-	static const size_t bucket_size = 4; 
-	static const size_t min_buckets = 8; 
-#endif 
-	size_t operator()(const T* a) const { return ((size_t)a)/sizeof(T); }
-	bool operator()(const T* a, const T* b) { return a < b; }
-	
-	size_t operator()(const boost::intrusive_ptr<T>& a) const { return ((size_t)a.get())/sizeof(T); }
-	bool operator()(const boost::intrusive_ptr<T>& a, const boost::intrusive_ptr<T>& b) { return a.get() < b.get(); }
-};
-template<>
-struct PointerHash<void> {
-	size_t operator()(const void* a) const { return ((size_t)a)>>2; }
 };
 
 /** 
@@ -306,12 +297,6 @@ public:
 
 	/** Avoid this! Use the one of a connected socket instead... */
 	ADCHPP_DLL static std::string getLocalIp();
-
-	struct Clear {
-		void operator()(ByteVector& x);
-	};
-	/** Pool of free buffers */
-	ADCHPP_DLL static Pool<ByteVector, Clear> freeBuf;
 
 	ADCHPP_DLL static uint32_t rand();
 	static uint32_t rand(uint32_t high) { return rand() % high; }

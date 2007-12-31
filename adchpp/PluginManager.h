@@ -22,7 +22,7 @@
  * 
  * ADCH++ contains a rather powerful plugin API that can be used to create advanced
  * plugins that change or add to ADCH++'s behaviour. Most plugins will need
- * PluginManager.h, ClientManager. and Client.h included to work, even though the 
+ * PluginManager.h, ClientManager.h and Client.h included to work, even though the 
  * other header files are available as well (they're more likely to change in future 
  * versions though). You can use any method that is declared as DLL or is inline, the 
  * others are meant to be internal to ADCH++, very likely to change/disappear and will
@@ -36,13 +36,7 @@
  * of the ADCH++ plugin API. This version usually follows the main ADCH++ version,
  * unless a small update is made that I judge shouldn't affect plugins in any way.
  * Most of the time, recompiling the plugin should be enough, unless any major changes
- * have been made, and your plugin doesn't rely on the nasty internals. As to compilers,
- * the windows version is compiled using Visual C++ 7.1 (.NET), with various optimizations
- * enabled. In theory, VC6 should work as well, as I haven't seen any information about
- * changes in the name mangling scheme, but if you get strange linker errors, don't
- * blame me. For best results, make sure you have the same settings. The Linux version
- * is compiled with G++ 3.4.x, and I don't have a clue if older versions will work
- * (probably not...).
+ * have been made, and your plugin doesn't rely on the nasty internals. 
  *
  * @section Threads Threads
  *
@@ -50,19 +44,16 @@
  * communication while the other does all other work (handle protocol data and
  * so on). All plugins are run in the worker thread, which is the only thread 
  * visible to the API. You are only allowed to interact with ADCH++ from this
- * thread, as none of the API is thread safe (this is a performance issue, this way
- * no locks are taken), unless otherwise noted. This has a few important 
- * consequences. First off, you can assume that your plugin will only be called
- * by this thread, which means that you don't have to worry about multithreading
- * issues unless you start threads by yourself. Second, any work you do in a plugin
- * halts <b>all</b> of ADCH++'s processing (apart from receiving/sending buffered
- * data), in other words, don't do any lengthy processing in the on methods, as
- * the whole of ADCH++ will suffer. Third, if you indeed start another thread, make
+ * thread, as none of the API is thread safe, unless otherwise noted. This has a 
+ * few important  consequences. First off, you can assume that your plugin will 
+ * only be called by this thread, which means that you don't have to worry about 
+ * multithreading issues unless you start threads by yourself. Second, any work you 
+ * do in a plugin halts <b>all</b> of ADCH++'s processing (apart from receiving/sending 
+ * buffered data), in other words, don't do any lengthy processing in the on methods, 
+ * as the whole of ADCH++ will suffer. Third, if you indeed start another thread, make
  * sure you don't use any API functions from it apart from those explicitly marked
  * as thread safe. To indicate from a plugin that you have work to do in the main
- * worker thread, call PluginManager::attention(). This will generate an 
- * Attention event in the near future, where your thread can do its work (be
- * careful though, the Attention event might be raised by other plugins).
+ * worker thread, call PluginManager::attention().
  */
 
 #ifndef ADCHPP_PLUGINMANAGER_H
@@ -147,6 +138,13 @@ public:
 	typedef Registry::iterator RegistryIter;
 
 	/**
+	 * This is a thread-safe method to call when you need to perform some work
+	 * in the main ADCH++ worker thread. Your job will be executed once, when
+	 * time permits.
+	 */
+	ADCHPP_DLL void attention(const std::tr1::function<void()>& f);
+	
+	/**
 	 * Get a list of currently loaded plugins
 	 */
 	const StringList& getPluginList() const {
@@ -174,7 +172,7 @@ public:
 	 * @return false if name was already registered and call fails
 	 */
 	bool registerPlugin(const std::string& name, Plugin* ptr) {
-		return 	registry.insert(std::make_pair(name, ptr)).second;
+		return registry.insert(std::make_pair(name, ptr)).second;
 	}
 	
 	/** @return True if the plugin existed and was thus unregistered */
@@ -193,7 +191,7 @@ public:
 	/**
 	 * The full map of registered plugins.
 	 */
-	const Registry& getPlugins() {
+	const Registry& getPlugins() const {
 		return registry;
 	}
 		

@@ -42,19 +42,6 @@ ManagedSocket::ManagedSocket() throw() : overFlow(0), disc(0)
 
 ManagedSocket::~ManagedSocket() throw() {
 	dcdebug("ManagedSocket deleted\n");
-#if 0
-	if(outBuf) {
-		dcdebug("Left (%d): %.*s\n", outBuf->size(), outBuf->size(), &(*outBuf)[0]);
-		Util::freeBuf = outBuf;
-	}
-	
-#ifdef _WIN32
-	if(writeBuf) {
-		dcdebug("Left2 (%d): %.*s\n", writeBuf->size(), writeBuf->size(), &(*writeBuf)[0]);
-		Util::freeBuf = writeBuf;
-	}
-#endif
-#endif
 }
 
 void ManagedSocket::write(const BufferPtr& buf) throw() {
