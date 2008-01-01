@@ -91,7 +91,7 @@ ABBREVIATE_BRIEF       =
 # Doxygen will generate a detailed section even if there is only a brief 
 # description.
 
-ALWAYS_DETAILED_SEC    = NO
+ALWAYS_DETAILED_SEC    = YES
 
 # If the INLINE_INHERITED_MEMB tag is set to YES, doxygen will show all 
 # inherited members of a class in the documentation of that class as if those 
@@ -476,7 +476,7 @@ WARN_NO_PARAMDOC       = NO
 # $version, which will be replaced by the version of the file (if it could 
 # be obtained via FILE_VERSION_FILTER)
 
-WARN_FORMAT            = "$file:$line: $text "
+WARN_FORMAT            = "$file:$line: $text  "
 
 # The WARN_LOGFILE tag can be used to specify a file to which warning 
 # and error messages should be written. If left blank the output is written 
@@ -750,7 +750,7 @@ CHM_FILE               =
 # the HTML help compiler (hhc.exe). If non-empty doxygen will try to run 
 # the HTML help compiler on the generated index.hhp.
 
-HHC_LOCATION           = "C:\Program Files\HTML Help Workshop\hhc.exe "
+HHC_LOCATION           = "C:\Program Files\HTML Help Workshop\hhc.exe  "
 
 # If the GENERATE_HTMLHELP tag is set to YES, the GENERATE_CHI flag 
 # controls if a separate .chi index file is generated (YES) or that 
@@ -1071,8 +1071,8 @@ INCLUDE_FILE_PATTERNS  =
 # instead of the = operator.
 
 PREDEFINED             = _REENTRANT \
-                         "GETSETREF(a,b,c)=private: a b; public: const a& get##c() const {}; void set##c(const a&) {}; " \
-                         "GETSET(a,b,c)=private: a b; public: a get##c() const {}; void set##c(a) {}; "
+                         "GETSETREF(a,b,c)=private: a b; public: const a& get##c() const {}; void set##c(const a&) {};  " \
+                         "GETSET(a,b,c)=private: a b; public: a get##c() const {}; void set##c(a) {};  "
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

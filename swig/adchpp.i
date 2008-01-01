@@ -12,7 +12,6 @@
 #include <adchpp/Exception.h>
 #include <adchpp/PluginManager.h>
 #include <adchpp/TigerHash.h>
-#include <adchpp/SocketManager.h>
 
 using namespace adchpp;
 
@@ -64,7 +63,6 @@ void shutdown() {
 %nodefaultdtor SettingsManager;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
-%nodefaultdtor SocketManager;
 
 namespace adchpp {
 	class Client;
@@ -513,10 +511,6 @@ public:
 	}
 }
 
-class SocketManager {
-	public:
-};
-
 class ClientManager 
 {
 public:
@@ -744,6 +738,5 @@ namespace adchpp {
 	LogManager* getLM() { return LogManager::getInstance(); }
 	SettingsManager* getSM() { return SettingsManager::getInstance(); }
 	PluginManager* getPM() { return PluginManager::getInstance(); }
-	SocketManager* getSocketManager() { return SocketManager::getInstance(); }
 }
 %}
