@@ -322,8 +322,7 @@ private:
 			DWORD x = 0;
 
 			ms->writeBuf.push_back(BufferPtr(new Buffer(ACCEPT_BUF_SIZE)));
-			ms->writeBuf.back()->resize(ACCEPT_BUF_SIZE);
-			
+
 			MSOverlapped* overlapped = pool.get();
 			*overlapped = MSOverlapped(MSOverlapped::ACCEPT_DONE, ms);
 
@@ -438,7 +437,7 @@ private:
 			return;
 		}
 		
-		ms->wsabuf->resize(sizeof(WSABUF) * ms->writeBuf.size());
+		ms->wsabuf = BufferPtr(new Buffer(sizeof(WSABUF) * ms->writeBuf.size()));
 		for(size_t i = 0; i < ms->writeBuf.size(); ++i) {
 			WSABUF wsa = { (u_long)ms->writeBuf[i]->size(), (char*)ms->writeBuf[i]->data() };
 			memcpy(ms->wsabuf->data() + i * sizeof(WSABUF), &wsa, sizeof(WSABUF));
@@ -459,6 +458,7 @@ private:
 	
 	void handleWriteDone(const ManagedSocketPtr& ms, DWORD bytes) throw() {
 		ms->completeWrite(ms->writeBuf, bytes);
+		ms->wsabuf = BufferPtr();
 	}
 	
 	void failWrite(const ManagedSocketPtr& ms, int error) throw() {

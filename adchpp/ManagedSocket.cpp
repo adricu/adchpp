@@ -32,9 +32,7 @@ using namespace std;
 FastMutex ManagedSocket::writeMutex;
 
 ManagedSocket::ManagedSocket() throw() : overFlow(0), disc(0)
-#ifdef _WIN32
-, writeBuf(0)
-#else
+#ifndef _WIN32
 , blocked(false)
 #endif
 {
