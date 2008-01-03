@@ -80,6 +80,10 @@ Section "MainSection" SEC01
   File "config\users.txt"
 SectionEnd
 
+Section "Install as Service" SEC02
+  Exec "$INSTDIR\adchppd.exe" -i adchppd
+SectionEnd
+
 Section -AdditionalIcons
   SetOutPath $INSTDIR
   WriteIniStr "$INSTDIR\${PRODUCT_NAME}.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
