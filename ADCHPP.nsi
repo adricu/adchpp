@@ -80,10 +80,6 @@ Section "MainSection" SEC01
   File "config\users.txt"
 SectionEnd
 
-Section "Install as Service" SEC02
-  Exec "$INSTDIR\adchppd.exe" -i adchppd
-SectionEnd
-
 Section -AdditionalIcons
   SetOutPath $INSTDIR
   WriteIniStr "$INSTDIR\${PRODUCT_NAME}.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
@@ -92,6 +88,11 @@ Section -AdditionalIcons
   CreateShortCut "$SMPROGRAMS\ADCH++\Uninstall.lnk" "$INSTDIR\uninst.exe"
 SectionEnd
 
+Section -Service
+  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to install ADCH++ as service ?" IDYES Service IDNO End
+  Service: Exec '"$INSTDIR\adchppd.exe" -i adchppd'
+  End:
+SectionEnd
 
 Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
@@ -114,6 +115,11 @@ Function un.onInit
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove $(^Name) and all of its components?" IDYES +2
   Abort
 FunctionEnd
+
+Section -un.Service
+     Exec 'sc delete adchppd'
+    
+SectionEnd
 
 Section Uninstall
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
