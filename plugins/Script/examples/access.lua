@@ -54,7 +54,7 @@ local inf_fields = {
 local context_hub = "[H]"
 local context_bcast = "[BF]"
 local context_direct = "[DE]"
-local context_send = "[BFD]"
+local context_send = "[BFDE]"
 local context_hubdirect = "[HDE]"
 
 local command_contexts = {
