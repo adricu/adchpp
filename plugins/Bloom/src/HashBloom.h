@@ -15,14 +15,16 @@
  */
 class HashBloom {
 public:
+	HashBloom() : k(0), h(0) { }
+	
 	/** Return a suitable value for k based on n */
-	static size_t get_k(size_t n);
+	static size_t get_k(size_t n, size_t h);
 	/** Optimal number of bits to allocate for n elements when using k hashes */
 	static uint64_t get_m(size_t n, size_t k);
 	
 	void add(const TTHValue& tth);
 	bool match(const TTHValue& tth) const;
-	void reset(ByteVector& v, size_t k);
+	void reset(ByteVector& v, size_t k, size_t h);
 	void push_back(bool v);
 	
 	size_t size() const { return bloom.size(); }
@@ -32,6 +34,7 @@ private:
 	
 	std::vector<bool> bloom;
 	size_t k;
+	size_t h;
 };
 
 #endif /*HASHBLOOM_H_*/

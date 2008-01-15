@@ -1,2 +1,7 @@
--- 2.1 06.01.2008 --
- * Initial ADC 1.0 release
+-- --
+* access.lua: fixed message type for MSG
+* Some minor socket fixes
+* Initial Bloom filter implementation
+
+-- 2.1 2008-01-06 --
+* Initial ADC 1.0 release

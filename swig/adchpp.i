@@ -680,7 +680,7 @@ public:
 class TigerHash {
 public:
 	/** Hash size in bytes */
-	enum { HASH_SIZE = 24 };
+	enum { BITS = 192, BYTES = BITS / 8 }; // Keep old name for a while
 
 	TigerHash();
 	
@@ -689,7 +689,7 @@ public:
 			self->update(data.data(), data.size());
 		}
 		std::string finalize() {
-			return std::string(reinterpret_cast<const char*>(self->finalize()), TigerHash::HASH_SIZE);
+			return std::string(reinterpret_cast<const char*>(self->finalize()), TigerHash::BYTES);
 		}
 	}
 };

@@ -534,12 +534,16 @@ private:
 			ssize_t bytes = ::recv(ms->getSocket(), buf->data(), buf->size(), MSG_DONTWAIT);
 			if(bytes == -1) {
 				int error = errno;
-				if(error != EAGAIN && error != EINTR) {
-					ms->close();
-					disconnect(ms, error);
-					return false;
+				if(error == EINTR) {
+					continue;
 				}
-				break;
+				if(error == EAGAIN) {
+					break;
+				}
+				
+				ms->close();
+				disconnect(ms, error);
+				return false;
 			} else if(bytes == 0) {
 				ms->close();
 				disconnect(ms, 0);
@@ -557,33 +561,31 @@ private:
 			return;
 		}
 		BufferList buffers;
-		while(true) {
-			ms->prepareWrite(buffers);
-			if(buffers.empty()) {
-				uint32_t now = GET_TICK();
-				if(ms->disc || (ms->isBlocked() && ms->disc < now)) {
-					disconnect(ms, 0);
-				}
-				return;
+		ms->prepareWrite(buffers);
+		if(buffers.empty()) {
+			uint32_t now = GET_TICK();
+			if(ms->disc || (ms->isBlocked() && ms->disc < now)) {
+				disconnect(ms, 0);
 			}
-			std::vector<iovec> iov(buffers.size());
-			for(size_t i = 0; i < buffers.size(); ++i) {
-				iov[i].iov_base = buffers[i]->data();
-				iov[i].iov_len = buffers[i]->size();
-			}
-			ssize_t bytes = ::writev(ms->getSocket(), &iov[0], iov.size());
-			if(bytes == -1) {
-				int error = errno;
-				if(error == EAGAIN) {
-					ms->completeWrite(buffers, 0);
-					return;
-				}
+			return;
+		}
+		std::vector<iovec> iov(buffers.size());
+		for(size_t i = 0; i < buffers.size(); ++i) {
+			iov[i].iov_base = buffers[i]->data();
+			iov[i].iov_len = buffers[i]->size();
+		}
+		ssize_t bytes = ::writev(ms->getSocket(), &iov[0], iov.size());
+		if(bytes == -1) {
+			int error = errno;
+			if(error == EAGAIN) {
+				ms->setBlocked(true);
+			} else if(error != EINTR) {
 				disconnect(ms, error);
 				return;
 			}
-			if(!ms->completeWrite(buffers, bytes)) {
-				break;
-			}
+			ms->completeWrite(buffers, 0);
+		} else {
+			ms->completeWrite(buffers, bytes);
 		}
 	}
 

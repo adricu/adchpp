@@ -32,6 +32,9 @@ using namespace adchpp;
 BloomManager* BloomManager::instance = 0;
 const string BloomManager::className = "BloomManager";
 
+// TODO Make configurable
+const size_t h = 24;
+
 BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
 	LOG(className, "Starting");
 	ClientManager* cm = ClientManager::getInstance();
@@ -56,7 +59,7 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 				return;
 			}
 			
-			size_t k = HashBloom::get_k(n);
+			size_t k = HashBloom::get_k(n, h);
 			size_t m = HashBloom::get_m(n, k);
 			blooms.erase(c.getSID());
 
@@ -68,6 +71,7 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 			get.addParam("0");
 			get.addParam(Util::toString(m/8));
 			get.addParam("BK", Util::toString(k));
+			get.addParam("BH", Util::toString(h));
 			c.send(get);
 		}
 	} else if(cmd.getCommand() == AdcCommand::CMD_SND) {
@@ -149,7 +153,7 @@ void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
 	
 	if(v.size() == get<1>(i->second) / 8) {
 		HashBloom& bloom = blooms[c.getSID()];
-		bloom.reset(v, get<2>(i->second));
+		bloom.reset(v, get<2>(i->second), h);
 		pending.erase(i);
 	}
 }

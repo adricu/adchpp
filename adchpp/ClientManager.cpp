@@ -269,9 +269,9 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const Byte
 	TigerHash tiger;
 	tiger.update(&password[0], password.size());
 	tiger.update(&salt[0], salt.size());
-	uint8_t tmp[TigerHash::HASH_SIZE];
-	Encoder::fromBase32(suppliedHash.c_str(), tmp, TigerHash::HASH_SIZE);
-	if (memcmp(tiger.finalize(), tmp, TigerHash::HASH_SIZE) == 0) {
+	uint8_t tmp[TigerHash::BYTES];
+	Encoder::fromBase32(suppliedHash.c_str(), tmp, TigerHash::BYTES);
+	if (memcmp(tiger.finalize(), tmp, TigerHash::BYTES) == 0) {
 		return true;
 	}
 
@@ -284,7 +284,7 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const Byte
 	tiger2.update(c.getCID().data(), CID::SIZE);
 	tiger2.update(&password[0], password.size());
 	tiger2.update(&salt[0], salt.size());
-	if (memcmp(tiger2.finalize(), tmp, TigerHash::HASH_SIZE) == 0) {
+	if (memcmp(tiger2.finalize(), tmp, TigerHash::BYTES) == 0) {
 		c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Your client uses an old PAS encoding, please upgrade"));
 		return true;
 	}

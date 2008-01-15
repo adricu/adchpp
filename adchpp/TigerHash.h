@@ -23,8 +23,9 @@ namespace adchpp {
 
 class TigerHash {
 public:
-	/** Hash size in bytes */
-	enum { HASH_SIZE = 24 };
+	/** Hash size */
+	static const size_t BITS = 192;
+	static const size_t BYTES = BITS / 8;
 
 	TigerHash() : pos(0) {
 		res[0]=_ULL(0x0123456789ABCDEF);

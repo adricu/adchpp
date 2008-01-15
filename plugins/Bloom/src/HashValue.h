@@ -24,21 +24,22 @@
 
 template<class Hasher>
 struct HashValue {
-	static const size_t SIZE = Hasher::HASH_SIZE;
+	static const size_t BITS = Hasher::BITS;
+	static const size_t BYTES = Hasher::BYTES;
 
 	HashValue() { }
-	explicit HashValue(uint8_t* aData) { memcpy(data, aData, SIZE); }
-	explicit HashValue(const std::string& base32) { Encoder::fromBase32(base32.c_str(), data, SIZE); }
-	HashValue(const HashValue& rhs) { memcpy(data, rhs.data, SIZE); }
-	HashValue& operator=(const HashValue& rhs) { memcpy(data, rhs.data, SIZE); return *this; }
+	explicit HashValue(uint8_t* aData) { memcpy(data, aData, BYTES); }
+	explicit HashValue(const std::string& base32) { Encoder::fromBase32(base32.c_str(), data, BYTES); }
+	HashValue(const HashValue& rhs) { memcpy(data, rhs.data, BYTES); }
+	HashValue& operator=(const HashValue& rhs) { memcpy(data, rhs.data, BYTES); return *this; }
 	bool operator!=(const HashValue& rhs) const { return !(*this == rhs); }
-	bool operator==(const HashValue& rhs) const { return memcmp(data, rhs.data, SIZE) == 0; }
-	bool operator<(const HashValue& rhs) const { return memcmp(data, rhs.data, SIZE) < 0; }
+	bool operator==(const HashValue& rhs) const { return memcmp(data, rhs.data, BYTES) == 0; }
+	bool operator<(const HashValue& rhs) const { return memcmp(data, rhs.data, BYTES) < 0; }
 
-	std::string toBase32() const { return Encoder::toBase32(data, SIZE); }
-	std::string& toBase32(std::string& tmp) const { return Encoder::toBase32(data, SIZE, tmp); }
+	std::string toBase32() const { return Encoder::toBase32(data, BYTES); }
+	std::string& toBase32(std::string& tmp) const { return Encoder::toBase32(data, BYTES, tmp); }
 
-	uint8_t data[SIZE];
+	uint8_t data[BYTES];
 };
 
 namespace std { namespace tr1 {
