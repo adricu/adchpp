@@ -47,7 +47,7 @@ void HashBloom::reset(ByteVector& v, size_t k_, size_t h_) {
 	bloom.resize(v.size() * 8);
 	for(size_t i = 0; i < v.size(); ++i) {
 		for(size_t j = 0; j < 8; ++j) {
-			bloom[i*8 + j] = ((v[i] >> j) != 0);
+			bloom[i*8 + j] = (((v[i] >> j) & 1) != 0);
 		}
 	}
 }
