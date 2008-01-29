@@ -98,14 +98,13 @@ void ManagedSocket::prepareWrite(BufferList& buffers) {
 		// Copy as many buffers as possible
 		// TODO The last copied buffer should be split...
 		size_t done = 0;
-		BufferList::iterator i;
-		for(i = outBuf.begin(); i != outBuf.end(); ++i) {
+		BufferList::iterator i = outBuf.begin();
+		do {
 			buffers.push_back(*i);
 			done += (*i)->size();
-			if(done > max_send) {
-					break;
-			}
-		}
+			++i;
+		} while((i != outBuf.end()) && (done < max_send));
+
 		outBuf.erase(outBuf.begin(), i);
 	} else {
 		buffers.swap(outBuf);
@@ -135,6 +134,7 @@ bool ManagedSocket::completeWrite(BufferList& buffers, size_t written) throw() {
 			(*i)->erase_first(diff);
 		}
 		
+		dcdebug("Tried %u buffers, readding %u buffers, diff is %u\n", buffers.size(), std::distance(i, buffers.end()), diff);
 		outBuf.insert(outBuf.begin(), i, buffers.end());
 	}
 
