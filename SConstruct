@@ -223,7 +223,7 @@ if conf.CheckLib('pthread', 'pthread_create'):
 
 env = conf.Finish()
 
-dev.intl = dev.build('intl/')
+#dev.intl = dev.build('intl/')
 
 dev.adchpp = dev.build('adchpp/')
 
