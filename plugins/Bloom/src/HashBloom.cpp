@@ -53,12 +53,13 @@ void HashBloom::reset(ByteVector& v, size_t k_, size_t h_) {
 }
 
 size_t HashBloom::pos(const TTHValue& tth, size_t n) const {
-	uint64_t x = 0;
-	
-	size_t start = n * h;
 	if((n+1)*h > TTHValue::BITS) {
 		return 0;
 	}
+
+	uint64_t x = 0;
+	
+	size_t start = n * h;
 	
 	for(size_t i = 0; i < h; ++i) {
 		size_t bit = start + i;
