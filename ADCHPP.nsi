@@ -2,7 +2,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "ADCH++"
-!define PRODUCT_VERSION "2.1"
+!define PRODUCT_VERSION "2.2"
 !define PRODUCT_PUBLISHER "Jacek Sieka"
 !define PRODUCT_WEB_SITE "http://adchpp.sourceforge.net"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\adchppd.exe"
@@ -56,9 +56,8 @@ Section "MainSection" SEC01
   File "adchppd.exe"
   File "adchpp.dll"
   File "_pyadchpp.dll"
-  File "aintl.dll"
-  File "alua.dll"
   File "Bloom.dll"
+  File "alua.dll"
   File "changelog.txt"
   File "License.txt"
   File "luadchpp.dll"
@@ -137,7 +136,6 @@ Section Uninstall
   Delete "$INSTDIR\changelog.txt"
   Delete "$INSTDIR\Bloom.dll"
   Delete "$INSTDIR\alua.dll"
-  Delete "$INSTDIR\aintl.dll"
   Delete "$INSTDIR\_pyadchpp.dll"
   Delete "$INSTDIR\adchpp.dll"
   Delete "$INSTDIR\adchppd.exe"
