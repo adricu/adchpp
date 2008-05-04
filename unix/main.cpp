@@ -25,6 +25,7 @@
 #include <adchpp/File.h>
 
 #include <signal.h>
+#include <limits.h>
 
 using namespace std;
 using namespace adchpp;

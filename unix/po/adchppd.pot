@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \"adchpp\"--copyright-holder=\"Jacek Sieka\"\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-23 00:10+0100\n"
+"POT-Creation-Date: 2008-05-03 23:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,17 +15,17 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: unix/main.cpp:71
+#: unix/main.cpp:72
 #, c-format
 msgid "Shutting down."
 msgstr ""
 
-#: unix/main.cpp:141
+#: unix/main.cpp:142
 #, c-format
 msgid "Starting"
 msgstr ""
 
-#: unix/main.cpp:149
+#: unix/main.cpp:150
 #, c-format
 msgid ""
 "\n"
@@ -33,39 +33,39 @@ msgid ""
 "FATAL: Can't start ADCH++: %s\n"
 msgstr ""
 
-#: unix/main.cpp:155
+#: unix/main.cpp:156
 #, c-format
 msgid ""
 ".\n"
 "%s running, press ctrl-c to exit...\n"
 msgstr ""
 
-#: unix/main.cpp:166
+#: unix/main.cpp:167
 #, c-format
 msgid "Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]\n"
 msgstr ""
 
-#: unix/main.cpp:188
+#: unix/main.cpp:189
 #, c-format
 msgid "-c <directory>\n"
 msgstr ""
 
-#: unix/main.cpp:194
+#: unix/main.cpp:195
 #, c-format
 msgid "Config dir must be an absolute path\n"
 msgstr ""
 
-#: unix/main.cpp:203
+#: unix/main.cpp:204
 #, c-format
 msgid "-p <pid-file>\n"
 msgstr ""
 
-#: unix/main.cpp:212
+#: unix/main.cpp:213
 #, c-format
 msgid "Unknown parameter: %s\n"
 msgstr ""
 
-#: unix/main.cpp:221
+#: unix/main.cpp:222
 #, c-format
 msgid "Can't open %s for writing\n"
 msgstr ""

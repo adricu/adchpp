@@ -2,3 +2,8 @@
 ./.project
 ./.pydevproject
 ./.settings
+*.gch
+./.sconf_temp
+./.sconsign.dblite
+./build
+./config.log

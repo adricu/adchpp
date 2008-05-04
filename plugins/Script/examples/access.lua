@@ -611,4 +611,3 @@ load_users()
 local cm = adchpp.getCM()
 conn = cm:signalReceive():connect(onReceive)
 dis = cm:signalDisconnected():connect(onDisconnected)
-

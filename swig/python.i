@@ -23,6 +23,9 @@
 %typemap(in) std::tr1::function<void (adchpp::Client&, adchpp::AdcCommand&, int&)> {
 	$1 = PyHandle($input, false);
 }
+%typemap(in) std::tr1::function<void (adchpp::Client&, const adchpp::StringList&, int&)> {
+	$1 = PyHandle($input, false);
+}
 
 %include "adchpp.i"
 
@@ -100,6 +103,22 @@ struct PyHandle {
 		
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
+		PyTuple_SetItem(args, 2, PyInt_FromLong(i));
+		
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
+		
+		if(PyInt_Check(ret)) {
+			i |= static_cast<int>(PyInt_AsLong(ret));
+		}
+	}
+
+	
+	void operator()(adchpp::Client& c, const adchpp::StringList& cmd, int& i) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(3));
+		
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Client, 0 |  0 ));
+		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_std__vectorT_std__string_std__allocatorT_std__string_t_t, 0 |  0 ));
 		PyTuple_SetItem(args, 2, PyInt_FromLong(i));
 		
 		PyHandle ret(PyObject_Call(obj, args, 0), true);

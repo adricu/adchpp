@@ -113,9 +113,9 @@ boost::intrusive_ptr<ManagedConnection<Signal> > manage(Signal* signal, const F&
 
 template<typename F>
 struct SignalTraits {
-	typedef Signal<F> Signal;
+	typedef adchpp::Signal<F> Signal;
 	typedef typename Signal::Connection Connection;
-	typedef boost::intrusive_ptr<ManagedConnection<Signal> > ManagedConnection;
+	typedef boost::intrusive_ptr<adchpp::ManagedConnection<Signal> > ManagedConnection;
 };
 
 }

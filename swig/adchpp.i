@@ -66,6 +66,7 @@ void shutdown() {
 
 namespace adchpp {
 	class Client;
+	typedef std::vector<std::string> StringList;
 }
 
 %template(TErrorPair) std::pair<int, size_t>;
@@ -76,7 +77,6 @@ namespace adchpp {
 
 %template(TByteVector) std::vector<uint8_t>;
 
-typedef std::vector<std::string> StringList;
 %inline%{
 typedef std::vector<adchpp::Client*> ClientList;
 %}
@@ -727,6 +727,9 @@ public:
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();
+//	typedef std::tr1::function<void (Client&, const StringList&, int& override)> CommandSlot;
+	ClientManager::SignalReceive::Connection onCommand(const std::string& commandName, std::tr1::function<void (Client&, const StringList&, int& override)> f);
+
 };
 
 

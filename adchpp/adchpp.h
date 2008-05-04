@@ -114,6 +114,7 @@ typedef unsigned __int64 uint64_t;
 #include <errno.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <string.h>
 
 #include <string>
 #include <vector>
@@ -121,6 +122,7 @@ typedef unsigned __int64 uint64_t;
 #include <list>
 #include <functional>
 #include <memory>
+#include <algorithm>
 
 #ifdef _STLPORT_VERSION
 
