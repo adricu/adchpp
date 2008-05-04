@@ -20,6 +20,7 @@ json = require('json')
 string = require('string')
 
 local pos = 0
+local  command_handled = adchpp.ClientManager_DONT_DISPATCH + adchpp.ClientManager_DONT_SEND
 
 local messages = {}
 
@@ -29,8 +30,14 @@ end
 
 local function onHistory(c, params, override)
 	local items = defaultItems
+
+	if(params:size() > 1) then
+		items = tonumber(params[1])
+		if not items then
+			return command_handled
+		end
+	end
 	
-	print("sz " .. params:size() .. " " .. params[0] .. " " .. params[1])
 	local s = 0
 	
 	if items < pos then
