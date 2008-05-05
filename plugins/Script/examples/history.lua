@@ -58,7 +58,7 @@ local function onHistory(c, params, override)
 		s = s + 1
 	end
 	
-	c:send(autil.info(msg))
+	autil.reply(c, msg)
 	
 	return autil.handled
 end

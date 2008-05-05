@@ -165,8 +165,12 @@ struct CommandDispatch {
 	CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) : name('+' + name_), f(f_) { }
 	
 	void operator()(Client& c, AdcCommand& cmd, int& override) {
-		if(cmd.getCommand() != AdcCommand::CMD_MSG)
+		if(c.getState() != Client::STATE_NORMAL) { 
 			return;
+		}
+		if(cmd.getCommand() != AdcCommand::CMD_MSG) {
+			return;
+		}
 		if(cmd.getParameters().size() < 1) {
 			return;
 		}

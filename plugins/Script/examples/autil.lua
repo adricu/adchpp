@@ -13,4 +13,15 @@ function info(m)
 	return answer
 end
 
+function reply(c, m)
+	c:send(info(m))
+end
+
+function dump(c, code, msg)
+	answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+	answer:addParam("" .. tostring(adchpp.AdcCommand_SEV_FATAL) .. code):addParam(msg)
+	c:send(answer)
+	c:disconnect(0)
+end
+
 handled = adchpp.ClientManager_DONT_DISPATCH + adchpp.ClientManager_DONT_SEND
