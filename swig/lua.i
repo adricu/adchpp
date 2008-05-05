@@ -26,8 +26,11 @@ static int traceback (lua_State *L) {
 
 class RegistryItem : private boost::noncopyable {
 public:
-	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { }
-	~RegistryItem() { luaL_unref(L, LUA_REGISTRYINDEX, index); }
+	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { 
+	}
+	~RegistryItem() { 
+		luaL_unref(L, LUA_REGISTRYINDEX, index); 
+	}
 
 	void push() { lua_rawgeti(L, LUA_REGISTRYINDEX, index); }
 private:

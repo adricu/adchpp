@@ -22,7 +22,6 @@
 
 #include "SocketManager.h"
 #include "TimerManager.h"
-#include "PluginManager.h"
 #include "SettingsManager.h"
 
 namespace adchpp {
