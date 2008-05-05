@@ -1,6 +1,12 @@
 -- Simple history script that displays the last n history items
 -- History is persisted across restarts
 
+local base = _G
+
+module("history")
+base.require('luadchpp')
+local adchpp = base.luadchpp
+
 -- Options
 
 -- Number of messages to keep
@@ -12,15 +18,16 @@ local defaultItems = 50
 -- Prefix to put before each message (as seen by 
 local prefix = "[%Y-%m-%d %H:%M:%S] "
 
-require('luadchpp')
-adchpp = luadchpp
-io = require('io')
-os = require('os')
-json = require('json')
-string = require('string')
+-- Where to read/write history file - set to nil to disable persistent history
+local history_file = adchpp.Util_getCfgPath() .. "history.txt"
+
+io = base.require('io')
+os = base.require('os')
+json = base.require('json')
+string = base.require('string')
+autil = base.require('autil')
 
 local pos = 0
-local  command_handled = adchpp.ClientManager_DONT_DISPATCH + adchpp.ClientManager_DONT_SEND
 
 local messages = {}
 
@@ -30,11 +37,10 @@ end
 
 local function onHistory(c, params, override)
 	local items = defaultItems
-
 	if(params:size() > 1) then
 		items = tonumber(params[1])
 		if not items then
-			return command_handled
+			return autil.handled
 		end
 	end
 	
@@ -48,15 +54,46 @@ local function onHistory(c, params, override)
 	local msg = "Displaying last " .. (e - s) .. " messages"
 	
 	while s ~= e and messages[idx(s)] do
-		msg = msg .. messages[idx(s)]
+		msg = msg .. "\r\n" .. messages[idx(s)]
 		s = s + 1
 	end
 	
-	local answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-	answer:addParam(msg)
-	c:send(answer)
+	c:send(autil.info(msg))
 	
-	return adchpp.ClientManager_DONT_DISPATCH + adchpp.ClientManager_DONT_SEND
+	return autil.handled
+end
+
+local function save_messages()
+	if not history_file then
+		return
+	end
+	
+	local s = 0
+	local e = pos
+	
+	if pos >= maxItems then
+		s = pos + 1
+		e = pos + maxItems
+	end
+	
+	local f = io.open(history_file, "w")
+
+	while s ~= e and messages[idx(s)] do
+		f:write(messages[idx(s)] .. "\n")
+		s = s + 1
+	end
+	f:close()
+end
+
+local function load_messages()
+	if not history_file then
+		return
+	end
+	
+	for line in io.lines(history_file) do
+		messages[idx(pos)] = line
+		pos = pos + 1
+	end
 end
 
 local function onMSG(c, cmd)
@@ -66,9 +103,11 @@ local function onMSG(c, cmd)
 	end
 	
 	local now = os.date(prefix)
-	local message = '\r\n' .. now .. ' <' .. nick .. '> ' .. cmd:getParam(0)
+	local message = now .. '<' .. nick .. '> ' .. cmd:getParam(0)
 	messages[idx(pos)] = message
 	pos = pos + 1
+	
+	base.pcall(save_messages)
 	
 	return 0
 end
@@ -84,6 +123,8 @@ local function onReceive(c, cmd, override)
 		return onMSG(c, cmd)
 	end
 end
+
+base.pcall(load_messages)
 
 c1 = adchpp.getPM():onCommand("history", onHistory)
 c2 = adchpp.getCM():signalReceive():connect(onReceive)
