@@ -69,6 +69,6 @@
 		<!-- This plugins provides the scripting support. -->
 		<Plugin>Script</Plugin>
 		<!-- Bloom filter plugin, helps save upload bandwidth at a slight expense of memory and download bandwidth -->
-		<Plugin>Bloom</Bloom>
+		<Plugin>Bloom</Plugin>
 	</Plugins>
 </ADCHubPlusPlus>
