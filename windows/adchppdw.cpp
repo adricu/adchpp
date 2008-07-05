@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include "stdinc.h"
 #include <adchpp/common.h>
 #include <adchpp/Semaphores.h>
@@ -64,10 +64,10 @@ LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
 	printf("Writing to %s\n", (Util::getCfgPath()).c_str());
 	File f(Util::getCfgPath() + "exceptioninfo.txt", File::WRITE, File::OPEN | File::CREATE);
 	f.setEndPos(0);
-	
+
 	DWORD exceptionCode = e->ExceptionRecord->ExceptionCode ;
 
-	sprintf(buf, "Code: %x\r\nVersion: %s\r\n", 
+	sprintf(buf, "Code: %x\r\nVersion: %s\r\n",
 		exceptionCode, versionString.c_str());
 
 	f.write(buf, strlen(buf));
@@ -109,9 +109,10 @@ static ExceptionHandler eh;	//  global instance of class
 #endif
 
 bool asService = true;
-static TCHAR* serviceName = _T("adchpp");
+static const TCHAR* serviceName = _T("adchpp");
 
-static void installService(const TCHAR* name) {
+static void installService(const TCHAR* name, const std::string& configPath) {
+	Util::setCfgPath(configPath);
 	SC_HANDLE scm = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if(scm == NULL) {
 		PRINTERROR("OpenSCManager");
@@ -141,9 +142,9 @@ static void removeService(const TCHAR* name) {
 		PRINTERROR("OpenSCManager");
 		return;
 	}
-	
+
 	SC_HANDLE service = OpenService(scm, name == NULL ? serviceName : name, DELETE);
-	
+
 	if(service == NULL) {
 		PRINTERROR("OpenService");
 		CloseServiceHandle(scm);
@@ -157,7 +158,7 @@ static void removeService(const TCHAR* name) {
 	}
 
 	fprintf(stdout, "ADCH++ service \"%s\" successfully removed\n", name == NULL ? serviceName : name);
-	
+
 	CloseServiceHandle(service);
 	CloseServiceHandle(scm);
 }
@@ -168,7 +169,7 @@ static void init(const string& configPath) {
 	EXTENDEDTRACEINITIALIZE( Util::getAppPath().c_str() );
 	SetUnhandledExceptionFilter(&DCUnhandledExceptionFilter);
 #endif
-	
+
 	initialize(configPath);
 
 	if(asService)
@@ -220,20 +221,20 @@ static void f() {
 
 static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 	ssh = ::RegisterServiceCtrlHandler(argv[0], handler);
-	
+
 	if(ssh == 0) {
 		LOGERROR("RegisterServiceCtrlHandler");
 		uninit();
 		return;
 	}
-	
+
 	ss.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
 	ss.dwCurrentState = SERVICE_START_PENDING;
 	ss.dwControlsAccepted = SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_STOP;
 	ss.dwWin32ExitCode = NO_ERROR;
 	ss.dwCheckPoint = 0;
 	ss.dwWaitHint = 10 * 1000;
-	
+
 	if(!SetServiceStatus(ssh, &ss)) {
 		LOGERROR("SetServiceStatus");
 		uninit();
@@ -241,12 +242,12 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 	}
 
 	try {
-		startup(&f);		
+		startup(&f);
 	} catch(const Exception& e) {
 		LOG(modName, "ADCH++ startup failed because: " + e.getError());
-		
+
 		uninit();
-		
+
 		ss.dwCurrentState = SERVICE_STOPPED;
 		SetServiceStatus(ssh, &ss);
 	}
@@ -270,11 +271,11 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 static void runService(const TCHAR* name, const string& configPath) {
 	init(configPath);
 
-    SERVICE_TABLE_ENTRY   DispatchTable[] = { 
-		{ (LPTSTR)name, &serviceStart }, 
+    SERVICE_TABLE_ENTRY   DispatchTable[] = {
+		{ (LPTSTR)name, &serviceStart },
 		{ NULL, NULL }
     };
-	
+
     if (!StartServiceCtrlDispatcher(DispatchTable)) {
 		LOGERROR("StartServiceCtrlDispatcher");
     }
@@ -308,7 +309,7 @@ int CDECL main(int argc, char* argv[]) {
 #endif
 
 	string configPath = Util::getAppPath() + _T("config\\");
-	
+
 	int task = 0;
 
 	const TCHAR* name = NULL;
@@ -364,11 +365,11 @@ int CDECL main(int argc, char* argv[]) {
 			return 4;
 		}
 	}
-	
+
 	switch(task) {
 		case 0: runConsole(configPath); break;
 		case 1: runService(name, configPath); break;
-		case 2: installService(name); break;
+		case 2: installService(name, configPath); break;
 		case 3: removeService(name); break;
 	}
 

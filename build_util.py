@@ -62,7 +62,7 @@ class Dev:
 		return map(lambda x: self.get_build_path(source_path) + x, glob.glob(source_glob))
 		
 	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True):
-		local_env = self.env.Copy()
+		local_env = self.env.Clone()
 		
 		local_env.BuildDir(self.get_build_path(source_path), '.', duplicate = 0)
 		

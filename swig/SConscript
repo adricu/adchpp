@@ -93,7 +93,6 @@ def buildPyModule():
 	wrapper = build_path + 'python_wrap.cc'
 	pyfile = build_path + 'pyadchpp.py'
 	pytarget = dev.get_target(source_path, 'pyadchpp.py')
-	env.SideEffect(pyfile, wrapper)
 	env.Command(pytarget, pyfile, Copy('$TARGET', '$SOURCE'))
 	env.Depends(pytarget, pyfile)
 	

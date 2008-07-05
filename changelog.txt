@@ -1,3 +1,6 @@
+-- --
+* Fix service install on Windows
+
 -- 2.2 2008-02-12 --
 * access.lua: fixed message type for MSG
 * Some minor socket fixes

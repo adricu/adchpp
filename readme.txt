@@ -33,8 +33,8 @@ NOTE: The hub will not run on Windows 9x/ME
 To compile the sources you will also need:
 
 * GCC 4.2+ (Linux or http://www.mingw.org[MinGW])
-* http://www.scons.org[SCons 0.97]
-* http://www.swig.org[SWIG 1.3.33]
+* http://www.scons.org[SCons 0.98.4]
+* http://www.swig.org[SWIG 1.3.36]
 * http://www.python.org[Python] 2.5 (Windows) or 2.4+ (Linux)
 
 == Building
@@ -44,7 +44,7 @@ To build ADCH++ from source you have to:
 * Install Python and ensure it's in your PATH
 * Install SCons and ensure it's in your PATH
 * Windows: Install MinGW and ensure it's in your PATH
-* Linux: Install GCC 4.2+ and appropriate header files
+* Linux: Install GCC and appropriate header files
 * In the source folder, type "scons -h" to see additional compile options
 * Type "scons" to create a debug build. "scons mode=release" will create a
   release build.

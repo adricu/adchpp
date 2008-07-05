@@ -1,0 +1,8 @@
+.cproject
+.project
+.pydevproject
+.sconf_temp
+.sconsign.dblite
+build
+config.log
+*.gch
