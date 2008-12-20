@@ -90,8 +90,7 @@ def buildPyModule():
 		env.Append(LIBS=['python' + sys.version[0:3]])
 	
 	env.Append(LIBS=['adchpp'])
-	wrapper = build_path + 'python_wrap.cc'
-	pyfile = build_path + 'pyadchpp.py'
+	pyfile = '#/pyadchpp.py'
 	pytarget = dev.get_target(source_path, 'pyadchpp.py')
 	env.Command(pytarget, pyfile, Copy('$TARGET', '$SOURCE'))
 	env.Depends(pytarget, pyfile)
