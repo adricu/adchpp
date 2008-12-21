@@ -65,6 +65,7 @@ def buildPyModule():
 
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-classic'])
+	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
 
 	import distutils.sysconfig
 	
@@ -88,16 +89,9 @@ def buildPyModule():
 	else:
 		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
 		env.Append(LIBS=['python' + sys.version[0:3]])
-	
 	env.Append(LIBS=['adchpp'])
-	pyfile = '#/pyadchpp.py'
-	pytarget = dev.get_target(source_path, 'pyadchpp.py')
-	env.Command(pytarget, pyfile, Copy('$TARGET', '$SOURCE'))
-	env.Depends(pytarget, pyfile)
-	
-	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
-	env.Depends(pyd, pytarget)
 
+	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(pyd)
 
 def buildLuaModule():
