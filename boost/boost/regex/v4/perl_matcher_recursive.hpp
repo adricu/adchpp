@@ -20,8 +20,20 @@
 #ifndef BOOST_REGEX_V4_PERL_MATCHER_RECURSIVE_HPP
 #define BOOST_REGEX_V4_PERL_MATCHER_RECURSIVE_HPP
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
+
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4800)
 #endif
 
 namespace boost{
@@ -279,7 +291,7 @@ bool perl_matcher<BidiIterator, Allocator, traits>::match_rep()
    // Always copy the repeat count, so that the state is restored
    // when we exit this scope:
    //
-   repeater_count<BidiIterator> r(rep->id, &next_count, position);
+   repeater_count<BidiIterator> r(rep->state_id, &next_count, position);
    //
    // If we've had at least one repeat already, and the last one 
    // matched the NULL string then set the repeat count to
@@ -823,9 +835,19 @@ bool perl_matcher<BidiIterator, Allocator, traits>::backtrack_till_match(std::si
 
 } // namespace re_detail
 } // namespace boost
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 #endif

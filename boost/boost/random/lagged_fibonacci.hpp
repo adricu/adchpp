@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: lagged_fibonacci.hpp,v 1.28 2005/05/21 15:57:00 dgregor Exp $
+ * $Id: lagged_fibonacci.hpp 49314 2008-10-13 09:00:03Z johnmaddock $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -16,11 +16,11 @@
 #ifndef BOOST_RANDOM_LAGGED_FIBONACCI_HPP
 #define BOOST_RANDOM_LAGGED_FIBONACCI_HPP
 
-#include <cmath>
+#include <boost/config/no_tr1/cmath.hpp>
 #include <iostream>
 #include <algorithm>     // std::max
 #include <iterator>
-#include <cmath>         // std::pow
+#include <boost/config/no_tr1/cmath.hpp>         // std::pow
 #include <boost/config.hpp>
 #include <boost/limits.hpp>
 #include <boost/cstdint.hpp>
@@ -102,8 +102,8 @@ private:
   void init_wordmask()
   {
     wordmask = 0;
-    for(int i = 0; i < w; ++i)
-      wordmask |= (1u << i);
+    for(int j = 0; j < w; ++j)
+      wordmask |= (1u << j);
   }
 
 public:
@@ -319,8 +319,8 @@ public:
     unsigned int j;
     for(j = 0; j < long_lag && first != last; ++j, ++first) {
       x[j] = RealType(0);
-      for(int i = 0; i < w/32 && first != last; ++i, ++first)
-        x[j] += *first / pow(two32,i+1);
+      for(int k = 0; k < w/32 && first != last; ++k, ++first)
+        x[j] += *first / pow(two32,k+1);
       if(first != last && mask != 0)
         x[j] += fmod((*first & mask) / _modulus, RealType(1));
     }

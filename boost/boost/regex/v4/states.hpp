@@ -19,8 +19,15 @@
 #ifndef BOOST_REGEX_V4_STATES_HPP
 #define BOOST_REGEX_V4_STATES_HPP
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 namespace boost{
@@ -233,7 +240,7 @@ Repeat a section of the machine
 struct re_repeat : public re_alt
 {
    std::size_t   min, max;  // min and max allowable repeats
-   int           id;        // Unique identifier for this repeat
+   int           state_id;        // Unique identifier for this repeat
    bool          leading;   // True if this repeat is at the start of the machine (lets us optimize some searches)
    bool          greedy;    // True if this is a greedy repeat
 };
@@ -267,8 +274,15 @@ iterator BOOST_REGEX_CALL re_is_set_member(iterator next,
 
 } // namespace boost
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 #endif

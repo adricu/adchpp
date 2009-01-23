@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: normal_distribution.hpp,v 1.20 2004/07/27 03:43:32 dgregor Exp $
+ * $Id: normal_distribution.hpp 49314 2008-10-13 09:00:03Z johnmaddock $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -16,7 +16,7 @@
 #ifndef BOOST_RANDOM_NORMAL_DISTRIBUTION_HPP
 #define BOOST_RANDOM_NORMAL_DISTRIBUTION_HPP
 
-#include <cmath>
+#include <boost/config/no_tr1/cmath.hpp>
 #include <cassert>
 #include <iostream>
 #include <boost/limits.hpp>
@@ -24,7 +24,7 @@
 
 namespace boost {
 
-// deterministic polar method, uses trigonometric functions
+// deterministic Box-Muller method, uses trigonometric functions
 template<class RealType = double>
 class normal_distribution
 {
@@ -36,11 +36,11 @@ public:
     BOOST_STATIC_ASSERT(!std::numeric_limits<RealType>::is_integer);
 #endif
 
-  explicit normal_distribution(const result_type& mean = result_type(0),
-                               const result_type& sigma = result_type(1))
-    : _mean(mean), _sigma(sigma), _valid(false)
+  explicit normal_distribution(const result_type& mean_arg = result_type(0),
+                               const result_type& sigma_arg = result_type(1))
+    : _mean(mean_arg), _sigma(sigma_arg), _valid(false)
   {
-    assert(sigma >= result_type(0));
+    assert(_sigma >= result_type(0));
   }
 
   // compiler-generated copy constructor is NOT fine, need to purge cache

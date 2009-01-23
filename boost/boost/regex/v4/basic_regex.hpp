@@ -19,14 +19,21 @@
 #ifndef BOOST_REGEX_V4_BASIC_REGEX_HPP
 #define BOOST_REGEX_V4_BASIC_REGEX_HPP
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 namespace boost{
 #ifdef BOOST_MSVC
 #pragma warning(push)
-#pragma warning(disable : 4251 4231 4660)
+#pragma warning(disable : 4251 4231 4660 4800)
 #endif
 
 namespace re_detail{
@@ -184,7 +191,7 @@ class basic_regex : public regbase
 {
 public:
    // typedefs:
-   typedef typename traits::size_type            traits_size_type;
+   typedef std::size_t                           traits_size_type;
    typedef typename traits::string_type          traits_string_type;
    typedef charT                                 char_type;
    typedef traits                                traits_type;
@@ -630,8 +637,15 @@ public:
 
 } // namespace boost
 
+#ifdef BOOST_MSVC
+#pragma warning(push)
+#pragma warning(disable: 4103)
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
+#endif
+#ifdef BOOST_MSVC
+#pragma warning(pop)
 #endif
 
 #endif
