@@ -28,7 +28,8 @@ namespace adchpp {
 
 using namespace std;
 using namespace std::tr1;
-using namespace std::tr1::placeholders;
+using std::tr1::placeholders::_1;
+using std::tr1::placeholders::_2;
 using namespace boost::asio;
 
 ManagedSocket::~ManagedSocket() throw() {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,20 +50,20 @@
 #endif
 
 namespace adchpp {
-	
+
 using namespace std;
 using namespace std::tr1;
-using namespace std::tr1::placeholders;
+using std::tr1::placeholders::_1;
 
 PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 
-PluginManager::PluginManager() throw() : pluginIds(0) { 
+PluginManager::PluginManager() throw() : pluginIds(0) {
 	SettingsManager::getInstance()->signalLoad().connect(std::tr1::bind(&PluginManager::onLoad, this, _1));
 }
 
-PluginManager::~PluginManager() throw() { 
-	
+PluginManager::~PluginManager() throw() {
+
 }
 
 void PluginManager::attention(const function<void()>& f) {
@@ -94,7 +94,7 @@ bool PluginManager::loadPlugin(const string& file) {
 		LOG(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
 		return false;
 	}
-	
+
 	PLUGIN_GET_VERSION v = (PLUGIN_GET_VERSION)PM_GET_ADDRESS(h, "pluginGetVersion");
 	if(v != NULL) {
 		double ver = v();
@@ -163,9 +163,9 @@ void PluginManager::shutdown() {
 
 struct CommandDispatch {
 	CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) : name('+' + name_), f(f_) { }
-	
+
 	void operator()(Client& c, AdcCommand& cmd, int& override) {
-		if(c.getState() != Client::STATE_NORMAL) { 
+		if(c.getState() != Client::STATE_NORMAL) {
 			return;
 		}
 		if(cmd.getCommand() != AdcCommand::CMD_MSG) {

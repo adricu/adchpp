@@ -23,8 +23,6 @@
 
 #include "forward.h"
 #include "Thread.h"
-#include "Mutex.h"
-#include "Semaphores.h"
 #include "Singleton.h"
 
 #include <boost/asio.hpp>
@@ -54,13 +52,6 @@ private:
 
 	typedef std::vector<Callback> ProcessQueue;
 
-	FastMutex processMutex;
-
-	ProcessQueue processQueue;
-
-	Semaphore processSem;
-
-	std::auto_ptr<Writer> writer;
 	IncomingHandler incomingHandler;
 
 	static const std::string className;
