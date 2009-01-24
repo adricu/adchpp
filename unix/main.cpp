@@ -27,6 +27,8 @@
 #include <signal.h>
 #include <limits.h>
 
+#define _(x) x
+
 using namespace std;
 using namespace adchpp;
 

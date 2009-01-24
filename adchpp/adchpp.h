@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,23 +19,13 @@
 #ifndef ADCHPP_ADCHPP_H
 #define ADCHPP_ADCHPP_H
 
-// This enables stlport's debug mode (and slows it down to a crawl...)
-//# define _STLP_DEBUG 1
-
-// Set to zero to disable some old DC++ compatibility code
-#define COMPATIBILITY 1
-
 // --- Shouldn't have to change anything under here...
 
 #ifndef _REENTRANT
 # define _REENTRANT 1
 #endif
 
-#ifdef HAVE_STLPORT
-# define _STLP_USE_PTR_SPECIALIZATIONS 1
-# define _STLP_NO_ANACHRONISMS 1
-# define _STLP_USE_BOOST_SUPPORT 1
-#endif
+#define COMPATIBILITY 1
 
 #ifdef _MSC_VER
 
@@ -111,10 +101,11 @@ typedef unsigned __int64 uint64_t;
 
 #endif
 
-#include <errno.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <string.h>
+#include <sys/time.h>
+#include <cerrno>
+#include <cstdarg>
+#include <cstddef>
+#include <cstring>
 
 #include <string>
 #include <vector>
@@ -123,22 +114,8 @@ typedef unsigned __int64 uint64_t;
 #include <functional>
 #include <memory>
 #include <algorithm>
-
-#ifdef _STLPORT_VERSION
-
 #include <unordered_map>
 #include <unordered_set>
-
-#elif defined(__GLIBCPP__) || defined(__GLIBCXX__)  // Using GNU C++ library?
-
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
-
-#elif defined(_MSC_VER)  // Assume the msvc stl
-#error "afaik msvc doesn't have tr1 containers, so it'll need stlport (or maybe a recent version of boost)"
-#else
-#error "Unknown STL, please configure accordingly"
-#endif
 
 #include <boost/intrusive_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -151,12 +128,6 @@ typedef unsigned __int64 uint64_t;
 # ifndef _T
 #  define _T(s) s
 # endif
-#endif
-
-// TODO Maybe do this in the implementations?
-#ifndef _
-#define _(String) String
-#define bindtextdomain(Package, Directory)
 #endif
 
 #endif // STDINC_H

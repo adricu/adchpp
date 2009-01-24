@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,28 +64,29 @@ public:
 	};
 
 	static Client* create(const ManagedSocketPtr& ms_) throw();
-	
+
 	const StringList& getSupportList() const throw() { return supportList; }
 	bool supports(const std::string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
 
 	void send(const char* command, size_t len) throw() { send(BufferPtr(new Buffer(command, len))); }
-	
+
 	void send(const AdcCommand& cmd) throw() { send(cmd.getBuffer()); }
 	void send(const std::string& command) throw() { send(command.c_str(), command.length()); }
 	void send(const BufferPtr& command) throw() { socket->write(command); }
-	
+
 	void fastSend(const BufferPtr& command, bool lowPrio = false) throw() {
-		socket->fastWrite(command, lowPrio);
+		socket->write(command, lowPrio);
 	}
+
 	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
-	
+
 	/** @param reason The statistic to update */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
 	const ManagedSocketPtr& getSocket() throw() { return socket; }
 	const ManagedSocketPtr& getSocket() const throw() { return socket; }
 	const std::string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
 
-	/** 
+	/**
 	 * Set data mode for aBytes bytes.
 	 * May only be called from on(ClientListener::Command...).
 	 */
@@ -96,7 +97,7 @@ public:
 	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
 	ADCHPP_DLL bool getAllFields(AdcCommand& cmd) const throw();
 	ADCHPP_DLL const BufferPtr& getINF() const throw();
-	
+
 	void resetChanged() { changed.clear(); }
 
 	const std::string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(AdcCommand::toCode(name)); return i == info.end() ? Util::emptyString : i->second; }
@@ -107,16 +108,16 @@ public:
 
 	bool isUdpActive() const { return info.find(AdcCommand::toCode("U4")) != info.end(); }
 	bool isTcpActive() const { return info.find(AdcCommand::toCode("I4")) != info.end(); }
-	
+
 	ADCHPP_DLL bool isFiltered(const std::string& features) const;
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
-	
+
 	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
 	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
 	void setFlag(size_t aFlag);
 	void unsetFlag(size_t aFlag);
-	
+
 	/**
 	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
 	 * per-client data, and retrieve it later on. Each plugin is only allowed
@@ -126,14 +127,14 @@ public:
 	 * @param id Id as retrieved from PluginManager::getPluginId()
 	 * @param data Data to store, this can be pretty much anything
 	 * @return Old value if any was associated with the plugin already, NULL otherwise
-	 */ 
+	 */
 	ADCHPP_DLL void* setPSD(int id, void* data) throw();
 	/**
 	 * @param id Plugin id
 	 * @return Value stored, NULL if none found
 	 */
 	ADCHPP_DLL void* getPSD(int id) throw();
-	
+
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
 	void setSID(uint32_t sid_) { sid = sid_; }
@@ -145,10 +146,6 @@ private:
 	Client() throw();
 	virtual ~Client() throw() { }
 
-	/** H-C INF SU */
-	StringList filters;
-	/** H-C SUP */
-	StringList supportList;
 	typedef std::pair<int, void*> PSDPair;
 	typedef std::vector<PSDPair> PSDList;
 	typedef PSDList::iterator PSDIter;
@@ -156,32 +153,37 @@ private:
 	typedef std::tr1::unordered_map<uint16_t, std::string> InfMap;
 	typedef InfMap::iterator InfIter;
 
+	/** H-C INF SU */
+	StringList filters;
+	/** H-C SUP */
+	StringList supportList;
+
 	InfMap info;
 	InfMap changed;
-	
+
 	Flags flags;
 
 	CID cid;
 	uint32_t sid;
 	State state;
 	bool disconnecting;
-	
+
 	PSDList psd;
 	BufferPtr buffer;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;
-	
+
 	time_t floodTimer;
-	
+
 	/** Latest INF cached */
 	mutable BufferPtr INF;
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
-	
+
 	void onConnected() throw();
 	void onData(const BufferPtr&) throw();
 	void onFailed() throw();
-	
+
 };
 
 }

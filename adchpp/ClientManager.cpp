@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,12 +50,11 @@ ClientManager::~ClientManager() throw() {
 
 void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) throw() {
 	const BufferPtr& buf = cmd.getBuffer();
-	
+
 	bool all = false;
 	switch (cmd.getType()) {
 	case AdcCommand::TYPE_BROADCAST: all = true; // Fallthrough
 	case AdcCommand::TYPE_FEATURE: {
-		FastMutex::Lock l(ManagedSocket::getWriteMutex());
 		for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
 			if (all || !i->second->isFiltered(cmd.getFeatures())) {
 				int override = 0;
@@ -83,7 +82,6 @@ void ClientManager::send(const AdcCommand& cmd, bool lowPrio /* = false */) thro
 }
 
 void ClientManager::sendToAll(const BufferPtr& buf) throw() {
-	FastMutex::Lock l(ManagedSocket::getWriteMutex());
 	for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
 		i->second->fastSend(buf);
 	}
@@ -92,7 +90,6 @@ void ClientManager::sendToAll(const BufferPtr& buf) throw() {
 size_t ClientManager::getQueuedBytes() throw() {
 	size_t total = 0;
 
-	FastMutex::Lock l(ManagedSocket::getWriteMutex());
 	for (ClientIter i = clients.begin(); i != clients.end(); ++i) {
 		total += i->second->getQueuedBytes();
 	}
