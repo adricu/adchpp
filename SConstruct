@@ -143,6 +143,9 @@ env.Append(CCFLAGS = flags['common'])
 env.Append(LINKFLAGS = link_flags[mode])
 env.Append(LINKFLAGS = link_flags['common'])
 
+if dev.is_win32():
+	env.Append(LIBS = ['ws2_32', 'mswsock'])
+
 env.SourceCode('.', None)
 
 import SCons.Scanner
