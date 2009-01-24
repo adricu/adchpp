@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,9 +23,9 @@
 
 #include "forward.h"
 #include "Thread.h"
-#include "Mutex.h"
-#include "Semaphores.h"
 #include "Singleton.h"
+
+#include <boost/asio.hpp>
 
 namespace adchpp {
 
@@ -39,22 +39,19 @@ public:
 
 	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
-	
+
 private:
 	friend class ManagedSocket;
 	friend class Writer;
-	
+
 	virtual int run();
+
+	void handleAccept(const boost::system::error_code ec, const ManagedSocketPtr& s, boost::asio::ip::tcp::acceptor& acceptor);
+
+	boost::asio::io_service io;
 
 	typedef std::vector<Callback> ProcessQueue;
 
-	FastMutex processMutex;
-	
-	ProcessQueue processQueue;
-
-	Semaphore processSem;
-
-	std::auto_ptr<Writer> writer;
 	IncomingHandler incomingHandler;
 
 	static const std::string className;

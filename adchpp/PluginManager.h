@@ -62,6 +62,7 @@
 #include "Singleton.h"
 #include "version.h"
 #include "Signal.h"
+#include "ClientManager.h"
 
 namespace adchpp {
 	
@@ -194,7 +195,15 @@ public:
 	const Registry& getPlugins() const {
 		return registry;
 	}
-		
+	
+	typedef std::tr1::function<void (Client&, const StringList&, int& override)> CommandSlot;
+	/**
+	 * Utility function to handle +-commands from clients
+	 * The parameters are the same as ClientManager::signalReceive, only that the parameters will
+	 * have been parsed already, and the function will only be called if the command name matches
+	 */
+	ADCHPP_DLL ClientManager::SignalReceive::Connection onCommand(const std::string& commandName, const CommandSlot& f);
+	
 	/** @internal */
 	void load() {
 		for(StringIter i = plugins.begin(); i != plugins.end(); ++i) {

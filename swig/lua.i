@@ -1,6 +1,5 @@
 %module luadchpp
 
-
 typedef unsigned int size_t;
 
 %wrapper %{
@@ -27,8 +26,11 @@ static int traceback (lua_State *L) {
 
 class RegistryItem : private boost::noncopyable {
 public:
-	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { }
-	~RegistryItem() { luaL_unref(L, LUA_REGISTRYINDEX, index); }
+	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { 
+	}
+	~RegistryItem() { 
+		luaL_unref(L, LUA_REGISTRYINDEX, index); 
+	}
 
 	void push() { lua_rawgeti(L, LUA_REGISTRYINDEX, index); }
 private:
@@ -105,6 +107,23 @@ public:
 		docall(1, 0);
 	}
 	
+	void operator()(adchpp::Client& c, const adchpp::StringList& cmd, int& i) {
+		pushFunction();
+		
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_std__vectorT_std__string_t, 0);
+		lua_pushinteger(L, i);
+		
+		if(docall(3, 1) != 0) {
+			return;
+		}
+		
+		if(lua_isnumber(L, -1)) {
+			i |= static_cast<int>(lua_tonumber(L, -1));
+		}
+		lua_pop(L, 1);
+	}
+
 
 private:
 	void pushFunction() { registryItem->push(); }
@@ -174,6 +193,10 @@ private:
 }
 
 %typemap(in) std::tr1::function<void (const SimpleXML&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::tr1::function<void (adchpp::Client &, const adchpp::StringList&, int&) > {
 	$1 = LuaFunction(L);
 }
 

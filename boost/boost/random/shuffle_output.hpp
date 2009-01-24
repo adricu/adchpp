@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: shuffle_output.hpp,v 1.10 2005/08/25 16:27:22 johnmaddock Exp $
+ * $Id: shuffle_output.hpp 41369 2007-11-25 18:07:19Z bemandawes $
  *
  * Revision history
  *  2001-02-18  moved to individual header files
@@ -52,7 +52,7 @@ public:
     : _rng(x._rng), y(x.y) { std::copy(x.v, x.v+k, v); }
 #endif
   template<class T>
-  explicit shuffle_output(T seed) : _rng(seed) { init(); }
+  explicit shuffle_output(T s) : _rng(s) { init(); }
   explicit shuffle_output(const base_type & rng) : _rng(rng) { init(); }
   template<class It> shuffle_output(It& first, It last)
     : _rng(first, last) { init(); }

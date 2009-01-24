@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,24 +28,20 @@
 #include "Util.h"
 #include "Buffer.h"
 
+#include <boost/asio.hpp>
+
 namespace adchpp {
 
 /**
  * An asynchronous socket managed by SocketManager.
  */
-class ManagedSocket : public intrusive_ptr_base {
+class ManagedSocket : public intrusive_ptr_base, boost::noncopyable {
 public:
-	void create() throw(SocketException) { sock.create(); }
+	ManagedSocket(boost::asio::io_service& io) : sock(io), overFlow(0), disc(0), writing(false) { }
 
 	/** Asynchronous write */
-	ADCHPP_DLL void write(const BufferPtr& buf) throw();
-	
-	/** Asynchronous write, assumes that buffers are locked */
-	ADCHPP_DLL void fastWrite(const BufferPtr& buf, bool lowPrio = false) throw();
-	
-	/** Returns the lock used for the write buffers */
-	static FastMutex& getWriteMutex() { return writeMutex; }
-	
+	ADCHPP_DLL void write(const BufferPtr& buf, bool lowPrio = false) throw();
+
 	/** Returns the number of bytes in the output buffer; buffers must be locked */
 	size_t getQueuedBytes() const;
 
@@ -54,7 +50,7 @@ public:
 
 	const std::string& getIp() const { return ip; }
 	void setIp(const std::string& ip_) { ip = ip_; }
-	
+
 	typedef std::tr1::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
 	typedef std::tr1::function<void(const BufferPtr&)> DataHandler;
@@ -62,60 +58,46 @@ public:
 	typedef std::tr1::function<void()> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
-	socket_t getSocket() { return sock.getSocket(); }
-	operator bool() const { return sock; }
+	boost::asio::ip::tcp::socket& getSock() { return sock; }
 private:
+	friend class SocketManager;
 
-	ManagedSocket() throw();
 	~ManagedSocket() throw();
-	
-	// Functions for Writer (called from Writer thread)
-	void prepareWrite(BufferList& buffers);
-	void completeAccept() throw();
-	bool completeWrite(BufferList& buffers, size_t written) throw();
-	bool completeRead(const BufferPtr& buf) throw();
+
+	void completeAccept(const boost::system::error_code&) throw();
+	void prepareWrite() throw();
+	void completeWrite(const boost::system::error_code& ec, size_t bytes) throw();
+	void prepareRead() throw();
+	void completeRead(const boost::system::error_code& ec, size_t bytes) throw();
+
 	void failSocket(int error) throw();
-	
-	void shutdown() { sock.shutdown(); }
-	void close() { sock.disconnect(); }
-	
+
+	void shutdown() { /*sock.shutdown();*/ }
+	void close() { /*sock.disconnect();*/ }
+
 	// Functions processing events
 	void processData(const BufferPtr& buf) throw();
-	
-	// No copies
-	ManagedSocket(const ManagedSocket&);
-	ManagedSocket& operator=(const ManagedSocket&);
 
-	friend class Writer;
+	boost::asio::ip::tcp::socket sock;
 
-	Socket sock;
-	
 	/** Output buffer, for storing data that's waiting to be transmitted */
 	BufferList outBuf;
+	/** Input buffer */
+	BufferPtr readBuf;
+
 	/** Overflow timer, the buffer is allowed to overflow for 1 minute, then disconnect */
 	uint32_t overFlow;
 	/** Disconnection scheduled for this socket */
 	uint32_t disc;
 
+	bool writing;
+
 	std::string ip;
-#ifdef _WIN32
-	/** Data currently being sent by WSASend, 0 if not sending */
-	BufferList writeBuf;
-	/** Buffer containing WSABUF's for data being sent */
-	BufferPtr wsabuf;
-	
-	bool isBlocked() { return !writeBuf.empty(); }
-#else
-	bool blocked;
-	bool isBlocked() { return blocked; }
-	void setBlocked(bool blocked_) { blocked = blocked_; }
-#endif
 
 	ConnectedHandler connectedHandler;
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
 
-	ADCHPP_DLL static FastMutex writeMutex;
 };
 
 }

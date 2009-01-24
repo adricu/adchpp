@@ -25,6 +25,9 @@
 #include <adchpp/File.h>
 
 #include <signal.h>
+#include <limits.h>
+
+#define _(x) x
 
 using namespace std;
 using namespace adchpp;
@@ -168,7 +171,7 @@ static void printUsage() {
 
 int main(int argc, char* argv[]) {
 
-	char buf[PATH_MAX + 1];
+	char buf[PATH_MAX + 1] = { 0 };
 	char* path = buf;
 	if (readlink("/proc/self/exe", buf, sizeof (buf)) == -1) {
 		path = getenv("_");

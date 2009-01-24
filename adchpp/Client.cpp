@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,15 @@ namespace adchpp {
 
 using namespace std;
 using namespace std::tr1::placeholders;
-	
+
 Client* Client::create(const ManagedSocketPtr& ms) throw() {
 	Client* c = new Client();
 	c->setSocket(ms);
+	c->onConnected();
 	return c;
 }
 
-Client::Client() throw() : sid(0), state(STATE_PROTOCOL), disconnecting(false), socket(0), dataBytes(0), floodTimer(0) { 
+Client::Client() throw() : sid(0), state(STATE_PROTOCOL), disconnecting(false), dataBytes(0), floodTimer(0) {
 
 }
 
@@ -44,14 +45,14 @@ namespace {
 	struct Handler {
 		Handler(void (Client::*f)(), Client* c_) : c(c_), f0(f) { }
 		Handler(void (Client::*f)(const BufferPtr&), Client* c_) : c(c_), f1(f) { }
-		
+
 		void operator()() throw() {
 			(c->*f0)();
 		}
 		void operator()(const BufferPtr& bv) throw() {
 			(c->*f1)(bv);
 		}
-		
+
 		Client* c;
 		union {
 			void (Client::*f0)();
@@ -104,7 +105,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 			size_t j = done;
 			while(j < len && data[j] != '\n')
 				++j;
-			
+
 			if(j == len) {
 				if(!buffer) {
 					if(done == 0) {
@@ -125,9 +126,9 @@ void Client::onData(const BufferPtr& buf) throw() {
 			} else {
 				buffer->append(data + done, data + j + 1);
 			}
-			
+
 			done = j + 1;
-			
+
 			size_t max_cmd_size = static_cast<size_t>(SETTING(MAX_COMMAND_SIZE));
 
 			if(max_cmd_size > 0 && buffer->size() > max_cmd_size) {
@@ -140,10 +141,10 @@ void Client::onData(const BufferPtr& buf) throw() {
 				buffer = BufferPtr();
 				continue;
 			}
-			
+
 			try {
 				AdcCommand cmd(buffer);
-	
+
 				if(cmd.getType() == 'H') {
 					cmd.setFrom(getSID());
 				} else if(cmd.getFrom() != getSID()) {
@@ -157,16 +158,16 @@ void Client::onData(const BufferPtr& buf) throw() {
 			buffer = BufferPtr();
 		}
 	}
-}	
+}
 
 void Client::setField(const char* name, const string& value) throw() {
 	uint16_t code = AdcCommand::toCode(name);
-	
+
 	if(code == AdcCommand::toCode("SU")) {
 		filters.clear();
 		Util::tokenize(filters, value, ',');
 	}
-	
+
     if(value.empty()) {
 	    info.erase(code);
     } else {
@@ -177,13 +178,13 @@ void Client::setField(const char* name, const string& value) throw() {
 }
 
 bool Client::getChangedFields(AdcCommand& cmd) const throw() {
-	for(InfMap::const_iterator i = changed.begin(); i != changed.end(); ++i) 
+	for(InfMap::const_iterator i = changed.begin(); i != changed.end(); ++i)
 		cmd.addParam(string((char*)&i->first, 2));
 	return !changed.empty();
 }
 
 bool Client::getAllFields(AdcCommand& cmd) const throw() {
-	for(InfMap::const_iterator i = info.begin(); i != info.end(); ++i) 
+	for(InfMap::const_iterator i = info.begin(); i != info.end(); ++i)
 		cmd.addParam(string((char*)&i->first, 2), i->second);
 	return !info.empty();
 }
@@ -194,7 +195,7 @@ const BufferPtr& Client::getINF() const throw() {
 		getAllFields(cmd);
 		INF = cmd.getBuffer();
 	}
-	return INF;	
+	return INF;
 }
 
 void Client::updateFields(const AdcCommand& cmd) throw() {
@@ -210,7 +211,7 @@ bool Client::isFiltered(const string& features) const {
 	if(filters.empty()) {
 		return true;
 	}
-	
+
 	for(size_t i = 0; i < features.size(); i += 5) {
 		if(features[i] == '-') {
 			if(std::find(filters.begin(), filters.end(), features.substr(i+1, 4)) != filters.end()) {
@@ -246,13 +247,13 @@ bool Client::isFlooding(time_t addSeconds) {
 	if(floodTimer < now) {
 		floodTimer = now;
 	}
-	
+
 	floodTimer += addSeconds;
-	
+
 	if(floodTimer > now + SETTING(FLOOD_THRESHOLD)) {
 		return true;
 	}
-	
+
 	return false;
 }
 

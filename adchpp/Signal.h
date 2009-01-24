@@ -22,12 +22,22 @@
 #include "Util.h"
 
 namespace adchpp {
+
+struct Connection : private boost::noncopyable {
+public:
+	Connection() { }
+	virtual ~Connection() { }
 	
+	virtual void disconnect() = 0;
+};
+
+typedef std::auto_ptr<Connection> ConnectionPtr;
+
 template<typename F>
-struct Signal {
+class Signal {
+public:
 	typedef std::tr1::function<F> Slot;
 	typedef std::list<Slot> SlotList;
-	typedef typename SlotList::iterator Connection;
 	typedef F FunctionType;
 	
 	template<typename T0>
@@ -71,51 +81,59 @@ struct Signal {
 	}
 	
 	template<typename T>
-	Connection connect(const T& f) { return slots.insert(slots.end(), f); }
-	void disconnect(const Connection& i) { slots.erase(i); }
+	ConnectionPtr connect(const T& f) { return ConnectionPtr(new SlotConnection(this, slots.insert(slots.end(), f))); }
 	
 	~Signal() { }
 private:
 	SlotList slots;
+	
+	void disconnect(const typename SlotList::iterator& i) { 
+		slots.erase(i); 
+	}
+
+	struct SlotConnection : public Connection {
+		SlotConnection(Signal<F>* sig_, const typename SlotList::iterator& i_) : sig(sig_), i(i_) { }
+		
+		virtual void disconnect() { if(sig) sig->disconnect(i), sig = 0; }
+		Signal<F>* sig;
+		typename Signal<F>::SlotList::iterator i;
+	};
 };
 
-template<typename Sig>
-struct ManagedConnection : intrusive_ptr_base {
-	ManagedConnection(Sig* signal_, const typename Sig::Connection& iter_) : signal(signal_), iter(iter_) { 
+struct ManagedConnection : public intrusive_ptr_base, private boost::noncopyable {
+	ManagedConnection(ConnectionPtr conn_) : conn(conn_) { 
 	}
 	
 	void disconnect() {
-		if(signal) {
-			signal->disconnect(iter);
-			signal = 0;
+		if(conn.get()) {
+			conn->disconnect();
+			conn.reset();
 		}
 	}
 	
 	void release() {
-		signal = 0;
+		conn.reset();
 	}
 	
 	~ManagedConnection() {
 		disconnect();
 	}
 private:
-	ManagedConnection(const ManagedConnection& rhs);
-	ManagedConnection& operator=(const ManagedConnection& rhs);
-	
-	Sig* signal;
-	typename Sig::SlotList::iterator iter;
+	ConnectionPtr conn;
 };
 
-template<typename Signal, typename F>
-boost::intrusive_ptr<ManagedConnection<Signal> > manage(Signal* signal, const F& f) {
-	return boost::intrusive_ptr<ManagedConnection<Signal> >(new ManagedConnection<Signal>(signal, signal->connect(f)));
+typedef boost::intrusive_ptr<ManagedConnection> ManagedConnectionPtr;
+
+template<typename F1, typename F2>
+ManagedConnectionPtr manage(Signal<F1>* signal, const F2& f) {
+	return ManagedConnectionPtr(new ManagedConnection(signal->connect(f)));
 }
 
 template<typename F>
 struct SignalTraits {
-	typedef Signal<F> Signal;
-	typedef typename Signal::Connection Connection;
-	typedef boost::intrusive_ptr<ManagedConnection<Signal> > ManagedConnection;
+	typedef adchpp::Signal<F> Signal;
+	typedef adchpp::ConnectionPtr Connection;
+	typedef adchpp::ManagedConnectionPtr ManagedConnection;
 };
 
 }

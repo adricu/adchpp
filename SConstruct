@@ -98,6 +98,7 @@ if('gcc' in env['TOOLS']):
 	env.Tool("gch", toolpath=".")
 
 env.Append(CPPPATH = ["#/boost/boost/tr1/tr1/", "#/boost/"])
+env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
 
 if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
@@ -224,6 +225,14 @@ if conf.CheckLib('pthread', 'pthread_create'):
 env = conf.Finish()
 
 #dev.intl = dev.build('intl/')
+
+env.Append(LIBPATH = env.Dir(dev.get_build_root() + 'bin/').abspath)
+if not dev.is_win32():
+	dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
+
+dev.boost_system = dev.build('boost/libs/system/src/')
+
+env.Append(LIBS = ['aboost_system'])
 
 dev.adchpp = dev.build('adchpp/')
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ struct hash<boost::intrusive_ptr<T> > {
 
 } }
 
-namespace adchpp { 
+namespace adchpp {
 
 struct intrusive_ptr_base {
 	intrusive_ptr_base() : refs(0) { }
@@ -39,15 +39,15 @@ struct intrusive_ptr_base {
 private:
 	friend void intrusive_ptr_add_ref(intrusive_ptr_base*);
 	friend void intrusive_ptr_release(intrusive_ptr_base*);
-	
+
 	ADCHPP_DLL static FastMutex mtx;
-	
+
 	long refs;
 };
 
 inline void intrusive_ptr_add_ref(intrusive_ptr_base* ptr) {
 #ifdef _WIN32
-	InterlockedIncrement(&ptr->refs);	
+	InterlockedIncrement(&ptr->refs);
 #else
 	FastMutex::Lock l(intrusive_ptr_base::mtx);
 	ptr->refs++;
@@ -90,7 +90,7 @@ struct DeleteFunction {
 	void operator()(T* ptr) { delete ptr; }
 };
 
-/** 
+/**
  * Compares two values
  * @return -1 if v1 < v2, 0 if v1 == v2 and 1 if v1 > v2
  */
@@ -114,22 +114,6 @@ class Flags {
 		MaskType flags;
 };
 
-template<typename T>
-class AutoArray {
-	typedef T* TPtr;
-public:
-	explicit AutoArray(TPtr t) : p(t) { }
-	explicit AutoArray(size_t size) : p(new T[size]) { }
-	~AutoArray() { delete[] p; }
-	operator TPtr() { return p; }
-	AutoArray& operator=(TPtr t) { delete[] p; p = t; return *this; }
-private:
-	AutoArray(const AutoArray&);
-	AutoArray& operator=(const AutoArray&);
-
-	TPtr p;
-};
-
 struct Stats {
 	ADCHPP_DLL static size_t queueCalls;
 	ADCHPP_DLL static int64_t queueBytes;
@@ -140,7 +124,7 @@ struct Stats {
 	ADCHPP_DLL static time_t startTime;
 };
 
-class Util  
+class Util
 {
 public:
 	enum Reason {
@@ -168,29 +152,29 @@ public:
 	};
 
 	ADCHPP_DLL static size_t reasons[REASON_LAST];
-	
+
 	ADCHPP_DLL static std::string emptyString;
 
 	ADCHPP_DLL static void initialize(const std::string& configPath);
 	ADCHPP_DLL static std::string getOsVersion();
 	ADCHPP_DLL static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
 	ADCHPP_DLL static std::string formatTime(const std::string& msg, time_t t = time(NULL));
-	
+
 	static const std::string& getCfgPath() { return cfgPath; }
 	static void setCfgPath(const std::string& path) { cfgPath = path; }
-	
+
 	ADCHPP_DLL static std::string getAppPath();
 	ADCHPP_DLL static std::string getAppName();
-	
+
 #ifndef _WIN32
 	ADCHPP_DLL static void setApp(const std::string& app);
 	static std::string appPath;
 	static std::string appName;
-	
+
 #endif
 
 	ADCHPP_DLL static std::string translateError(int aError);
-	
+
 	ADCHPP_DLL static std::string toAcp(const std::wstring& wString);
 	static const std::string& toAcp(const std::string& wString) { return wString; }
 	static std::string& toAcp(std::string& wString) { return wString; }
@@ -203,64 +187,64 @@ public:
 
 	ADCHPP_DLL static std::string getShortTimeString();
 	ADCHPP_DLL static std::string getTimeString();
-		
+
 	ADCHPP_DLL static std::string formatBytes(int64_t aBytes);
 
 	ADCHPP_DLL static void tokenize(StringList& lst, const std::string& str, char sep, std::string::size_type j = 0);
-	
+
 	static std::string formatSeconds(int64_t aSec) {
 		char buf[64];
 		sprintf(buf, "%01d:%02d:%02d:%02d", (int)(aSec / (24*60*60)), (int)((aSec / (60*60)) % 24), (int)((aSec / 60) % 60), (int)(aSec % 60));
 		return buf;
 	}
-	
+
 	static bool toBool(const std::string& aString) { return toBool(aString.c_str()); }
 	static int toInt(const std::string& aString) { return toInt(aString.c_str()); }
 	static double toDouble(const std::string& aString) { return toDouble(aString.c_str()); }
 	static float toFloat(const std::string& aString) { return toFloat(aString.c_str()); }
 	static int64_t toInt64(const std::string& aString) { return toInt64(aString.c_str()); }
-	
+
 	static bool toBool(const char* aString) { return toInt(aString) > 0; }
 	static int toInt(const char* aString) { return ::atoi(aString); }
 	static double toDouble(const char* aString) { return ::atof(aString); }
 	static float toFloat(const char* aString) { return (float)::atof(aString); }
-	static int64_t toInt64(const char* aString) {	
+	static int64_t toInt64(const char* aString) {
 #ifdef _MSC_VER
 		return _atoi64(aString);
 #else
 		return atoll(aString);
 #endif
 	}
-	
+
 	static std::string toString(bool val) {
 		return val ? "1" : "0";
 	}
-	
+
 	static std::string toString(short val) {
 		char buf[8];
 		sprintf(buf, "%d", (int)val);
 		return buf;
-	}	
+	}
 	static std::string toString(unsigned short val) {
 		char buf[8];
 		sprintf(buf, "%u", (unsigned int)val);
 		return buf;
-	}	
+	}
 	static std::string toString(int val) {
 		char buf[16];
 		sprintf(buf, "%d", val);
 		return buf;
-	}	
+	}
 	static std::string toString(unsigned int val) {
 		char buf[16];
 		sprintf(buf, "%u", val);
 		return buf;
-	}	
+	}
 	static std::string toString(long val) {
 		char buf[32];
 		sprintf(buf, "%ld", val);
 		return buf;
-	}	
+	}
 	static std::string toString(unsigned long val) {
 		char buf[32];
 		sprintf(buf, "%lu", val);
@@ -284,7 +268,7 @@ public:
 #endif
 		return buf;
 	}
-	
+
 	static std::string toString(double val, int maxDec = 2) {
 		char buf[32];
 		sprintf(buf, "%.*f", maxDec, val);

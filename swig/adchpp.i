@@ -66,6 +66,7 @@ void shutdown() {
 
 namespace adchpp {
 	class Client;
+	typedef std::vector<std::string> StringList;
 }
 
 %template(TErrorPair) std::pair<int, size_t>;
@@ -76,7 +77,6 @@ namespace adchpp {
 
 %template(TByteVector) std::vector<uint8_t>;
 
-typedef std::vector<std::string> StringList;
 %inline%{
 typedef std::vector<adchpp::Client*> ClientList;
 %}
@@ -94,21 +94,28 @@ namespace adchpp {
 void initialize(const std::string& configPath);
 void cleanup();
 
-template<typename F>
-struct Signal {
-};
-
-template<typename Sig>
 struct ManagedConnection {
 	void disconnect();
 	void release();
 };
 
+typedef boost::intrusive_ptr<ManagedConnection> ManagedConnectionPtr;
+%template (ManagedConnectrionPtr) boost::intrusive_ptr<ManagedConnection>;
+
+template<typename F>
+struct Signal {
+%extend {
+	ManagedConnectionPtr connect(std::tr1::function<F> f) {
+		return manage(self, f);
+	}
+}
+};
+
 template<typename F>
 struct SignalTraits {
-	typedef Signal<F> Signal;
-	typedef typename Signal::Connection Connection;
-	typedef boost::intrusive_ptr<ManagedConnection<Signal> > ManagedConnection;
+	typedef adchpp::Signal<F> Signal;
+	//typedef adchpp::ConnectionPtr Connection;
+	typedef adchpp::ManagedConnectionPtr ManagedConnection;
 };
 
 class Exception : public std::exception
@@ -468,49 +475,6 @@ public:
 %template(SignalS) Signal<void (const SimpleXML&)>;
 %template(SignalTraitsS) SignalTraits<void (const SimpleXML&)>;
 
-%template(ManagedC) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&)> > >;
-%template(ManagedCA) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&)> > >;
-%template(ManagedCAI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, AdcCommand&, int&)> > >;
-%template(ManagedCI) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, int)> > >;
-%template(ManagedCS) boost::intrusive_ptr<ManagedConnection<Signal<void (Client&, const std::string&)> > >;
-%template(ManagedS) boost::intrusive_ptr<ManagedConnection<Signal<const SimpleXML&> > >;
-
-%extend Signal<void (Client&)> {
-	SignalTraits<void (Client&)>::ManagedConnection connect(std::tr1::function<void (Client&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, AdcCommand&)> {
-	SignalTraits<void (Client&, AdcCommand&)>::ManagedConnection connect(std::tr1::function<void (Client&, AdcCommand&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, AdcCommand&, int&)> {
-	SignalTraits<void (Client&, AdcCommand&, int&)>::ManagedConnection connect(std::tr1::function<void (Client&, AdcCommand&, int&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, int)> {
-	SignalTraits<void (Client&, int)>::ManagedConnection connect(std::tr1::function<void (Client&, int)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (Client&, const std::string&)> {
-	SignalTraits<void (Client&, const std::string&)>::ManagedConnection connect(std::tr1::function<void (Client&, const std::string&)> f) {
-		return manage(self, f);
-	}
-}
-
-%extend Signal<void (const SimpleXML&)> {
-	SignalTraits<void (const SimpleXML&)>::ManagedConnection connect(std::tr1::function<void (const SimpleXML&)> f) {
-		return manage(self, f);
-	}
-}
-
 class ClientManager 
 {
 public:
@@ -727,6 +691,13 @@ public:
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();
+//	typedef std::tr1::function<void (Client&, const StringList&, int& override)> CommandSlot;
+	%extend {
+		ManagedConnectionPtr onCommand(const std::string& commandName, std::tr1::function<void (Client&, const StringList&, int& override)> f) {
+			return ManagedConnectionPtr(new ManagedConnection(self->onCommand(commandName, f)));
+		}
+	}
+
 };
 
 
