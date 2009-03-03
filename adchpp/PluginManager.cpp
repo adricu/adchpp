@@ -140,6 +140,8 @@ bool PluginManager::loadPlugin(const string& file) {
 }
 
 void PluginManager::onLoad(const SimpleXML& xml) throw() {
+	plugins.clear();
+
 	xml.resetCurrentChild();
 	if(xml.findChild("Plugins")) {
 		pluginPath = xml.getChildAttrib("Path");
@@ -159,6 +161,9 @@ void PluginManager::shutdown() {
 	for(PluginList::reverse_iterator i = active.rbegin(); i != active.rend(); ++i)
 		PM_UNLOAD_LIBRARY(i->handle);
 #endif
+
+	registry.clear();
+	active.clear();
 }
 
 struct CommandDispatch {

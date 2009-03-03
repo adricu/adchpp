@@ -50,8 +50,6 @@ private:
 
 	boost::asio::io_service io;
 
-	typedef std::vector<Callback> ProcessQueue;
-
 	IncomingHandler incomingHandler;
 
 	static const std::string className;

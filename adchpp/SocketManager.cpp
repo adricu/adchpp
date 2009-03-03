@@ -70,7 +70,6 @@ void SocketManager::addJob(const Callback& callback) throw() {
 }
 
 void SocketManager::shutdown() {
-
 	io.stop();
 	join();
 }
