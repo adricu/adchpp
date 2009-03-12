@@ -33,35 +33,49 @@ struct hash<boost::intrusive_ptr<T> > {
 
 namespace adchpp {
 
-struct intrusive_ptr_base {
-	intrusive_ptr_base() : refs(0) { }
-	ADCHPP_DLL virtual ~intrusive_ptr_base() = 0;
+template<typename T>
+class intrusive_ptr_base
+{
+public:
+	bool unique() throw() {
+		return (refs == 1);
+	}
+
+	boost::intrusive_ptr<T> from_this() { return boost::intrusive_ptr<T>(static_cast<T*>(this)); }
+
+protected:
+	intrusive_ptr_base() throw() : refs(0) { }
+
 private:
-	friend void intrusive_ptr_add_ref(intrusive_ptr_base*);
-	friend void intrusive_ptr_release(intrusive_ptr_base*);
+	friend void intrusive_ptr_add_ref(intrusive_ptr_base* p) {
+#ifdef _WIN32
+	InterlockedIncrement(&p->refs);
+#else
+	FastMutex::Lock l(mtx);
+	p->refs++;
+#endif
+	}
 
+	friend void intrusive_ptr_release(intrusive_ptr_base* p) {
+#ifdef _WIN32
+	if(!InterlockedDecrement(&p->refs))
+		delete static_cast<T*>(p);
+#else
+	FastMutex::Lock l(intrusive_ptr_base::mtx);
+	if(!--p->refs)
+		delete static_cast<T*>(p);
+#endif
+	}
+
+#ifndef _WIN32
 	ADCHPP_DLL static FastMutex mtx;
+#endif
 
-	long refs;
+	volatile long refs;
 };
 
-inline void intrusive_ptr_add_ref(intrusive_ptr_base* ptr) {
-#ifdef _WIN32
-	InterlockedIncrement(&ptr->refs);
-#else
-	FastMutex::Lock l(intrusive_ptr_base::mtx);
-	ptr->refs++;
-#endif
-}
-
-inline void intrusive_ptr_release(intrusive_ptr_base* ptr) {
-#ifdef _WIN32
-	if(!InterlockedDecrement(&ptr->refs)) delete ptr;
-#else
-	FastMutex::Lock l(intrusive_ptr_base::mtx);
-	if(!--ptr->refs) delete ptr;
-#endif
-}
+template<typename T>
+FastMutex intrusive_ptr_base<T>::mtx;
 
 /** Evaluates op(pair<T1, T2>.first, compareTo) */
 template<class T1, class T2, class op = std::equal_to<T1> >

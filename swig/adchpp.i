@@ -85,7 +85,7 @@ namespace boost {
 template<typename T>
 class intrusive_ptr {
 public:
-	T* operator->();	
+	T* operator->();
 };
 }
 
@@ -125,7 +125,7 @@ public:
 	Exception(const std::string& aError) throw();
 	virtual ~Exception() throw();
 	const std::string& getError() const throw();
-	
+
 	virtual const char* what();
 };
 
@@ -139,7 +139,7 @@ struct Stats {
 	static time_t startTime;
 };
 
-class Util  
+class Util
 {
 public:
 	enum Reason {
@@ -167,14 +167,14 @@ public:
 	};
 
 	static size_t reasons[REASON_LAST];
-	
+
 	static std::string emptyString;
 
 	static void initialize(const std::string& configPath);
 	static std::string getOsVersion();
 	static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
 	static std::string formatTime(const std::string& msg, time_t t = time(NULL));
-	
+
 	static const std::string& getCfgPath();
 	static void setCfgPath(const std::string& path);
 
@@ -182,7 +182,7 @@ public:
 	static std::string getAppName();
 
 	static std::string translateError(int aError);
-	
+
 	static std::string toAcp(const std::wstring& wString);
 	static const std::string& toAcp(const std::string& wString);
 
@@ -193,13 +193,13 @@ public:
 
 	static std::string getShortTimeString();
 	static std::string getTimeString();
-		
+
 	static std::string formatBytes(int64_t aBytes);
 
 	static void tokenize(StringList& lst, const std::string& str, char sep, std::string::size_type j = 0);
 
 	static std::string formatSeconds(int64_t aSec);
-	
+
 
 	/** Avoid this! Use the one of a connected socket instead... */
 	static std::string getLocalIp();
@@ -228,11 +228,11 @@ public:
 
 	size_t toHash() const;
 	//const uint8_t* data() const;
-	
+
 	%extend {
 		std::string data() const { return std::string(reinterpret_cast<const char*>(self->data()), CID::SIZE); }
 		std::string __str__() { return self->toBase32(); }
-	}  
+	}
 
 	bool isZero() const;
 	static CID generate();
@@ -296,7 +296,7 @@ public:
 	static const char TYPE_UDP = 'U';
 
 	// Known commands...
-#define C(n, a, b, c) static const unsigned int CMD_##n = (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); 
+#define C(n, a, b, c) static const unsigned int CMD_##n = (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16));
 	// Base commands
 	C(SUP, 'S','U','P');
 	C(STA, 'S','T','A');
@@ -338,14 +338,14 @@ public:
 	AdcCommand& addParam(const std::string& name, const std::string& value);
 	AdcCommand& addParam(const std::string& str);
 	const std::string& getParam(size_t n) const;
-	
+
 	const std::string& getFeatures() const;
 
 #ifndef SWIGLUA
 	bool getParam(const char* name, size_t start, std::string& OUTPUT) const;
 #endif
 	bool delParam(const char* name, size_t start);
-	
+
 	bool hasFlag(const char* name, size_t start) const;
 	static uint16_t toCode(const char* x);
 
@@ -374,7 +374,7 @@ public:
 		return (((uint32_t)cmd[0]) | (((uint32_t)cmd[1])<<8) | (((uint32_t)cmd[2])<<16));
 	}
 }
-	
+
 };
 
 class Client {
@@ -386,7 +386,7 @@ public:
 		STATE_NORMAL,
 		STATE_DATA
 	};
-	
+
 	enum {
 		FLAG_BOT = 0x01,
 		FLAG_REGISTERED = 0x02,
@@ -442,10 +442,10 @@ public:
 	bool isFiltered(const std::string& features) const;
 
 	bool isFlooding(time_t addSeconds);
-	
+
 	//void* setPSD(int id, void* data) throw();
 	//void* getPSD(int id) throw();
-	
+
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
 	uint32_t getSID() const { return sid; }
@@ -475,25 +475,25 @@ public:
 %template(SignalS) Signal<void (const SimpleXML&)>;
 %template(SignalTraitsS) SignalTraits<void (const SimpleXML&)>;
 
-class ClientManager 
+class ClientManager
 {
 public:
 	enum SignalCommandOverride {
 		DONT_DISPATCH = 1 << 0,
 		DONT_SEND = 1 << 1
 	};
-	
+
 	//typedef HASH_MAP<uint32_t, Client*> ClientMap;
 	//typedef ClientMap::iterator ClientIter;
-	
+
 	void addSupports(const std::string& str) throw();
 	void removeSupports(const std::string& str) throw();
 
 	void updateCache() throw();
-	
+
 	uint32_t getSID(const std::string& nick) const throw();
 	uint32_t getSID(const CID& cid) const throw();
-	
+
 	Client* getClient(const uint32_t& aSid) throw();
 	//ClientMap& getClients() throw() { return clients; }
 	%extend{
@@ -513,14 +513,14 @@ public:
 		return 0;
 	}
 	}
-	
+
 	void send(const AdcCommand& cmd, bool lowPrio = false) throw();
 	void sendToAll(const AdcCommand& cmd) throw();
 	void sendToAll(const std::string& cmd) throw();
 	void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
 
 	bool checkFlooding(Client& c, const AdcCommand&) throw();
-	
+
 	void enterIdentify(Client& c, bool sendData) throw();
 
 	ByteVector enterVerify(Client& c, bool sendData) throw();
@@ -534,14 +534,14 @@ public:
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
 
 	void setState(Client& c, Client::State newState) throw();
-	
+
 	size_t getQueuedBytes() throw();
-	
+
 	//void incomingConnection(ManagedSocket* ms) throw();
-	
+
 	//void startup() throw() { updateCache(); }
 	//void shutdown();
-	
+
 	typedef SignalTraits<void (Client&)> SignalConnected;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
 	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
@@ -559,12 +559,12 @@ public:
 	//virtual ~ClientManager() throw() { }
 };
 
-class SimpleXML  
+class SimpleXML
 {
 public:
 	SimpleXML(int numAttribs = 0);
 	~SimpleXML();
-	
+
 	void addTag(const std::string& aName, const std::string& aData = Util::emptyString) throw(SimpleXMLException);
 	void addAttrib(const std::string& aName, const std::string& aData) throw(SimpleXMLException);
 	void addChildAttrib(const std::string& aName, const std::string& aData) throw(SimpleXMLException);
@@ -572,7 +572,7 @@ public:
 	const std::string& getData() const;
 	void stepIn() const throw(SimpleXMLException);
 	void stepOut() const throw(SimpleXMLException);
-	
+
 	void resetCurrentChild() const throw();
 	bool findChild(const std::string& aName) const throw();
 
@@ -585,9 +585,9 @@ public:
 	bool getBoolChildAttrib(const std::string& aName) throw(SimpleXMLException);
 	void fromXML(const std::string& aXML) throw(SimpleXMLException);
 	std::string toXML();
-	
+
 	static void escape(std::string& aString, bool aAttrib, bool aLoading = false);
-	/** 
+	/**
 	 * This is a heurestic for whether escape needs to be called or not. The results are
  	 * only guaranteed for false, i e sometimes true might be returned even though escape
 	 * was not needed...
@@ -605,13 +605,13 @@ public:
 	};
 
 	enum StrSetting { STR_FIRST,
-		HUB_NAME = STR_FIRST, SERVER_IP, LOG_FILE, DESCRIPTION,
+		HUB_NAME = STR_FIRST, LOG_FILE, DESCRIPTION,
 		STR_LAST };
 
 	enum IntSetting { INT_FIRST = STR_LAST + 1,
-		SERVER_PORT = INT_FIRST, LOG, KEEP_SLOW_USERS, 
-		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE, 
-		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD, 
+		LOG = INT_FIRST, KEEP_SLOW_USERS,
+		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE,
+		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD,
 		LOGIN_TIMEOUT,
 		INT_LAST };
 
@@ -636,7 +636,7 @@ public:
 	}
 }
 	bool getBool(IntSetting key) const;
-	
+
 	typedef SignalTraits<void (const SimpleXML&)> SignalLoad;
 	SignalLoad::Signal& signalLoad();
 };
@@ -647,7 +647,7 @@ public:
 	enum { BITS = 192, BYTES = BITS / 8 }; // Keep old name for a while
 
 	TigerHash();
-	
+
 	%extend {
 		void update(const std::string& data) {
 			self->update(data.data(), data.size());
@@ -673,7 +673,7 @@ public:
 	}
 };
 
-class PluginManager 
+class PluginManager
 {
 public:
 	void attention(const std::tr1::function<void()>& f);

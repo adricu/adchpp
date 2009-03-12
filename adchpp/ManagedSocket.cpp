@@ -75,25 +75,17 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 
 void ManagedSocket::prepareWrite() throw() {
 	if(!outBuf.empty() && !writing) {
-		if(outBuf.size() == 1) {
-			sock.async_send(buffer(outBuf[0]->data(), outBuf[0]->size()), bind(&ManagedSocket::completeWrite, this, _1, _2));
-		} else {
-			std::vector<const_buffer> buffers(std::min(outBuf.size(), static_cast<size_t>(64)));
-
-			for(size_t i = 0; i < buffers.size(); ++i) {
-				buffers[i] = boost::asio::const_buffer(outBuf[i]->data(), outBuf[i]->size());
-			}
-
-			sock.async_send(buffers, bind(&ManagedSocket::completeWrite, this, _1, _2));
-		}
+		sock->write(outBuf, bind(&ManagedSocket::completeWrite, from_this(), _1, _2));
 		writing = true;
+	} else if(disc) {
+		failSocket(0);
+		sock->close();
 	}
 }
 
 void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t bytes) throw() {
 	writing = false;
 	if(!ec) {
-
 		Stats::sendBytes += bytes;
 		Stats::sendCalls++;
 
@@ -108,8 +100,8 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 			}
 		}
 
-		size_t left = getQueuedBytes();
 		if(overFlow > 0) {
+			size_t left = getQueuedBytes();
 			if(left < static_cast<size_t>(SETTING(MAX_BUFFER_SIZE))) {
 				overFlow = 0;
 			}
@@ -124,7 +116,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 void ManagedSocket::prepareRead() throw() {
 	if(!readBuf) {
 		readBuf = BufferPtr(new Buffer(SETTING(BUFFER_SIZE)));
-		sock.async_read_some(buffer(readBuf->data(), readBuf->size()), bind(&ManagedSocket::completeRead, this, _1, _2));
+		sock->read(readBuf, bind(&ManagedSocket::completeRead, from_this(), _1, _2));
 	}
 }
 
@@ -167,6 +159,8 @@ void ManagedSocket::disconnect(Util::Reason reason) throw() {
 
 	disc = GET_TICK() + SETTING(DISCONNECT_TIMEOUT);
 	Util::reasons[reason]++;
+
+	prepareWrite();
 }
 
 }

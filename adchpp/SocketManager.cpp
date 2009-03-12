@@ -24,41 +24,163 @@
 #include "TimerManager.h"
 #include "SettingsManager.h"
 #include "ManagedSocket.h"
+#include "SimpleXML.h"
+
+#ifdef HAVE_OPENSSL
+#include <boost/asio/ssl.hpp>
+#endif
 
 namespace adchpp {
 
 using namespace std;
 using namespace std::tr1;
 using namespace std::tr1::placeholders;
-
 using namespace boost::asio;
+using namespace boost::system;
 
 SocketManager::SocketManager()  {
+	SettingsManager::getInstance()->signalLoad().connect(std::tr1::bind(&SocketManager::onLoad, this, std::tr1::placeholders::_1));
 }
 
 SocketManager::~SocketManager() {
+
 }
 
 SocketManager* SocketManager::instance = 0;
 const string SocketManager::className = "SocketManager";
 
-void SocketManager::handleAccept(const boost::system::error_code ec, const ManagedSocketPtr& s, ip::tcp::acceptor& acceptor) {
-	incomingHandler(s);
-	s->completeAccept(ec);
+template<typename T>
+class SocketStream : public AsyncStream {
+public:
+	template<typename X>
+	SocketStream(X& x) : sock(x) { }
 
-	ManagedSocketPtr p(new ManagedSocket(io));
+	template<typename X, typename Y>
+	SocketStream(X& x, Y& y) : sock(x, y) { }
 
-	acceptor.async_accept(p->getSock(), bind(&SocketManager::handleAccept, this, _1, p, ref(acceptor)));
-}
+	virtual void read(const BufferPtr& buf, const Handler& handler) {
+		sock.async_read_some(boost::asio::buffer(buf->data(), buf->size()), handler);
+	}
+
+	virtual void write(const BufferList& bufs, const Handler& handler) {
+		if(bufs.size() == 1) {
+			sock.async_write_some(boost::asio::buffer(bufs[0]->data(), bufs[0]->size()), handler);
+		} else {
+			std::vector<boost::asio::const_buffer> buffers(std::min(bufs.size(), static_cast<size_t>(64)));
+
+			for(size_t i = 0; i < bufs.size(); ++i) {
+				buffers[i] = boost::asio::const_buffer(bufs[i]->data(), bufs[i]->size());
+			}
+
+			sock.async_write_some(buffers, handler);
+		}
+	}
+	virtual void close() {
+		sock.lowest_layer().close();
+	}
+
+	T sock;
+};
+
+typedef SocketStream<ip::tcp::socket> SimpleSocketStream;
+
+#ifdef HAVE_OPENSSL
+typedef SocketStream<ssl::stream<ip::tcp::socket> > TLSSocketStream;
+#endif
+
+class SocketFactory : public intrusive_ptr_base<SocketFactory> {
+public:
+	SocketFactory(io_service& io_, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
+		io(io_),
+		acceptor(io_, ip::tcp::endpoint(boost::asio::ip::tcp::v4(), info->port)),
+		serverInfo(info),
+		handler(handler_)
+	{
+#ifdef HAVE_OPENSSL
+		TLSServerInfoPtr tls = boost::dynamic_pointer_cast<TLSServerInfo>(info);
+		if(tls) {
+			context.reset(new boost::asio::ssl::context(io, ssl::context::tlsv1_server));
+		    context->set_options(
+		        boost::asio::ssl::context::no_sslv2
+		        | boost::asio::ssl::context::no_sslv3
+		        | boost::asio::ssl::context::single_dh_use);
+		    //context->set_password_callback(boost::bind(&server::get_password, this));
+		    context->use_certificate_chain_file(tls->cert);
+		    context->use_private_key_file(tls->pkey, boost::asio::ssl::context::pem);
+		    context->use_tmp_dh_file(tls->dh);
+		}
+#endif
+	}
+
+	void prepareAccept() {
+#ifdef HAVE_OPENSSL
+		TLSServerInfoPtr tls = boost::dynamic_pointer_cast<TLSServerInfo>(serverInfo);
+		if(tls) {
+			TLSSocketStream* s = new TLSSocketStream(io, *context);
+			socket.reset(new ManagedSocket(AsyncStreamPtr(s)));
+			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::prepareHandshake, from_this(), std::tr1::placeholders::_1));
+		} else {
+#endif
+			SimpleSocketStream* s = new SimpleSocketStream(io);
+			socket.reset(new ManagedSocket(AsyncStreamPtr(s)));
+			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::handleAccept, from_this(), std::tr1::placeholders::_1));
+#ifdef HAVE_OPENSSL
+		}
+#endif
+	}
+
+#ifdef HAVE_OPENSSL
+	void prepareHandshake(const error_code& ec) {
+		if(!ec) {
+			boost::intrusive_ptr<TLSSocketStream> tls = boost::static_pointer_cast<TLSSocketStream>(socket->sock);
+			tls->sock.async_handshake(ssl::stream_base::server, std::tr1::bind(&SocketFactory::completeHandshake, from_this(), std::tr1::placeholders::_1, socket));
+			prepareAccept();
+		}
+	}
+#endif
+
+	void handleAccept(const error_code& ec) {
+		completeAccept(ec, socket);
+		if(!ec) {
+			prepareAccept();
+		}
+	}
+
+	void completeHandshake(const error_code& ec, const ManagedSocketPtr& sock) {
+		completeAccept(ec, sock);
+	}
+
+	void completeAccept(const error_code& ec, const ManagedSocketPtr& sock) {
+		handler(sock);
+		sock->completeAccept(ec);
+	}
+
+	io_service& io;
+	ip::tcp::acceptor acceptor;
+	ServerInfoPtr serverInfo;
+	SocketManager::IncomingHandler handler;
+
+	ManagedSocketPtr socket;
+
+#ifdef HAVE_OPENSSL
+	std::tr1::shared_ptr<boost::asio::ssl::context> context;
+#endif
+
+};
 
 int SocketManager::run() {
 	LOG(SocketManager::className, "Starting");
 
-	ip::tcp::acceptor acceptor(io, ip::tcp::endpoint(ip::tcp::v4(), SETTING(SERVER_PORT)));
+	for(std::vector<ServerInfoPtr>::iterator i = servers.begin(), iend = servers.end(); i != iend; ++i) {
+		const ServerInfoPtr& si = *i;
 
-	ManagedSocketPtr p(new ManagedSocket(io));
-
-	acceptor.async_accept(p->getSock(), bind(&SocketManager::handleAccept, this, _1, p, ref(acceptor)));
+		try {
+			// The factory manages its own lifetime
+			(new SocketFactory(io, incomingHandler, si))->prepareAccept();
+		} catch(const system_error& se) {
+			LOG(SocketManager::className, "Error while loading server on port " + Util::toString(si->port) +": " + se.what());
+		}
+	}
 
 	io.run();
 
@@ -72,6 +194,33 @@ void SocketManager::addJob(const Callback& callback) throw() {
 void SocketManager::shutdown() {
 	io.stop();
 	join();
+}
+
+void SocketManager::onLoad(const SimpleXML& xml) throw() {
+	servers.clear();
+	xml.resetCurrentChild();
+	if(xml.findChild("Servers")) {
+		xml.stepIn();
+		while(xml.findChild("Server")) {
+			ServerInfoPtr server;
+
+			if(xml.getBoolChildAttrib("TLS")) {
+				TLSServerInfoPtr p(new TLSServerInfo);
+				p->cert = xml.getChildAttrib("Certificate");
+				p->pkey = xml.getChildAttrib("PrivateKey");
+				p->trustedPath = xml.getChildAttrib("TrustedPath");
+				p->dh = xml.getChildAttrib("DHParams");
+
+				server = p;
+			} else {
+				server.reset(new ServerInfo);
+			}
+
+			server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
+			servers.push_back(server);
+		}
+		xml.stepOut();
+	}
 }
 
 }

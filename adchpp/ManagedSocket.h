@@ -22,22 +22,20 @@
 #include "common.h"
 
 #include "forward.h"
-#include "Socket.h"
 #include "Mutex.h"
 #include "Signal.h"
 #include "Util.h"
 #include "Buffer.h"
-
-#include <boost/asio.hpp>
+#include "AsyncStream.h"
 
 namespace adchpp {
 
 /**
  * An asynchronous socket managed by SocketManager.
  */
-class ManagedSocket : public intrusive_ptr_base, boost::noncopyable {
+class ManagedSocket : public intrusive_ptr_base<ManagedSocket>, boost::noncopyable {
 public:
-	ManagedSocket(boost::asio::io_service& io) : sock(io), overFlow(0), disc(0), writing(false) { }
+	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overFlow(0), disc(0), writing(false) { }
 
 	/** Asynchronous write */
 	ADCHPP_DLL void write(const BufferPtr& buf, bool lowPrio = false) throw();
@@ -58,10 +56,10 @@ public:
 	typedef std::tr1::function<void()> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
-	boost::asio::ip::tcp::socket& getSock() { return sock; }
 private:
 	friend class SocketManager;
-
+	friend class SocketFactory;
+	friend void intrusive_ptr_release(intrusive_ptr_base<ManagedSocket>*);
 	~ManagedSocket() throw();
 
 	void completeAccept(const boost::system::error_code&) throw();
@@ -78,7 +76,7 @@ private:
 	// Functions processing events
 	void processData(const BufferPtr& buf) throw();
 
-	boost::asio::ip::tcp::socket sock;
+	AsyncStreamPtr sock;
 
 	/** Output buffer, for storing data that's waiting to be transmitted */
 	BufferList outBuf;

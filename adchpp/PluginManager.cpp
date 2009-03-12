@@ -151,7 +151,6 @@ void PluginManager::onLoad(const SimpleXML& xml) throw() {
 		}
 		xml.stepOut();
 	}
-	xml.resetCurrentChild();
 }
 
 void PluginManager::shutdown() {

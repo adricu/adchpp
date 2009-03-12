@@ -84,7 +84,6 @@ toolset = [tools, 'swig']
 env = Environment(tools = toolset, options=opts, ENV=os.environ)
 Help(opts.GenerateHelpText(env))
 
-
 mode = env['mode']
 if mode not in gcc_flags:
 	print "Unknown mode, exiting"
@@ -224,7 +223,9 @@ if conf.CheckLib('dl', 'dlopen'):
 	conf.env.Append(CPPDEFINES=['HAVE_DL'])
 if conf.CheckLib('pthread', 'pthread_create'):
 	conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
-
+if conf.CheckLib('ssl', 'SSL_connect'):
+	conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
+	
 env = conf.Finish()
 
 #dev.intl = dev.build('intl/')

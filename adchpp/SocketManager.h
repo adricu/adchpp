@@ -24,10 +24,33 @@
 #include "forward.h"
 #include "Thread.h"
 #include "Singleton.h"
+#include "Util.h"
 
 #include <boost/asio.hpp>
 
 namespace adchpp {
+
+class SocketManager;
+
+class ServerInfo : public intrusive_ptr_base<ServerInfo> {
+public:
+	std::string ip;
+	unsigned short port;
+	virtual ~ServerInfo() { }
+};
+
+typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
+
+class TLSServerInfo : public ServerInfo {
+public:
+	std::string cert;
+	std::string pkey;
+	std::string trustedPath;
+	std::string dh;
+};
+
+typedef boost::intrusive_ptr<TLSServerInfo> TLSServerInfoPtr;
+typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
@@ -36,6 +59,8 @@ public:
 
 	void startup() throw(ThreadException) { start(); }
 	void shutdown();
+
+	void setServers(const ServerInfoList& servers_) { servers = servers_; }
 
 	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
@@ -46,9 +71,9 @@ private:
 
 	virtual int run();
 
-	void handleAccept(const boost::system::error_code ec, const ManagedSocketPtr& s, boost::asio::ip::tcp::acceptor& acceptor);
-
 	boost::asio::io_service io;
+
+	std::vector<ServerInfoPtr> servers;
 
 	IncomingHandler incomingHandler;
 
@@ -56,6 +81,8 @@ private:
 
 	friend class Singleton<SocketManager>;
 	ADCHPP_DLL static SocketManager* instance;
+
+	void onLoad(const SimpleXML& xml) throw();
 
 	SocketManager();
 	virtual ~SocketManager();

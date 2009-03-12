@@ -35,6 +35,9 @@ if 'HAVE_DL' in env['CPPDEFINES']:
 if 'HAVE_PTHREAD' in env['CPPDEFINES']:
     env.Append(LIBS = ['pthread'])
 
+if 'HAVE_OPENSSL' in env['CPPDEFINES']:
+	env.Append(LIBS = ['crypto', 'ssl'])
+
 if 'gcc' in env['TOOLS']:
 	env['GchSh'] = env.GchSh('adchpp.h')[0]
 

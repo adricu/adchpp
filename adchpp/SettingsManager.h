@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,13 +37,13 @@ public:
 	};
 
 	enum StrSetting { STR_FIRST,
-		HUB_NAME = STR_FIRST, SERVER_IP, LOG_FILE, DESCRIPTION,
+		HUB_NAME = STR_FIRST, LOG_FILE, DESCRIPTION,
 		STR_LAST };
 
 	enum IntSetting { INT_FIRST = STR_LAST + 1,
-		SERVER_PORT = INT_FIRST, LOG, KEEP_SLOW_USERS, 
-		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE, 
-		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD, 
+		LOG = INT_FIRST, KEEP_SLOW_USERS,
+		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE,
+		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD,
 		LOGIN_TIMEOUT,
 		INT_LAST, SETTINGS_LAST = INT_LAST };
 
@@ -99,7 +99,7 @@ public:
 private:
 	friend class Singleton<SettingsManager>;
 	ADCHPP_DLL static SettingsManager* instance;
-	
+
 	SettingsManager() throw();
 	virtual ~SettingsManager() throw() { }
 
@@ -109,7 +109,7 @@ private:
 
 	std::string strSettings[STR_LAST - STR_FIRST];
 	int intSettings[INT_LAST - INT_FIRST];
-	
+
 	SignalLoad::Signal signalLoad_;
 };
 

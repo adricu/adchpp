@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,11 +37,6 @@ namespace adchpp {
 
 using namespace std;
 
-intrusive_ptr_base::~intrusive_ptr_base() {
-}
-
-FastMutex intrusive_ptr_base::mtx;
-
 #ifdef NDEBUG
 FastMutex FastAllocBase::mtx;
 #endif
@@ -69,7 +64,7 @@ static void sgenrand(unsigned long seed);
 void Util::initialize(const string& configPath) {
 	setlocale(LC_ALL, "");
 	sgenrand((unsigned long)time(NULL));
-	
+
 	setCfgPath(configPath);
 }
 
@@ -82,7 +77,7 @@ void Util::initialize(const string& configPath) {
 void Util::decodeUrl(const string& url, string& aServer, short& aPort, string& aFile) {
 	// First, check for a protocol: xxxx://
 	string::size_type i = 0, j, k;
-	
+
 	aServer.clear();
 	aFile.clear();
 
@@ -188,7 +183,7 @@ string Util::getAppName() {
 
 string Util::getLocalIp() {
 	string tmp;
-	
+
 	char buf[256];
 	gethostname(buf, 255);
 	hostent* he = gethostbyname(buf);
@@ -196,15 +191,15 @@ string Util::getLocalIp() {
 		return Util::emptyString;
 	sockaddr_in dest;
 	int i = 0;
-	
+
 	// We take the first ip as default, but if we can find a better one, use it instead...
 	memcpy(&(dest.sin_addr), he->h_addr_list[i++], he->h_length);
 	tmp = inet_ntoa(dest.sin_addr);
-	if( strncmp(tmp.c_str(), "192", 3) == 0 || 
-		strncmp(tmp.c_str(), "169", 3) == 0 || 
-		strncmp(tmp.c_str(), "127", 3) == 0 || 
+	if( strncmp(tmp.c_str(), "192", 3) == 0 ||
+		strncmp(tmp.c_str(), "169", 3) == 0 ||
+		strncmp(tmp.c_str(), "127", 3) == 0 ||
 		strncmp(tmp.c_str(), "10", 2) == 0 ) {
-		
+
 		while(he->h_addr_list[i]) {
 			memcpy(&(dest.sin_addr), he->h_addr_list[i], he->h_length);
 			string tmp2 = inet_ntoa(dest.sin_addr);
@@ -212,7 +207,7 @@ string Util::getLocalIp() {
 				strncmp(tmp2.c_str(), "169", 3) != 0 &&
 				strncmp(tmp2.c_str(), "127", 3) != 0 &&
 				strncmp(tmp2.c_str(), "10", 2) != 0) {
-				
+
 				tmp = tmp2;
 			}
 			i++;
@@ -234,7 +229,7 @@ string Util::formatBytes(int64_t aBytes) {
 	} else {
 		sprintf(buf, "%.02f TiB", (double)aBytes/(1024.0*1024.0*1024.0*1024.0));
 	}
-	
+
 	return buf;
 }
 
@@ -270,7 +265,7 @@ string Util::formatTime(const string& msg, time_t t /* = time(NULL) */) {
 		bufsize+=64;
 		buf = new char[bufsize];
 	}
-	
+
 	string result = buf;
 	delete[] buf;
 	return result;
@@ -279,23 +274,23 @@ string Util::formatTime(const string& msg, time_t t /* = time(NULL) */) {
 string Util::translateError(int aError) {
 #ifdef _WIN32
 	LPVOID lpMsgBuf;
-	::FormatMessage( 
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		FORMAT_MESSAGE_FROM_SYSTEM | 
+	::FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		aError,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPTSTR) &lpMsgBuf,
 		0,
-		NULL 
+		NULL
 	);
 
 #ifdef _UNICODE
 	string tmp = Util::toAcp((LPCTSTR)lpMsgBuf);
 #else
 	string tmp = (LPCTSTR)lpMsgBuf;
-#endif		
+#endif
 		// Free the buffer.
 	LocalFree( lpMsgBuf );
 #else // WIN32
@@ -339,7 +334,7 @@ string Util::getOsVersion() {
 			} else {
 				os = "WinUnknown";
 			}
-			
+
 			if(ver.wProductType == VER_NT_WORKSTATION)
 				os += " Pro";
 			else if(ver.wProductType == VER_NT_SERVER)
@@ -352,7 +347,7 @@ string Util::getOsVersion() {
 			os += " SP" + Util::toString(ver.wServicePackMajor);
 		}
 	}
-	
+
 	return os;
 
 #else // WIN32
@@ -363,25 +358,25 @@ string Util::getOsVersion() {
 	}
 
 	return string(n.sysname) + " " + string(n.release) + " (" + string(n.machine) + ")";
-	
+
 #endif // WIN32
 }
 
 /* Below is a high-speed random number generator with much
 better granularity than the CRT one in msvc...(no, I didn't
-write it...see copyright) */ 
+write it...see copyright) */
 /* Copyright (C) 1997 Makoto Matsumoto and Takuji Nishimura.
-Any feedback is very welcome. For any question, comments,       
-see http://www.math.keio.ac.jp/matumoto/emt.html or email       
-matumoto@math.keio.ac.jp */       
-/* Period parameters */  
+Any feedback is very welcome. For any question, comments,
+see http://www.math.keio.ac.jp/matumoto/emt.html or email
+matumoto@math.keio.ac.jp */
+/* Period parameters */
 #define N 624
 #define M 397
 #define MATRIX_A 0x9908b0df   /* constant vector a */
 #define UPPER_MASK 0x80000000 /* most significant w-r bits */
 #define LOWER_MASK 0x7fffffff /* least significant r bits */
 
-/* Tempering parameters */   
+/* Tempering parameters */
 #define TEMPERING_MASK_B 0x9d2c5680
 #define TEMPERING_MASK_C 0xefc60000
 #define TEMPERING_SHIFT_U(y)  (y >> 11)
@@ -434,7 +429,7 @@ uint32_t Util::rand() {
 	y ^= TEMPERING_SHIFT_T(y) & TEMPERING_MASK_C;
 	y ^= TEMPERING_SHIFT_L(y);
 
-	return y; 
+	return y;
 }
 
 }

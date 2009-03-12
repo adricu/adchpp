@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "version.h"
 
 namespace adchpp {
-	
+
 using namespace std;
 
 SettingsManager* SettingsManager::instance = 0;
@@ -35,12 +35,12 @@ const string SettingsManager::className = "SettingsManager";
 const string SettingsManager::settingTags[] =
 {
 	// Strings
-	"HubName", "ServerIp", "LogFile", "Description", 
-	"SENTRY", 
+	"HubName", "LogFile", "Description",
+	"SENTRY",
 	// Ints
-	"ServerPort", "Log", "KeepSlowUsers", 
+	"Log", "KeepSlowUsers",
 	"MaxSendSize", "MaxBufferSize", "BufferSize", "MaxCommandSize",
-	"OverflowTimeout", "DisconnectTimeout", "FloodAdd", "FloodThreshold", 
+	"OverflowTimeout", "DisconnectTimeout", "FloodAdd", "FloodThreshold",
 	"LoginTimeout",
 	"SENTRY"
 };
@@ -49,10 +49,8 @@ SettingsManager::SettingsManager() throw() {
 	memset(intSettings, 0, sizeof(intSettings));
 
 	set(HUB_NAME, appName);
-	// set(SERVER_IP, "");
 	set(LOG_FILE, "logs/adchpp%Y%m.log");
 	set(DESCRIPTION, versionString);
-	set(SERVER_PORT, 2780);
 	set(LOG, 1);
 	set(KEEP_SLOW_USERS, 0);
 	set(MAX_SEND_SIZE, 1400);
@@ -85,13 +83,13 @@ void SettingsManager::load(const string& aFileName)
 {
 	try {
 		SimpleXML xml;
-	
+
 		xml.fromXML(File(aFileName, File::READ, File::OPEN).read());
 
 		xml.resetCurrentChild();
-		
+
 		xml.stepIn();
-		
+
 		if(xml.findChild("Settings")) {
 			xml.stepIn();
 
@@ -118,7 +116,7 @@ void SettingsManager::load(const string& aFileName)
 					LOG(className, attr + " missing from settings, using default");
 				xml.resetCurrentChild();
 			}
-			
+
 			xml.stepOut();
 
 		} else {
@@ -126,9 +124,9 @@ void SettingsManager::load(const string& aFileName)
 		}
 
 		signalLoad_(xml);
-		
+
 		xml.stepOut();
-	
+
 	} catch(const Exception& e) {
 		printf("SettingsManager: Unable to load adchpp.xml, using defaults: %s\n", e.getError().c_str());
 	}

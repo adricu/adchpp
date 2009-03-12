@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ struct Connection : private boost::noncopyable {
 public:
 	Connection() { }
 	virtual ~Connection() { }
-	
+
 	virtual void disconnect() = 0;
 };
 
@@ -39,7 +39,7 @@ public:
 	typedef std::tr1::function<F> Slot;
 	typedef std::list<Slot> SlotList;
 	typedef F FunctionType;
-	
+
 	template<typename T0>
 	void operator()(T0& t0) {
 		typename SlotList::iterator end = slots.end();
@@ -55,7 +55,7 @@ public:
 			(*i++)(t0, t1);
 		}
 	}
-	
+
 	template<typename T0, typename T1, typename T2>
 	void operator()(const T0& t0, const T1& t1, const T2& t2) {
 		typename SlotList::iterator end = slots.end();
@@ -71,7 +71,7 @@ public:
 			(*i++)(t0, t1, t2);
 		}
 	}
-	
+
 	template<typename T0, typename T1, typename T2>
 	void operator()(T0& t0, T1& t1, T2& t2) {
 		typename SlotList::iterator end = slots.end();
@@ -79,42 +79,42 @@ public:
 			(*i++)(t0, t1, t2);
 		}
 	}
-	
+
 	template<typename T>
 	ConnectionPtr connect(const T& f) { return ConnectionPtr(new SlotConnection(this, slots.insert(slots.end(), f))); }
-	
+
 	~Signal() { }
 private:
 	SlotList slots;
-	
-	void disconnect(const typename SlotList::iterator& i) { 
-		slots.erase(i); 
+
+	void disconnect(const typename SlotList::iterator& i) {
+		slots.erase(i);
 	}
 
 	struct SlotConnection : public Connection {
 		SlotConnection(Signal<F>* sig_, const typename SlotList::iterator& i_) : sig(sig_), i(i_) { }
-		
+
 		virtual void disconnect() { if(sig) sig->disconnect(i), sig = 0; }
 		Signal<F>* sig;
 		typename Signal<F>::SlotList::iterator i;
 	};
 };
 
-struct ManagedConnection : public intrusive_ptr_base, private boost::noncopyable {
-	ManagedConnection(ConnectionPtr conn_) : conn(conn_) { 
+struct ManagedConnection : public intrusive_ptr_base<ManagedConnection>, private boost::noncopyable {
+	ManagedConnection(ConnectionPtr conn_) : conn(conn_) {
 	}
-	
+
 	void disconnect() {
 		if(conn.get()) {
 			conn->disconnect();
 			conn.reset();
 		}
 	}
-	
+
 	void release() {
 		conn.reset();
 	}
-	
+
 	~ManagedConnection() {
 		disconnect();
 	}
