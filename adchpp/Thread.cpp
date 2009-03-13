@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,15 @@
 #include "Util.h"
 
 namespace adchpp {
-	
+
 
 #ifdef _WIN32
 
 void Thread::start() throw(ThreadException) {
+	if(isRunning()) {
+		throw ThreadException(_T("Already running"));
+	}
+
 	DWORD threadId = 0;
 	if( (threadHandle = ::CreateThread(NULL, 0, &starter, this, 0, &threadId)) == NULL) {
 		throw ThreadException(Util::translateError(::GetLastError()));
@@ -45,7 +49,11 @@ void Thread::join() throw() {
 
 #else // _WIN32
 
-void Thread::start() throw(ThreadException) { 
+void Thread::start() throw(ThreadException) {
+	if(isRunning()) {
+		throw ThreadException(_T("Already running"));
+	}
+
 	// Not all implementations may create threads as joinable by default.
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -57,10 +65,10 @@ void Thread::start() throw(ThreadException) {
 	pthread_attr_destroy(&attr);
 }
 
-void Thread::join() throw() { 
+void Thread::join() throw() {
 	if(t == 0)
 		return;
-	
+
 	void* x;
 	pthread_join(t, &x);
 	t = 0;
@@ -68,4 +76,4 @@ void Thread::join() throw() {
 
 #endif
 }
-	
+

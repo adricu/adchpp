@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,12 +18,12 @@
 
 /**
  * @mainpage
- * 
+ *
  * ADCH++ is a server application meant to be used in the Direct Connect network,
  * released under a yet to be decided licence. If you're reading this it means one
- * of two things, you got it from me (Jacek Sieka) directly, or you're not allowed 
+ * of two things, you got it from me (Jacek Sieka) directly, or you're not allowed
  * to use it.
- * 
+ *
  * There's a plugin API about which you can find some general
  * information on the @ref PluginAPI page.
  *
@@ -32,7 +32,7 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * 
+ *
  * Please see the readme or contact me for full details regarding
  * licensing.
  */
@@ -41,22 +41,20 @@
 #define ADCHPP_COMMON_H
 
 namespace adchpp {
-	
+
 extern ADCHPP_DLL const char compileTime[];
-// ADCHPP_DLL extern void logAssert(const char* file, int line, const char* exp);
+extern ADCHPP_DLL void logAssert(const char* file, int line, const char* exp);
 
 #ifndef NDEBUG
-
-extern ADCHPP_DLL void logAssert(const char* file, int line, const char* exp);
 
 inline void debugTrace(const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	
+
 #ifdef _MSC_VER
 	char buf[512];
-	
+
 	_vsnprintf(buf, sizeof(buf), format, args);
 	OutputDebugStringA(buf);
 	fputs(buf, stderr);
@@ -99,15 +97,15 @@ typedef StringList::const_iterator StringIterC;
 typedef std::vector<uint8_t> ByteVector;
 typedef ByteVector::iterator ByteIter;
 
-/** 
+/**
  * Initialize configuration.
  */ADCHPP_DLL void initialize(const std::string& path);
 
-/** 
+/**
  * Load plugins and start listening for incoming connections
  */ADCHPP_DLL void startup(void (*f)());
 
-/** 
+/**
  * Stop listening for incoming connections
  */ADCHPP_DLL void shutdown(void (*f)());
 

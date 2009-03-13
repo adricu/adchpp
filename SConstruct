@@ -1,9 +1,12 @@
 # vim: set filetype: py
 
+EnsureSConsVersion(1, 2)
+
+import os,sys
 from build_util import Dev
 
 gcc_flags = {
-	'common': ['-ggdb', '-Wall', '-Wextra', '-pipe', '-Wno-unused-parameter', '-Wno-missing-field-initializers', '-fexceptions'],
+	'common': ['-ggdb', '-Wall', '-Wextra', '-Wno-unused-parameter', '-Wno-missing-field-initializers', '-fexceptions'],
 	'debug': [], 
 	'release' : ['-O3']
 }
@@ -42,7 +45,7 @@ msvc_link_flags = {
 
 msvc_defs = {
 	'common' : ['_REENTRANT'],
-	'debug' : [''],
+	'debug' : ['_DEBUG'],
 	'release' : ['NDEBUG']
 }
 
@@ -58,31 +61,36 @@ import os,sys,distutils.sysconfig
 
 plugins = filter(lambda x: os.path.isfile(os.path.join('plugins', x, 'SConscript')), os.listdir('plugins'))
 
-opts = Options('custom.py', ARGUMENTS)
+defEnv = Environment(ENV = os.environ)
+opts = Variables('custom.py', ARGUMENTS)
 
 if sys.platform == 'win32':
 	tooldef = 'mingw'
 else:
 	tooldef = 'default'
 
-opts.AddOptions(
-	EnumOption('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default']),
-	EnumOption('mode', 'Compile mode', 'debug', ['debug', 'release']),
-	ListOption('plugins', 'The plugins to compile', 'all', plugins),
-	BoolOption('nativestl', 'Use native STL instead of STLPort', 'yes'),
-	BoolOption('verbose', 'Show verbose command lines', 'no'),
-	BoolOption('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
-	BoolOption('nls', 'Build with internationalization support', 'yes'),
+opts.AddVariables(
+	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default']),
+	EnumVariable('mode', 'Compile mode', 'debug', ['debug', 'release']),
+	ListVariable('plugins', 'The plugins to compile', 'all', plugins),
+	BoolVariable('nativestl', 'Use native STL instead of STLPort', 'yes'),
+	BoolVariable('gch', 'Use GCH when compiling GUI (disable if you have linking problems with mingw)', 'yes'),
+	BoolVariable('verbose', 'Show verbose command lines', 'no'),
+	BoolVariable('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
+	BoolVariable('i18n', 'Rebuild i18n files in debug build', 'no'),
+	BoolVariable('nls', 'Build with internationalization support', 'yes'),
 	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-'),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix'))
 )
+
+opts.Update(defEnv)
+Help(opts.GenerateHelpText(defEnv))
 
 tools = ARGUMENTS.get('tools', tooldef)
 
 toolset = [tools, 'swig']
 
-env = Environment(tools = toolset, options=opts, ENV=os.environ)
-Help(opts.GenerateHelpText(env))
+env = Environment(ENV=os.environ, tools = toolset, options=opts)
 
 mode = env['mode']
 if mode not in gcc_flags:
@@ -93,8 +101,6 @@ dev = Dev(mode, tools, env)
 dev.prepare()
 
 env.SConsignFile()
-if('gcc' in env['TOOLS']):
-	env.Tool("gch", toolpath=".")
 
 env.Append(CPPPATH = ["#/boost/boost/tr1/tr1/", "#/boost/"])
 env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
@@ -103,7 +109,11 @@ if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
 	env.Append(CCFLAGS=['-fvisibility=hidden'])
 
-if not env['nativestl']:
+if env['nativestl']:
+	if 'gcc' in env['TOOLS']:
+		env.Append(CPPDEFINES = ['BOOST_HAS_GCC_TR1'])
+	# boost detects MSVC's tr1 automagically
+else:
 	env.Append(CPPPATH = ['#/stlport/stlport/'])
 	env.Append(LIBPATH = ['#/stlport/lib/'])
 	env.Append(CPPDEFINES = ['HAVE_STLPORT', '_STLP_USE_STATIC_LIB=1'])
@@ -111,13 +121,17 @@ if not env['nativestl']:
 		env.Append(LIBS = ['stlportg.5.1'])
 	else:
 		env.Append(LIBS = ['stlport.5.1'])	
-elif 'gcc' in env['TOOLS']:
-	env.Append(CPPDEFINES = ['BOOST_HAS_GCC_TR1'])
 
-if env['savetemps'] and 'gcc' in env['TOOLS']:
-	env.Append(CCFLAGS = ['-save-temps', '-fverbose-asm'])
+	# assume STLPort has tr1 containers
+	env.Append(CPPDEFINES = ['BOOST_HAS_TR1'])
 
-if env['CC'] == 'cl':
+if 'gcc' in env['TOOLS']:
+	if env['savetemps']:
+		env.Append(CCFLAGS = ['-save-temps', '-fverbose-asm'])
+	else:
+		env.Append(CCFLAGS = ['-pipe'])
+
+if env['CC'] == 'cl': # MSVC
 	flags = msvc_flags
 	xxflags = msvc_xxflags
 	link_flags = msvc_link_flags
@@ -132,6 +146,8 @@ else:
 	xxflags = gcc_xxflags
 	link_flags = gcc_link_flags
 	defs = gcc_defs
+
+	env.Tool("gch", toolpath=".")
 
 env.Append(CPPDEFINES = defs[mode])
 env.Append(CPPDEFINES = defs['common'])
@@ -157,60 +173,24 @@ SWIGScanner = SCons.Scanner.ClassicCPP(
 env.Append(SCANNERS=[SWIGScanner])
 
 #
-# internationalization (taken from the ardour build files (ardour.org)
+# internationalization (ardour.org provided the initial idea)
 #
 
-# po_builder: builder function to copy po files to the parent directory while updating them
-#
-# first source:  .po file
-# second source: .pot file
-#
-
-def po_builder(target,source,env):
-    args = [ 'msgmerge',
-             '--update',
-             str(target[0]),
-             str(source[0])
-             ]
-    print 'Updating ' + str(target[0])
-    return os.spawnvp (os.P_WAIT, 'msgmerge', args)
-
-po_bld = Builder (action = po_builder)
+po_args = ['msgmerge', '-q', '--update', '--backup=none', '--no-location', '$TARGET', '$SOURCE']
+po_bld = Builder (action = Action([po_args], 'Updating translation $TARGET from $SOURCES'))
 env.Append(BUILDERS = {'PoBuild' : po_bld})
 
-# mo_builder: builder function for (binary) message catalogs (.mo)
-#
-# first source:  .po file
-#
-def mo_builder(target,source,env):
-    args = [ 'msgfmt',
-             '-c',
-             '-o',
-             target[0].get_path(),
-             source[0].get_path()
-             ]
-    return os.spawnvp (os.P_WAIT, 'msgfmt', args)
-
-mo_bld = Builder (action = mo_builder)
+mo_args = ['msgfmt', '-c', '-o', '$TARGET', '$SOURCE']
+mo_bld = Builder (action = Action([mo_args], 'Compiling message catalog $TARGET from $SOURCES'))
 env.Append(BUILDERS = {'MoBuild' : mo_bld})
 
-# pot_builder: builder function for message templates (.pot)
-#
-# source: list of C/C++ etc. files to extract messages from
-#
-def pot_builder(target,source,env):
-    args = [ 'xgettext',
-             '--keyword=_',
-             '--keyword=N_',
-             '--from-code=UTF-8',
-             '-o', target[0].get_path(),
-             '--foreign-user',
-             '--package-name="adchpp"'
-             '--copyright-holder="Jacek Sieka"' ]
-    args += [ src.get_path() for src in source ]
-    return os.spawnvp (os.P_WAIT, 'xgettext', args)
+pot_args = ['xgettext', '--from-code=UTF-8', '--foreign-user', '--package-name=$PACKAGE',
+		'--copyright-holder=Jacek Sieka', '--msgid-bugs-address=dcplusplus-devel@lists.sourceforge.net',
+		'--no-wrap', '--keyword=_', '--keyword=T_', '--keyword=TF_', '--keyword=TFN_:1,2',
+		'--keyword=F_', '--keyword=gettext_noop', '--keyword=N_', '--keyword=CT_', '--boost', '-s',
+		'--output=$TARGET', '$SOURCES']
 
-pot_bld = Builder (action = pot_builder)
+pot_bld = Builder (action = Action([pot_args], 'Extracting messages to $TARGET from $SOURCES'))
 env.Append(BUILDERS = {'PotBuild' : pot_bld})
 
 conf = Configure(env)

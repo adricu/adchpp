@@ -2,6 +2,8 @@
 * Fix service install on Windows
 * Fix plugins not being unloaded correctly
 * Use boost asio for sockets instead of home brew
+* TLS support
+* Fix a few crashes here and there
 
 -- 2.2 2008-02-12 --
 * access.lua: fixed message type for MSG

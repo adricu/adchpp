@@ -15,6 +15,9 @@ class Dev:
 			self.env['SHCCCOMSTR'] = "Compiling $TARGET (shared)"
 			self.env['CXXCOMSTR'] = "Compiling $TARGET (static)"
 			self.env['SHCXXCOMSTR'] = "Compiling $TARGET (shared)"
+			self.env['PCHCOMSTR'] = "Compiling $TARGET (precompiled header)"
+			self.env['GCHCOMSTR'] = "Compiling $TARGET (static precompiled header)"
+			self.env['GCHSHCOMSTR'] = "Compiling $TARGET (shared precompiled header)"
 			self.env['SHLINKCOMSTR'] = "Linking $TARGET (shared)"
 			self.env['LINKCOMSTR'] = "Linking $TARGET (static)"
 			self.env['ARCOMSTR'] = "Archiving $TARGET"
@@ -23,6 +26,7 @@ class Dev:
 		self.env.SConsignFile()
 		self.env.SetOption('implicit_cache', '1')
 		self.env.SetOption('max_drift', 60*10)
+		self.env.Decider('MD5-timestamp')
 
 		if 'mingw' in self.env['TOOLS']:
 			self.env.Append(LINKFLAGS=["-Wl,--enable-runtime-pseudo-reloc"])
@@ -61,12 +65,20 @@ class Dev:
 	def get_sources(self, source_path, source_glob):
 		return map(lambda x: self.get_build_path(source_path) + x, glob.glob(source_glob))
 		
-	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True):
-		local_env = self.env.Clone()
+	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True, precompiled_header = None):
+		env = self.env.Clone()
+		env.BuildDir(self.get_build_path(source_path), '.', duplicate = 0)
+
+		sources = self.get_sources(source_path, source_glob)
+
+		if precompiled_header is not None:
+			if env['CC'] == 'cl': # MSVC
+				env['PCHSTOP'] = precompiled_header + '.h'
+				env['PCH'] = env.PCH(self.get_target(source_path, precompiled_header + '.pch', False), precompiled_header + '.cpp')[0]
+			elif 'gcc' in env['TOOLS']:
+				env['Gch'] = env.Gch(self.get_target(source_path, precompiled_header + '.gch', False), precompiled_header + '.h')[0]
 		
-		local_env.BuildDir(self.get_build_path(source_path), '.', duplicate = 0)
-		
-		return (local_env, self.get_target(source_path, name, in_bin), self.get_sources(source_path, source_glob))
+		return (env, self.get_target(source_path, name, in_bin), sources)
 
 	def build(self, source_path, local_env = None):
 		if not local_env:
@@ -75,16 +87,20 @@ class Dev:
 		return local_env.SConscript(source_path + 'SConscript', exports={'dev' : self, 'source_path' : full_path })
 
 	def i18n (self, source_path, buildenv, sources, name):
+		if self.env['mode'] != 'release' and not self.env['i18n']:
+			return
+
 		p_oze = glob.glob('po/*.po')
 		languages = [ os.path.basename(po).replace ('.po', '') for po in p_oze ]
 		potfile = 'po/' + name + '.pot'
-		
+		buildenv['PACKAGE'] = name
 		ret = buildenv.PotBuild(potfile, sources)
 		
 		for po_file in p_oze:
 			buildenv.Precious(buildenv.PoBuild(po_file, [potfile]))
-#			mo_file = po_file.replace (".po", ".mo")
-#			installenv.Alias ('install', buildenv.MoBuild (mo_file, po_file))
+			lang = os.path.basename(po_file)[:-3]
+			mo_file = self.get_target(source_path, "locale/" + lang + "/LC_MESSAGES/" + name + ".mo", True)
+			buildenv.MoBuild (mo_file, po_file)
 		
 #		for lang in languages:
 #			modir = (os.path.join (install_prefix, 'share/locale/' + lang + '/LC_MESSAGES/'))

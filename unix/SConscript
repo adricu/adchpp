@@ -1,14 +1,15 @@
 # vim: set filetype=py
 
 Import('dev source_path')
+
 env, target, sources = dev.prepare_build(source_path, 'adchppd')
 
 env.Append(CPPPATH = ['.', '#'])
 env.Append(LIBS=['adchpp'])
 
-ret = env.Program(target, sources)
-
 if env['nls']:
-	ret += dev.i18n(source_path, env, [source for source in sources if str(source).endswith('.cpp')], 'adchppd')
+	headers=dev.get_sources(source_path, "*.h")
+	dev.i18n(source_path, env, [sources,headers], 'adchppd')
 
+ret = env.Program(target, sources)
 Return('ret')

@@ -1,33 +1,23 @@
 # vim: set filetype=py
 
-from os import popen4
-import re
+def getRevision(env):
+	try:
+		import bzrlib
+		import bzrlib.builtins
 
-def getRevision():
-	cmd = 'svn info -R "' + env.Dir("#").abspath + '"'
-	stdin, stdout = popen4(cmd)
-	stdin.close()
-	maxver = 0
-	matcher = re.compile(ur'Revision: (\d+)')
-	for line in stdout.readlines():
-		match = matcher.match(line)
-		if not match:
-			continue
-		ver = int(match.group(1))
-		if ver > maxver:
-			maxver = ver
-	
-	stdout.close()
-	print "Building revision " + str(maxver)
-	
-	return str(maxver)
+		tree = bzrlib.builtins.WorkingTree.open_containing(env.Dir("#").abspath)[0]
+
+		return tree.branch.revision_id_to_revno(tree.last_revision())
+	except ImportError:
+		return 0
  
 Import('dev source_path')
 
-env, target, sources = dev.prepare_build(source_path, 'adchpp')
+env, target, sources = dev.prepare_build(source_path, 'adchpp', precompiled_header = 'adchpp')
 
-env.Append(CPPDEFINES = ['BUILDING_ADCHPP'])
 env.Append(CPPPATH = ['.'])
+
+env.Append(CPPDEFINES=["BUILDING_ADCHPP=1"])
 
 if 'HAVE_DL' in env['CPPDEFINES']:
     env.Append(LIBS = ['dl'])
@@ -38,13 +28,12 @@ if 'HAVE_PTHREAD' in env['CPPDEFINES']:
 if 'HAVE_OPENSSL' in env['CPPDEFINES']:
 	env.Append(LIBS = ['crypto', 'ssl'])
 
-if 'gcc' in env['TOOLS']:
-	env['GchSh'] = env.GchSh('adchpp.h')[0]
-
 for i, source in enumerate(sources):
 	if source.find("version.cpp") != -1:
-		rev = ['ADCHPP_REVISION=' + getRevision()]
+		rev = ['ADCHPP_REVISION=' + str(getRevision(env))]
 		sources[i] = env.SharedObject(source, CPPDEFINES=env['CPPDEFINES'] + rev)
+
+headers=dev.get_sources(source_path, "*.h")
 
 ret = env.SharedLibrary(target, sources)
 
