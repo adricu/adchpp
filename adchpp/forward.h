@@ -9,8 +9,8 @@ typedef boost::intrusive_ptr<Client> ClientPtr;
 class ManagedSocket;
 typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;
 class SocketFactory;
+typedef boost::intrusive_ptr<SocketFactory> SocketFactoryPtr;
 class SocketManager;
-class Writer;
 class SimpleXML;
 
 }

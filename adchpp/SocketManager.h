@@ -57,7 +57,7 @@ public:
 	typedef std::tr1::function<void()> Callback;
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
 
-	void startup() throw(ThreadException) { start(); }
+	void startup() throw(ThreadException);
 	void shutdown();
 
 	void setServers(const ServerInfoList& servers_) { servers = servers_; }
@@ -67,13 +67,17 @@ public:
 
 private:
 	friend class ManagedSocket;
-	friend class Writer;
+	friend class SocketFactory;
 
 	virtual int run();
 
+	void closeFactories();
+
 	boost::asio::io_service io;
+	std::auto_ptr<boost::asio::io_service::work> work;
 
 	std::vector<ServerInfoPtr> servers;
+	std::vector<SocketFactoryPtr> factories;
 
 	IncomingHandler incomingHandler;
 

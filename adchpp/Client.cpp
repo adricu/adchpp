@@ -32,7 +32,6 @@ using namespace std::tr1::placeholders;
 Client* Client::create(const ManagedSocketPtr& ms) throw() {
 	Client* c = new Client();
 	c->setSocket(ms);
-	c->onConnected();
 	return c;
 }
 

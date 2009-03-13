@@ -68,13 +68,14 @@ public:
 		} else {
 			std::vector<boost::asio::const_buffer> buffers(std::min(bufs.size(), static_cast<size_t>(64)));
 
-			for(size_t i = 0; i < bufs.size(); ++i) {
+			for(size_t i = 0; i < buffers.size(); ++i) {
 				buffers[i] = boost::asio::const_buffer(bufs[i]->data(), bufs[i]->size());
 			}
 
 			sock.async_write_some(buffers, handler);
 		}
 	}
+
 	virtual void close() {
 		sock.lowest_layer().close();
 	}
@@ -110,57 +111,58 @@ public:
 		    context->use_tmp_dh_file(tls->dh);
 		}
 #endif
+
+		prepareAccept();
 	}
 
 	void prepareAccept() {
+		if(!SocketManager::getInstance()->work.get()) {
+			return;
+		}
 #ifdef HAVE_OPENSSL
 		TLSServerInfoPtr tls = boost::dynamic_pointer_cast<TLSServerInfo>(serverInfo);
 		if(tls) {
 			TLSSocketStream* s = new TLSSocketStream(io, *context);
-			socket.reset(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::prepareHandshake, from_this(), std::tr1::placeholders::_1));
+			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
+			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::prepareHandshake, from_this(), std::tr1::placeholders::_1, socket));
 		} else {
 #endif
 			SimpleSocketStream* s = new SimpleSocketStream(io);
-			socket.reset(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::handleAccept, from_this(), std::tr1::placeholders::_1));
+			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
+			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::handleAccept, from_this(), std::tr1::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
 #endif
 	}
 
 #ifdef HAVE_OPENSSL
-	void prepareHandshake(const error_code& ec) {
+	void prepareHandshake(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			boost::intrusive_ptr<TLSSocketStream> tls = boost::static_pointer_cast<TLSSocketStream>(socket->sock);
-			tls->sock.async_handshake(ssl::stream_base::server, std::tr1::bind(&SocketFactory::completeHandshake, from_this(), std::tr1::placeholders::_1, socket));
-			prepareAccept();
+			tls->sock.async_handshake(ssl::stream_base::server, std::tr1::bind(&SocketFactory::completeAccept, from_this(), std::tr1::placeholders::_1, socket));
 		}
+
+		prepareAccept();
 	}
 #endif
 
-	void handleAccept(const error_code& ec) {
+	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		completeAccept(ec, socket);
-		if(!ec) {
-			prepareAccept();
-		}
+
+		prepareAccept();
 	}
 
-	void completeHandshake(const error_code& ec, const ManagedSocketPtr& sock) {
-		completeAccept(ec, sock);
+	void completeAccept(const error_code& ec, const ManagedSocketPtr& socket) {
+		handler(socket);
+		socket->completeAccept(ec);
 	}
 
-	void completeAccept(const error_code& ec, const ManagedSocketPtr& sock) {
-		handler(sock);
-		sock->completeAccept(ec);
-	}
+	void close() { acceptor.close(); }
 
 	io_service& io;
 	ip::tcp::acceptor acceptor;
 	ServerInfoPtr serverInfo;
 	SocketManager::IncomingHandler handler;
-
-	ManagedSocketPtr socket;
 
 #ifdef HAVE_OPENSSL
 	std::tr1::shared_ptr<boost::asio::ssl::context> context;
@@ -175,8 +177,7 @@ int SocketManager::run() {
 		const ServerInfoPtr& si = *i;
 
 		try {
-			// The factory manages its own lifetime
-			(new SocketFactory(io, incomingHandler, si))->prepareAccept();
+			factories.push_back(SocketFactoryPtr(new SocketFactory(io, incomingHandler, si)));
 		} catch(const system_error& se) {
 			LOG(SocketManager::className, "Error while loading server on port " + Util::toString(si->port) +": " + se.what());
 		}
@@ -184,15 +185,30 @@ int SocketManager::run() {
 
 	io.run();
 
+	io.reset();
+
 	return 0;
+}
+
+void SocketManager::closeFactories() {
+	for(std::vector<SocketFactoryPtr>::iterator i = factories.begin(), iend = factories.end(); i != iend; ++i) {
+		(*i)->close();
+	}
+	factories.clear();
 }
 
 void SocketManager::addJob(const Callback& callback) throw() {
 	io.post(callback);
 }
 
+void SocketManager::startup() throw(ThreadException) {
+	work.reset(new io_service::work(io));
+	start();
+}
+
 void SocketManager::shutdown() {
-	io.stop();
+	addJob(std::tr1::bind(&SocketManager::closeFactories, this));
+	work.reset();
 	join();
 }
 
