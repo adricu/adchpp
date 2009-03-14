@@ -74,8 +74,10 @@ private:
 	volatile long refs;
 };
 
+#ifndef _WIN32
 template<typename T>
 FastMutex intrusive_ptr_base<T>::mtx;
+#endif
 
 /** Evaluates op(pair<T1, T2>.first, compareTo) */
 template<class T1, class T2, class op = std::equal_to<T1> >
