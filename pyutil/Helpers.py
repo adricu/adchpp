@@ -1,6 +1,6 @@
 import pyadchpp as a
 import re
-def recieveHandler(client, cmd, override, filter, callback):
+def receiveHandler(client, cmd, override, filter, callback):
     if override & a.ClientManager.DONT_DISPATCH:
         return 0
     
@@ -11,7 +11,7 @@ def recieveHandler(client, cmd, override, filter, callback):
     
 def handleCommand(filter, callback):
     cm = a.getCM()
-    return cm.signalReceive().connect(lambda clinet, cmd, override: receiveHandler(client, cmd, override, filter, callback))
+    return cm.signalReceive().connect(lambda client, cmd, override: receiveHandler(client, cmd, override, filter, callback))
 
 def dump(c, code, msg):
     answer = a.AdcCommand(a.AdcCommand.CMD_STA, a.AdcCommand.TYPE_INFO, a.AdcCommand.HUB_SID)
@@ -127,7 +127,7 @@ class InfVerifier(object):
         
 class PasswordHandler(object):
     def __init__(self, getPassword, succeeded, failed):
-        self.getPassword = getPassword or (lambda nick, cid: None)
+        self.getPassword = getPassword or (lambda client: None)
         self.succeeded = succeeded or (lambda client: None)
         self.failed = failed or (lambda client, error: None)
         
@@ -140,15 +140,15 @@ class PasswordHandler(object):
         if c.getState() != a.Client.STATE_IDENTIFY:
             return 0
         
-        password = self.getPassword(client)
+        password = self.getPassword(c)
         if not password:
             return 0
         
-        self.salts[client.getSID()] = (cm.enterVerify(c, True), password)
+        self.salts[c.getSID()] = (cm.enterVerify(c, True), password)
         
         return handled
     
-    def onPAS(self, client, cmd, override):
+    def onPAS(self, c, cmd, override):
         if c.getState() != a.Client.STATE_VERIFY:
             dump(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
             return handled
@@ -168,6 +168,6 @@ class PasswordHandler(object):
             dump(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
             return handled
 
-        self.succeeded(client)
+        self.succeeded(c)
         
         return 0
