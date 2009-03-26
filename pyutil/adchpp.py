@@ -6,12 +6,13 @@ import pyadchpp as a
 
 def run():
     print "Starting"
-    a.initialize(os.path.abspath('../etc/') + os.pathsep)
+    a.initialize(os.path.abspath('../etc/') + os.sep)
 
     print "."
     
     try:
-        a.startup();
+        a.startup()
+        raw_input("Running...")
     except:
         print "\n\nFATAL: Can't start ADCH++: %s\n"
     
