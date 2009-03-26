@@ -1,5 +1,5 @@
 import pyadchpp as a
-
+import re
 def recieveHandler(client, cmd, override, filter, callback):
     if override & a.ClientManager.DONT_DISPATCH:
         return 0
@@ -15,7 +15,7 @@ def handleCommand(filter, callback):
 
 def dump(c, code, msg):
     answer = a.AdcCommand(a.AdcCommand.CMD_STA, a.AdcCommand.TYPE_INFO, a.AdcCommand.HUB_SID)
-    answer.addParam("" + adchpp.AdcCommand_SEV_FATAL + code).addParam(msg)
+    answer.addParam("" + a.AdcCommand.SEV_FATAL + code).addParam(msg)
     c.send(answer)
     c.disconnect(0)
 
@@ -60,12 +60,12 @@ class InfVerifier(object):
             "SU": re.compile("[0-9A-Z,]+"),
         },
         
-        AdcCommand.CMD_MSG : {
+        a.AdcCommand.CMD_MSG : {
             "PM": sid,
             "ME": boolean,
         },
          
-        AdcCommand.CMD_SCH : {
+        a.AdcCommand.CMD_SCH : {
             "AN": nonempty,
             "NO": nonempty,
             "EX": nonempty,
@@ -77,7 +77,7 @@ class InfVerifier(object):
             "TR": tth,
         },
         
-        AdcCommand.CMD_RES : {
+        a.AdcCommand.CMD_RES : {
             "FN": nonempty,
             "SI": integer,
             "SL": integer,
@@ -88,11 +88,11 @@ class InfVerifier(object):
     }
     
     params = {
-        AdcCommand.CMD_STA: (sta_code, any),
-        AdcCommand.CMD_MSG: (any,),
-        AdcCommand.CMD_CTM: (any, integer, any),
-        AdcCommand.CMD_RCM: (any, any),
-        AdcCommand.CMD_PAS: (base32,)
+        a.AdcCommand.CMD_STA: (sta_code, any),
+        a.AdcCommand.CMD_MSG: (any,),
+        a.AdcCommand.CMD_CTM: (any, integer, any),
+        a.AdcCommand.CMD_RCM: (any, any),
+        a.AdcCommand.CMD_PAS: (base32,)
     }
  
     def __init__(self, succeeded, failed):
@@ -131,13 +131,13 @@ class PasswordHandler(object):
         self.succeeded = succeeded or (lambda client: None)
         self.failed = failed or (lambda client, error: None)
         
-        self.inf = handleCommand(pyadchpp.AdcCommand.CMD_INF, self.onINF)
-        self.pas = handleCommand(pyadchpp.AdcCommand.CMD_PAS, self.OnPAS)
+        self.inf = handleCommand(a.AdcCommand.CMD_INF, self.onINF)
+        self.pas = handleCommand(a.AdcCommand.CMD_PAS, self.onPAS)
         
         self.salts = {}
         
     def onINF(self, c, cmd, override):
-        if c.getState() != pyadchpp.Client.STATE_IDENTIFY:
+        if c.getState() != a.Client.STATE_IDENTIFY:
             return 0
         
         password = self.getPassword(client)
