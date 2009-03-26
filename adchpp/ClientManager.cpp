@@ -173,7 +173,7 @@ void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
 		return;
 	}
 
-	if (checkFlooding(c, cmd)) {
+	if(checkFlooding(c, cmd)) {
 		return;
 	}
 

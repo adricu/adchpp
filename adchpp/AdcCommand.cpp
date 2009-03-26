@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,33 @@
 #include "AdcCommand.h"
 
 namespace adchpp {
+
+const char AdcCommand::TYPE_BROADCAST;
+const char AdcCommand::TYPE_CLIENT;
+const char AdcCommand::TYPE_DIRECT;
+const char AdcCommand::TYPE_ECHO;
+const char AdcCommand::TYPE_FEATURE;
+const char AdcCommand::TYPE_INFO;
+const char AdcCommand::TYPE_HUB;
+const char AdcCommand::TYPE_UDP;
+
+const uint32_t AdcCommand::CMD_SUP;
+const uint32_t AdcCommand::CMD_STA;
+const uint32_t AdcCommand::CMD_INF;
+const uint32_t AdcCommand::CMD_MSG;
+const uint32_t AdcCommand::CMD_SCH;
+const uint32_t AdcCommand::CMD_RES;
+const uint32_t AdcCommand::CMD_CTM;
+const uint32_t AdcCommand::CMD_RCM;
+const uint32_t AdcCommand::CMD_GPA;
+const uint32_t AdcCommand::CMD_PAS;
+const uint32_t AdcCommand::CMD_QUI;
+const uint32_t AdcCommand::CMD_GET;
+const uint32_t AdcCommand::CMD_GFI;
+const uint32_t AdcCommand::CMD_SND;
+const uint32_t AdcCommand::CMD_SID;
+// Extensions
+const uint32_t AdcCommand::CMD_CMD;
 
 using namespace std;
 
@@ -48,26 +75,26 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
 	if(len < 5) {
 		throw ParseException("Command too short");
 	}
-	
+
 	type = buf[0];
-	
+
 	if(type != TYPE_BROADCAST && type != TYPE_CLIENT && type != TYPE_DIRECT && type != TYPE_ECHO && type != TYPE_FEATURE && type != TYPE_INFO && type != TYPE_HUB && type != TYPE_UDP) {
 		throw ParseException("Invalid type");
 	}
-	
+
 	cmd[0] = buf[1];
 	cmd[1] = buf[2];
 	cmd[2] = buf[3];
-	
+
 	if(buf[4] != ' ') {
 		throw ParseException("Missing space after command");
 	}
 
 	// Skip trailing LF
 	len--;
-	
+
 	parameters.reserve(8);
-	
+
 	string cur;
 	cur.reserve(64);
 
@@ -78,7 +105,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
 	string::size_type i = 5;
 	while(i < len) {
 		switch(buf[i]) {
-		case '\\': 
+		case '\\':
 			++i;
 			if(i == len)
 				throw ParseException("Escape at eol");
@@ -91,7 +118,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
 			else
 				throw ParseException("Unknown escape");
 			break;
-		case ' ': 
+		case ' ':
 			// New parameter...
 			{
 				if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) && !fromSet) {
@@ -113,6 +140,9 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
                     features = cur;
 					featureSet = true;
 				} else {
+					if(!Util::validateUtf8(cur)) {
+						throw ParseException("Invalid UTF-8 sequence");
+					}
 					parameters.push_back(cur);
 				}
 				cur.clear();
@@ -143,18 +173,21 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
             features = cur;
 			featureSet = true;
 		} else {
+			if(!Util::validateUtf8(cur)) {
+				throw ParseException("Invalid UTF-8 sequence");
+			}
 			parameters.push_back(cur);
 		}
 	}
-	
+
 	if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) && !fromSet) {
 		throw ParseException("Missing from_sid");
 	}
-	
+
 	if(type == TYPE_FEATURE && !featureSet) {
 		throw ParseException("Missing feature");
 	}
-	
+
 	if((type == TYPE_DIRECT || type == TYPE_ECHO) && !toSet) {
 		throw ParseException("Missing to_sid");
 	}
@@ -226,7 +259,7 @@ bool AdcCommand::delParam(const char* name, size_t start) {
 
 bool AdcCommand::hasFlag(const char* name, size_t start) const {
 	for(string::size_type i = start; i < getParameters().size(); ++i) {
-		if(toCode(name) == toCode(getParameters()[i].c_str()) && 
+		if(toCode(name) == toCode(getParameters()[i].c_str()) &&
 			getParameters()[i].size() == 3 &&
 			getParameters()[i][2] == '1')
 		{

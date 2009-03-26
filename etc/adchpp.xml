@@ -18,12 +18,6 @@
 			 plugins can use the logs as well... -->
 		<LogFile type="string">logs/adchpp%Y%m.log</LogFile>
 
-<!-- Hub port -->
-		<!-- Probably one of the most important settings, the hub port where the hub
-			 should listen to connections. Please change this to avoid having all hubs
-			 on the same port, which facilates hub blocking. -->
-		<ServerPort type="int">2780</ServerPort>
-
 <!-- Flood protection -->
 		<FloodAdd>1</FloodAdd>
 		<FloodThreshold>25</FloodThreshold>
@@ -57,6 +51,10 @@
 		<DisconnectTimeout>10000</DisconnectTimeout>
 		<LoginTimeout>30</LoginTimeout>
 	</Settings>
+	
+	<Servers>
+		<Server Port="2780"/>
+	</Servers>
 
 	<!-- Instead of scripts, ADCH++ uses plugins. Plugins can do the same work
 		 as scripts, are more difficult to write, but when it comes to performance,

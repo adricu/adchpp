@@ -91,6 +91,9 @@ def buildPyModule():
 		env.Append(LIBS=['python' + sys.version[0:3]])
 	env.Append(LIBS=['adchpp'])
 
+	if sys.platform == 'win32':
+		env['SHLIBSUFFIX'] ='.pyd'
+		
 	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(pyd)
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ void initialize(const string& configPath) {
 	if(initialized) {
 		throw Exception("Already initialized");
 	}
-	
+
 #ifdef _WIN32
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -71,7 +71,7 @@ void startup(void (*f)()) {
 	if(f) f();
 	PluginManager::getInstance()->load();
 	if(f) f();
-	
+
 	running = true;
 }
 
@@ -79,7 +79,7 @@ void shutdown(void (*f)()) {
 	if(!running) {
 		return;
 	}
-	
+
 	if(f) f();
 	PluginManager::getInstance()->shutdown();
 	if(f) f();
@@ -98,7 +98,7 @@ void cleanup() {
 	if(running) {
 		shutdown(0);
 	}
-	
+
 	PluginManager::deleteInstance();
 	ClientManager::deleteInstance();
 	SocketManager::deleteInstance();
@@ -118,7 +118,7 @@ void logAssert(const char* file, int line, const char* exp) {
 	try {
 		File f(Util::getCfgPath() + _T("exceptioninfo.txt"), File::WRITE, File::OPEN | File::CREATE);
 		f.setEndPos(0);
-		
+
 		f.write(string(file) + "(" + Util::toString(line) + "): " + string(exp) + "\r\n");
 	} catch(const FileException& e) {
 		dcdebug("logAssert: %s\n", e.getError().c_str());

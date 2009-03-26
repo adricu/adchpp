@@ -9,3 +9,4 @@
 ./config.log
 ./doc
 *.pot
+logs

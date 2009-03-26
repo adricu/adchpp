@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -104,8 +104,9 @@ public:
 #undef C
 
 	enum { HUB_SID = 0xffffffff };
-	
-	uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c) { return (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); }
+
+	static uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c) { return (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); }
+	static uint32_t toCMD(const char* str) { return toCMD(str[0], str[1], str[2]); }
 
 	ADCHPP_DLL AdcCommand();
 	ADCHPP_DLL explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType = TYPE_INFO);
@@ -133,19 +134,19 @@ public:
 		parameters.push_back(param);
 		return *this;
 	}
-	
+
 	const std::string& getParam(size_t n) const {
 		return getParameters().size() > n ? getParameters()[n] : Util::emptyString;
 	}
-	
+
 	void resetBuffer() { buffer = BufferPtr(); }
-	
+
 	const std::string& getFeatures() const { return features; }
 
 	/** Return a named parameter where the name is a two-letter code */
 	ADCHPP_DLL bool getParam(const char* name, size_t start, std::string& ret) const;
 	ADCHPP_DLL bool delParam(const char* name, size_t start);
-	
+
 	ADCHPP_DLL bool hasFlag(const char* name, size_t start) const;
 	static uint16_t toCode(const char* x) { return *((uint16_t*)x); }
 
@@ -154,7 +155,7 @@ public:
 	ADCHPP_DLL static void escape(const std::string& s, std::string& out);
 
 	ADCHPP_DLL const BufferPtr& getBuffer() const;
-	
+
 	uint32_t getTo() const { return to; }
 	void setTo(uint32_t aTo) { to = aTo; }
 	uint32_t getFrom() const { return from; }
@@ -170,13 +171,13 @@ private:
 	std::string features;
 
 	mutable BufferPtr buffer;
-	
+
 	union {
 		char cmdChar[4];
 		uint8_t cmd[4];
 		uint32_t cmdInt;
 	};
-	
+
 	uint32_t from;
 	uint32_t to;
 	char type;
@@ -206,7 +207,7 @@ public:
 			C(SND);
 			C(SID);
 			C(CMD);
-			default: 
+			default:
 				dcdebug("Unknown ADC command: %.50s\n", cmd.toString().c_str());
 				return true;
 #undef C

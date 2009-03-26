@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "Singleton.h"
 
 namespace adchpp {
-	
+
 class ManagedSocket;
 
 /**
@@ -40,22 +40,22 @@ public:
 		DONT_DISPATCH = 1 << 0,
 		DONT_SEND = 1 << 1
 	};
-	
+
 	typedef std::tr1::unordered_map<uint32_t, Client*> ClientMap;
 	typedef ClientMap::iterator ClientIter;
-	
+
 	/** Adds a string to SUP, propagating the change to all connected clients */
 	ADCHPP_DLL void addSupports(const std::string& str) throw();
 	/** Removes a string from SUP, propagating the change to all connected clients */
 	ADCHPP_DLL void removeSupports(const std::string& str) throw();
 
 	ADCHPP_DLL void updateCache() throw();
-	
+
 	/** @return SID of client or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const std::string& nick) const throw();
 	/** @return SID of client or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const CID& cid) const throw();
-	
+
 	/** @return The client associated with a certain SID, NULL if not found */
 	Client* getClient(uint32_t aSid) throw() {
 		ClientIter i = clients.find(aSid);
@@ -78,11 +78,11 @@ public:
 
 	/**
 	 * Calling this function will increase the flood-counter and kick/ban the user
-	 * if the counter exceeds the setting. 
+	 * if the counter exceeds the setting.
 	 * @return True if the user was flooding and was kicked, false otherwise.
 	 */
 	ADCHPP_DLL bool checkFlooding(Client& c, const AdcCommand&) throw();
-	
+
 	/**
 	 * Enter IDENTIFY state.
 	 * Call this if you stop the SUP command when in PROTOCOL state.
@@ -102,8 +102,8 @@ public:
 
 	/**
 	 * Enter NORMAL state. Call this if you stop an INF of a password-less
-	 * client in IDENTIFY state or a PAS in VERIFY state. 
-	 * 
+	 * client in IDENTIFY state or a PAS in VERIFY state.
+	 *
 	 * @param sendData Send all data as mandated by the protocol, including list of connected clients.
 	 * @param sendOwnInf Set to true to broadcast the client's inf (i e when a plugin asks
 	 *                   for password)
@@ -115,18 +115,18 @@ public:
 	 * Do all SUP verifications and update client data. Call if you stop SUP but still want the default processing.
 	 */
 	ADCHPP_DLL bool verifySUP(Client& c, AdcCommand& cmd) throw();
-	
+
 	/**
 	 * Do all INF verifications and update client data. Call if you stop INF but still want the default processing.
 	 */
 	ADCHPP_DLL bool verifyINF(Client& c, AdcCommand& cmd) throw();
-	
+
 	/**
 	 * Verify nick on INF (check that its not a dupe etc...)
 	 * @return false if the client was disconnected
 	 */
 	ADCHPP_DLL bool verifyNick(Client& c, const AdcCommand& cmd) throw();
-	
+
 	/**
 	 * Verify password
 	 */
@@ -141,15 +141,15 @@ public:
 	 * Verify that CID is correct and corresponds to PID
 	 */
 	ADCHPP_DLL bool verifyCID(Client& c, AdcCommand& cmd) throw();
-	
+
 	/** Update the state of c (this fires signalState as well) */
 	ADCHPP_DLL void setState(Client& c, Client::State newState) throw();
 
 	ADCHPP_DLL size_t getQueuedBytes() throw();
-	
+
 	void startup() throw() { updateCache(); }
 	void shutdown();
-	
+
 	typedef SignalTraits<void (Client&)> SignalConnected;
 	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
 	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
@@ -166,7 +166,7 @@ public:
 
 private:
 	friend class Client;
-	
+
 	/**
 	 * List of SUP items.
 	 */
@@ -195,27 +195,27 @@ private:
 
 	friend class Singleton<ClientManager>;
 	ADCHPP_DLL static ClientManager* instance;
-	
+
 	friend class CommandHandler<ClientManager>;
 
 	uint32_t makeSID();
-	
+
 	void removeLogins(Client& c) throw();
 	void removeClient(Client& c) throw();
 
 	bool handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw();
 	bool handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw();
 	bool handleDefault(Client& c, AdcCommand& cmd) throw();
-	
+
 	template<typename T> bool handle(T, Client& c, AdcCommand& cmd) throw() { return handleDefault(c, cmd); }
 
 	void onConnected(Client&) throw();
 	void onReceive(Client&, AdcCommand&) throw();
 	void onBadLine(Client&, const std::string&) throw();
 	void onFailed(Client&) throw();
-	
+
 	void badState(Client& c, const AdcCommand& cmd) throw();
-	
+
 	SignalConnected::Signal signalConnected_;
 	SignalReceive::Signal signalReceive_;
 	SignalBadLine::Signal signalBadLine_;
