@@ -6,11 +6,19 @@ import pyadchpp as a
 
 from Helpers import *
 
+users = { 'arnetheduck' : 'test' }
+
+def findUser(nick, cid):
+	if nick in users:
+		return users[nick]
+	
+	return None
+
 def run():
     print "Starting"
     a.initialize(os.path.abspath('../etc/') + os.sep)
 
-    pw = PasswordHandler(None, None, None)
+    pw = PasswordHandler(findUser, None, None)
     iv = InfVerifier(None, None)
     print "."
     

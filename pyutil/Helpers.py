@@ -20,7 +20,6 @@ def dump(c, code, msg):
     c.disconnect(0)
 
 handled = a.ClientManager.DONT_DISPATCH + a.ClientManager.DONT_SEND
-cm = a.getCM()
 
 class InfVerifier(object):
     BASE32_CHARS = "[2-7a-zA-Z]"
@@ -127,7 +126,7 @@ class InfVerifier(object):
         
 class PasswordHandler(object):
     def __init__(self, getPassword, succeeded, failed):
-        self.getPassword = getPassword or (lambda client: None)
+        self.getPassword = getPassword or (lambda nick, cid: None)
         self.succeeded = succeeded or (lambda client: None)
         self.failed = failed or (lambda client, error: None)
         
@@ -135,16 +134,23 @@ class PasswordHandler(object):
         self.pas = handleCommand(a.AdcCommand.CMD_PAS, self.onPAS)
         
         self.salts = {}
+        self.cm = a.getCM()
         
     def onINF(self, c, cmd, override):
         if c.getState() != a.Client.STATE_IDENTIFY:
             return 0
         
-        password = self.getPassword(c)
+        foundn, nick = cmd.getParam("NI", 0)
+        foundc, cid = cmd.getParam("ID", 0)
+        
+        if not foundn or not foundc:
+            dump(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
+
+        password = self.getPassword(nick, cid)
         if not password:
             return 0
         
-        self.salts[c.getSID()] = (cm.enterVerify(c, True), password)
+        self.salts[c.getSID()] = (self.cm.enterVerify(c, True), password)
         
         return handled
     
@@ -159,12 +165,12 @@ class PasswordHandler(object):
             dump(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
             return handled
         
-        del salts[c.getSID()]
+        del self.salts[c.getSID()]
         
         cid = c.getCID()
         nick = c.getField("NI")
         
-        if not cm.verifyPassword(c, password, salt, cmd.getParam(0)):
+        if not self.cm.verifyPassword(c, password, salt, cmd.getParam(0)):
             dump(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
             return handled
 
