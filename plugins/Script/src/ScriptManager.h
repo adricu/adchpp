@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,15 +57,18 @@ public:
 private:
 	friend class Singleton<ScriptManager>;
 	static ScriptManager* instance;
-	
+
 	std::vector<Engine*> engines;
-	
+
 	void load();
 	void reload();
 	void clearEngines();
-	
-	ClientManager::SignalReceive::ManagedConnection receiveConn;
-	void onReceive(Client& c, AdcCommand& cmd, int& handled);
+
+	ClientManager::SignalReceive::ManagedConnection reloadConn;
+	ClientManager::SignalReceive::ManagedConnection scriptsConn;
+
+	void onReload(Entity& c, const StringList& params, bool& ok);
+	void onScripts(Entity& c, const StringList& params, bool& ok);
 };
 
 #endif //ACCESSMANAGER_H

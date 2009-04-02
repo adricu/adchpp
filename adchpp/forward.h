@@ -13,6 +13,9 @@ typedef boost::intrusive_ptr<SocketFactory> SocketFactoryPtr;
 class SocketManager;
 class SimpleXML;
 
+/// Named parameter map (INF etc), AdcCommand::toField offers conversion
+typedef std::map<uint16_t, std::string> FieldMap;
+
 }
 
 #endif /*FORWARD_H_*/

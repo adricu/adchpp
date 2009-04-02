@@ -25,8 +25,6 @@
 # define _REENTRANT 1
 #endif
 
-#define COMPATIBILITY 1
-
 #ifdef _MSC_VER
 
 //disable the deprecated warnings for the CRT functions.
@@ -114,6 +112,7 @@ typedef unsigned __int64 uint64_t;
 #include <functional>
 #include <memory>
 #include <algorithm>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 

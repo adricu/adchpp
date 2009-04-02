@@ -41,7 +41,7 @@ public:
 	ADCHPP_DLL void write(const BufferPtr& buf, bool lowPrio = false) throw();
 
 	/** Returns the number of bytes in the output buffer; buffers must be locked */
-	size_t getQueuedBytes() const;
+	ADCHPP_DLL size_t getQueuedBytes() const;
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
 	ADCHPP_DLL void disconnect(Util::Reason reason) throw();

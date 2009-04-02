@@ -72,6 +72,12 @@ public:
 		SEV_FATAL = 2
 	};
 
+	enum Priority {
+		PRIORITY_NORMAL,		///< Default priority, command will be sent out normally
+		PRIORITY_LOW,			///< Low priority, command will only be sent if connection isn't saturated
+		PRIORITY_IGNORE			///< Ignore, command will not be put in send queue
+	};
+
 	static const char TYPE_BROADCAST = 'B';
 	static const char TYPE_CLIENT = 'C';
 	static const char TYPE_DIRECT = 'D';
@@ -105,15 +111,25 @@ public:
 
 	enum { HUB_SID = 0xffffffff };
 
+	static uint32_t toSID(const std::string& aSID) { return *reinterpret_cast<const uint32_t*>(aSID.data()); }
+	static std::string fromSID(const uint32_t aSID) { return std::string(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
+	static void appendSID(std::string& str, uint32_t aSID) { str.append(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
+
 	static uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c) { return (((uint32_t)a) | (((uint32_t)b)<<8) | (((uint32_t)c)<<16)); }
 	static uint32_t toCMD(const char* str) { return toCMD(str[0], str[1], str[2]); }
 
+	static uint16_t toField(const char* x) { return *((uint16_t*)x); }
+	static std::string fromField(const uint16_t aField) { return std::string(reinterpret_cast<const char*>(&aField), sizeof(aField)); }
+
+	static uint32_t toFourCC(const char* x) { return *reinterpret_cast<const uint32_t*>(x); }
+	static std::string fromFourCC(uint32_t x) { return std::string(reinterpret_cast<const char*>(&x), sizeof(x)); }
+
 	ADCHPP_DLL AdcCommand();
 	ADCHPP_DLL explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType = TYPE_INFO);
-	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), from(aFrom), type(aType) { }
-	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), type(0) { parse(aLine); }
-	explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException) : buffer(buffer_), cmdInt(0), type(0) { parse((const char*)buffer->data(), buffer->size()); }
-	AdcCommand(const AdcCommand& rhs) : parameters(rhs.parameters), cmdInt(rhs.cmdInt), from(rhs.from), to(rhs.to), type(rhs.type) { }
+	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), priority(PRIORITY_NORMAL), from(aFrom), type(aType) { }
+	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), priority(PRIORITY_NORMAL), type(0) { parse(aLine); }
+	explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException) : buffer(buffer_), cmdInt(0), priority(PRIORITY_NORMAL), type(0) { parse((const char*)buffer->data(), buffer->size()); }
+	AdcCommand(const AdcCommand& rhs) : parameters(rhs.parameters), cmdInt(rhs.cmdInt), priority(PRIORITY_NORMAL), from(rhs.from), to(rhs.to), type(rhs.type) { }
 
 	void parse(const std::string& str) throw(ParseException) { parse(str.data(), str.size()); }
 	ADCHPP_DLL void parse(const char* buf, size_t len) throw(ParseException);
@@ -124,15 +140,13 @@ public:
 	const StringList& getParameters() const { return parameters; }
 	ADCHPP_DLL std::string toString() const;
 
-	AdcCommand& addParam(const std::string& name, const std::string& value) {
-		parameters.push_back(name);
-		parameters.back() += value;
-		return *this;
-	}
-
 	AdcCommand& addParam(const std::string& param) {
 		parameters.push_back(param);
 		return *this;
+	}
+
+	AdcCommand& addParam(const std::string& name, const std::string& value) {
+		return addParam(name + value);
 	}
 
 	const std::string& getParam(size_t n) const {
@@ -148,7 +162,6 @@ public:
 	ADCHPP_DLL bool delParam(const char* name, size_t start);
 
 	ADCHPP_DLL bool hasFlag(const char* name, size_t start) const;
-	static uint16_t toCode(const char* x) { return *((uint16_t*)x); }
 
 	bool operator==(uint32_t aCmd) const { return cmdInt == aCmd; }
 
@@ -161,9 +174,9 @@ public:
 	uint32_t getFrom() const { return from; }
 	void setFrom(uint32_t aFrom) { from = aFrom; }
 
-	static uint32_t toSID(const std::string& aSID) { return *reinterpret_cast<const uint32_t*>(aSID.data()); }
-	static std::string fromSID(const uint32_t aSID) { return std::string(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
-	static void appendSID(std::string& str, uint32_t aSID) { str.append(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }
+	Priority getPriority() const { return priority; }
+	void setPriority(Priority priority_) { priority = priority_; }
+
 private:
 	AdcCommand& operator=(const AdcCommand&);
 
@@ -178,6 +191,7 @@ private:
 		uint32_t cmdInt;
 	};
 
+	Priority priority;
 	uint32_t from;
 	uint32_t to;
 	char type;

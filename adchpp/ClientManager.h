@@ -24,6 +24,7 @@
 #include "Signal.h"
 #include "Client.h"
 #include "Singleton.h"
+#include "Hub.h"
 
 namespace adchpp {
 
@@ -36,45 +37,31 @@ class ManagedSocket;
 class ClientManager : public Singleton<ClientManager>, public CommandHandler<ClientManager>
 {
 public:
-	enum SignalCommandOverride {
-		DONT_DISPATCH = 1 << 0,
-		DONT_SEND = 1 << 1
-	};
+	typedef std::tr1::unordered_map<uint32_t, Entity*> EntityMap;
+	typedef EntityMap::iterator EntityIter;
 
-	typedef std::tr1::unordered_map<uint32_t, Client*> ClientMap;
-	typedef ClientMap::iterator ClientIter;
-
-	/** Adds a string to SUP, propagating the change to all connected clients */
-	ADCHPP_DLL void addSupports(const std::string& str) throw();
-	/** Removes a string from SUP, propagating the change to all connected clients */
-	ADCHPP_DLL void removeSupports(const std::string& str) throw();
-
-	ADCHPP_DLL void updateCache() throw();
-
-	/** @return SID of client or 0 if not found */
+	/** @return SID of entity or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const std::string& nick) const throw();
-	/** @return SID of client or 0 if not found */
+	/** @return SID of entity or 0 if not found */
 	ADCHPP_DLL uint32_t getSID(const CID& cid) const throw();
 
-	/** @return The client associated with a certain SID, NULL if not found */
-	Client* getClient(uint32_t aSid) throw() {
-		ClientIter i = clients.find(aSid);
-		return (i == clients.end()) ? 0 : i->second;
-	}
+	/** @return The entity associated with a certain SID, NULL if not found */
+	ADCHPP_DLL Entity* getEntity(uint32_t aSid) throw();
+
 	/**
 	 * Get a list of all currently connected clients. (Don't change it, it's non-const
 	 * so that you'll be able to get non-const clients out of it...)!!!)
 	 */
-	ClientMap& getClients() throw() { return clients; }
+	EntityMap& getEntities() throw() { return entities; }
 
-	/** Send a command to the clients according to its type */
-	ADCHPP_DLL void send(const AdcCommand& cmd, bool lowPrio = false) throw();
-	void sendToAll(const AdcCommand& cmd) throw() { sendToAll(cmd.getBuffer()); }
-	/** Send command to all regardless of type */
-	void sendToAll(const std::string& cmd) throw() { sendToAll(BufferPtr(new Buffer(cmd))); }
+	/** Send a command to according to its type */
+	ADCHPP_DLL void send(const AdcCommand& cmd) throw();
+
+	/** Send a buffer to all connected entities */
 	ADCHPP_DLL void sendToAll(const BufferPtr& buffer) throw();
-	/** Send command to a single client regardless of type */
-	ADCHPP_DLL void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
+
+	/** Send buffer to a single client regardless of type */
+	ADCHPP_DLL void sendTo(const BufferPtr& buffer, uint32_t to);
 
 	/**
 	 * Calling this function will increase the flood-counter and kick/ban the user
@@ -147,15 +134,12 @@ public:
 
 	ADCHPP_DLL size_t getQueuedBytes() throw();
 
-	void startup() throw() { updateCache(); }
-	void shutdown();
-
-	typedef SignalTraits<void (Client&)> SignalConnected;
-	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
-	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
-	typedef SignalTraits<void (Client&, const AdcCommand&, int&)> SignalSend;
-	typedef SignalTraits<void (Client&, int)> SignalState;
-	typedef SignalTraits<void (Client&)> SignalDisconnected;
+	typedef SignalTraits<void (Entity&)> SignalConnected;
+	typedef SignalTraits<void (Entity&, AdcCommand&, bool&)> SignalReceive;
+	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
+	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
+	typedef SignalTraits<void (Entity&, int)> SignalState;
+	typedef SignalTraits<void (Entity&)> SignalDisconnected;
 
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
 	SignalReceive::Signal& signalReceive() { return signalReceive_; }
@@ -167,31 +151,20 @@ public:
 private:
 	friend class Client;
 
-	/**
-	 * List of SUP items.
-	 */
-	StringList supports;
-
 	std::deque<std::pair<Client*, time_t> > logins;
 
-	ClientMap clients;
+	EntityMap entities;
 	typedef std::tr1::unordered_map<std::string, uint32_t> NickMap;
 	NickMap nicks;
-	typedef std::tr1::unordered_map<CID, uint32_t>  CIDMap;
+	typedef std::tr1::unordered_map<CID, uint32_t> CIDMap;
 	CIDMap cids;
-	typedef std::tr1::unordered_set<uint32_t> SIDSet;
-	SIDSet sids;
+
+	Hub hub;
 
 	// Temporary string to use whenever a temporary string is needed (to avoid (de)allocating memory all the time...)
 	std::string strtmp;
 
 	static const std::string className;
-
-	// Strings used in various places along the pipeline...rebuilt in updateCache()...
-	struct Strings {
-		BufferPtr sup;
-		BufferPtr inf;
-	} strings;
 
 	friend class Singleton<ClientManager>;
 	ADCHPP_DLL static ClientManager* instance;
@@ -199,6 +172,8 @@ private:
 	friend class CommandHandler<ClientManager>;
 
 	uint32_t makeSID();
+
+	void maybeSend(Entity& c, const AdcCommand& cmd);
 
 	void removeLogins(Client& c) throw();
 	void removeClient(Client& c) throw();
@@ -208,6 +183,8 @@ private:
 	bool handleDefault(Client& c, AdcCommand& cmd) throw();
 
 	template<typename T> bool handle(T, Client& c, AdcCommand& cmd) throw() { return handleDefault(c, cmd); }
+
+	void handleIncoming(const ManagedSocketPtr& sock) throw();
 
 	void onConnected(Client&) throw();
 	void onReceive(Client&, AdcCommand&) throw();

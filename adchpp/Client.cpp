@@ -29,13 +29,13 @@ namespace adchpp {
 using namespace std;
 using namespace std::tr1::placeholders;
 
-Client* Client::create(const ManagedSocketPtr& ms) throw() {
-	Client* c = new Client();
+Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
+	Client* c = new Client(sid);
 	c->setSocket(ms);
 	return c;
 }
 
-Client::Client() throw() : sid(0), state(STATE_PROTOCOL), disconnecting(false), dataBytes(0), floodTimer(0) {
+Client::Client(uint32_t sid_) throw() : Entity(sid_), state(STATE_PROTOCOL), disconnecting(false), dataBytes(0), floodTimer(0) {
 
 }
 
@@ -155,88 +155,6 @@ void Client::onData(const BufferPtr& buf) throw() {
 				ClientManager::getInstance()->onBadLine(*this, string((char*)buffer->data(), buffer->size()));
 			}
 			buffer = BufferPtr();
-		}
-	}
-}
-
-void Client::setField(const char* name, const string& value) throw() {
-	uint16_t code = AdcCommand::toCode(name);
-
-	if(code == AdcCommand::toCode("SU")) {
-		filters.clear();
-		Util::tokenize(filters, value, ',');
-	}
-
-    if(value.empty()) {
-	    info.erase(code);
-    } else {
-	    info[code] = value;
-    }
-    changed[code] = value;
-    INF = BufferPtr();
-}
-
-bool Client::getChangedFields(AdcCommand& cmd) const throw() {
-	for(InfMap::const_iterator i = changed.begin(); i != changed.end(); ++i)
-		cmd.addParam(string((char*)&i->first, 2));
-	return !changed.empty();
-}
-
-bool Client::getAllFields(AdcCommand& cmd) const throw() {
-	for(InfMap::const_iterator i = info.begin(); i != info.end(); ++i)
-		cmd.addParam(string((char*)&i->first, 2), i->second);
-	return !info.empty();
-}
-
-const BufferPtr& Client::getINF() const throw() {
-	if(!INF) {
-		AdcCommand cmd(AdcCommand::CMD_INF, AdcCommand::TYPE_BROADCAST, getSID());
-		getAllFields(cmd);
-		INF = cmd.getBuffer();
-	}
-	return INF;
-}
-
-void Client::updateFields(const AdcCommand& cmd) throw() {
-	dcassert(cmd.getCommand() == AdcCommand::CMD_INF);
-	for(StringIterC j = cmd.getParameters().begin(); j != cmd.getParameters().end(); ++j) {
-		if(j->size() < 2)
-			continue;
-		setField(j->c_str(), j->substr(2));
-	}
-}
-
-bool Client::isFiltered(const string& features) const {
-	if(filters.empty()) {
-		return true;
-	}
-
-	for(size_t i = 0; i < features.size(); i += 5) {
-		if(features[i] == '-') {
-			if(std::find(filters.begin(), filters.end(), features.substr(i+1, 4)) != filters.end()) {
-				return true;
-			}
-		} else if(features[i] == '+') {
-			if(std::find(filters.begin(), filters.end(), features.substr(i+1, 4)) == filters.end()) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-void Client::updateSupports(const AdcCommand& cmd) throw() {
-	for(StringIterC i = cmd.getParameters().begin(); i != cmd.getParameters().end(); ++i) {
-		const string& str = *i;
-		if(str.size() != 6) {
-			continue;
-		}
-		if(str.compare(0, 2, "AD") == 0) {
-			supportList.push_back(str.substr(2));
-		} else if(str.compare(0, 2, "RM") == 0) {
-			supportList.erase(std::remove(supportList.begin(), supportList.end(), str.substr(2)), supportList.end());
-		} else {
-			continue;
 		}
 	}
 }

@@ -57,6 +57,7 @@ void shutdown() {
 %}
 
 %nodefaultctor;
+%nodefaultdtor Entity;
 %nodefaultdtor Client;
 %nodefaultdtor ClientManager;
 %nodefaultdtor LogManager;
@@ -65,29 +66,31 @@ void shutdown() {
 %nodefaultdtor PluginManager;
 
 namespace adchpp {
-	class Client;
+	class Entity;
 	typedef std::vector<std::string> StringList;
+	typedef std::vector<uint8_t> ByteVector;
+	typedef std::vector<Entity*> EntityList;
 }
 
-%template(TErrorPair) std::pair<int, size_t>;
-%template(TErrorList) std::vector<std::pair<int, size_t> >;
-
-%template(TClientList) std::vector<adchpp::Client*>;
+%template(TEntityList) std::vector<adchpp::Entity*>;
 %template(TStringList) std::vector<std::string>;
-
 %template(TByteVector) std::vector<uint8_t>;
 
-%inline%{
-typedef std::vector<adchpp::Client*> ClientList;
-%}
-
 namespace boost {
+
 template<typename T>
 class intrusive_ptr {
 public:
 	T* operator->();
 };
+
 }
+
+%inline%{
+	namespace adchpp {
+	typedef std::vector<Entity*> EntityList;
+	}
+%}
 
 namespace adchpp {
 
@@ -325,6 +328,19 @@ public:
 	explicit AdcCommand(const std::string& aLine) throw(ParseException);
 	AdcCommand(const AdcCommand& rhs);
 
+	static uint32_t toSID(const std::string& aSID);
+	static std::string fromSID(const uint32_t aSID);
+	static void appendSID(std::string& str, uint32_t aSID);
+
+	static uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c);
+	static uint32_t toCMD(const char* str);
+
+	static uint16_t toField(const char* x);
+	static std::string fromField(const uint16_t aField);
+
+	static uint32_t toFourCC(const char* x);
+	static std::string fromFourCC(uint32_t x);
+
 	void parse(const std::string& aLine) throw(ParseException);
 	uint32_t getCommand() const;
 	char getType() const;
@@ -347,7 +363,6 @@ public:
 	bool delParam(const char* name, size_t start);
 
 	bool hasFlag(const char* name, size_t start) const;
-	static uint16_t toCode(const char* x);
 
 	bool operator==(uint32_t aCmd) const;
 
@@ -377,13 +392,54 @@ public:
 
 };
 
-class Client {
+class Entity {
+public:
+	Entity(uint32_t sid_) : sid(sid_) {
+
+	}
+
+	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
+	virtual void send(const BufferPtr& cmd) = 0;
+
+	const std::string& getField(const char* name) const;
+	bool hasField(const char* name) const;
+	void setField(const char* name, const std::string& value);
+
+	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
+	bool getAllFields(AdcCommand& cmd) const throw();
+	const BufferPtr& getINF() const;
+
+	bool addSupports(uint32_t feature);
+	StringList getSupportList() const;
+	bool hasSupport(uint32_t feature) const;
+	bool removeSupports(uint32_t feature);
+
+	const BufferPtr& getSUP() const;
+
+	uint32_t getSID() const;
+
+	bool isFiltered(const std::string& features) const;
+
+	void updateFields(const AdcCommand& cmd);
+	void updateSupports(const AdcCommand& cmd) throw();
+
+};
+
+/**
+ * The client represents one connection to a user.
+ */
+class Client : public Entity {
 public:
 	enum State {
+		/** Initial protocol negotiation (wait for SUP) */
 		STATE_PROTOCOL,
+		/** Identify the connecting client (wait for INF) */
 		STATE_IDENTIFY,
+		/** Verify the client (wait for PAS) */
 		STATE_VERIFY,
+		/** Normal operation */
 		STATE_NORMAL,
+		/** Binary data transfer */
 		STATE_DATA
 	};
 
@@ -404,56 +460,58 @@ public:
 		FLAG_OK_IP = 0x104
 	};
 
-	//static Client* create(uint32_t sid) throw();
-	//DLL void deleteThis() throw();
+	// static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
 
-	const StringList& getSupportList() const throw();
-	bool supports(const std::string& feat) const throw();
+	virtual void send(const BufferPtr& command) throw() { socket->write(command); }
 
-	//void send(const char* command, size_t len) throw();
-	void send(const AdcCommand& cmd) throw();
-	void send(const std::string& command) throw();
-	//void send(const char* command) throw();
+	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
 
+	/** @param reason The statistic to update */
 	void disconnect(Util::Reason reason) throw();
-	//ManagedSocket* getSocket() throw() { return socket; }
-	//const ManagedSocket* getSocket() const throw() { return socket; }
-	const std::string& getIp() const throw();
+	const ManagedSocketPtr& getSocket() throw() { return socket; }
+	const ManagedSocketPtr& getSocket() const throw() { return socket; }
+	const std::string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
 
-	//void setSocket(ManagedSocket* aSocket) throw();
+	/**
+	 * Set data mode for aBytes bytes.
+	 * May only be called from on(ClientListener::Command...).
+	 */
+	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
+	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
-	//void setDataMode(std::tr1::function<void (const uint8_t*, size_t)> handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
-
-	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
-	bool getChangedFields(AdcCommand& cmd);
-	bool getAllFields(AdcCommand& cmd);
-
-	void resetChanged() { changed.clear(); }
-
-	const std::string& getField(const char* name) const throw();
-	void setField(const char* name, const std::string& value) throw();
-
-	void updateFields(const AdcCommand& cmd) throw();
-	void updateSupports(const AdcCommand& cmd) throw();
-
-	bool isUdpActive();
-	bool isTcpActive();
-
-	bool isFiltered(const std::string& features) const;
+	bool isUdpActive() const;
+	bool isTcpActive() const;
 
 	bool isFlooding(time_t addSeconds);
 
-	//void* setPSD(int id, void* data) throw();
-	//void* getPSD(int id) throw();
+	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
+	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
+	//void setFlag(size_t aFlag);
+	//void unsetFlag(size_t aFlag);
+
+	/**
+	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
+	 * per-client data, and retrieve it later on. Each plugin is only allowed
+	 * to store one single item, and the plugin must make sure that this
+	 * item will be properly deallocated when ClientQuit is received by the
+	 * plugin. If an item already exists, it will be replaced.
+	 * @param id Id as retrieved from PluginManager::getPluginId()
+	 * @param data Data to store, this can be pretty much anything
+	 * @return Old value if any was associated with the plugin already, NULL otherwise
+	 */
+	void* setPSD(int id, void* data) throw();
+
+	/**
+	 * @param id Plugin id
+	 * @return Value stored, NULL if none found
+	 */
+	void* getPSD(int id) throw();
 
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
-	uint32_t getSID() const { return sid; }
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
 
-	//Client(uint32_t aSID) throw();
-	//virtual ~Client() throw() { }
 };
 
 class LogManager
@@ -462,69 +520,60 @@ public:
 	void log(const std::string& area, const std::string& msg) throw();
 };
 
-%template(SignalC) Signal<void (Client&)>;
-%template(SignalTraitsC) SignalTraits<void (Client&)>;
-%template(SignalCA) Signal<void (Client&, AdcCommand&)>;
-%template(SignalTraitsCA) SignalTraits<void (Client&, AdcCommand&)>;
-%template(SignalCAI) Signal<void (Client&, AdcCommand&, int&)>;
-%template(SignalTraitsCAI) SignalTraits<void (Client&, AdcCommand&, int&)>;
-%template(SignalCI) Signal<void (Client&, int)>;
-%template(SignalTraitsCI) SignalTraits<void (Client&, int)>;
-%template(SignalCS) Signal<void (Client&, const std::string&)>;
-%template(SignalTraitsCS) SignalTraits<void (Client&, const std::string&)>;
+%template(SignalC) Signal<void (Entity&)>;
+%template(SignalTraitsC) SignalTraits<void (Entity&)>;
+%template(SignalCA) Signal<void (Entity&, AdcCommand&)>;
+%template(SignalTraitsCA) SignalTraits<void (Entity&, AdcCommand&)>;
+%template(SignalCAI) Signal<void (Entity&, AdcCommand&, bool&)>;
+%template(SignalTraitsCAI) SignalTraits<void (Entity&, AdcCommand&, bool&)>;
+%template(SignalCI) Signal<void (Entity&, int)>;
+%template(SignalTraitsCI) SignalTraits<void (Entity&, int)>;
+%template(SignalCS) Signal<void (Entity&, const std::string&)>;
+%template(SignalTraitsCS) SignalTraits<void (Entity&, const std::string&)>;
 %template(SignalS) Signal<void (const SimpleXML&)>;
 %template(SignalTraitsS) SignalTraits<void (const SimpleXML&)>;
 
 class ClientManager
 {
 public:
-	enum SignalCommandOverride {
-		DONT_DISPATCH = 1 << 0,
-		DONT_SEND = 1 << 1
-	};
-
-	//typedef HASH_MAP<uint32_t, Client*> ClientMap;
-	//typedef ClientMap::iterator ClientIter;
-
-	void addSupports(const std::string& str) throw();
-	void removeSupports(const std::string& str) throw();
-
-	void updateCache() throw();
+	typedef std::tr1::unordered_map<uint32_t, Entity*> EntityMap;
+	typedef EntityMap::iterator EntityIter;
 
 	uint32_t getSID(const std::string& nick) const throw();
 	uint32_t getSID(const CID& cid) const throw();
 
-	Client* getClient(const uint32_t& aSid) throw();
-	//ClientMap& getClients() throw() { return clients; }
+	Entity* getEntity(uint32_t aSid) throw();
+
+	// EntityMap& getEntities() throw() { return entities; }
+
 	%extend{
-	ClientList getClients() throw() {
-		ClientList ret;
-		for(ClientManager::ClientMap::iterator i = self->getClients().begin(); i != self->getClients().end(); ++i) {
+	EntityList getEntities() throw() {
+		EntityList ret;
+		for(ClientManager::EntityMap::iterator i = self->getEntities().begin(); i != self->getEntities().end(); ++i) {
 			ret.push_back(i->second);
 		}
 		return ret;
 	}
-	Client* findByNick(const std::string& nick) {
-		for(ClientManager::ClientMap::iterator i = self->getClients().begin(); i != self->getClients().end(); ++i) {
-			const std::string& nick2 = i->second->getField("NI");
-			if(nick == nick2)
-				return i->second;
+
+	Entity* findByNick(const std::string& nick) {
+		uint32_t sid = self->getSID(nick);
+		if(sid != 0) {
+			return self->getEntity(sid);
 		}
+
 		return 0;
 	}
 	}
 
-	void send(const AdcCommand& cmd, bool lowPrio = false) throw();
-	void sendToAll(const AdcCommand& cmd) throw();
-	void sendToAll(const std::string& cmd) throw();
-	void sendTo(const AdcCommand& cmd, const uint32_t& to) throw();
+	void send(const AdcCommand& cmd) throw();
+	void sendToAll(const BufferPtr& buffer) throw();
+	void sendTo(const BufferPtr& buffer, uint32_t to);
 
 	bool checkFlooding(Client& c, const AdcCommand&) throw();
 
 	void enterIdentify(Client& c, bool sendData) throw();
 
 	ByteVector enterVerify(Client& c, bool sendData) throw();
-
 	bool enterNormal(Client& c, bool sendData, bool sendOwnInf) throw();
 	bool verifySUP(Client& c, AdcCommand& cmd) throw();
 	bool verifyINF(Client& c, AdcCommand& cmd) throw();
@@ -532,22 +581,15 @@ public:
 	bool verifyPassword(Client& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
-
 	void setState(Client& c, Client::State newState) throw();
-
 	size_t getQueuedBytes() throw();
 
-	//void incomingConnection(ManagedSocket* ms) throw();
-
-	//void startup() throw() { updateCache(); }
-	//void shutdown();
-
-	typedef SignalTraits<void (Client&)> SignalConnected;
-	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalReceive;
-	typedef SignalTraits<void (Client&, const std::string&)> SignalBadLine;
-	typedef SignalTraits<void (Client&, AdcCommand&, int&)> SignalSend;
-	typedef SignalTraits<void (Client&, int)> SignalState;
-	typedef SignalTraits<void (Client&)> SignalDisconnected;
+	typedef SignalTraits<void (Entity&)> SignalConnected;
+	typedef SignalTraits<void (Entity&, AdcCommand&, bool&)> SignalReceive;
+	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
+	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
+	typedef SignalTraits<void (Entity&, int)> SignalState;
+	typedef SignalTraits<void (Entity&)> SignalDisconnected;
 
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
 	SignalReceive::Signal& signalReceive() { return signalReceive_; }
@@ -693,7 +735,7 @@ public:
 	//void shutdown();
 //	typedef std::tr1::function<void (Client&, const StringList&, int& override)> CommandSlot;
 	%extend {
-		ManagedConnectionPtr onCommand(const std::string& commandName, std::tr1::function<void (Client&, const StringList&, int& override)> f) {
+		ManagedConnectionPtr onCommand(const std::string& commandName, std::tr1::function<void (Entity&, const StringList&, bool& override)> f) {
 			return ManagedConnectionPtr(new ManagedConnection(self->onCommand(commandName, f)));
 		}
 	}

@@ -25,13 +25,14 @@
 #include "FastAlloc.h"
 #include "AdcCommand.h"
 #include "CID.h"
+#include "Entity.h"
 
 namespace adchpp {
 
 /**
  * The client represents one connection to a user.
  */
-class Client : public FastAlloc<Client>, public boost::noncopyable {
+class Client : public Entity, public FastAlloc<Client>, public boost::noncopyable {
 public:
 	enum State {
 		/** Initial protocol negotiation (wait for SUP) */
@@ -63,20 +64,11 @@ public:
 		FLAG_OK_IP = 0x104
 	};
 
-	static Client* create(const ManagedSocketPtr& ms_) throw();
+	static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
 
-	const StringList& getSupportList() const throw() { return supportList; }
-	bool supports(const std::string& feat) const throw() { return find(supportList.begin(), supportList.end(), feat) != supportList.end(); }
+	using Entity::send;
 
-	void send(const char* command, size_t len) throw() { send(BufferPtr(new Buffer(command, len))); }
-
-	void send(const AdcCommand& cmd) throw() { send(cmd.getBuffer()); }
-	void send(const std::string& command) throw() { send(command.c_str(), command.length()); }
-	void send(const BufferPtr& command) throw() { socket->write(command); }
-
-	void fastSend(const BufferPtr& command, bool lowPrio = false) throw() {
-		socket->write(command, lowPrio);
-	}
+	virtual void send(const BufferPtr& command) throw() { socket->write(command); }
 
 	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
 
@@ -93,23 +85,8 @@ public:
 	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
-	/** Add any flags that have been updated to the AdcCommand (type etc is not set) */
-	ADCHPP_DLL bool getChangedFields(AdcCommand& cmd) const throw();
-	ADCHPP_DLL bool getAllFields(AdcCommand& cmd) const throw();
-	ADCHPP_DLL const BufferPtr& getINF() const throw();
-
-	void resetChanged() { changed.clear(); }
-
-	const std::string& getField(const char* name) const throw() { InfMap::const_iterator i = info.find(AdcCommand::toCode(name)); return i == info.end() ? Util::emptyString : i->second; }
-	ADCHPP_DLL void setField(const char* name, const std::string& value) throw();
-
-	ADCHPP_DLL void updateFields(const AdcCommand& cmd) throw();
-	ADCHPP_DLL void updateSupports(const AdcCommand& cmd) throw();
-
-	bool isUdpActive() const { return info.find(AdcCommand::toCode("U4")) != info.end(); }
-	bool isTcpActive() const { return info.find(AdcCommand::toCode("I4")) != info.end(); }
-
-	ADCHPP_DLL bool isFiltered(const std::string& features) const;
+	bool isUdpActive() const { return hasField("U4"); }
+	bool isTcpActive() const { return hasField("I4"); }
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 
@@ -129,6 +106,7 @@ public:
 	 * @return Old value if any was associated with the plugin already, NULL otherwise
 	 */
 	ADCHPP_DLL void* setPSD(int id, void* data) throw();
+
 	/**
 	 * @param id Plugin id
 	 * @return Value stored, NULL if none found
@@ -137,34 +115,20 @@ public:
 
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
-	void setSID(uint32_t sid_) { sid = sid_; }
-	uint32_t getSID() const { return sid; }
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
 
 private:
-	Client() throw();
+	Client(uint32_t sid_) throw();
 	virtual ~Client() throw() { }
 
 	typedef std::pair<int, void*> PSDPair;
 	typedef std::vector<PSDPair> PSDList;
 	typedef PSDList::iterator PSDIter;
 
-	typedef std::tr1::unordered_map<uint16_t, std::string> InfMap;
-	typedef InfMap::iterator InfIter;
-
-	/** H-C INF SU */
-	StringList filters;
-	/** H-C SUP */
-	StringList supportList;
-
-	InfMap info;
-	InfMap changed;
-
 	Flags flags;
 
 	CID cid;
-	uint32_t sid;
 	State state;
 	bool disconnecting;
 
@@ -175,8 +139,6 @@ private:
 
 	time_t floodTimer;
 
-	/** Latest INF cached */
-	mutable BufferPtr INF;
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
 

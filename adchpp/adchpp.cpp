@@ -65,8 +65,6 @@ void startup(void (*f)()) {
 	Stats::startTime = GET_TIME();
 
 	if(f) f();
-	ClientManager::getInstance()->startup();
-	if(f) f();
 	SocketManager::getInstance()->startup();
 	if(f) f();
 	PluginManager::getInstance()->load();
@@ -82,8 +80,6 @@ void shutdown(void (*f)()) {
 
 	if(f) f();
 	PluginManager::getInstance()->shutdown();
-	if(f) f();
-	ClientManager::getInstance()->shutdown();
 	if(f) f();
 	SocketManager::getInstance()->shutdown();
 	if(f) f();

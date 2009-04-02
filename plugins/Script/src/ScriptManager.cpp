@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,10 +27,9 @@
 #include <adchpp/TimerManager.h>
 #include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
-#include <adchpp/SocketManager.h>
 #include <adchpp/AdcCommand.h>
-#include <adchpp/ClientManager.h>
 #include <adchpp/Client.h>
+#include <adchpp/PluginManager.h>
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -40,9 +39,9 @@ const string ScriptManager::className = "ScriptManager";
 
 ScriptManager::ScriptManager() {
 	LOG(className, "Starting");
-	ClientManager::SignalReceive::Signal& sig = ClientManager::getInstance()->signalReceive();
-	receiveConn = manage(&sig, std::tr1::bind(&ScriptManager::onReceive, this, _1, _2, _3));
-	
+
+	reloadConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("reload", std::tr1::bind(&ScriptManager::onReload, this, _1, _2, _3))));
+
 	load();
 }
 
@@ -64,14 +63,14 @@ void ScriptManager::load() {
 		while(xml.findChild("Engine")) {
 			const std::string& scriptPath = xml.getChildAttrib("scriptPath");
 			const std::string& language = xml.getChildAttrib("language");
-			
+
 			if(language.empty() || language == "lua") {
 				engines.push_back(new LuaEngine);
 			} else {
 				LOG(className, "Unrecognised language " + language);
 				continue;
 			}
-			
+
 			xml.stepIn();
 			while(xml.findChild("Script")) {
 				engines.back()->loadScript(scriptPath, xml.getChildData(), ParameterMap());
@@ -90,22 +89,15 @@ void ScriptManager::reload() {
 	load();
 }
 
-void ScriptManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
-	
-	if(cmd.getCommand() != AdcCommand::CMD_MSG) {
-		return;
+void ScriptManager::onReload(Entity& c, const StringList& cmd, bool& ok) {
+	PluginManager::getInstance()->attention(std::tr1::bind(&ScriptManager::reload, this));
+	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Reloading scripts"));
+}
+
+void ScriptManager::onScripts(Entity& c, const StringList& cmd, bool& ok) {
+	string tmp("Currently loaded scripts:\n");
+	for(vector<Engine*>::const_iterator i = engines.begin(); i != engines.end(); ++i) {
+		(*i)->getStats(tmp);
 	}
-	
-	if(cmd.getParam(0) == "+reload") {
-		SocketManager::getInstance()->addJob(std::tr1::bind(&ScriptManager::reload, this));
-		c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Reloading scripts"));
-		override |= ClientManager::DONT_SEND;
-	} else if(cmd.getParam(0) == "+scripts") {
-		string tmp("Currently loaded scripts:\n");
-		for(vector<Engine*>::const_iterator i = engines.begin(); i != engines.end(); ++i) {
-			(*i)->getStats(tmp);
-		}
-		c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(tmp));
-		override |= ClientManager::DONT_SEND;
-	}
+	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(tmp));
 }

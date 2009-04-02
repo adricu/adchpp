@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -51,15 +51,15 @@ public:
 	virtual ~BloomManager();
 
 	virtual int getVersion() { return 0; }
-	
+
 	static const std::string className;
 private:
 	friend class Singleton<BloomManager>;
 	static BloomManager* instance;
-	
+
 	typedef std::tr1::unordered_map<uint32_t, HashBloom> BloomMap;
 	BloomMap blooms;
-	
+
 	// bytes, m, k
 	typedef std::tr1::tuple<ByteVector, size_t, size_t> PendingItem;
 	typedef std::tr1::unordered_map<uint32_t, PendingItem> PendingMap;
@@ -68,17 +68,17 @@ private:
 	int64_t searches;
 	int64_t tthSearches;
 	int64_t stopped;
-	
+
 	ClientManager::SignalReceive::ManagedConnection receiveConn;
 	ClientManager::SignalDisconnected::ManagedConnection disconnectConn;
 	ClientManager::SignalSend::ManagedConnection sendConn;
 
 	int64_t getBytes() const;
-	void onReceive(Client& c, AdcCommand& cmd, int&);
-	void onSend(Client& c, const AdcCommand& cmd, int&);
-	void onData(Client& c, const uint8_t* data, size_t len);
-	void onDisconnected(Client& c);
-	
+	void onReceive(Entity& c, AdcCommand& cmd, bool&);
+	void onSend(Entity& c, const AdcCommand& cmd, bool&);
+	void onData(Entity& c, const uint8_t* data, size_t len);
+	void onDisconnected(Entity& c);
+
 };
 
 #endif //ACCESSMANAGER_H

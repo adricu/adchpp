@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,24 +47,30 @@ BloomManager::~BloomManager() {
 	LOG(className, "Shutting down");
 }
 
-static const std::string FEATURE = "BLO0";
+static const uint32_t FEATURE = AdcCommand::toFourCC("BLO0");
 
-void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
+void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 	string tmp;
 
-	if(cmd.getCommand() == AdcCommand::CMD_INF && c.supports(FEATURE)) {
+	Client* cc = dynamic_cast<Client*>(&e);
+	if(!cc) {
+		return;
+	}
+
+	Client& c = *cc;
+	if(cmd.getCommand() == AdcCommand::CMD_INF && c.hasSupport(FEATURE)) {
 		if(cmd.getParam("SF", 0, tmp)) {
 			size_t n = adchpp::Util::toInt(tmp);
 			if(n == 0) {
 				return;
 			}
-			
+
 			size_t k = HashBloom::get_k(n, h);
 			size_t m = HashBloom::get_m(n, k);
 			blooms.erase(c.getSID());
 
 			pending[c.getSID()] = make_tuple(ByteVector(), m, k);
-			
+
 			AdcCommand get(AdcCommand::CMD_GET);
 			get.addParam("blom");
 			get.addParam("/");
@@ -81,27 +87,27 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 		if(cmd.getParam(0) != "blom") {
 			return;
 		}
-		
+
 		PendingMap::const_iterator i = pending.find(c.getSID());
 		if(i == pending.end()) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Unexpected bloom filter update"));
 			c.disconnect(Util::REASON_BAD_STATE);
-			override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
+			ok = false;
 			return;
 		}
-		
+
 		int64_t bytes = Util::toInt(cmd.getParam(3));
-		
+
 		if(bytes != static_cast<int64_t>(get<1>(i->second) / 8)) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid number of bytes"));
 			c.disconnect(Util::REASON_PLUGIN);
-			override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
+			ok = false;
 			pending.erase(c.getSID());
 			return;
 		}
 
 		c.setDataMode(bind(&BloomManager::onData, this, _1, _2, _3), bytes);
-		override |= ClientManager::DONT_DISPATCH | ClientManager::DONT_SEND;
+		ok = false;
 	} else if(cmd.getCommand() == AdcCommand::CMD_MSG && cmd.getParameters().size() >= 1) {
 		if(cmd.getParam(0).compare(0, 6, "+stats") == 0) {
 			string stats = "\nBloom filter statistics:";
@@ -109,16 +115,16 @@ void BloomManager::onReceive(Client& c, AdcCommand& cmd, int& override) {
 			stats += "\nOutgoing TTH searches: " + Util::toString(tthSearches) + " (" + Util::toString(tthSearches * 100. / searches) + "% of total)";
 			stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
 			int64_t bytes = getBytes();
-			size_t clients = ClientManager::getInstance()->getClients().size();
+			size_t clients = ClientManager::getInstance()->getEntities().size();
 			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
 			stats += "\nApproximate memory usage: " + Util::formatBytes(bytes) + ", " + Util::formatBytes(static_cast<double>(bytes) / clients) + "/client";
-			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));			
-			override |= ClientManager::DONT_SEND;
+			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));
+			ok = false;
 		}
 	}
 }
 
-void BloomManager::onSend(Client& c, const AdcCommand& cmd, int& override) {
+void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 	if(cmd.getCommand() == AdcCommand::CMD_SCH) {
 		searches++;
 		string tmp;
@@ -129,10 +135,10 @@ void BloomManager::onSend(Client& c, const AdcCommand& cmd, int& override) {
 				// Stop it
 				stopped++;
 				dcdebug("Stopping search\n");
-				override |= ClientManager::DONT_SEND;
+				ok = false;
 			}
 		}
-	}  
+	}
 }
 int64_t BloomManager::getBytes() const {
 	int64_t bytes = 0;
@@ -142,7 +148,7 @@ int64_t BloomManager::getBytes() const {
 	return bytes;
 }
 
-void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
+void BloomManager::onData(Entity& c, const uint8_t* data, size_t len) {
 	PendingMap::iterator i = pending.find(c.getSID());
 	if(i == pending.end()) {
 		// Shouldn't happen
@@ -150,7 +156,7 @@ void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
 	}
 	ByteVector& v = get<0>(i->second);
 	v.insert(v.end(), data, data + len);
-	
+
 	if(v.size() == get<1>(i->second) / 8) {
 		HashBloom& bloom = blooms[c.getSID()];
 		bloom.reset(v, get<2>(i->second), h);
@@ -158,7 +164,7 @@ void BloomManager::onData(Client& c, const uint8_t* data, size_t len) {
 	}
 }
 
-void BloomManager::onDisconnected(Client& c) {
+void BloomManager::onDisconnected(Entity& c) {
 	blooms.erase(c.getSID());
 	pending.erase(c.getSID());
 }

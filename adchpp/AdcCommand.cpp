@@ -51,21 +51,21 @@ const uint32_t AdcCommand::CMD_CMD;
 
 using namespace std;
 
-AdcCommand::AdcCommand() : cmdInt(0), from(0), type(0) { }
+AdcCommand::AdcCommand() : cmdInt(0), priority(PRIORITY_NORMAL), from(0), type(0) { }
 
-AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), from(HUB_SID), type(aType) {
+AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), priority(PRIORITY_NORMAL), from(HUB_SID), type(aType) {
 	addParam(Util::toString(sev * 100 + err));
 	addParam(desc);
 }
 
 void AdcCommand::escape(const string& s, string& out) {
 	out.reserve(out.length() + static_cast<size_t>(s.length() * 1.1));
-	string::const_iterator send = s.end();
-	for(string::const_iterator i = s.begin(); i != send; ++i) {
+
+	for(string::const_iterator i = s.begin(), iend = s.end(); i != iend; ++i) {
 		switch(*i) {
-			case ' ': out += "\\s"; break;
-			case '\n': out += "\\n"; break;
-			case '\\': out += "\\\\"; break;
+			case ' ': out += '\\'; out += 's'; break;
+			case '\n': out += '\\'; out += 'n'; break;
+			case '\\': out += '\\'; out += '\\'; break;
 			default: out += *i;
 		}
 	}
@@ -153,6 +153,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
 		}
 		++i;
 	}
+
 	if(!cur.empty()) {
 		if((type == TYPE_BROADCAST || type == TYPE_DIRECT || type == TYPE_ECHO || type == TYPE_FEATURE) && !fromSet) {
 			if(cur.length() != 4) {
@@ -238,7 +239,7 @@ string AdcCommand::toString() const {
 
 bool AdcCommand::getParam(const char* name, size_t start, string& ret) const {
 	for(string::size_type i = start; i < getParameters().size(); ++i) {
-		if(toCode(name) == toCode(getParameters()[i].c_str())) {
+		if(toField(name) == toField(getParameters()[i].c_str())) {
 			ret = getParameters()[i].substr(2);
 			return true;
 		}
@@ -248,7 +249,7 @@ bool AdcCommand::getParam(const char* name, size_t start, string& ret) const {
 
 bool AdcCommand::delParam(const char* name, size_t start) {
 	for(string::size_type i = start; i < getParameters().size(); ++i) {
-		if(toCode(name) == toCode(getParameters()[i].c_str())) {
+		if(toField(name) == toField(getParameters()[i].c_str())) {
 			getParameters().erase(getParameters().begin() + i);
 			resetBuffer();
 			return true;
@@ -259,7 +260,7 @@ bool AdcCommand::delParam(const char* name, size_t start) {
 
 bool AdcCommand::hasFlag(const char* name, size_t start) const {
 	for(string::size_type i = start; i < getParameters().size(); ++i) {
-		if(toCode(name) == toCode(getParameters()[i].c_str()) &&
+		if(toField(name) == toField(getParameters()[i].c_str()) &&
 			getParameters()[i].size() == 3 &&
 			getParameters()[i][2] == '1')
 		{

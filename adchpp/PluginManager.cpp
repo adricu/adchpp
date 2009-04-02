@@ -168,24 +168,36 @@ void PluginManager::shutdown() {
 struct CommandDispatch {
 	CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) : name('+' + name_), f(f_) { }
 
-	void operator()(Client& c, AdcCommand& cmd, int& override) {
-		if(c.getState() != Client::STATE_NORMAL) {
+	void operator()(Entity& e, AdcCommand& cmd, bool& ok) {
+		Client* cc = dynamic_cast<Client*>(&e);
+		if(!cc) {
 			return;
 		}
+
+		if(cc->getState() != Client::STATE_NORMAL) {
+			return;
+		}
+
 		if(cmd.getCommand() != AdcCommand::CMD_MSG) {
 			return;
 		}
+
 		if(cmd.getParameters().size() < 1) {
 			return;
 		}
+
 		if(cmd.getParameters()[0] != name) {
 			return;
 		}
+
 		StringList l(cmd.getParameters().size());
 		l[0] = name.substr(1);
 		std::copy(cmd.getParameters().begin() + 1, cmd.getParameters().end(), l.begin() + 1);
-		f(c, l, override);
+
+		cmd.setPriority(AdcCommand::PRIORITY_IGNORE);
+		f(e, l, ok);
 	}
+
 	std::string name;
 	PluginManager::CommandSlot f;
 };
