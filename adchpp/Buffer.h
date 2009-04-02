@@ -30,7 +30,13 @@ public:
 
 	template<typename InputIterator>
 	void append(InputIterator start, InputIterator end) { buf().insert(buf().end(), start, end); }
+
+	static void setDefaultBufferSize(size_t newSize) { defaultBufferSize = newSize; }
+	static size_t getDefaultBufferSize() { return defaultBufferSize; }
+
 private:
+
+	static size_t defaultBufferSize;
 
 	const ByteVector& buf() const { return *bufp; }
 	ByteVector& buf() { return *bufp; }

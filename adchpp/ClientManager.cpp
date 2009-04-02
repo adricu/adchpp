@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@
 #include "TigerHash.h"
 #include "Encoder.h"
 #include "version.h"
-#include "SettingsManager.h"
 
 namespace adchpp {
 
@@ -37,7 +36,7 @@ using namespace std;
 ClientManager* ClientManager::instance = 0;
 const string ClientManager::className = "ClientManager";
 
-ClientManager::ClientManager() throw() {
+ClientManager::ClientManager() throw() : loginTimeout(30 * 1000) {
 	hub.addSupports(AdcCommand::toFourCC("BASE"));
 	hub.addSupports(AdcCommand::toFourCC("TIGR"));
 
@@ -67,14 +66,14 @@ void ClientManager::send(const AdcCommand& cmd) throw() {
 		break;
 	case AdcCommand::TYPE_DIRECT: // Fallthrough
 	case AdcCommand::TYPE_ECHO: {
-		EntityIter i = entities.find(cmd.getTo());
-		if(i != entities.end()) {
-			maybeSend(*i->second, cmd);
+		Entity* e = getEntity(cmd.getTo());
+		if(e) {
+			maybeSend(*e, cmd);
 
 			if(cmd.getType() == AdcCommand::TYPE_ECHO) {
-				i = entities.find(cmd.getFrom());
-				if(i != entities.end()) {
-					maybeSend(*i->second, cmd);
+				e = getEntity(cmd.getFrom());
+				if(e) {
+					maybeSend(*e, cmd);
 				}
 			}
 		}
@@ -115,8 +114,12 @@ void ClientManager::sendTo(const BufferPtr& buffer, uint32_t to) {
 }
 
 bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
+	// @todo Make multiplier configurable
+	if(true)
+		return false;
+
 	time_t add = ((cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_FEATURE) ? 1 : 0)
-		* SETTING(FLOOD_ADD);
+		* 5;
 	if(c.isFlooding(add)) {
 		c.disconnect(Util::REASON_FLOODING);
 		return true;
@@ -147,7 +150,7 @@ uint32_t ClientManager::makeSID() {
 
 void ClientManager::onConnected(Client& c) throw() {
 	// First let's check if any clients have passed the login timeout...
-	time_t timeout = GET_TIME() - SETTING(LOGIN_TIMEOUT);
+	size_t timeout = GET_TICK() - getLoginTimeout();
 	while(!logins.empty() && (timeout > logins.front().second)) {
 		Client* cc = logins.front().first;
 
@@ -156,7 +159,7 @@ void ClientManager::onConnected(Client& c) throw() {
 		logins.pop_front();
 	}
 
-	logins.push_back(make_pair(&c, GET_TIME()));
+	logins.push_back(make_pair(&c, GET_TICK()));
 
 	signalConnected_(c);
 }
@@ -473,6 +476,10 @@ void ClientManager::removeClient(Client& c) throw() {
 }
 
 Entity* ClientManager::getEntity(uint32_t aSid) throw() {
+	if(aSid == AdcCommand::HUB_SID) {
+		return &hub;
+	}
+
 	EntityIter i = entities.find(aSid);
 	return (i == entities.end()) ? 0 : i->second;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 #include "adchpp.h"
 
 #include "PluginManager.h"
-#include "SettingsManager.h"
 
 #include "SimpleXML.h"
 #include "LogManager.h"
@@ -59,7 +58,7 @@ PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 
 PluginManager::PluginManager() throw() : pluginIds(0) {
-	SettingsManager::getInstance()->signalLoad().connect(std::tr1::bind(&PluginManager::onLoad, this, _1));
+
 }
 
 PluginManager::~PluginManager() throw() {
@@ -69,6 +68,13 @@ PluginManager::~PluginManager() throw() {
 void PluginManager::attention(const function<void()>& f) {
 	SocketManager::getInstance()->addJob(f);
 }
+
+void PluginManager::load()  {
+	for(StringIter i = plugins.begin(); i != plugins.end(); ++i) {
+		loadPlugin(*i + PLUGIN_EXT);
+	}
+}
+
 
 bool PluginManager::loadPlugin(const string& file) {
 	if(file.length() < 3) {
@@ -137,20 +143,6 @@ bool PluginManager::loadPlugin(const string& file) {
 
 	PM_UNLOAD_LIBRARY(h);
 	return false;
-}
-
-void PluginManager::onLoad(const SimpleXML& xml) throw() {
-	plugins.clear();
-
-	xml.resetCurrentChild();
-	if(xml.findChild("Plugins")) {
-		pluginPath = xml.getChildAttrib("Path");
-		xml.stepIn();
-		while(xml.findChild("Plugin")) {
-			plugins.push_back(xml.getChildData() + PLUGIN_EXT);
-		}
-		xml.stepOut();
-	}
 }
 
 void PluginManager::shutdown() {

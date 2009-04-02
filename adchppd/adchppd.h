@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,23 +16,4 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef LUAENGINE_H_
-#define LUAENGINE_H_
-
-#include "Engine.h"
-
-class LuaScript;
-
-class LuaEngine : public Engine {
-public:
-	LuaEngine();
-	virtual ~LuaEngine();
-	
-	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters);
-	virtual void unloadScript(Script* script);
-	
-	virtual void getStats(std::string& str) const;
-private:
-	std::vector<LuaScript*> scripts;
-};
-#endif /*LUAENGINE_H_*/
+void loadXML(const std::string& fileName);

@@ -220,10 +220,7 @@ env.Append(LIBS = ['aboost_system'])
 
 dev.adchpp = dev.build('adchpp/')
 
-if dev.is_win32():
-	dev.build('windows/')
-else:
-	dev.build('unix/')
+dev.build('adchppd/')
 
 # Lua for plugins & swig
 dev.build('lua/')

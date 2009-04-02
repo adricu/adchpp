@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,13 @@
 
 #include "ClientManager.h"
 #include "TimerManager.h"
-#include "SettingsManager.h"
 
 namespace adchpp {
 
 using namespace std;
 using namespace std::tr1::placeholders;
+
+size_t Client::defaultMaxCommandSize = 16 * 1024;
 
 Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
 	Client* c = new Client(sid);
@@ -35,7 +36,8 @@ Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
 	return c;
 }
 
-Client::Client(uint32_t sid_) throw() : Entity(sid_), state(STATE_PROTOCOL), disconnecting(false), dataBytes(0), floodTimer(0) {
+Client::Client(uint32_t sid_) throw() : Entity(sid_), state(STATE_PROTOCOL), disconnecting(false),
+	dataBytes(0), floodTimer(0), maxCommandSize(getDefaultMaxCommandSize()) {
 
 }
 
@@ -128,9 +130,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 
 			done = j + 1;
 
-			size_t max_cmd_size = static_cast<size_t>(SETTING(MAX_COMMAND_SIZE));
-
-			if(max_cmd_size > 0 && buffer->size() > max_cmd_size) {
+			if(getMaxCommandSize() > 0 && buffer->size() > getMaxCommandSize()) {
 				send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Command too long"));
 				disconnect(Util::REASON_MAX_COMMAND_SIZE);
 				return;
@@ -167,7 +167,8 @@ bool Client::isFlooding(time_t addSeconds) {
 
 	floodTimer += addSeconds;
 
-	if(floodTimer > now + SETTING(FLOOD_THRESHOLD)) {
+	/// @todo fix flood timer threshold
+	if(false && floodTimer > now + 25) {
 		return true;
 	}
 
@@ -177,7 +178,8 @@ bool Client::isFlooding(time_t addSeconds) {
 void Client::disconnect(Util::Reason reason) throw() {
 	if(socket && !disconnecting) {
 		disconnecting = true;
-		socket->disconnect(reason);
+		/// @todo fix timeout
+		socket->disconnect(5000, reason);
 	}
 }
 

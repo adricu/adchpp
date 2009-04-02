@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 
 #include "SocketManager.h"
 #include "TimerManager.h"
-#include "SettingsManager.h"
 
 namespace adchpp {
 
@@ -31,6 +30,9 @@ using namespace std::tr1;
 using namespace std::tr1::placeholders;
 
 using namespace boost::asio;
+
+size_t ManagedSocket::defaultMaxBufferSize = 16 * 1024;
+size_t ManagedSocket::overflowTimeout = 60 * 1000;
 
 ManagedSocket::~ManagedSocket() throw() {
 	dcdebug("ManagedSocket deleted\n");
@@ -54,11 +56,11 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 
 	size_t queued = getQueuedBytes();
 
-	if(queued + buf->size() > (size_t)SETTING(MAX_BUFFER_SIZE)) {
-		if(lowPrio && SETTING(KEEP_SLOW_USERS)) {
+	if(getMaxBufferSize() > 0 && queued + buf->size() > getMaxBufferSize()) {
+		if(lowPrio) {
 			return;
-		} else if(overFlow > 0 && overFlow + SETTING(OVERFLOW_TIMEOUT) < GET_TICK()) {
-			disconnect(Util::REASON_WRITE_OVERFLOW);
+		} else if(overFlow > 0 && overFlow + getOverflowTimeout() < GET_TICK()) {
+			disconnect(0, Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
 			overFlow = GET_TICK();
@@ -74,12 +76,16 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 }
 
 void ManagedSocket::prepareWrite() throw() {
+	if(disc > 0) {
+		if(outBuf.empty() || GET_TICK() >= disc) {
+			sock->close();
+			return;
+		}
+	}
+
 	if(!outBuf.empty() && !writing) {
 		sock->write(outBuf, bind(&ManagedSocket::completeWrite, from_this(), _1, _2));
 		writing = true;
-	} else if(disc) {
-		failSocket(0);
-		sock->close();
 	}
 }
 
@@ -102,7 +108,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 		if(overFlow > 0) {
 			size_t left = getQueuedBytes();
-			if(left < static_cast<size_t>(SETTING(MAX_BUFFER_SIZE))) {
+			if(left < getMaxBufferSize()) {
 				overFlow = 0;
 			}
 		}
@@ -115,7 +121,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 void ManagedSocket::prepareRead() throw() {
 	if(!readBuf) {
-		readBuf = BufferPtr(new Buffer(SETTING(BUFFER_SIZE)));
+		readBuf = BufferPtr(new Buffer(Buffer::getDefaultBufferSize()));
 		sock->read(readBuf, bind(&ManagedSocket::completeRead, from_this(), _1, _2));
 	}
 }
@@ -152,13 +158,11 @@ void ManagedSocket::failSocket(int) throw() {
 	}
 }
 
-void ManagedSocket::disconnect(Util::Reason reason) throw() {
-	if(disc) {
-		return;
+void ManagedSocket::disconnect(size_t timeout, Util::Reason reason) throw() {
+	if(!disc) {
+		disc = GET_TICK() + timeout;
+		Util::reasons[reason]++;
 	}
-
-	disc = GET_TICK() + SETTING(DISCONNECT_TIMEOUT);
-	Util::reasons[reason]++;
 
 	prepareWrite();
 }

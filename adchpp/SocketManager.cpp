@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 
 #include "LogManager.h"
 #include "TimerManager.h"
-#include "SettingsManager.h"
 #include "ManagedSocket.h"
 #include "SimpleXML.h"
 
@@ -39,7 +38,7 @@ using namespace boost::asio;
 using namespace boost::system;
 
 SocketManager::SocketManager()  {
-	SettingsManager::getInstance()->signalLoad().connect(std::tr1::bind(&SocketManager::onLoad, this, std::tr1::placeholders::_1));
+
 }
 
 SocketManager::~SocketManager() {
@@ -214,29 +213,6 @@ void SocketManager::shutdown() {
 
 void SocketManager::onLoad(const SimpleXML& xml) throw() {
 	servers.clear();
-	xml.resetCurrentChild();
-	if(xml.findChild("Servers")) {
-		xml.stepIn();
-		while(xml.findChild("Server")) {
-			ServerInfoPtr server;
-
-			if(xml.getBoolChildAttrib("TLS")) {
-				TLSServerInfoPtr p(new TLSServerInfo);
-				p->cert = xml.getChildAttrib("Certificate");
-				p->pkey = xml.getChildAttrib("PrivateKey");
-				p->trustedPath = xml.getChildAttrib("TrustedPath");
-				p->dh = xml.getChildAttrib("DHParams");
-
-				server = p;
-			} else {
-				server.reset(new ServerInfo);
-			}
-
-			server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
-			servers.push_back(server);
-		}
-		xml.stepOut();
-	}
 }
 
 }

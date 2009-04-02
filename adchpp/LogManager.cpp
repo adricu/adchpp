@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+/*
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,14 @@
 #include "LogManager.h"
 
 #include "File.h"
-#include "SettingsManager.h"
 
 namespace adchpp {
-	
+
 using namespace std;
 
 LogManager* LogManager::instance = 0;
+
+LogManager::LogManager() : logFile("logs/adchpp%Y%m.log"), enabled(true) { }
 
 void LogManager::log(const string& area, const string& msg) throw() {
 	char buf[64];
@@ -42,8 +43,8 @@ void LogManager::log(const string& area, const string& msg) throw() {
 
 void LogManager::dolog(const string& msg) throw() {
 	dcdebug("Logging: %s\n", msg.c_str());
-	if(SETTING(LOG)) {
-		string logFile = Util::formatTime(File::makeAbsolutePath(Util::getCfgPath(), SETTING(LOG_FILE)));
+	if(getEnabled()) {
+		string logFile = Util::formatTime(File::makeAbsolutePath(Util::getCfgPath(), getLogFile()));
 		FastMutex::Lock l(mtx);
 		try {
 			File f(logFile, File::WRITE, File::OPEN | File::CREATE);

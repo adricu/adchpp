@@ -7,7 +7,6 @@
 #include <adchpp/Client.h>
 #include <adchpp/ClientManager.h>
 #include <adchpp/LogManager.h>
-#include <adchpp/SettingsManager.h>
 #include <adchpp/SimpleXML.h>
 #include <adchpp/Exception.h>
 #include <adchpp/PluginManager.h>
@@ -61,7 +60,6 @@ void shutdown() {
 %nodefaultdtor Client;
 %nodefaultdtor ClientManager;
 %nodefaultdtor LogManager;
-%nodefaultdtor SettingsManager;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
 
@@ -637,52 +635,6 @@ public:
 	static bool needsEscape(const std::string& aString, bool aAttrib, bool aLoading = false);
 };
 
-class SettingsManager
-{
-public:
-	enum Types {
-		TYPE_STRING,
-		TYPE_INT,
-		TYPE_INT64
-	};
-
-	enum StrSetting { STR_FIRST,
-		HUB_NAME = STR_FIRST, LOG_FILE, DESCRIPTION,
-		STR_LAST };
-
-	enum IntSetting { INT_FIRST = STR_LAST + 1,
-		LOG = INT_FIRST, KEEP_SLOW_USERS,
-		MAX_SEND_SIZE, MAX_BUFFER_SIZE, BUFFER_SIZE, MAX_COMMAND_SIZE,
-		OVERFLOW_TIMEOUT, DISCONNECT_TIMEOUT, FLOOD_ADD, FLOOD_THRESHOLD,
-		LOGIN_TIMEOUT,
-		INT_LAST };
-
-	//bool getType(const char* name, int& n, int& type);
-	const std::string& getName(int n) { dcassert(n < SETTINGS_LAST); return settingTags[n]; }
-
-%extend {
-	const std::string& getString(StrSetting key) {
-		return self->get(key);
-	}
-	int getInt(IntSetting key) {
-		return self->get(key);
-	}
-	void setString(StrSetting key, std::string const& value) {
-		self->set(key, value);
-	}
-	void setInt(IntSetting key, int value) {
-		self->set(key, value);
-	}
-	void setBool(IntSetting key, bool value) {
-		self->set(key, value);
-	}
-}
-	bool getBool(IntSetting key) const;
-
-	typedef SignalTraits<void (const SimpleXML&)> SignalLoad;
-	SignalLoad::Signal& signalLoad();
-};
-
 class TigerHash {
 public:
 	/** Hash size in bytes */
@@ -749,7 +701,6 @@ public:
 namespace adchpp {
 	ClientManager* getCM() { return ClientManager::getInstance(); }
 	LogManager* getLM() { return LogManager::getInstance(); }
-	SettingsManager* getSM() { return SettingsManager::getInstance(); }
 	PluginManager* getPM() { return PluginManager::getInstance(); }
 }
 %}

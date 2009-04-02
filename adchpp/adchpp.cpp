@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@
 #include "ClientManager.h"
 #include "PluginManager.h"
 #include "File.h"
-#include "SettingsManager.h"
 
 namespace adchpp {
 
@@ -36,7 +35,7 @@ static bool initialized = false;
 static bool running = false;
 
 void initialize(const string& configPath) {
-	if(initialized) {
+	if (initialized) {
 		throw Exception("Already initialized");
 	}
 
@@ -47,51 +46,55 @@ void initialize(const string& configPath) {
 
 	Util::initialize(configPath);
 
-	SettingsManager::newInstance();
 	LogManager::newInstance();
 	TimerManager::newInstance();
 	SocketManager::newInstance();
 	ClientManager::newInstance();
 	PluginManager::newInstance();
 
-	SettingsManager::getInstance()->load();
 	initialized = true;
 }
 
-void startup(void (*f)()) {
-	if(!initialized) {
+void startup(void(*f)()) {
+	if (!initialized) {
 		throw Exception("adchpp not initialized");
 	}
 	Stats::startTime = GET_TIME();
 
-	if(f) f();
+	if (f)
+		f();
 	SocketManager::getInstance()->startup();
-	if(f) f();
+	if (f)
+		f();
 	PluginManager::getInstance()->load();
-	if(f) f();
+	if (f)
+		f();
 
 	running = true;
 }
 
-void shutdown(void (*f)()) {
-	if(!running) {
+void shutdown(void(*f)()) {
+	if (!running) {
 		return;
 	}
 
-	if(f) f();
+	if (f)
+		f();
 	PluginManager::getInstance()->shutdown();
-	if(f) f();
+	if (f)
+		f();
 	SocketManager::getInstance()->shutdown();
-	if(f) f();
+	if (f)
+		f();
 
 	running = false;
 }
 
 void cleanup() {
-	if(!initialized) {
+	if (!initialized) {
 		return;
 	}
-	if(running) {
+	if (running) {
 		shutdown(0);
 	}
 
@@ -99,7 +102,6 @@ void cleanup() {
 	ClientManager::deleteInstance();
 	SocketManager::deleteInstance();
 	LogManager::deleteInstance();
-	SettingsManager::deleteInstance();
 	TimerManager::deleteInstance();
 
 #ifdef _WIN32
@@ -116,7 +118,7 @@ void logAssert(const char* file, int line, const char* exp) {
 		f.setEndPos(0);
 
 		f.write(string(file) + "(" + Util::toString(line) + "): " + string(exp) + "\r\n");
-	} catch(const FileException& e) {
+	} catch (const FileException& e) {
 		dcdebug("logAssert: %s\n", e.getError().c_str());
 	}
 }

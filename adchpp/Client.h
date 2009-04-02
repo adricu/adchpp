@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,7 +118,15 @@ public:
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
 
+
+	void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
+	size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
+
+	void setMaxCommandSize(size_t newSize) { maxCommandSize = newSize; }
+	size_t getMaxCommandSize() { return maxCommandSize; }
 private:
+	static size_t defaultMaxCommandSize;
+
 	Client(uint32_t sid_) throw();
 	virtual ~Client() throw() { }
 
@@ -138,6 +146,8 @@ private:
 	int64_t dataBytes;
 
 	time_t floodTimer;
+
+	size_t maxCommandSize;
 
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();

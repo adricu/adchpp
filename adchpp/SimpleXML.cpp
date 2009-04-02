@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+/*
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,21 +21,21 @@
 #include "SimpleXML.h"
 
 namespace adchpp {
-	
+
 using namespace std;
 
-SimpleXML::SimpleXML(int numAttribs) : attribs(numAttribs), found(false) { 
-	root = current = new Tag("BOGUSROOT", Util::emptyString, NULL); 
+SimpleXML::SimpleXML(int numAttribs) : attribs(numAttribs), found(false) {
+	root = current = new Tag("BOGUSROOT", Util::emptyString, NULL);
 }
 
-SimpleXML::~SimpleXML() { 
-	delete root; 
+SimpleXML::~SimpleXML() {
+	delete root;
 }
 
 void SimpleXML::escape(string& aString, bool aAttrib, bool aLoading /* = false */) {
 	string::size_type i = 0;
 	const char* chars = aAttrib ? "<&>'\"" : "<&>";
-	
+
 	if(aLoading) {
 		while((i = aString.find('&', i)) != string::npos) {
 			if(aString.compare(i+1, 3, "lt;") == 0) {
@@ -61,7 +61,7 @@ void SimpleXML::escape(string& aString, bool aAttrib, bool aLoading /* = false *
 				while( (i = aString.find('\n', i) ) != string::npos) {
 					if(aString[i-1] != '\r')
 						aString.insert(i, 1, '\r');
-					
+
 					i+=2;
 				}
 			}
@@ -139,12 +139,12 @@ string SimpleXML::Tag::toXML(int indent) {
 
 bool SimpleXML::findChild(const string& aName) const throw() {
 	dcassert(current != NULL);
-	
+
 	if(found && currentChild != current->children.end())
 		currentChild++;
-	
+
 	while(currentChild!=current->children.end()) {
-		if((*currentChild)->name == aName) {
+		if(aName.empty() || (*currentChild)->name == aName) {
 			found = true;
 			return true;
 		} else
@@ -167,7 +167,7 @@ void SimpleXML::stepOut() const throw(SimpleXMLException) {
 	dcassert(current->parent != NULL);
 
 	currentChild = find(current->parent->children.begin(), current->parent->children.end(), current);
-	
+
 	current = current->parent;
 	found = true;
 }
@@ -204,7 +204,7 @@ string::size_type SimpleXML::Tag::fromXML(const string& tmp, string::size_type s
 
 	bool hasChildren = false;
 	dcassert(tmp.size() > 0);
-	
+
 	for(;;) {
 		j = tmp.find('<', i);
 		if(j == string::npos) {
@@ -246,7 +246,7 @@ string::size_type SimpleXML::Tag::fromXML(const string& tmp, string::size_type s
 		// Check if we reached the end tag
 		if(tmp[i] == '/') {
 			i++;
-			if( (tmp.compare(i, name.length(), name) == 0) && 
+			if( (tmp.compare(i, name.length(), name) == 0) &&
 				(tmp[i + name.length()] == '>') )
 			{
 				if(!hasChildren) {
@@ -264,18 +264,18 @@ string::size_type SimpleXML::Tag::fromXML(const string& tmp, string::size_type s
 		if(j == string::npos) {
 			throw SimpleXMLException("Missing '>' in " + name);
 		}
-		
+
 		child = new Tag(tmp.substr(i, j-i), Util::emptyString, this, aa);
 		// Put it here immideately to avoid mem leaks
 		children.push_back(child);
 
 		if(tmp[j] == ' ')
 			j = tmp.find_first_not_of("\r\n\t ", j+1);
-		
+
 		if(j == string::npos) {
 			throw SimpleXMLException("Missing '>' in " + name);
 		}
-		
+
 		if(tmp[j] != '/' && tmp[j] != '>') {
 			// We have attribs...
 			j = child->loadAttribs(tmp, j);
@@ -296,7 +296,7 @@ string::size_type SimpleXML::Tag::fromXML(const string& tmp, string::size_type s
 			}
 			return tmp.length();
 		}
-	}	
+	}
 }
 
 void SimpleXML::addTag(const string& aName, const string& aData /* = "" */) throw(SimpleXMLException) {
@@ -337,11 +337,11 @@ void SimpleXML::fromXML(const string& aXML) throw(SimpleXMLException) {
 	root = new Tag("BOGUSROOT", Util::emptyString, NULL, 0);
 
 	root->fromXML(aXML, 0, attribs, true);
-	
+
 	if(root->children.size() != 1) {
 		throw SimpleXMLException("Invalid XML file, missing or multiple root tags");
 	}
-	
+
 	current = root;
 	resetCurrentChild();
 }

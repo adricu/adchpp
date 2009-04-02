@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -152,12 +152,16 @@ public:
 		return plugins;
 	}
 
+	void setPluginList(const StringList& pluginList) { plugins = pluginList; }
+
 	/**
 	 * Get the plugin path as set in adchpp.xml
 	 */
 	const std::string& getPluginPath() const {
 		return pluginPath;
 	}
+
+	void setPluginPath(const std::string& path) { pluginPath = path; }
 
 	/**
 	 * This function returns a unique identifier for a plugin, to
@@ -205,11 +209,7 @@ public:
 	ADCHPP_DLL ClientManager::SignalReceive::Connection onCommand(const std::string& commandName, const CommandSlot& f);
 
 	/** @internal */
-	void load() {
-		for(StringIter i = plugins.begin(); i != plugins.end(); ++i) {
-			loadPlugin(*i);
-		}
-	}
+	void load();
 	/** @internal */
 	void shutdown();
 
@@ -247,8 +247,6 @@ private:
 	PluginManager() throw();
 
 	bool loadPlugin(const std::string& file);
-
-	void onLoad(const SimpleXML& xml) throw();
 };
 
 }

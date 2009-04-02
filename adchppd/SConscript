@@ -1,0 +1,20 @@
+# vim: set filetype=py
+
+Import('dev source_path')
+
+env, target, sources = dev.prepare_build(source_path, 'adchppd', 'adchppd.cpp')
+
+if dev.is_win32():
+	sources += [dev.get_build_path(source_path) + 'adchppdw.cpp']
+else:
+	sources += [dev.get_build_path(source_path) + 'adchppdu.cpp']
+
+env.Append(CPPPATH = ['.', '#'])
+env.Append(LIBS=['adchpp'])
+
+#if env['nls']:
+#	headers=dev.get_sources(source_path, "*.h")
+#	dev.i18n(source_path, env, [sources,headers], 'adchppd')
+
+ret = env.Program(target, sources)
+Return('ret')
