@@ -60,6 +60,7 @@ void ClientManager::send(const AdcCommand& cmd) throw() {
 	case AdcCommand::TYPE_FEATURE: {
 		for(EntityIter i = entities.begin(); i != entities.end(); ++i) {
 			if(all || !i->second->isFiltered(cmd.getFeatures())) {
+				maybeSend(*i->second, cmd);
 			}
 		}
 	}
