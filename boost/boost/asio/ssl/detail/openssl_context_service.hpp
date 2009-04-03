@@ -67,7 +67,7 @@ public:
   // Create a new context implementation.
   void create(impl_type& impl, context_base::method m)
   {
-    ::SSL_METHOD* ssl_method = 0;
+    const ::SSL_METHOD* ssl_method = 0;
     switch (m)
     {
     case context_base::sslv2:

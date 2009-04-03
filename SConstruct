@@ -203,7 +203,7 @@ if conf.CheckLib('dl', 'dlopen'):
 	conf.env.Append(CPPDEFINES=['HAVE_DL'])
 if conf.CheckLib('pthread', 'pthread_create'):
 	conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
-if conf.CheckLib('ssl', 'SSL_connect'):
+if conf.CheckLib('ssl', 'SSL_connect') or os.path.exists(Dir('#/openssl/include').abspath):
 	conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
 	
 env = conf.Finish()
