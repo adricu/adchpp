@@ -25,6 +25,8 @@
 #include <adchpp/version.h>
 #include <adchpp/File.h>
 
+#include "adchppd.h"
+
 using namespace adchpp;
 using namespace std;
 
@@ -178,6 +180,8 @@ static void init(const string& configPath) {
 		LOG(modName, versionString + " started as a service");
 	else
 		LOG(modName, versionString + " started from console");
+
+	loadXML(File::makeAbsolutePath(configPath, "adchpp.xml"));
 }
 
 static void f2() {
