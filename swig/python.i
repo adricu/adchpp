@@ -20,10 +20,10 @@
 %typemap(in) std::tr1::function<void (adchpp::Entity&, const std::string&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, adchpp::AdcCommand&, int&)> {
+%typemap(in) std::tr1::function<void (adchpp::Entity&, adchpp::AdcCommand&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::StringList&, int&)> {
+%typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
 
@@ -56,6 +56,12 @@ struct PyHandle {
 
 	PyObject* operator ->() { return obj; }
 	operator PyObject*() { return obj; }
+
+	static PyObject* getBool(bool v) {
+		PyObject* ret = v ? Py_True : Py_False;
+		Py_INCREF(ret);
+		return ret;
+	}
 
 	void operator()() {
 		PyGIL gil;
@@ -125,13 +131,13 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, int& i) {
+	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, bool& i) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(3));
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
-		PyTuple_SetItem(args, 2, PyInt_FromLong(i));
+		PyTuple_SetItem(args, 2, getBool(i));
 
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 
@@ -141,23 +147,22 @@ struct PyHandle {
 		}
 
 		if(PyInt_Check(ret)) {
-			i |= static_cast<int>(PyInt_AsLong(ret));
+			i |= static_cast<bool>(PyInt_AsLong(ret));
 		}
 	}
 
-
-	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, int& i) {
+	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(3));
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_std__vectorT_std__string_std__allocatorT_std__string_t_t, 0 |  0 ));
-		PyTuple_SetItem(args, 2, PyInt_FromLong(i));
+		PyTuple_SetItem(args, 2, getBool(i));
 
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 
 		if(PyInt_Check(ret)) {
-			i |= static_cast<int>(PyInt_AsLong(ret));
+			i |= static_cast<bool>(PyInt_AsLong(ret));
 		}
 	}
 

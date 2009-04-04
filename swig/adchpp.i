@@ -11,6 +11,7 @@
 #include <adchpp/Exception.h>
 #include <adchpp/PluginManager.h>
 #include <adchpp/TigerHash.h>
+#include <adchpp/SocketManager.h>
 
 using namespace adchpp;
 
@@ -59,6 +60,7 @@ void shutdown() {
 %nodefaultdtor Entity;
 %nodefaultdtor Client;
 %nodefaultdtor ClientManager;
+%nodefaultdtor SocketManager;
 %nodefaultdtor LogManager;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
@@ -73,7 +75,13 @@ namespace adchpp {
 %template(TEntityList) std::vector<adchpp::Entity*>;
 %template(TStringList) std::vector<std::string>;
 %template(TByteVector) std::vector<uint8_t>;
+%template(TServerInfoList) std::vector<boost::intrusive_ptr<adchpp::ServerInfo> >;
 
+%inline%{
+	namespace adchpp {
+typedef std::vector<adchpp::Entity*> EntityList;
+	}
+%}
 namespace boost {
 
 template<typename T>
@@ -83,12 +91,6 @@ public:
 };
 
 }
-
-%inline%{
-	namespace adchpp {
-	typedef std::vector<Entity*> EntityList;
-	}
-%}
 
 namespace adchpp {
 
@@ -101,7 +103,44 @@ struct ManagedConnection {
 };
 
 typedef boost::intrusive_ptr<ManagedConnection> ManagedConnectionPtr;
-%template (ManagedConnectrionPtr) boost::intrusive_ptr<ManagedConnection>;
+
+struct ServerInfo {
+	std::string ip;
+	unsigned short port;
+
+	%extend {
+		static adchpp::ServerInfoPtr create() {
+			return adchpp::ServerInfoPtr(new adchpp::ServerInfo);
+		}
+	}
+
+};
+
+typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
+
+class TLSServerInfo : public ServerInfo {
+public:
+	std::string cert;
+	std::string pkey;
+	std::string trustedPath;
+	std::string dh;
+
+	%extend {
+		static adchpp::TLSServerInfoPtr create() {
+			return adchpp::TLSServerInfoPtr(new adchpp::TLSServerInfo);
+		}
+	}
+
+};
+
+typedef boost::intrusive_ptr<TLSServerInfo> TLSServerInfoPtr;
+typedef std::vector<ServerInfoPtr> ServerInfoList;
+
+class SocketManager {
+public:
+	void setServers(const ServerInfoList& servers_);
+
+};
 
 template<typename F>
 struct Signal {
@@ -331,7 +370,7 @@ public:
 	static void appendSID(std::string& str, uint32_t aSID);
 
 	static uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c);
-	static uint32_t toCMD(const char* str);
+	//static uint32_t toCMD(const char* str);
 
 	static uint16_t toField(const char* x);
 	static std::string fromField(const uint16_t aField);
@@ -370,10 +409,6 @@ public:
 	void setTo(uint32_t aTo);
 	uint32_t getFrom() const;
 	void setFrom(uint32_t aFrom);
-
-	static uint32_t toSID(const std::string& aSID);
-	static std::string fromSID(const uint32_t aSID);
-	static void appendSID(std::string& str, uint32_t aSID);
 
 %extend {
 	std::string getCommandString() {
@@ -694,6 +729,9 @@ public:
 
 };
 
+%template (ServerInfoPtr) boost::intrusive_ptr<ServerInfo>;
+%template (ManagedConnectrionPtr) boost::intrusive_ptr<ManagedConnection>;
+%template(TLSServerInfoPtr) boost::intrusive_ptr<TLSServerInfo>;
 
 }
 
@@ -702,5 +740,6 @@ namespace adchpp {
 	ClientManager* getCM() { return ClientManager::getInstance(); }
 	LogManager* getLM() { return LogManager::getInstance(); }
 	PluginManager* getPM() { return PluginManager::getInstance(); }
+	SocketManager* getSM() { return SocketManager::getInstance(); }
 }
 %}

@@ -17,7 +17,12 @@ def findUser(nick, cid):
 def run():
     print "Starting"
     a.initialize(os.path.abspath('../etc/') + os.sep)
-
+    
+    sil = a.TServerInfoList(1)
+    si = a.ServerInfo_create()
+    si.port=2780
+    sil[0] = si
+    a.getSM().setServers(sil)
     pw = PasswordHandler(findUser, None, None)
     iv = InfVerifier(None, None)
     print "."

@@ -99,6 +99,8 @@ def buildPyModule():
 
 def buildLuaModule():
 	env, target, sources = dev.prepare_build(source_path, 'luadchpp', 'lua.i')
+
+	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
 	

@@ -1,25 +1,23 @@
 import pyadchpp as a
 import re
-def receiveHandler(client, cmd, override, filter, callback):
-    if override & a.ClientManager.DONT_DISPATCH:
+def receiveHandler(client, cmd, ok, filter, callback):
+    if not ok:
         return 0
     
     if cmd.getCommand() != filter:
         return 0
     
-    return callback(client, cmd, override)
+    return callback(client, cmd, ok)
     
 def handleCommand(filter, callback):
     cm = a.getCM()
-    return cm.signalReceive().connect(lambda client, cmd, override: receiveHandler(client, cmd, override, filter, callback))
+    return cm.signalReceive().connect(lambda client, cmd, ok: receiveHandler(client, cmd, ok, filter, callback))
 
 def dump(c, code, msg):
     answer = a.AdcCommand(a.AdcCommand.CMD_STA, a.AdcCommand.TYPE_INFO, a.AdcCommand.HUB_SID)
     answer.addParam("" + a.AdcCommand.SEV_FATAL + code).addParam(msg)
     c.send(answer)
     c.disconnect(0)
-
-handled = a.ClientManager.DONT_DISPATCH + a.ClientManager.DONT_SEND
 
 class InfVerifier(object):
     BASE32_CHARS = "[2-7a-zA-Z]"
@@ -98,7 +96,7 @@ class InfVerifier(object):
         self.succeeded = succeeded or (lambda client: None)
         self.failed = failed or (lambda client, error: None)
         
-    def validate(self, c, cmd, override):
+    def validate(self, c, cmd, ok):
         if cmd.getCommand() in params:
             self.validateParam(c, cmd, self.params[cmd.getCommand()])
         
@@ -136,7 +134,7 @@ class PasswordHandler(object):
         self.salts = {}
         self.cm = a.getCM()
         
-    def onINF(self, c, cmd, override):
+    def onINF(self, c, cmd, ok):
         if c.getState() != a.Client.STATE_IDENTIFY:
             return 0
         
@@ -154,7 +152,7 @@ class PasswordHandler(object):
         
         return handled
     
-    def onPAS(self, c, cmd, override):
+    def onPAS(self, c, cmd, ok):
         if c.getState() != a.Client.STATE_VERIFY:
             dump(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
             return handled
