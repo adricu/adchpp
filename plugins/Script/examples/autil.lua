@@ -24,4 +24,4 @@ function dump(c, code, msg)
 	c:disconnect(0)
 end
 
-handled = adchpp.ClientManager_DONT_DISPATCH + adchpp.ClientManager_DONT_SEND
+handled = false

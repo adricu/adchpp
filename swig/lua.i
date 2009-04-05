@@ -26,10 +26,10 @@ static int traceback (lua_State *L) {
 
 class RegistryItem : private boost::noncopyable {
 public:
-	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) { 
+	RegistryItem(lua_State* L_) : L(L_), index(luaL_ref(L, LUA_REGISTRYINDEX)) {
 	}
-	~RegistryItem() { 
-		luaL_unref(L, LUA_REGISTRYINDEX, index); 
+	~RegistryItem() {
+		luaL_unref(L, LUA_REGISTRYINDEX, index);
 	}
 
 	void push() { lua_rawgeti(L, LUA_REGISTRYINDEX, index); }
@@ -48,54 +48,54 @@ public:
 		pushFunction();
 		docall(0, 0);
 	}
-	
+
 	void operator()(adchpp::Client& c) {
 		pushFunction();
 
 		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
 		docall(1, 0);
 	}
-	
+
 	void operator()(adchpp::Client& c, const std::string& str) {
 		pushFunction();
 
 		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
 		lua_pushstring(L, str.c_str());
-		
+
 		docall(2, 0);
 	}
-	
+
 	void operator()(adchpp::Client& c, int i) {
 		pushFunction();
 
 		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
 		lua_pushinteger(L, i);
-		
-		docall(2, 0);
-	}
-	
-	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd) {
-		pushFunction();
-		
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
-		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
-	
+
 		docall(2, 0);
 	}
 
-	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd, int& i) {
+	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd) {
 		pushFunction();
-		
+
 		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
-		lua_pushinteger(L, i);
-		
+
+		docall(2, 0);
+	}
+
+	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd, bool& i) {
+		pushFunction();
+
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
+		lua_pushboolean(L, i);
+
 		if(docall(3, 1) != 0) {
 			return;
 		}
-		
-		if(lua_isnumber(L, -1)) {
-			i |= static_cast<int>(lua_tonumber(L, -1));
+
+		if(lua_isboolean(L, -1)) {
+			i &= lua_toboolean(L, -1) != 1;
 		}
 		lua_pop(L, 1);
 	}
@@ -106,20 +106,20 @@ public:
 		SWIG_NewPointerObj(L, &s, SWIGTYPE_p_adchpp__SimpleXML, 0);
 		docall(1, 0);
 	}
-	
-	void operator()(adchpp::Client& c, const adchpp::StringList& cmd, int& i) {
+
+	void operator()(adchpp::Client& c, const adchpp::StringList& cmd, bool& i) {
 		pushFunction();
-		
+
 		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_std__vectorT_std__string_t, 0);
-		lua_pushinteger(L, i);
-		
+		lua_pushboolean(L, i);
+
 		if(docall(3, 1) != 0) {
 			return;
 		}
-		
-		if(lua_isnumber(L, -1)) {
-			i |= static_cast<int>(lua_tonumber(L, -1));
+
+		if(lua_isboolean(L, -1)) {
+			i &= lua_toboolean(L, -1) != 1;
 		}
 		lua_pop(L, 1);
 	}
@@ -151,10 +151,10 @@ private:
 		} else if(status != 0) {
 			fprintf(stderr, "Unknown lua status: %d\n", status);
 		}
-			
+
 		return status;
 	}
-	
+
 	lua_State* L;
 	std::tr1::shared_ptr<RegistryItem> registryItem;
 };
@@ -180,7 +180,7 @@ private:
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &, int&) > {
+%typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &, bool&) > {
 	$1 = LuaFunction(L);
 }
 
@@ -196,7 +196,7 @@ private:
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, const adchpp::StringList&, int&) > {
+%typemap(in) std::tr1::function<void (adchpp::Client &, const adchpp::StringList&, bool&) > {
 	$1 = LuaFunction(L);
 }
 

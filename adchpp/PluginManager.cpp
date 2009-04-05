@@ -75,7 +75,6 @@ void PluginManager::load()  {
 	}
 }
 
-
 bool PluginManager::loadPlugin(const string& file) {
 	if(file.length() < 3) {
 		return false;

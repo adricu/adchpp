@@ -147,7 +147,7 @@ struct PyHandle {
 		}
 
 		if(PyInt_Check(ret)) {
-			i |= static_cast<bool>(PyInt_AsLong(ret));
+			i &= static_cast<bool>(PyInt_AsLong(ret));
 		}
 	}
 
@@ -162,7 +162,7 @@ struct PyHandle {
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 
 		if(PyInt_Check(ret)) {
-			i |= static_cast<bool>(PyInt_AsLong(ret));
+			i &= static_cast<bool>(PyInt_AsLong(ret));
 		}
 	}
 
