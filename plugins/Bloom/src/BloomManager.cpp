@@ -23,6 +23,7 @@
 #include <adchpp/Client.h>
 #include <adchpp/AdcCommand.h>
 #include <adchpp/Util.h>
+#include <adchpp/PluginManager.h>
 
 using namespace std;
 using namespace std::tr1;
@@ -35,12 +36,22 @@ const string BloomManager::className = "BloomManager";
 // TODO Make configurable
 const size_t h = 24;
 
+struct PendingItem {
+	PendingItem(size_t m_, size_t k_) : m(m_), k(k_) { buffer.reserve(m/8); }
+	ByteVector buffer;
+	size_t m;
+	size_t k;
+};
+
 BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
 	LOG(className, "Starting");
 	ClientManager* cm = ClientManager::getInstance();
 	receiveConn = manage(&cm->signalReceive(), std::tr1::bind(&BloomManager::onReceive, this, _1, _2, _3));
 	sendConn = manage(&cm->signalSend(), std::tr1::bind(&BloomManager::onSend, this, _1, _2, _3));
-	disconnectConn = manage(&cm->signalDisconnected(), std::tr1::bind(&BloomManager::onDisconnected, this, _1));
+
+	PluginManager* pm = PluginManager::getInstance();
+	bloomHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<HashBloom>);
+	pendingHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<PendingItem>);
 }
 
 BloomManager::~BloomManager() {
@@ -65,11 +76,12 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 				return;
 			}
 
+			e.clearPluginData(bloomHandle);
+
 			size_t k = HashBloom::get_k(n, h);
 			size_t m = HashBloom::get_m(n, k);
-			blooms.erase(c.getSID());
 
-			pending[c.getSID()] = make_tuple(ByteVector(), m, k);
+			e.setPluginData(pendingHandle, new PendingItem(m, k));
 
 			AdcCommand get(AdcCommand::CMD_GET);
 			get.addParam("blom");
@@ -88,8 +100,8 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 			return;
 		}
 
-		PendingMap::const_iterator i = pending.find(c.getSID());
-		if(i == pending.end()) {
+		PendingItem* pending = reinterpret_cast<PendingItem*>(e.getPluginData(pendingHandle));
+		if(!pending) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Unexpected bloom filter update"));
 			c.disconnect(Util::REASON_BAD_STATE);
 			ok = false;
@@ -98,11 +110,11 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 
 		int64_t bytes = Util::toInt(cmd.getParam(3));
 
-		if(bytes != static_cast<int64_t>(get<1>(i->second) / 8)) {
+		if(bytes != pending->m / 8) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid number of bytes"));
 			c.disconnect(Util::REASON_PLUGIN);
 			ok = false;
-			pending.erase(c.getSID());
+			e.clearPluginData(pendingHandle);
 			return;
 		}
 
@@ -116,7 +128,7 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 			stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
 			int64_t bytes = getBytes();
 			size_t clients = ClientManager::getInstance()->getEntities().size();
-			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
+//			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
 			stats += "\nApproximate memory usage: " + Util::formatBytes(bytes) + ", " + Util::formatBytes(static_cast<double>(bytes) / clients) + "/client";
 			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));
 			ok = false;
@@ -130,8 +142,8 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 		string tmp;
 		if(cmd.getParam("TR", 0, tmp)) {
 			tthSearches++;
-			BloomMap::const_iterator i = blooms.find(c.getSID());
-			if(i != blooms.end() && !i->second.match(TTHValue(tmp))) {
+			HashBloom* bloom = reinterpret_cast<HashBloom*>(c.getPluginData(bloomHandle));
+			if(bloom && !bloom->match(TTHValue(tmp))) {
 				// Stop it
 				stopped++;
 				dcdebug("Stopping search\n");
@@ -142,29 +154,23 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 }
 int64_t BloomManager::getBytes() const {
 	int64_t bytes = 0;
-	for(BloomMap::const_iterator i = blooms.begin(); i != blooms.end(); ++i) {
-		bytes += i->second.size() / 8;
-	}
+	// TODO
 	return bytes;
 }
 
 void BloomManager::onData(Entity& c, const uint8_t* data, size_t len) {
-	PendingMap::iterator i = pending.find(c.getSID());
-	if(i == pending.end()) {
+	PendingItem* pending = reinterpret_cast<PendingItem*>(c.getPluginData(pendingHandle));
+	if(!pending) {
 		// Shouldn't happen
 		return;
 	}
-	ByteVector& v = get<0>(i->second);
-	v.insert(v.end(), data, data + len);
 
-	if(v.size() == get<1>(i->second) / 8) {
-		HashBloom& bloom = blooms[c.getSID()];
-		bloom.reset(v, get<2>(i->second), h);
-		pending.erase(i);
+	pending->buffer.insert(pending->buffer.end(), data, data + len);
+
+	if(pending->buffer.size() == pending->m / 8) {
+		HashBloom* bloom = new HashBloom();
+		c.setPluginData(bloomHandle, bloom);
+		bloom->reset(pending->buffer, pending->k, h);
+		c.clearPluginData(pendingHandle);
 	}
-}
-
-void BloomManager::onDisconnected(Entity& c) {
-	blooms.erase(c.getSID());
-	pending.erase(c.getSID());
 }

@@ -20,9 +20,11 @@
 #define BLOOM_MANAGER_H
 
 #include <tuple>
+#include <adchpp/forward.h>
 #include <adchpp/Exception.h>
 #include <adchpp/Singleton.h>
 #include <adchpp/ClientManager.h>
+#include <adchpp/Plugin.h>
 
 #include "HashBloom.h"
 
@@ -37,13 +39,6 @@
 #endif
 
 STANDARD_EXCEPTION(BloomException);
-class Engine;
-
-namespace adchpp {
-class SimpleXML;
-class Client;
-class AdcCommand;
-}
 
 class BloomManager : public Singleton<BloomManager> {
 public:
@@ -57,28 +52,20 @@ private:
 	friend class Singleton<BloomManager>;
 	static BloomManager* instance;
 
-	typedef std::tr1::unordered_map<uint32_t, HashBloom> BloomMap;
-	BloomMap blooms;
-
-	// bytes, m, k
-	typedef std::tr1::tuple<ByteVector, size_t, size_t> PendingItem;
-	typedef std::tr1::unordered_map<uint32_t, PendingItem> PendingMap;
-	PendingMap pending;
+	PluginDataHandle bloomHandle;
+	PluginDataHandle pendingHandle;
 
 	int64_t searches;
 	int64_t tthSearches;
 	int64_t stopped;
 
 	ClientManager::SignalReceive::ManagedConnection receiveConn;
-	ClientManager::SignalDisconnected::ManagedConnection disconnectConn;
 	ClientManager::SignalSend::ManagedConnection sendConn;
 
 	int64_t getBytes() const;
 	void onReceive(Entity& c, AdcCommand& cmd, bool&);
 	void onSend(Entity& c, const AdcCommand& cmd, bool&);
 	void onData(Entity& c, const uint8_t* data, size_t len);
-	void onDisconnected(Entity& c);
-
 };
 
 #endif //ACCESSMANAGER_H

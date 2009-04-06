@@ -22,6 +22,7 @@
 #include "forward.h"
 #include "Buffer.h"
 #include "AdcCommand.h"
+#include "Plugin.h"
 
 namespace adchpp {
 
@@ -56,7 +57,31 @@ public:
 	ADCHPP_DLL void updateFields(const AdcCommand& cmd);
 	ADCHPP_DLL void updateSupports(const AdcCommand& cmd) throw();
 
+	/**
+	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
+	 * per-client data, and retrieve it later on. The life cycle of the data follows
+	 * that of the client unless explicitly removed. Any data referenced by the plugin
+	 * will have its delete function called when the Entity is deleted.
+	 * @param id Id as retrieved from PluginManager::getPluginId()
+	 * @param data Data to store, this can be pretty much anything
+	 */
+	ADCHPP_DLL void setPluginData(const PluginDataHandle& handle, void* data) throw();
+
+	/**
+	 * @param handle Plugin data handle, as returned by PluginManager::registerPluginData
+	 * @return Value stored, NULL if none found
+	 */
+	ADCHPP_DLL void* getPluginData(const PluginDataHandle& handle) const throw();
+
+	/**
+	 * Clear any data referenced by the handle, calling the registered delete function.
+	 */
+	ADCHPP_DLL void clearPluginData(const PluginDataHandle& handle) throw();
 protected:
+	virtual ~Entity();
+
+	typedef std::map<PluginDataHandle, void*> PluginDataMap;
+
 	uint32_t sid;
 
 	/** SUP items */
@@ -67,6 +92,9 @@ protected:
 
 	/** INF fields */
 	FieldMap fields;
+
+	/** Plugin data, see PluginManager::registerPluginData */
+	PluginDataMap pluginData;
 
 	/** Latest INF cached */
 	mutable BufferPtr INF;

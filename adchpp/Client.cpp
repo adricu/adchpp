@@ -75,23 +75,6 @@ void Client::onConnected() throw() {
 	ClientManager::getInstance()->onConnected(*this);
 }
 
-void* Client::setPSD(int id, void* data) throw() {
-	PSDIter i = find_if(psd.begin(), psd.end(), CompareFirst<int, void*>(id));
-	if(i != psd.end()) {
-		void* old = i->second;
-		i->second = data;
-		return old;
-	} else {
-		psd.push_back(make_pair(id, data));
-		return 0;
-	}
-}
-
-void* Client::getPSD(int id) throw() {
-	PSDIter i = find_if(psd.begin(), psd.end(), CompareFirst<int, void*>(id));
-	return (i != psd.end()) ? i->second : 0;
-}
-
 void Client::onData(const BufferPtr& buf) throw() {
 	uint8_t* data = buf->data();
 	size_t done = 0;

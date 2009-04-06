@@ -22,6 +22,12 @@
 
 namespace adchpp {
 
+Entity::~Entity() {
+	for(PluginDataMap::iterator i = pluginData.begin(), iend = pluginData.end(); i != iend; ++i) {
+		(*i->first)(i->second);
+	}
+}
+
 const std::string& Entity::getField(const char* name) const {
 	FieldMap::const_iterator i = fields.find(AdcCommand::toField(name));
 	return i == fields.end() ? Util::emptyString : i->second;
@@ -159,6 +165,26 @@ bool Entity::isFiltered(const std::string& features) const {
 		}
 	}
 	return false;
+}
+
+void Entity::setPluginData(const PluginDataHandle& handle, void* data) throw() {
+	clearPluginData(handle);
+	pluginData.insert(std::make_pair(handle, data));
+}
+
+void* Entity::getPluginData(const PluginDataHandle& handle) const throw() {
+	PluginDataMap::const_iterator i = pluginData.find(handle);
+	return i == pluginData.end() ? 0 : i->second;
+}
+
+void Entity::clearPluginData(const PluginDataHandle& handle) throw() {
+	PluginDataMap::iterator i = pluginData.find(handle);
+	if(i == pluginData.end()) {
+		return;
+	}
+
+	(*i->first)(i->second);
+	pluginData.erase(i);
 }
 
 }

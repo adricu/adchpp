@@ -95,29 +95,10 @@ public:
 	void setFlag(size_t aFlag);
 	void unsetFlag(size_t aFlag);
 
-	/**
-	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
-	 * per-client data, and retrieve it later on. Each plugin is only allowed
-	 * to store one single item, and the plugin must make sure that this
-	 * item will be properly deallocated when ClientQuit is received by the
-	 * plugin. If an item already exists, it will be replaced.
-	 * @param id Id as retrieved from PluginManager::getPluginId()
-	 * @param data Data to store, this can be pretty much anything
-	 * @return Old value if any was associated with the plugin already, NULL otherwise
-	 */
-	ADCHPP_DLL void* setPSD(int id, void* data) throw();
-
-	/**
-	 * @param id Plugin id
-	 * @return Value stored, NULL if none found
-	 */
-	ADCHPP_DLL void* getPSD(int id) throw();
-
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
-
 
 	void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
 	size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
@@ -128,11 +109,6 @@ private:
 	static size_t defaultMaxCommandSize;
 
 	Client(uint32_t sid_) throw();
-	virtual ~Client() throw() { }
-
-	typedef std::pair<int, void*> PSDPair;
-	typedef std::vector<PSDPair> PSDList;
-	typedef PSDList::iterator PSDIter;
 
 	Flags flags;
 
@@ -140,7 +116,6 @@ private:
 	State state;
 	bool disconnecting;
 
-	PSDList psd;
 	BufferPtr buffer;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;

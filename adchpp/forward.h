@@ -4,10 +4,10 @@
 namespace adchpp {
 
 class Client;
-typedef boost::intrusive_ptr<Client> ClientPtr;
-
+class Entity;
 class ManagedSocket;
 typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;
+class PluginManager;
 class SocketFactory;
 typedef boost::intrusive_ptr<SocketFactory> SocketFactoryPtr;
 class SocketManager;

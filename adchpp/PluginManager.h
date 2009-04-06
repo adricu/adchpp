@@ -63,6 +63,7 @@
 #include "version.h"
 #include "Signal.h"
 #include "ClientManager.h"
+#include "Plugin.h"
 
 namespace adchpp {
 
@@ -89,20 +90,6 @@ typedef HMODULE plugin_t;
 typedef void* plugin_t;
 
 #endif // WIN32
-
-/**
- * Public plugin interface, for plugin intercom.
- * Plugins that register a public interface must inherit from this class.
- * Plugins requesting another plugins interface will get a pointer to this
- * class and must upcast it (using dynamic_cast<> and check NULL to be safe).
- */
-class Plugin {
-public:
-	Plugin() { }
-	virtual ~Plugin() { }
-	/** @return API version for a plugin (incremented every time API changes) */
-	virtual int getVersion() = 0;
-};
 
 /**
  * PLUGIN_API double pluginGetVersion()
@@ -163,14 +150,14 @@ public:
 
 	void setPluginPath(const std::string& path) { pluginPath = path; }
 
+
 	/**
-	 * This function returns a unique identifier for a plugin, to
-	 * be used in other parts of ADCH++, PSD's in Client for example.
-	 * Note; Only call this once per plugin, the internal routines
-	 * are optimised for low memory usage, not handling many different
-	 * plugin id's (I might add a check in the future...).
+	 * Register a plugin data type to be used with Client::setPSD and friends.
+	 * When data is removed, the deleter function will automatically be called
+	 * with the data as parameter, allowing automatic life cycle managment for
+	 * plugin-specific data.
 	 */
-	int getPluginId() { return pluginIds++; }
+	PluginDataHandle registerPluginData(const PluginDataDeleter& deleter_) { return PluginDataHandle(new PluginData(deleter_)); }
 
 	/**
 	 * Register a plugin interface under a name.
@@ -239,8 +226,6 @@ private:
 
 	StringList plugins;
 	std::string pluginPath;
-
-	int pluginIds;
 
 	static const std::string className;
 

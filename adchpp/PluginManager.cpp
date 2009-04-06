@@ -57,7 +57,7 @@ using std::tr1::placeholders::_1;
 PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 
-PluginManager::PluginManager() throw() : pluginIds(0) {
+PluginManager::PluginManager() throw() {
 
 }
 

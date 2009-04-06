@@ -456,6 +456,8 @@ public:
 	void updateFields(const AdcCommand& cmd);
 	void updateSupports(const AdcCommand& cmd) throw();
 
+
+
 };
 
 /**
@@ -521,24 +523,6 @@ public:
 	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
 	//void setFlag(size_t aFlag);
 	//void unsetFlag(size_t aFlag);
-
-	/**
-	 * Set PSD (plugin specific data). This allows a plugin to store arbitrary
-	 * per-client data, and retrieve it later on. Each plugin is only allowed
-	 * to store one single item, and the plugin must make sure that this
-	 * item will be properly deallocated when ClientQuit is received by the
-	 * plugin. If an item already exists, it will be replaced.
-	 * @param id Id as retrieved from PluginManager::getPluginId()
-	 * @param data Data to store, this can be pretty much anything
-	 * @return Old value if any was associated with the plugin already, NULL otherwise
-	 */
-	void* setPSD(int id, void* data) throw();
-
-	/**
-	 * @param id Plugin id
-	 * @return Value stored, NULL if none found
-	 */
-	void* getPSD(int id) throw();
 
 	const CID& getCID() const { return cid; }
 	void setCID(const CID& cid_) { cid = cid_; }
