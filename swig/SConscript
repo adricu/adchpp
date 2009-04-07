@@ -64,7 +64,7 @@ def buildPyModule():
 	import sys
 
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
-	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-classic'])
+	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-modern', '-features', 'autodoc=1'])
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
 
 	import distutils.sysconfig

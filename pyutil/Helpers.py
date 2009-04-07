@@ -2,10 +2,10 @@ import pyadchpp as a
 import re
 def receiveHandler(client, cmd, ok, filter, callback):
     if not ok:
-        return 0
+        return ok
     
     if cmd.getCommand() != filter:
-        return 0
+        return ok
     
     return callback(client, cmd, ok)
     
@@ -103,7 +103,7 @@ class InfVerifier(object):
         if cmd.getCommand() in fields:
             self.validateFields(c, cmd, self.fields[cmd.getCommand()])
             
-        return 0
+        return ok
             
     def validateParam(self, c, cmd, params):
         if len(cmd.getParameters()) < len(params):
@@ -134,9 +134,13 @@ class PasswordHandler(object):
         self.salts = {}
         self.cm = a.getCM()
         
-    def onINF(self, c, cmd, ok):
+    def onINF(self, e, cmd, ok):
+        c = e.asClient()
+        if not c:
+            return ok
+        
         if c.getState() != a.Client.STATE_IDENTIFY:
-            return 0
+            return ok
         
         foundn, nick = cmd.getParam("NI", 0)
         foundc, cid = cmd.getParam("ID", 0)
@@ -146,7 +150,7 @@ class PasswordHandler(object):
 
         password = self.getPassword(nick, cid)
         if not password:
-            return 0
+            return ok
         
         self.salts[c.getSID()] = (self.cm.enterVerify(c, True), password)
         
@@ -174,4 +178,4 @@ class PasswordHandler(object):
 
         self.succeeded(c)
         
-        return 0
+        return ok

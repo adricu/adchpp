@@ -26,7 +26,7 @@
 
 namespace adchpp {
 
-class Entity {
+class ADCHPP_VISIBLE Entity {
 public:
 	Entity(uint32_t sid_) : sid(sid_) {
 
