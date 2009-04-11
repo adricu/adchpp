@@ -35,12 +35,12 @@ local function idx(p)
 	return (p % maxItems) + 1
 end
 
-local function onHistory(c, params, override)
+local function onHistory(c, params, ok)
 	local items = defaultItems
 	if(params:size() > 1) then
 		items = tonumber(params[1])
 		if not items then
-			return autil.handled
+			return false
 		end
 	end
 	
@@ -59,8 +59,8 @@ local function onHistory(c, params, override)
 	end
 	
 	autil.reply(c, msg)
-	
-	return autil.handled
+
+	return false
 end
 
 local function save_messages()
@@ -99,7 +99,7 @@ end
 local function onMSG(c, cmd)
 	local nick = c:getField("NI")
 	if #nick < 1 then
-		return 0
+		return true
 	end
 	
 	local now = os.date(prefix)
@@ -109,14 +109,14 @@ local function onMSG(c, cmd)
 	
 	base.pcall(save_messages)
 	
-	return 0
+	return true
 end
 
-local function onReceive(c, cmd, override)
+local function onReceive(c, cmd, ok)
 
 	-- Skip messages that have been handled by others
-	if override ~= 0 then
-		return 0
+	if not ok then
+		return ok
 	end
 	
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST then

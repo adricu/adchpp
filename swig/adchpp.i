@@ -66,6 +66,7 @@ void shutdown() {
 %nodefaultdtor PluginManager;
 
 namespace adchpp {
+	class Client;
 	class Entity;
 	typedef std::vector<std::string> StringList;
 	typedef std::vector<uint8_t> ByteVector;
@@ -498,6 +499,8 @@ public:
 	};
 
 	// static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
+
+	using Entity::send;
 
 	virtual void send(const BufferPtr& command) throw() { socket->write(command); }
 

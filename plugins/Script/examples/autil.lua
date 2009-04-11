@@ -18,10 +18,8 @@ function reply(c, m)
 end
 
 function dump(c, code, msg)
-	answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-	answer:addParam("" .. tostring(adchpp.AdcCommand_SEV_FATAL) .. code):addParam(msg)
+	local answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+	answer:addParam(adchpp.AdcCommand_SEV_FATAL .. code):addParam(msg)
 	c:send(answer)
 	c:disconnect(0)
 end
-
-handled = false

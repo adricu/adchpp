@@ -49,44 +49,44 @@ public:
 		docall(0, 0);
 	}
 
-	void operator()(adchpp::Client& c) {
+	void operator()(adchpp::Entity& c) {
 		pushFunction();
 
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
 		docall(1, 0);
 	}
 
-	void operator()(adchpp::Client& c, const std::string& str) {
+	void operator()(adchpp::Entity& c, const std::string& str) {
 		pushFunction();
 
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
 		lua_pushstring(L, str.c_str());
 
 		docall(2, 0);
 	}
 
-	void operator()(adchpp::Client& c, int i) {
+	void operator()(adchpp::Entity& c, int i) {
 		pushFunction();
 
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
 		lua_pushinteger(L, i);
 
 		docall(2, 0);
 	}
 
-	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd) {
+	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd) {
 		pushFunction();
 
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
 
 		docall(2, 0);
 	}
 
-	void operator()(adchpp::Client& c, adchpp::AdcCommand& cmd, bool& i) {
+	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, bool& i) {
 		pushFunction();
 
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
 		lua_pushboolean(L, i);
 
@@ -94,8 +94,9 @@ public:
 			return;
 		}
 
+
 		if(lua_isboolean(L, -1)) {
-			i &= lua_toboolean(L, -1) != 1;
+			i &= lua_toboolean(L, -1) == 1;
 		}
 		lua_pop(L, 1);
 	}
@@ -107,10 +108,10 @@ public:
 		docall(1, 0);
 	}
 
-	void operator()(adchpp::Client& c, const adchpp::StringList& cmd, bool& i) {
+	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i) {
 		pushFunction();
 
-		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Client, 0);
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_std__vectorT_std__string_t, 0);
 		lua_pushboolean(L, i);
 
@@ -119,7 +120,7 @@ public:
 		}
 
 		if(lua_isboolean(L, -1)) {
-			i &= lua_toboolean(L, -1) != 1;
+			i &= lua_toboolean(L, -1) == 1;
 		}
 		lua_pop(L, 1);
 	}
@@ -172,23 +173,23 @@ private:
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &) > {
+%typemap(in) std::tr1::function<void (adchpp::Entity &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &) > {
+%typemap(in) std::tr1::function<void (adchpp::Entity &, adchpp::AdcCommand &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, adchpp::AdcCommand &, bool&) > {
+%typemap(in) std::tr1::function<void (adchpp::Entity &, adchpp::AdcCommand &, bool&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, int) > {
+%typemap(in) std::tr1::function<void (adchpp::Entity &, int) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, const std::string&) > {
+%typemap(in) std::tr1::function<void (adchpp::Entity &, const std::string&) > {
 	$1 = LuaFunction(L);
 }
 
@@ -196,7 +197,7 @@ private:
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Client &, const adchpp::StringList&, bool&) > {
+%typemap(in) std::tr1::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
 	$1 = LuaFunction(L);
 }
 
