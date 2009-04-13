@@ -1,5 +1,6 @@
 import pyadchpp as a
 import re
+
 def receiveHandler(client, cmd, ok, filter, callback):
     if not ok:
         return ok
@@ -19,6 +20,16 @@ def dump(c, code, msg):
     c.send(answer)
     c.disconnect(0)
 
+def fallbackdict(dict):
+    def __init__(self, fallback):
+        self.fallback = fallback
+        
+    def __getitem__(self, key):
+        try:
+            return super(fallbackdict, self).__getitem__(self, key)
+        except KeyError:
+            return self.fallback.__getitem__(self, key)
+   
 class InfVerifier(object):
     BASE32_CHARS = "[2-7a-zA-Z]"
     any = re.compile(".*")
@@ -131,8 +142,9 @@ class PasswordHandler(object):
         self.inf = handleCommand(a.AdcCommand.CMD_INF, self.onINF)
         self.pas = handleCommand(a.AdcCommand.CMD_PAS, self.onPAS)
         
-        self.salts = {}
         self.cm = a.getCM()
+        self.pm = a.getPM()
+        self.salt = pm.registerPluginData()
         
     def onINF(self, e, cmd, ok):
         c = e.asClient()
@@ -152,7 +164,7 @@ class PasswordHandler(object):
         if not password:
             return ok
         
-        self.salts[c.getSID()] = (self.cm.enterVerify(c, True), password)
+        c.setPluginData(self.salt, (self.cm.enterVerify(c, True), password))
         
         return handled
     

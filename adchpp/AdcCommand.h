@@ -109,7 +109,7 @@ public:
 	C(CMD, 'C','M','D');
 #undef C
 
-	enum { HUB_SID = 0xffffffff };
+	static const uint32_t HUB_SID = 0xffffffff;
 
 	static uint32_t toSID(const std::string& aSID) { return *reinterpret_cast<const uint32_t*>(aSID.data()); }
 	static std::string fromSID(const uint32_t aSID) { return std::string(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }

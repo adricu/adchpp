@@ -1,9 +1,15 @@
 %module pyadchpp
 
-%{
+%runtime %{
+#ifdef socklen_t
 // Python pollution
 #undef socklen_t
+#endif
 %}
+
+%define %property(NAME, STUFF...)
+    %pythoncode { NAME = property(STUFF) }
+%enddef
 
 %typemap(in) std::tr1::function<void ()> {
 	$1 = PyHandle($input, false);
@@ -32,6 +38,71 @@
 %init%{
 	PyEval_InitThreads();
 %}
+
+%runtime %{
+	static void decRef(void* p) {
+		Py_XDECREF(reinterpret_cast<PyObject*>(p));
+	}
+
+	static PluginDataHandle dataHandle;
+	static inline const PluginDataHandle& getDataHandle() {
+		if(!dataHandle) {
+			dataHandle = PluginManager::getInstance()->registerPluginData(&decRef);
+		}
+
+		return dataHandle;
+	}
+%}
+
+%extend adchpp::Entity {
+	PyObject* getPluginData(const PluginDataHandle& handle) {
+		PyObject* ret = reinterpret_cast<PyObject*>($self->getPluginData(handle));
+		if(!ret) {
+			Py_RETURN_NONE;
+		}
+
+		return ret;
+	}
+
+	void setPluginData(const PluginDataHandle& handle, PyObject* data) {
+		if(data != Py_None) {
+			Py_XINCREF(data);
+		}
+		$self->setPluginData(handle, data == Py_None ? 0 : reinterpret_cast<void*>(data));
+	}
+
+	void setPluginData(PyObject* data) {
+		if(data != Py_None) {
+			Py_XINCREF(data);
+		}
+		$self->setPluginData(getDataHandle(), data == Py_None ? 0 : reinterpret_cast<void*>(data));
+	}
+
+	PyObject* getPluginData() {
+		PyObject* ret = reinterpret_cast<PyObject*>($self->getPluginData(getDataHandle()));
+		if(!ret) {
+			Py_RETURN_NONE;
+		}
+
+		return ret;
+	}
+
+	%property(pluginData, getPluginData, setPluginData)
+	%property(SID, getSID)
+}
+
+%extend adchpp::Client {
+	%property(ip, getIp)
+	%property(CID, getCID)
+	%property(state, getState, setState)
+}
+
+%extend adchpp::PluginManager {
+	PluginDataHandle registerPluginData() {
+		return PluginManager::getInstance()->registerPluginData(&decRef);
+	}
+}
+
 %{
 struct PyGIL {
 	PyGIL() { state = PyGILState_Ensure(); }

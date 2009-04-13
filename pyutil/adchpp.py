@@ -5,12 +5,24 @@ print sys.path
 import pyadchpp as a
 
 from Helpers import *
+from Hub import *
 
-users = { 'arnetheduck' : 'test' }
+hub = Hub()
+op = Profile('op', hub)
+vip = Profile('vip', hub)
+
+profiles = dict([(x.name, x) for x in (op, vip)])
+
+users = [User(profile=op, nick='arnetheduck', password='test')]
+
+nicks = dict([(x.nick, x) for x in users if x.nick])
+cids = dict([(x.cid, x) for x in users if x.cid])
 
 def findUser(nick, cid):
-	if nick in users:
-		return users[nick]
+	if nick in nicks:
+		return nicks[nick]
+	if cid in cids:
+		return cids[cid]
 	
 	return None
 
@@ -19,7 +31,7 @@ def run():
     a.initialize(os.path.abspath('../etc/') + os.sep)
     sil = a.TServerInfoList(1)
     si = a.ServerInfo.create()
-    si.port=2780
+    si.port = 2780
     sil[0] = si
     a.getSM().setServers(sil)
     pw = PasswordHandler(findUser, None, None)

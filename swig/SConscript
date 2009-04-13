@@ -84,7 +84,7 @@ def buildPyModule():
 		version = '25' # We only support 2.5.x for now
 
 		env.Append(LIBPATH=[libpath])
-		env.Append(LIBS=["python"+version, "msvcr71"])
+		env.Append(LIBS=["python"+version])
 		env.Append(CPPPATH=[incpath])
 	else:
 		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])

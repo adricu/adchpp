@@ -1,4 +1,4 @@
-%{
+%runtime %{
 
 #include <adchpp/adchpp.h>
 #include <adchpp/common.h>
@@ -358,7 +358,7 @@ public:
 	C(CMD, 'C','M','D');
 #undef C
 
-	enum { HUB_SID = 0xffffffff };
+	static const uint32_t HUB_SID = 0xffffffff;
 
 	AdcCommand();
 	explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType);

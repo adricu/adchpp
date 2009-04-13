@@ -49,6 +49,8 @@ const uint32_t AdcCommand::CMD_SID;
 // Extensions
 const uint32_t AdcCommand::CMD_CMD;
 
+const uint32_t AdcCommand::HUB_SID;
+
 using namespace std;
 
 AdcCommand::AdcCommand() : cmdInt(0), priority(PRIORITY_NORMAL), from(0), type(0) { }
