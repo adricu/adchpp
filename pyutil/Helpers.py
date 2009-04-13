@@ -19,6 +19,7 @@ def dump(c, code, msg):
     answer.addParam("" + a.AdcCommand.SEV_FATAL + code).addParam(msg)
     c.send(answer)
     c.disconnect(0)
+    return False
 
 def fallbackdict(dict):
     def __init__(self, fallback):
@@ -104,90 +105,92 @@ class InfVerifier(object):
     }
  
     def __init__(self, succeeded, failed):
-        self.succeeded = succeeded or (lambda client: None)
-        self.failed = failed or (lambda client, error: None)
+        self.succeeded = succeeded or (lambda client: True)
+        self.failed = failed or dump
+        self.inf = handleCommand(a.AdcCommand.CMD_INF, self.validate)
         
     def validate(self, c, cmd, ok):
-        if cmd.getCommand() in params:
-            self.validateParam(c, cmd, self.params[cmd.getCommand()])
+        if ok and cmd.getCommand() in self.params:
+            ok &= self.validateParam(c, cmd, self.params[cmd.getCommand()])
         
-        if cmd.getCommand() in fields:
-            self.validateFields(c, cmd, self.fields[cmd.getCommand()])
-            
-        return ok
-            
+        if ok and cmd.getCommand() in self.fields:
+            ok &= self.validateFields(c, cmd, self.fields[cmd.getCommand()])
+        
+        return ok & self.succeeded(c)
+
     def validateParam(self, c, cmd, params):
         if len(cmd.getParameters()) < len(params):
-            dump(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "Too few parameters for " + cmd.getCommand())
-            return
+            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Too few parameters for " + cmd.getCommand())
         
         for i, param in enumerate(params):
             if not param.match(cmd.getParam(i)):
-                dump(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, cmd.getParam(i) + " doesn't match " + param)
-                return
-
+                return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, cmd.getParam(i) + " doesn't match " + param)
+        return True
+    
     def validateFields(self, c, cmd, fields):
         for field in cmd.getParameters():
             if field[0:2] in fields:
                 r = fields[field[0:2]]
                 if not r.match(field[2:]):
-                    dump(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, field + " doesn't match " + str(r))
-        
+                    return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, field + " doesn't match " + str(r))
+        return True
+    
 class PasswordHandler(object):
     def __init__(self, getPassword, succeeded, failed):
         self.getPassword = getPassword or (lambda nick, cid: None)
-        self.succeeded = succeeded or (lambda client: None)
-        self.failed = failed or (lambda client, error: None)
+        self.succeeded = succeeded or (lambda client: True)
+        self.failed = failed or dump
         
         self.inf = handleCommand(a.AdcCommand.CMD_INF, self.onINF)
         self.pas = handleCommand(a.AdcCommand.CMD_PAS, self.onPAS)
         
         self.cm = a.getCM()
-        self.pm = a.getPM()
-        self.salt = pm.registerPluginData()
+        
+        self.salt = a.getPM().registerPluginData()
         
     def onINF(self, e, cmd, ok):
-        c = e.asClient()
-        if not c:
+        if not ok:
             return ok
         
-        if c.getState() != a.Client.STATE_IDENTIFY:
-            return ok
+        c = e.asClient()
+        if not c or c.getState() != a.Client.STATE_IDENTIFY:
+            return True
         
         foundn, nick = cmd.getParam("NI", 0)
         foundc, cid = cmd.getParam("ID", 0)
         
         if not foundn or not foundc:
-            dump(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
+            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 
         password = self.getPassword(nick, cid)
         if not password:
-            return ok
+            return True
         
         c.setPluginData(self.salt, (self.cm.enterVerify(c, True), password))
         
-        return handled
+        return False
     
-    def onPAS(self, c, cmd, ok):
-        if c.getState() != a.Client.STATE_VERIFY:
-            dump(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
-            return handled
+    def onPAS(self, e, cmd, ok):
+        if not ok:
+            return ok
         
-        salt, password = self.salts[c.getSID()]
+        c = e.asClient()
+ 
+        if c.getState() != a.Client.STATE_VERIFY:
+            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
+        
+        salt, password = c.getPluginData(self.salt)
         
         if not salt:
-            dump(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
-            return handled
+            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
         
-        del self.salts[c.getSID()]
+        c.setPluginData(self.salt, None)
         
         cid = c.getCID()
         nick = c.getField("NI")
         
         if not self.cm.verifyPassword(c, password, salt, cmd.getParam(0)):
-            dump(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
-            return handled
+            return self.failed(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
 
         self.succeeded(c)
-        
-        return ok
+        return False

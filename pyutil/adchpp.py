@@ -19,6 +19,7 @@ nicks = dict([(x.nick, x) for x in users if x.nick])
 cids = dict([(x.cid, x) for x in users if x.cid])
 
 def findUser(nick, cid):
+	print "looking for", nick, cid
 	if nick in nicks:
 		return nicks[nick]
 	if cid in cids:

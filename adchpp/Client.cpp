@@ -38,6 +38,9 @@ Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
 
 Client::Client(uint32_t sid_) throw() : Entity(sid_), state(STATE_PROTOCOL), disconnecting(false),
 	dataBytes(0), floodTimer(0), maxCommandSize(getDefaultMaxCommandSize()) {
+}
+
+Client::~Client() {
 
 }
 

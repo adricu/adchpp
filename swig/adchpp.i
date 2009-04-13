@@ -458,7 +458,9 @@ public:
 	void updateSupports(const AdcCommand& cmd) throw();
 
 %extend {
-	Client* asClient() { return dynamic_cast<Client*>($self); }
+	Client* asClient() {
+		return dynamic_cast<Client*>($self);
+	}
 }
 
 };

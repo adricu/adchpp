@@ -32,7 +32,7 @@ namespace adchpp {
 /**
  * The client represents one connection to a user.
  */
-class Client : public Entity, public FastAlloc<Client>, public boost::noncopyable {
+class ADCHPP_VISIBLE Client : public Entity, public FastAlloc<Client>, public boost::noncopyable {
 public:
 	enum State {
 		/** Initial protocol negotiation (wait for SUP) */
@@ -109,6 +109,7 @@ private:
 	static size_t defaultMaxCommandSize;
 
 	Client(uint32_t sid_) throw();
+	virtual ~Client();
 
 	Flags flags;
 
