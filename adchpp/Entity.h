@@ -28,9 +28,7 @@ namespace adchpp {
 
 class ADCHPP_VISIBLE Entity {
 public:
-	Entity(uint32_t sid_) : sid(sid_) {
-
-	}
+	Entity(uint32_t sid_) : sid(sid_) { }
 
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;

@@ -20,6 +20,7 @@ class User(object):
         self.nick = nick
         self.cid = cid
         self.settings = fallbackdict(self._profile.settings)
+        self.password = password
         
     def setProfile(self, profile):
         self._profile = profile

@@ -22,12 +22,10 @@
 #include "forward.h"
 
 #include "Entity.h"
-#include "Buffer.h"
 
 namespace adchpp {
 
-
-class Hub : public Entity {
+class ADCHPP_VISIBLE Hub : public Entity {
 public:
 	Hub();
 

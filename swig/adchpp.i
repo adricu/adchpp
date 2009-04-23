@@ -271,8 +271,8 @@ public:
 	//const uint8_t* data() const;
 
 	%extend {
-		std::string data() const { return std::string(reinterpret_cast<const char*>(self->data()), CID::SIZE); }
-		std::string __str__() { return self->toBase32(); }
+		std::string data() const { return std::string(reinterpret_cast<const char*>($self->data()), CID::SIZE); }
+		std::string __str__() { return $self->toBase32(); }
 	}
 
 	bool isZero() const;
@@ -458,9 +458,9 @@ public:
 	void updateSupports(const AdcCommand& cmd) throw();
 
 %extend {
-	Client* asClient() {
-		return dynamic_cast<Client*>($self);
-	}
+	Client* asClient() { return dynamic_cast<Client*>($self); }
+	Hub* asHub() { return dynamic_cast<Hub*>($self); }
+	Bot* asBot() { return dynamic_cast<Hub*>($self); }
 }
 
 };
@@ -504,15 +504,15 @@ public:
 
 	using Entity::send;
 
-	virtual void send(const BufferPtr& command) throw() { socket->write(command); }
+	virtual void send(const BufferPtr& command) throw();
 
-	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
+	size_t getQueuedBytes() throw();
 
 	/** @param reason The statistic to update */
 	void disconnect(Util::Reason reason) throw();
-	const ManagedSocketPtr& getSocket() throw() { return socket; }
-	const ManagedSocketPtr& getSocket() const throw() { return socket; }
-	const std::string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
+	const ManagedSocketPtr& getSocket() throw();
+	const ManagedSocketPtr& getSocket() const throw();
+	const std::string& getIp() const throw();
 
 	/**
 	 * Set data mode for aBytes bytes.
@@ -560,9 +560,6 @@ public:
 class ClientManager
 {
 public:
-	typedef std::tr1::unordered_map<uint32_t, Entity*> EntityMap;
-	typedef EntityMap::iterator EntityIter;
-
 	uint32_t getSID(const std::string& nick) const throw();
 	uint32_t getSID(const CID& cid) const throw();
 
@@ -580,7 +577,7 @@ public:
 	}
 
 	Entity* findByNick(const std::string& nick) {
-		uint32_t sid = self->getSID(nick);
+		uint32_t sid = $self->getSID(nick);
 		if(sid != 0) {
 			return self->getEntity(sid);
 		}

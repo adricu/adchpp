@@ -166,6 +166,9 @@ class PasswordHandler(object):
         if not password:
             return True
         
+        if not self.cm.verifyINF(c, cmd):
+            return False
+        
         c.setPluginData(self.salt, (self.cm.enterVerify(c, True), password))
         
         return False
@@ -192,5 +195,7 @@ class PasswordHandler(object):
         if not self.cm.verifyPassword(c, password, salt, cmd.getParam(0)):
             return self.failed(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
 
+        self.cm.enterNormal(c, True, True)
+        
         self.succeeded(c)
         return False
