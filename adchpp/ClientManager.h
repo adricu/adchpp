@@ -148,13 +148,13 @@ public:
 	SignalState::Signal& signalState() { return signalState_; }
 	SignalDisconnected::Signal& signalDisconnected() { return signalDisconnected_; }
 
-	void setLoginTimeout(size_t millis) { loginTimeout = millis; }
-	size_t getLoginTimeout() { return loginTimeout; }
+	void setLoginTimeout(uint32_t millis) { loginTimeout = millis; }
+	uint32_t getLoginTimeout() { return loginTimeout; }
 
 private:
 	friend class Client;
 
-	std::deque<std::pair<Client*, time_t> > logins;
+	std::deque<std::pair<Client*, uint32_t> > logins;
 
 	EntityMap entities;
 	typedef std::tr1::unordered_map<std::string, uint32_t> NickMap;

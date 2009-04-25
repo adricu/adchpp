@@ -150,7 +150,7 @@ uint32_t ClientManager::makeSID() {
 
 void ClientManager::onConnected(Client& c) throw() {
 	// First let's check if any clients have passed the login timeout...
-	size_t timeout = GET_TICK() - getLoginTimeout();
+	uint32_t timeout = GET_TICK() - getLoginTimeout();
 	while(!logins.empty() && (timeout > logins.front().second)) {
 		Client* cc = logins.front().first;
 
@@ -454,8 +454,8 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 }
 
 void ClientManager::removeLogins(Client& c) throw() {
-	deque<pair<Client*, time_t> >::iterator i = find_if(logins.begin(), logins.end(),
-		CompareFirst<Client*, time_t> (&c));
+	deque<pair<Client*, uint32_t> >::iterator i = find_if(logins.begin(), logins.end(),
+		CompareFirst<Client*, uint32_t> (&c));
 	if(i != logins.end()) {
 		logins.erase(i);
 	}

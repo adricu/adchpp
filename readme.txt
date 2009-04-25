@@ -30,11 +30,11 @@ To run ADCH++ you will need the following:
 
 NOTE: The hub will not run on Windows 9x/ME
 
-To compile the sources you will also need:
+To compile the sources you will also need (other versions might work but I don't use them):
 
 * GCC 4.2+ (Linux or http://www.mingw.org[MinGW])
-* http://www.scons.org[SCons 0.98.4]
-* http://www.swig.org[SWIG 1.3.36]
+* http://www.scons.org[SCons 0.98.5]
+* http://www.swig.org[SWIG 1.3.39]
 * http://www.python.org[Python] 2.5 (Windows) or 2.4+ (Linux)
 
 == Building
