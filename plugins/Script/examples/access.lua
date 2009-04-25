@@ -2,8 +2,8 @@
 -- Fix error types
 --
 -- bans:
--- add per reg exp
 -- un-ban
+-- clean up expired bans
 
 local base = _G
 
@@ -114,6 +114,7 @@ bans.cids = { }
 bans.ips = { }
 bans.nicks = { }
 bans.nicksre = { }
+bans.msgsre = { }
 
 local stats = { }
 
@@ -190,6 +191,7 @@ local function load_bans()
 	bans.ips = { }
 	bans.nicks = { }
 	bans.nicksre = { }
+	bans.msgsre = { }
 
 	local file = io.open(bans_file, "r")
 	if not file then
@@ -222,6 +224,9 @@ local function load_bans()
 	end
 	if not bans.nicksre then
 		bans.nicksre = { }
+	end
+	if not bans.msgsre then
+		bans.msgsre = { }
 	end
 end
 
@@ -439,7 +444,7 @@ local function onINF(c, cmd)
 
 	local ban = nil
 	if bans.cids[cid] then
-		ban = bans.cid[cid]
+		ban = bans.cids[cid]
 	elseif bans.ips[c:getIp()] then
 		ban = bans.ips[c:getIp()]
 	elseif bans.nicks[nick] then
@@ -582,6 +587,17 @@ local function onMSG(c, cmd)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 
 	if not command then
+		for re, reban in base.pairs(bans.msgsre) do
+			if msg:match(re) and (not reban.expires or ban_expiration_diff(reban) > 0) then
+				local cid = c:getCID():toBase32()
+				local ban = { cid = cid, level = reban.level, reason = reban.reason, expires = reban.expires }
+				bans.cids[cid] = ban
+				save_bans()
+				dump_banned(c, ban)
+				return false
+			end
+		end
+
 		return true
 	end
 
@@ -596,7 +612,7 @@ local function onMSG(c, cmd)
 	elseif command == "help" then
 		autil.reply(c, "+test, +help, +regme password, +regnick nick password level")
 		if check_banner(c, true) then
-			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +listbans, +reloadbans")
+			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +banmsgre msg-reg-exp [reason] [minutes], +listbans, +reloadbans")
 		end
 		return false
 	elseif command == "regme" then
@@ -747,7 +763,7 @@ local function onMSG(c, cmd)
 		bans.cids[cid] = ban
 		save_bans()
 
-		autil.reply(c, "The CID " .. cid .. " is now banned")
+		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
 		return false
 
 	elseif command == "banip" then
@@ -767,7 +783,7 @@ local function onMSG(c, cmd)
 		bans.ips[ip] = ban
 		save_bans()
 
-		autil.reply(c, "The IP address " .. ip .. " is now banned")
+		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
 		return false
 
 	elseif command == "bannick" then
@@ -787,7 +803,7 @@ local function onMSG(c, cmd)
 		bans.nicks[nick] = ban
 		save_bans()
 
-		autil.reply(c, "The nick " .. nick .. " is now banned")
+		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
 		return false
 
 	elseif command == "bannickre" then
@@ -807,7 +823,27 @@ local function onMSG(c, cmd)
 		bans.nicksre[re] = ban
 		save_bans()
 
-		autil.reply(c, "Nicks that match " .. re .. " are now banned")
+		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
+		return false
+
+	elseif command == "banmsgre" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
+		local re, reason, minutes = parameters:match("^(.+) ?(%S*) ?(%d*)")
+		if not re then
+			autil.reply(c, "You need to supply a reg exp")
+			return false
+		end
+
+		local ban = make_ban(level, reason, minutes)
+		ban.msgre = re
+		bans.msgsre[re] = ban
+		save_bans()
+
+		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
 		return false
 
 	elseif command == "listbans" then
@@ -834,6 +870,11 @@ local function onMSG(c, cmd)
 		str = str .. "\n\nNick bans (reg exp):"
 		for nickre, ban in base.pairs(bans.nicksre) do
 			str = str .. "\n\tReg exp: " .. nickre .. ban_info_string(ban)
+		end
+
+		str = str .. "\n\nMessage bans (reg exp):"
+		for msgre, ban in base.pairs(bans.msgsre) do
+			str = str .. "\n\tReg exp: " .. msgre .. ban_info_string(ban)
 		end
 
 		autil.reply(c, str)
