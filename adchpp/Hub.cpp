@@ -29,7 +29,7 @@ Hub::Hub() : Entity(AdcCommand::HUB_SID) {
 	setField("HI", "1");
 	setField("DE", versionString);
 	setField("VE", versionString);
-	setField("CT", "5");
+	setFlag(FLAG_HUB);
 }
 
 }

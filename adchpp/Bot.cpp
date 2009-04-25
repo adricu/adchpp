@@ -16,24 +16,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef HUB_H_
-#define HUB_H_
+#include "adchpp.h"
 
-#include "forward.h"
-
-#include "Entity.h"
+#include "Bot.h"
+#include "AdcCommand.h"
 
 namespace adchpp {
 
-class ADCHPP_VISIBLE Hub : public Entity {
-public:
-	ADCHPP_DLL Hub();
+Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(handler_) {
+	setFlag(FLAG_BOT);
 
-	virtual void send(const BufferPtr& cmd) { }
-
-private:
-};
+	// Fake a cid
+	setCID(CID::generate());
+}
 
 }
 
-#endif /* HUB_H_ */

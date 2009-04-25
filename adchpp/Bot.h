@@ -30,10 +30,11 @@ public:
 
 	typedef std::tr1::function<void (const BufferPtr& cmd)> SendHandler;
 
-	Bot(uint32_t sid, const SendHandler& handler_) : Entity(sid), handler(handler_) { };
+	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
 
 	virtual void send(const BufferPtr& cmd) { handler(cmd); }
 
+	using Entity::send;
 private:
 
 	SendHandler handler;

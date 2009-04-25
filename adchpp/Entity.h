@@ -23,12 +23,44 @@
 #include "Buffer.h"
 #include "AdcCommand.h"
 #include "Plugin.h"
+#include "CID.h"
 
 namespace adchpp {
 
 class ADCHPP_VISIBLE Entity {
 public:
-	Entity(uint32_t sid_) : sid(sid_) { }
+	enum State {
+		/** Initial protocol negotiation (wait for SUP) */
+		STATE_PROTOCOL,
+		/** Identify the connecting client (wait for INF) */
+		STATE_IDENTIFY,
+		/** Verify the client (wait for PAS) */
+		STATE_VERIFY,
+		/** Normal operation */
+		STATE_NORMAL,
+		/** Binary data transfer */
+		STATE_DATA
+	};
+
+	enum Flag {
+		FLAG_BOT = 0x01,
+		FLAG_REGISTERED = 0x02,
+		FLAG_OP = 0x04,
+		FLAG_SU = 0x08,
+		FLAG_OWNER = 0x10,
+		FLAG_HUB = 0x20,
+		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
+		FLAG_PASSWORD = 0x100,
+		FLAG_HIDDEN = 0x101,
+		/** Extended away, no need to send msg */
+		FLAG_EXT_AWAY = 0x102,
+		/** Plugins can use these flags to disable various checks */
+		/** Bypass ip check */
+		FLAG_OK_IP = 0x104
+	};
+
+
+	Entity(uint32_t sid_) : sid(sid_), state(STATE_PROTOCOL) { }
 
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
@@ -75,12 +107,27 @@ public:
 	 * Clear any data referenced by the handle, calling the registered delete function.
 	 */
 	ADCHPP_DLL void clearPluginData(const PluginDataHandle& handle) throw();
+
+	const CID& getCID() const { return cid; }
+	void setCID(const CID& cid_) { cid = cid_; }
+
+	State getState() const { return state; }
+	void setState(State state_) { state = state_; }
+
+	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
+	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
+	ADCHPP_DLL void setFlag(size_t aFlag);
+	ADCHPP_DLL void unsetFlag(size_t aFlag);
+
 protected:
 	virtual ~Entity();
 
 	typedef std::map<PluginDataHandle, void*> PluginDataMap;
 
+	CID cid;
 	uint32_t sid;
+	Flags flags;
+	State state;
 
 	/** SUP items */
 	std::vector<uint32_t> supports;

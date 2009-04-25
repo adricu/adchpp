@@ -150,7 +150,6 @@ public:
 
 	void setPluginPath(const std::string& path) { pluginPath = path; }
 
-
 	/**
 	 * Register a plugin data type to be used with Client::setPSD and friends.
 	 * When data is removed, the deleter function will automatically be called

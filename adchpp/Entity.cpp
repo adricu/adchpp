@@ -187,4 +187,19 @@ void Entity::clearPluginData(const PluginDataHandle& handle) throw() {
 	pluginData.erase(i);
 }
 
+void Entity::setFlag(size_t flag) {
+	flags.setFlag(flag);
+	if(flag & MASK_CLIENT_TYPE) {
+		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
+	}
+}
+
+void Entity::unsetFlag(size_t flag) {
+	flags.setFlag(flag);
+	if(flag & MASK_CLIENT_TYPE) {
+		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
+	}
+}
+
+
 }

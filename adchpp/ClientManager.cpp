@@ -47,6 +47,12 @@ ClientManager::~ClientManager() throw() {
 
 }
 
+Bot* ClientManager::createBot(const Bot::SendHandler& handler) {
+	Bot* ret = new Bot(makeSID(), handler);
+	enterIdentify(*ret, false);
+	return ret;
+}
+
 void ClientManager::send(const AdcCommand& cmd) throw() {
 	if(cmd.getPriority() == AdcCommand::PRIORITY_IGNORE) {
 		return;
@@ -340,12 +346,11 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 			c.disconnect(Util::REASON_PID_CID_MISMATCH);
 			return false;
 		}
+
 		CIDMap::iterator i = cids.find(cid);
 		if(i != cids.end()) {
-			EntityIter j = entities.find(i->second);
-			if(j != entities.end()) {
-				j->second->send(BufferPtr(new Buffer("\n", 1)));
-			}
+			// Send a newline to see if the other client is still alive
+			i->second->send(BufferPtr(new Buffer("\n", 1)));
 
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken, please try again later"));
 			c.disconnect(Util::REASON_CID_TAKEN);
@@ -353,7 +358,7 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 		}
 
 		c.setCID(cid);
-		cids.insert(make_pair(c.getCID(), c.getSID()));
+		cids.insert(make_pair(c.getCID(), &c));
 		cmd.delParam("PD", 0);
 	}
 
@@ -362,6 +367,7 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 		c.disconnect(Util::REASON_PID_WITHOUT_CID);
 		return false;
 	}
+
 	return true;
 }
 
@@ -387,20 +393,20 @@ bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
 			return false;
 		}
 
-		nicks.insert(make_pair(strtmp, c.getSID()));
+		nicks.insert(make_pair(strtmp, &c));
 	}
 
 	return true;
 }
 
-void ClientManager::setState(Client& c, Client::State newState) throw() {
+void ClientManager::setState(Entity& c, Client::State newState) throw() {
 	Client::State oldState = c.getState();
 	c.setState(newState);
 	signalState_(c, oldState);
 }
 
-void ClientManager::enterIdentify(Client& c, bool sendData) throw() {
-	dcassert(c.getState() == Client::STATE_PROTOCOL);
+void ClientManager::enterIdentify(Entity& c, bool sendData) throw() {
+	dcassert(c.getState() == Entity::STATE_PROTOCOL);
 	dcdebug("%s entering IDENTIFY\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(sendData) {
 		c.send(hub.getSUP());
@@ -408,11 +414,11 @@ void ClientManager::enterIdentify(Client& c, bool sendData) throw() {
 		c.send(hub.getINF());
 	}
 
-	setState(c, Client::STATE_IDENTIFY);
+	setState(c, Entity::STATE_IDENTIFY);
 }
 
-ByteVector ClientManager::enterVerify(Client& c, bool sendData) throw() {
-	dcassert(c.getState() == Client::STATE_IDENTIFY);
+ByteVector ClientManager::enterVerify(Entity& c, bool sendData) throw() {
+	dcassert(c.getState() == Entity::STATE_IDENTIFY);
 	dcdebug("%s entering VERIFY\n", AdcCommand::fromSID(c.getSID()).c_str());
 
 	ByteVector challenge;
@@ -426,12 +432,12 @@ ByteVector ClientManager::enterVerify(Client& c, bool sendData) throw() {
 		c.send(AdcCommand(AdcCommand::CMD_GPA).addParam(Encoder::toBase32(&challenge[0], challenge.size())));
 	}
 
-	setState(c, Client::STATE_VERIFY);
+	setState(c, Entity::STATE_VERIFY);
 	return challenge;
 }
 
-bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw() {
-	dcassert(c.getState() == Client::STATE_IDENTIFY || c.getState() == Client::STATE_VERIFY);
+bool ClientManager::enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw() {
+	dcassert(c.getState() == Entity::STATE_IDENTIFY || c.getState() == Entity::STATE_VERIFY);
 	dcdebug("%s entering NORMAL\n", AdcCommand::fromSID(c.getSID()).c_str());
 
 	if(sendData) {
@@ -446,22 +452,27 @@ bool ClientManager::enterNormal(Client& c, bool sendData, bool sendOwnInf) throw
 	}
 
 	removeLogins(c);
-	setState(c, Client::STATE_NORMAL);
+	setState(c, Entity::STATE_NORMAL);
 
 	entities.insert(make_pair(c.getSID(), &c));
 
 	return true;
 }
 
-void ClientManager::removeLogins(Client& c) throw() {
+void ClientManager::removeLogins(Entity& e) throw() {
+	Client* c = dynamic_cast<Client*>(&e);
+	if(!c) {
+		return;
+	}
+
 	deque<pair<Client*, uint32_t> >::iterator i = find_if(logins.begin(), logins.end(),
-		CompareFirst<Client*, uint32_t> (&c));
+		CompareFirst<Client*, uint32_t> (c));
 	if(i != logins.end()) {
 		logins.erase(i);
 	}
 }
 
-void ClientManager::removeClient(Client& c) throw() {
+void ClientManager::removeEntity(Entity& c) throw() {
 	signalDisconnected_(c);
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Client::STATE_NORMAL) {
@@ -486,16 +497,16 @@ Entity* ClientManager::getEntity(uint32_t aSid) throw() {
 
 uint32_t ClientManager::getSID(const string& aNick) const throw() {
 	NickMap::const_iterator i = nicks.find(aNick);
-	return (i == nicks.end()) ? 0 : i->second;
+	return (i == nicks.end()) ? 0 : i->second->getSID();
 }
 
 uint32_t ClientManager::getSID(const CID& cid) const throw() {
 	CIDMap::const_iterator i = cids.find(cid);
-	return (i == cids.end()) ? 0 : i->second;
+	return (i == cids.end()) ? 0 : i->second->getSID();
 }
 
 void ClientManager::onFailed(Client& c) throw() {
-	removeClient(c);
+	removeEntity(c);
 }
 
 }

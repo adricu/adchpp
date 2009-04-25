@@ -36,7 +36,7 @@ Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
 	return c;
 }
 
-Client::Client(uint32_t sid_) throw() : Entity(sid_), state(STATE_PROTOCOL), disconnecting(false),
+Client::Client(uint32_t sid_) throw() : Entity(sid_), disconnecting(false),
 	dataBytes(0), floodTimer(0), maxCommandSize(getDefaultMaxCommandSize()) {
 }
 
@@ -172,20 +172,6 @@ void Client::disconnect(Util::Reason reason) throw() {
 void Client::onFailed() throw() {
 	ClientManager::getInstance()->onFailed(*this);
 	delete this;
-}
-
-void Client::setFlag(size_t flag) {
-	flags.setFlag(flag);
-	if(flag & MASK_CLIENT_TYPE) {
-		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
-	}
-}
-
-void Client::unsetFlag(size_t flag) {
-	flags.setFlag(flag);
-	if(flag & MASK_CLIENT_TYPE) {
-		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
-	}
 }
 
 }

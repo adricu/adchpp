@@ -430,6 +430,37 @@ public:
 
 class Entity {
 public:
+	enum State {
+		/** Initial protocol negotiation (wait for SUP) */
+		STATE_PROTOCOL,
+		/** Identify the connecting client (wait for INF) */
+		STATE_IDENTIFY,
+		/** Verify the client (wait for PAS) */
+		STATE_VERIFY,
+		/** Normal operation */
+		STATE_NORMAL,
+		/** Binary data transfer */
+		STATE_DATA
+	};
+
+	enum Flag {
+		FLAG_BOT = 0x01,
+		FLAG_REGISTERED = 0x02,
+		FLAG_OP = 0x04,
+		FLAG_SU = 0x08,
+		FLAG_OWNER = 0x10,
+		FLAG_HUB = 0x20,
+		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
+		FLAG_PASSWORD = 0x100,
+		FLAG_HIDDEN = 0x101,
+		/** Extended away, no need to send msg */
+		FLAG_EXT_AWAY = 0x102,
+		/** Plugins can use these flags to disable various checks */
+		/** Bypass ip check */
+		FLAG_OK_IP = 0x104
+	};
+
+
 	Entity(uint32_t sid_) : sid(sid_) {
 
 	}
@@ -459,6 +490,14 @@ public:
 	void updateFields(const AdcCommand& cmd);
 	void updateSupports(const AdcCommand& cmd) throw();
 
+	State getState() const { return state; }
+	void setState(State state_) { state = state_; }
+
+	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
+	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
+	void setFlag(size_t aFlag);
+	void unsetFlag(size_t aFlag);
+
 %extend {
 	Client* asClient() { return dynamic_cast<Client*>($self); }
 	Hub* asHub() { return dynamic_cast<Hub*>($self); }
@@ -472,36 +511,6 @@ public:
  */
 class Client : public Entity {
 public:
-	enum State {
-		/** Initial protocol negotiation (wait for SUP) */
-		STATE_PROTOCOL,
-		/** Identify the connecting client (wait for INF) */
-		STATE_IDENTIFY,
-		/** Verify the client (wait for PAS) */
-		STATE_VERIFY,
-		/** Normal operation */
-		STATE_NORMAL,
-		/** Binary data transfer */
-		STATE_DATA
-	};
-
-	enum {
-		FLAG_BOT = 0x01,
-		FLAG_REGISTERED = 0x02,
-		FLAG_OP = 0x04,
-		FLAG_SU = 0x08,
-		FLAG_OWNER = 0x10,
-		FLAG_HUB = 0x20,
-		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
-		FLAG_PASSWORD = 0x100,
-		FLAG_HIDDEN = 0x101,
-		/** Extended away, no need to send msg */
-		FLAG_EXT_AWAY = 0x102,
-		/** Plugins can use these flags to disable various checks */
-		/** Bypass ip check */
-		FLAG_OK_IP = 0x104
-	};
-
 	// static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
 
 	using Entity::send;
@@ -528,17 +537,29 @@ public:
 
 	bool isFlooding(time_t addSeconds);
 
-	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
-	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
-	//void setFlag(size_t aFlag);
-	//void unsetFlag(size_t aFlag);
-
-	const CID& getCID() const { return cid; }
-	void setCID(const CID& cid_) { cid = cid_; }
-	State getState() const { return state; }
-	void setState(State state_) { state = state_; }
-
 };
+
+class Bot : public Entity {
+public:
+	typedef std::tr1::function<void (const BufferPtr& cmd)> SendHandler;
+
+	Bot(uint32_t sid, const SendHandler& handler_);
+
+	using Entity::send;
+	virtual void send(const BufferPtr& cmd);
+private:
+	SendHandler handler;
+};
+
+class Hub : public Entity {
+public:
+	Hub();
+
+	virtual void send(const BufferPtr& cmd);
+
+private:
+};
+
 
 class LogManager
 {
@@ -566,6 +587,7 @@ public:
 	uint32_t getSID(const CID& cid) const throw();
 
 	Entity* getEntity(uint32_t aSid) throw();
+	Bot* createBot(const Bot::SendHandler& handler);
 
 	// EntityMap& getEntities() throw() { return entities; }
 
@@ -594,17 +616,17 @@ public:
 
 	bool checkFlooding(Client& c, const AdcCommand&) throw();
 
-	void enterIdentify(Client& c, bool sendData) throw();
+	void enterIdentify(Entity& c, bool sendData) throw();
 
-	ByteVector enterVerify(Client& c, bool sendData) throw();
-	bool enterNormal(Client& c, bool sendData, bool sendOwnInf) throw();
+	ByteVector enterVerify(Entity& c, bool sendData) throw();
+	bool enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw();
 	bool verifySUP(Client& c, AdcCommand& cmd) throw();
 	bool verifyINF(Client& c, AdcCommand& cmd) throw();
 	bool verifyNick(Client& c, const AdcCommand& cmd) throw();
 	bool verifyPassword(Client& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Client& c, AdcCommand& cmd) throw();
-	void setState(Client& c, Client::State newState) throw();
+	void setState(Entity& c, Client::State newState) throw();
 	size_t getQueuedBytes() throw();
 
 	typedef SignalTraits<void (Entity&)> SignalConnected;

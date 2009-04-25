@@ -34,36 +34,6 @@ namespace adchpp {
  */
 class ADCHPP_VISIBLE Client : public Entity, public FastAlloc<Client>, public boost::noncopyable {
 public:
-	enum State {
-		/** Initial protocol negotiation (wait for SUP) */
-		STATE_PROTOCOL,
-		/** Identify the connecting client (wait for INF) */
-		STATE_IDENTIFY,
-		/** Verify the client (wait for PAS) */
-		STATE_VERIFY,
-		/** Normal operation */
-		STATE_NORMAL,
-		/** Binary data transfer */
-		STATE_DATA
-	};
-
-	enum {
-		FLAG_BOT = 0x01,
-		FLAG_REGISTERED = 0x02,
-		FLAG_OP = 0x04,
-		FLAG_SU = 0x08,
-		FLAG_OWNER = 0x10,
-		FLAG_HUB = 0x20,
-		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
-		FLAG_PASSWORD = 0x100,
-		FLAG_HIDDEN = 0x101,
-		/** Extended away, no need to send msg */
-		FLAG_EXT_AWAY = 0x102,
-		/** Plugins can use these flags to disable various checks */
-		/** Bypass ip check */
-		FLAG_OK_IP = 0x104
-	};
-
 	static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
 
 	using Entity::send;
@@ -90,16 +60,6 @@ public:
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 
-	bool isSet(size_t aFlag) const { return flags.isSet(aFlag); }
-	bool isAnySet(size_t aFlag) const { return flags.isAnySet(aFlag); }
-	void setFlag(size_t aFlag);
-	void unsetFlag(size_t aFlag);
-
-	const CID& getCID() const { return cid; }
-	void setCID(const CID& cid_) { cid = cid_; }
-	State getState() const { return state; }
-	void setState(State state_) { state = state_; }
-
 	void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
 	size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
 
@@ -111,10 +71,6 @@ private:
 	Client(uint32_t sid_) throw();
 	virtual ~Client();
 
-	Flags flags;
-
-	CID cid;
-	State state;
 	bool disconnecting;
 
 	BufferPtr buffer;

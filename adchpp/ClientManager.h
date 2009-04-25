@@ -25,6 +25,7 @@
 #include "Client.h"
 #include "Singleton.h"
 #include "Hub.h"
+#include "Bot.h"
 
 namespace adchpp {
 
@@ -47,6 +48,9 @@ public:
 
 	/** @return The entity associated with a certain SID, NULL if not found */
 	ADCHPP_DLL Entity* getEntity(uint32_t aSid) throw();
+
+	/** @return A new Bot instance in STATE_IDENTIFY, set nick etc and call enterNormal to make it appear */
+	ADCHPP_DLL Bot* createBot(const Bot::SendHandler& handler);
 
 	/**
 	 * Get a list of all currently connected clients. (Don't change it, it's non-const
@@ -76,7 +80,7 @@ public:
 	 *
 	 * @param sendData Send ISUP & IINF.
 	 */
-	ADCHPP_DLL void enterIdentify(Client& c, bool sendData) throw();
+	ADCHPP_DLL void enterIdentify(Entity& c, bool sendData) throw();
 
 	/**
 	 * Enter VERIFY state. Call this if you stop
@@ -85,7 +89,7 @@ public:
 	 * @param sendData Send GPA.
 	 * @return The random data that was sent to the client (if sendData was true, undefined otherwise).
 	 */
-	ADCHPP_DLL ByteVector enterVerify(Client& c, bool sendData) throw();
+	ADCHPP_DLL ByteVector enterVerify(Entity& c, bool sendData) throw();
 
 	/**
 	 * Enter NORMAL state. Call this if you stop an INF of a password-less
@@ -96,7 +100,7 @@ public:
 	 *                   for password)
 	 * @return false if the client was disconnected
 	 */
-	ADCHPP_DLL bool enterNormal(Client& c, bool sendData, bool sendOwnInf) throw();
+	ADCHPP_DLL bool enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw();
 
 	/**
 	 * Do all SUP verifications and update client data. Call if you stop SUP but still want the default processing.
@@ -130,7 +134,7 @@ public:
 	ADCHPP_DLL bool verifyCID(Client& c, AdcCommand& cmd) throw();
 
 	/** Update the state of c (this fires signalState as well) */
-	ADCHPP_DLL void setState(Client& c, Client::State newState) throw();
+	ADCHPP_DLL void setState(Entity& c, Entity::State newState) throw();
 
 	ADCHPP_DLL size_t getQueuedBytes() throw();
 
@@ -157,9 +161,9 @@ private:
 	std::deque<std::pair<Client*, uint32_t> > logins;
 
 	EntityMap entities;
-	typedef std::tr1::unordered_map<std::string, uint32_t> NickMap;
+	typedef std::tr1::unordered_map<std::string, Entity*> NickMap;
 	NickMap nicks;
-	typedef std::tr1::unordered_map<CID, uint32_t> CIDMap;
+	typedef std::tr1::unordered_map<CID, Entity*> CIDMap;
 	CIDMap cids;
 
 	Hub hub;
@@ -180,8 +184,8 @@ private:
 
 	void maybeSend(Entity& c, const AdcCommand& cmd);
 
-	void removeLogins(Client& c) throw();
-	void removeClient(Client& c) throw();
+	void removeLogins(Entity& c) throw();
+	void removeEntity(Entity& c) throw();
 
 	bool handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw();
 	bool handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw();

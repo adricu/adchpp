@@ -201,7 +201,6 @@ public:
 
 	ADCHPP_DLL static bool validateUtf8(const std::string& str) throw();
 
-
 	static std::string formatBytes(const std::string& aString) { return formatBytes(toInt64(aString)); }
 
 	ADCHPP_DLL static std::string getShortTimeString();
