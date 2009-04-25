@@ -112,6 +112,8 @@ users.cids = { }
 local bans = { }
 bans.cids = { }
 bans.ips = { }
+bans.nicks = { }
+bans.nicksre = { }
 
 local stats = { }
 
@@ -183,8 +185,11 @@ local function save_users()
 end
 
 local function load_bans()
+	bans = { }
 	bans.cids = { }
 	bans.ips = { }
+	bans.nicks = { }
+	bans.nicksre = { }
 
 	local file = io.open(bans_file, "r")
 	if not file then
@@ -205,15 +210,18 @@ local function load_bans()
 		return
 	end
 
-	for k, ban in base.pairs(list) do
-		if not ban.expires or ban_expiration_diff(ban) > 0 then
-			if ban.cid then
-				bans.cids[ban.cid] = ban
-			end
-			if ban.ip then
-				bans.ips[ban.ip] = ban
-			end
-		end
+	bans = list
+	if not bans.cids then
+		bans.cids = { }
+	end
+	if not bans.ips then
+		bans.ips = { }
+	end
+	if not bans.nicks then
+		bans.nicks = { }
+	end
+	if not bans.nicksre then
+		bans.nicksre = { }
 	end
 end
 
@@ -224,26 +232,7 @@ local function save_bans()
 		return
 	end
 
-	local list = { }
-	local ipsdone = { }
-
-	local i = 1
-	for k, ban in base.pairs(bans.cids) do
-		list[i] = ban
-		if ban.ip then
-			ipsdone[ban] = 1
-		end
-		i = i + 1
-	end
-
-	for k, ban in base.pairs(bans.ips) do
-		if not ipsdone[ban] then
-			list[i] = ban
-			i = i + 1
-		end
-	end
-
-	file:write(json.encode(list))
+	file:write(json.encode(bans))
 	file:close()
 end
 
@@ -352,17 +341,12 @@ local function check_banner(c, no_reply)
 	return banner.level, true
 end
 
-local function make_ban(cid_or_ip, is_cid, level, reason, minutes)
+local function make_ban(level, reason, minutes)
 	local ban = { level = level }
-	if is_cid then
-		ban.cid = cid_or_ip
-	else
-		ban.ip = cid_or_ip
-	end
-	if reason then
+	if string.len(reason) > 0 then
 		ban.reason = reason
 	end
-	if minutes then
+	if string.len(minutes) > 0 then
 		ban.expires = os.time() + minutes * 60
 	end
 	return ban
@@ -395,9 +379,9 @@ local function ban_info_string(ban)
 end
 
 local function dump_banned(c, ban)
-	str = "You are banned (expires: " + ban_expiration_string(ban) + ")"
+	str = "You are banned (expires: " .. ban_expiration_string(ban) .. ")"
 	if ban.reason then
-		str = str .. " (reason: " + reason + ")"
+		str = str .. " (reason: " .. reason .. ")"
 	end
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, str)
 end
@@ -458,6 +442,15 @@ local function onINF(c, cmd)
 		ban = bans.cid[cid]
 	elseif bans.ips[c:getIp()] then
 		ban = bans.ips[c:getIp()]
+	elseif bans.nicks[nick] then
+		ban = bans.nicks[nick]
+	else
+		for re, reban in base.pairs(bans.nicksre) do
+			if nick:match(re) then
+				ban = reban
+				break
+			end
+		end
 	end
 	if ban and ban.expires and ban_expiration_diff(ban) <= 0 then
 		ban = nil
@@ -603,7 +596,7 @@ local function onMSG(c, cmd)
 	elseif command == "help" then
 		autil.reply(c, "+test, +help, +regme password, +regnick nick password level")
 		if check_banner(c, true) then
-			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +listbans, +reloadbans")
+			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +listbans, +reloadbans")
 		end
 		return false
 	elseif command == "regme" then
@@ -700,7 +693,7 @@ local function onMSG(c, cmd)
 		autil.reply(c, str)
 		return false
 
-	elseif command == "ban" then
+	elseif command == "ban" or command == "banuser" then
 		local level, ok = check_banner(c)
 		if not ok then
 			return false
@@ -728,7 +721,8 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local ban = make_ban(victim_cid, true, level, reason, minutes)
+		local ban = make_ban(level, reason, minutes)
+		ban.cid = victim_cid
 		bans.cids[victim_cid] = ban
 		save_bans()
 
@@ -748,7 +742,9 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		bans.cids[cid] = make_ban(cid, true, level, reason, minutes)
+		local ban = make_ban(level, reason, minutes)
+		ban.cid = cid
+		bans.cids[cid] = ban
 		save_bans()
 
 		autil.reply(c, "The CID " .. cid .. " is now banned")
@@ -766,10 +762,52 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		bans.ips[ip] = make_ban(ip, false, level, reason, minutes)
+		local ban = make_ban(level, reason, minutes)
+		ban.ip = ip
+		bans.ips[ip] = ban
 		save_bans()
 
 		autil.reply(c, "The IP address " .. ip .. " is now banned")
+		return false
+
+	elseif command == "bannick" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
+		local nick, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		if not nick then
+			autil.reply(c, "You need to supply a nick")
+			return false
+		end
+
+		local ban = make_ban(level, reason, minutes)
+		ban.nick = nick
+		bans.nicks[nick] = ban
+		save_bans()
+
+		autil.reply(c, "The nick " .. nick .. " is now banned")
+		return false
+
+	elseif command == "bannickre" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
+		local re, reason, minutes = parameters:match("^(.+) ?(%S*) ?(%d*)")
+		if not re then
+			autil.reply(c, "You need to supply a reg exp")
+			return false
+		end
+
+		local ban = make_ban(level, reason, minutes)
+		ban.nickre = re
+		bans.nicksre[re] = ban
+		save_bans()
+
+		autil.reply(c, "Nicks that match " .. re .. " are now banned")
 		return false
 
 	elseif command == "listbans" then
@@ -786,6 +824,16 @@ local function onMSG(c, cmd)
 		str = str .. "\n\nIP bans:"
 		for ip, ban in base.pairs(bans.ips) do
 			str = str .. "\n\tIP: " .. ip .. ban_info_string(ban)
+		end
+
+		str = str .. "\n\nNick bans:"
+		for nick, ban in base.pairs(bans.nicks) do
+			str = str .. "\n\tNick: " .. nick .. ban_info_string(ban)
+		end
+
+		str = str .. "\n\nNick bans (reg exp):"
+		for nickre, ban in base.pairs(bans.nicksre) do
+			str = str .. "\n\tReg exp: " .. nickre .. ban_info_string(ban)
 		end
 
 		autil.reply(c, str)
