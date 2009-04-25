@@ -3,7 +3,6 @@
 --
 -- bans:
 -- add per reg exp
--- support temp bans
 -- un-ban
 
 local base = _G
@@ -207,11 +206,13 @@ local function load_bans()
 	end
 
 	for k, ban in base.pairs(list) do
-		if ban.cid then
-			bans.cids[ban.cid] = ban
-		end
-		if ban.ip then
-			bans.ips[ban.ip] = ban
+		if not ban.expires or ban_expiration_diff(ban) > 0 then
+			if ban.cid then
+				bans.cids[ban.cid] = ban
+			end
+			if ban.ip then
+				bans.ips[ban.ip] = ban
+			end
 		end
 	end
 end
@@ -340,8 +341,65 @@ local function register_user(cid, nick, password, level)
 	save_users()
 end
 
-local function dump_banned(c)
-	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, "You are banned")
+local function check_banner(c, no_reply)
+	local banner = get_user(c:getCID():toBase32(), 0)
+	if not banner or banner.level < level_op then
+		if not no_reply then
+			autil.reply(c, "Only operators can ban")
+		end
+		return 0, false
+	end
+	return banner.level, true
+end
+
+local function make_ban(cid_or_ip, is_cid, level, reason, minutes)
+	local ban = { level = level }
+	if is_cid then
+		ban.cid = cid_or_ip
+	else
+		ban.ip = cid_or_ip
+	end
+	if reason then
+		ban.reason = reason
+	end
+	if minutes then
+		ban.expires = os.time() + minutes * 60
+	end
+	return ban
+end
+
+function ban_expiration_diff(ban)
+	return os.difftime(ban.expires, os.time())
+end
+
+local function ban_expiration_string(ban)
+	if ban.expires then
+		local diff = ban_expiration_diff(ban)
+		if diff > 0 then
+			return "in " .. formatSeconds(diff)
+		else
+			return "expired"
+		end
+	else
+		return "never"
+	end
+end
+
+local function ban_info_string(ban)
+	str = "\tLevel: " .. ban.level
+	if ban.reason then
+		str = str .. "\tReason: " .. ban.reason
+	end
+	str = str .. "\tExpires: " .. ban_expiration_string(ban)
+	return str
+end
+
+local function dump_banned(c, ban)
+	str = "You are banned (expires: " + ban_expiration_string(ban) + ")"
+	if ban.reason then
+		str = str .. " (reason: " + reason + ")"
+	end
+	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, str)
 end
 
 local function onINF(c, cmd)
@@ -395,11 +453,14 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	local banned_level = 0
+	local ban = nil
 	if bans.cids[cid] then
-		banned_level = bans.cid[cid].level
+		ban = bans.cid[cid]
 	elseif bans.ips[c:getIp()] then
-		banned_level = bans.ips[c:getIp()].level
+		ban = bans.ips[c:getIp()]
+	end
+	if ban and ban.expires and ban_expiration_diff(ban) <= 0 then
+		ban = nil
 	end
 
 	local user = get_user(cid, nick)
@@ -412,8 +473,8 @@ local function onINF(c, cmd)
 		end
 
 		-- check if banned
-		if banned_level > 0 then
-			dump_banned(c)
+		if ban and ban.level > 0 then
+			dump_banned(c, ban)
 			return false
 		end
 
@@ -421,8 +482,8 @@ local function onINF(c, cmd)
 		return true
 	end
 
-	if banned_level > user.level then
-		dump_banned(c)
+	if ban and ban.level > user.level then
+		dump_banned(c, ban)
 		return false
 	end
 
@@ -500,7 +561,7 @@ local function onPAS(c, cmd)
 	return false
 end
 
-local function formatSeconds(t)
+function formatSeconds(t)
 	local t_d = math.floor(t / (60*60*24))
 	local t_h = math.floor(t / (60*60)) % 24
 	local t_m = math.floor(t / 60) % 60
@@ -523,17 +584,6 @@ local function pairsByKeys (t, f)
 	return iter
 end
 
-local function check_banner(c, no_reply)
-	local banner = get_user(c:getCID():toBase32(), 0)
-	if not banner or banner.level < level_op then
-		if not no_reply then
-			autil.reply(c, "Only operators can ban")
-		end
-		return 0, false
-	end
-	return banner.level, true
-end
-
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
@@ -553,7 +603,7 @@ local function onMSG(c, cmd)
 	elseif command == "help" then
 		autil.reply(c, "+test, +help, +regme password, +regnick nick password level")
 		if check_banner(c, true) then
-			autil.reply(c, "+ban nick [minutes], +bancid CID [minutes], +banip IP [minutes], +listbans, +reloadbans")
+			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +listbans, +reloadbans")
 		end
 		return false
 	elseif command == "regme" then
@@ -656,17 +706,18 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		if not parameters:match("%S+") then
+		local nick, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		if not nick then
 			autil.reply(c, "You need to supply a nick")
 			return false
 		end
 
-		local victim = cm:getEntity(cm:getSID(parameters))
+		local victim = cm:getEntity(cm:getSID(nick))
 		if victim then
 			victim = victim:asClient()
 		end
 		if not victim then
-			autil.reply(c, "No user nick-named \"" .. parameters .. "\"")
+			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
 			return false
 		end
 
@@ -677,11 +728,12 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		bans.cids[victim_cid] = { cid = victim_cid, level = level }
+		local ban = make_ban(victim_cid, true, level, reason, minutes)
+		bans.cids[victim_cid] = ban
 		save_bans()
 
-		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, "You have been banned")
-		autil.reply(c, "\"" .. parameters .. "\" (CID: " .. cid .. ") is now banned")
+		dump_banned(victim, ban)
+		autil.reply(c, "\"" .. nick .. "\" (CID: " .. cid .. ") is now banned")
 		return false
 
 	elseif command == "bancid" then
@@ -690,15 +742,16 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		if not parameters:match("%S+") then
+		local cid, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		if not cid then
 			autil.reply(c, "You need to supply a CID")
 			return false
 		end
 
-		bans.cids[parameters] = { cid = parameters, level = level }
+		bans.cids[cid] = make_ban(cid, true, level, reason, minutes)
 		save_bans()
 
-		autil.reply(c, "The CID " .. parameters .. " is now banned")
+		autil.reply(c, "The CID " .. cid .. " is now banned")
 		return false
 
 	elseif command == "banip" then
@@ -707,15 +760,16 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		if not parameters:match("%S+") then
+		local ip, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		if not ip then
 			autil.reply(c, "You need to supply an IP address")
 			return false
 		end
 
-		bans.ips[parameters] = { ip = parameters, level = level }
+		bans.ips[ip] = make_ban(ip, false, level, reason, minutes)
 		save_bans()
 
-		autil.reply(c, "The IP address " .. parameters .. " is now banned")
+		autil.reply(c, "The IP address " .. ip .. " is now banned")
 		return false
 
 	elseif command == "listbans" then
@@ -726,12 +780,12 @@ local function onMSG(c, cmd)
 
 		str = "\nCID bans:"
 		for cid, ban in base.pairs(bans.cids) do
-			str = str .. "\n\tCID: " .. cid .. "\tLevel: " .. ban.level
+			str = str .. "\n\tCID: " .. cid .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nIP bans:"
 		for ip, ban in base.pairs(bans.ips) do
-			str = str .. "\n\tIP: " .. ip .. "\tLevel: " .. ban.level
+			str = str .. "\n\tIP: " .. ip .. ban_info_string(ban)
 		end
 
 		autil.reply(c, str)
