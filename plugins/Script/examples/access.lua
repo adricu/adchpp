@@ -1,5 +1,10 @@
 -- TODO
 -- Fix error types
+--
+-- bans:
+-- add per reg exp
+-- support temp bans
+-- un-ban
 
 local base = _G
 
@@ -15,6 +20,9 @@ local string = base.require('string')
 -- Where to read/write user database
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
+-- Where to read/write ban database
+local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
+
 -- Maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed
 local max_users = -1
 
@@ -22,6 +30,9 @@ local max_users = -1
 local command_min_levels = {
 --	[adchpp.AdcCommand_CMD_MSG] = 2
 }
+
+-- Users with a level above the one specified here are operators
+local level_op = 2
 
 -- Regexes for the various fields. 
 local cid_regex = "^" .. string.rep("[A-Z2-7]", 39) .. "$" -- No way of expressing exactly 39 chars without being explicit it seems
@@ -99,6 +110,10 @@ local users = { }
 users.nicks = { }
 users.cids = { }
 
+local bans = { }
+bans.cids = { }
+bans.ips = { }
+
 local stats = { }
 
 local cm = adchpp.getCM()
@@ -165,6 +180,69 @@ local function save_users()
 	end
 	
 	file:write(json.encode(userlist))
+	file:close()
+end
+
+local function load_bans()
+	bans.cids = { }
+	bans.ips = { }
+
+	local file = io.open(bans_file, "r")
+	if not file then
+		print("Unable to open " .. bans_file ..", bans not loaded")
+		return
+	end
+
+	str = file:read("*a")
+	file:close()
+
+	if #str == 0 then
+		return
+	end
+
+	local ok, list = base.pcall(json.decode, str)
+	if not ok then
+		print("Unable to decode bans file: " .. list)
+		return
+	end
+
+	for k, ban in base.pairs(list) do
+		if ban.cid then
+			bans.cids[ban.cid] = ban
+		end
+		if ban.ip then
+			bans.ips[ban.ip] = ban
+		end
+	end
+end
+
+local function save_bans()
+	local file = io.open(bans_file, "w")
+	if not file then
+		print("Unable to open " .. bans_file .. ", bans not saved")
+		return
+	end
+
+	local list = { }
+	local ipsdone = { }
+
+	local i = 1
+	for k, ban in base.pairs(bans.cids) do
+		list[i] = ban
+		if ban.ip then
+			ipsdone[ban] = 1
+		end
+		i = i + 1
+	end
+
+	for k, ban in base.pairs(bans.ips) do
+		if not ipsdone[ban] then
+			list[i] = ban
+			i = i + 1
+		end
+	end
+
+	file:write(json.encode(list))
 	file:close()
 end
 
@@ -262,6 +340,10 @@ local function register_user(cid, nick, password, level)
 	save_users()
 end
 
+local function dump_banned(c)
+	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, "You are banned")
+end
+
 local function onINF(c, cmd)
 	for field, regex in base.pairs(inf_fields) do
 		val = cmd:getParam(field, 0)
@@ -313,17 +395,38 @@ local function onINF(c, cmd)
 		return false
 	end
 
+	local banned_level = 0
+	if bans.cids[cid] then
+		banned_level = bans.cid[cid].level
+	elseif bans.ips[c:getIp()] then
+		banned_level = bans.ips[c:getIp()].level
+	end
+
 	local user = get_user(cid, nick)
 	if not user then
+		-- non-reg user
 		local code, err = check_max_users()
 		if code then
 			autil.dump(c, code, err)
 			return false
 		end
+
+		-- check if banned
+		if banned_level > 0 then
+			dump_banned(c)
+			return false
+		end
+
+		-- allow in
 		return true
 	end
 
-	if user.level > 1 then
+	if banned_level > user.level then
+		dump_banned(c)
+		return false
+	end
+
+	if user.level >= level_op then
 		cmd:addParam("CT4")
 		cmd:addParam("OP1") -- old name
 	else
@@ -384,7 +487,7 @@ local function onPAS(c, cmd)
 	autil.reply(c, "Welcome back")
 	cm:enterNormal(c, true, true)
 
-	if user.level > 1 and (c:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or
+	if user.level >= level_op and (c:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or
 		c:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))) then
 		for k, v in base.pairs(user_commands) do
 			ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
@@ -420,6 +523,15 @@ local function pairsByKeys (t, f)
 	return iter
 end
 
+local function check_banner(c)
+	local banner = get_user(c:getCID():toBase32(), 0)
+	if not banner or banner.level < level_op then
+		autil.reply(c, "Only operators can ban")
+		return 0, false
+	end
+	return banner.level, true
+end
+
 local function onMSG(c, cmd)
 	msg = cmd:getParam(0)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
@@ -438,6 +550,7 @@ local function onMSG(c, cmd)
 		return false
 	elseif command == "help" then
 		autil.reply(c, "+test, +help, +regme password, +regnick nick password level")
+		autil.reply(c, "+ban nick [minutes], +bancid CID [minutes], +banip IP [minutes], +listbans, +reloadbans")
 		return false
 	elseif command == "regme" then
 		if not parameters:match("%S+") then
@@ -532,8 +645,94 @@ local function onMSG(c, cmd)
 		
 		autil.reply(c, str)
 		return false
+
+	elseif command == "ban" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
+		if not parameters:match("%S+") then
+			autil.reply(c, "You need to supply a nick")
+			return false
+		end
+
+		local victim = cm:getEntity(cm:getSID(parameters)):asClient()
+		if not victim then
+			autil.reply(c, "No user nick-named \"" .. parameters .. "\"")
+			return false
+		end
+
+		local victim_cid = victim:getCID():toBase32()
+		local victim_user = get_user(victim_cid, 0)
+		if victim_user and level <= victim_user.level then
+			autil.reply(c, "You can't ban users whose level is higher or equal than yours")
+			return false
+		end
+
+		bans.cids[victim_cid] = { cid = victim_cid, level = level }
+		save_bans()
+
+		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, "You have been banned")
+		autil.reply(c, "\"" .. parameters .. "\" (CID: " .. cid .. ") is now banned")
+		return false
+
+	elseif command == "bancid" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
+		if not parameters:match("%S+") then
+			autil.reply(c, "You need to supply a CID")
+			return false
+		end
+
+		bans.cids[parameters] = { cid = parameters, level = level }
+		save_bans()
+
+		autil.reply(c, "The CID " .. parameters .. " is now banned")
+		return false
+
+	elseif command == "banip" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
+		if not parameters:match("%S+") then
+			autil.reply(c, "You need to supply an IP address")
+			return false
+		end
+
+		bans.ips[parameters] = { ip = parameters, level = level }
+		save_bans()
+
+		autil.reply(c, "The IP address " .. parameters .. " is now banned")
+		return false
+
+	elseif command == "listbans" then
+		str = "\nCID bans:"
+		for cid, ban in base.pairs(bans.cids) do
+			str = str .. "\n\tCID: " .. cid .. "\tLevel: " .. ban.level
+		end
+
+		str = str .. "\n\nIP bans:"
+		for ip, ban in base.pairs(bans.ips) do
+			str = str .. "\n\tIP: " .. ip .. "\tLevel: " .. ban.level
+		end
+
+		autil.reply(c, str)
+		return false
+
+	elseif command == "loadbans" or command == "reloadbans" then
+		load_bans()
+
+		autil.reply(c, "Ban list reloaded")
+		return false
+
 	end
-	
+
 	return true
 end
 
@@ -598,6 +797,7 @@ local function onDisconnected(c)
 end
 
 base.pcall(load_users)
+base.pcall(load_bans)
 
 conn = cm:signalReceive():connect(onReceive)
 dis = cm:signalDisconnected():connect(onDisconnected)
