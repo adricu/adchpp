@@ -30,7 +30,7 @@ public:
 
 	typedef std::tr1::function<void (const BufferPtr& cmd)> SendHandler;
 
-	Bot(uint32_t sid, const SendHandler& handler) : Entity(sid), handler(handler_) { };
+	Bot(uint32_t sid, const SendHandler& handler_) : Entity(sid), handler(handler_) { };
 
 	virtual void send(const BufferPtr& cmd) { handler(cmd); }
 

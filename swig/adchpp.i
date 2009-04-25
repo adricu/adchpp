@@ -12,6 +12,8 @@
 #include <adchpp/PluginManager.h>
 #include <adchpp/TigerHash.h>
 #include <adchpp/SocketManager.h>
+#include <adchpp/Hub.h>
+#include <adchpp/Bot.h>
 
 using namespace adchpp;
 
@@ -460,7 +462,7 @@ public:
 %extend {
 	Client* asClient() { return dynamic_cast<Client*>($self); }
 	Hub* asHub() { return dynamic_cast<Hub*>($self); }
-	Bot* asBot() { return dynamic_cast<Hub*>($self); }
+	Bot* asBot() { return dynamic_cast<Bot*>($self); }
 }
 
 };
