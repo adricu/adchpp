@@ -490,6 +490,9 @@ public:
 	void updateFields(const AdcCommand& cmd);
 	void updateSupports(const AdcCommand& cmd) throw();
 
+	const CID& getCID() const { return cid; }
+	void setCID(const CID& cid_) { cid = cid_; }
+
 	State getState() const { return state; }
 	void setState(State state_) { state = state_; }
 

@@ -383,7 +383,7 @@ local function onINF(c, cmd)
 		return false
 	end
 	
-	if c:getState() == adchpp.Client_STATE_NORMAL then
+	if c:getState() == adchpp.Entity_STATE_NORMAL then
 		return true
 	end
 	
@@ -443,7 +443,7 @@ local function onINF(c, cmd)
 end
 
 local function onPAS(c, cmd)
-	if c:getState() ~= adchpp.Client_STATE_VERIFY then
+	if c:getState() ~= adchpp.Entity_STATE_VERIFY then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
 		return false
 	end
@@ -523,10 +523,12 @@ local function pairsByKeys (t, f)
 	return iter
 end
 
-local function check_banner(c)
+local function check_banner(c, no_reply)
 	local banner = get_user(c:getCID():toBase32(), 0)
 	if not banner or banner.level < level_op then
-		autil.reply(c, "Only operators can ban")
+		if not no_reply then
+			autil.reply(c, "Only operators can ban")
+		end
 		return 0, false
 	end
 	return banner.level, true
@@ -550,7 +552,9 @@ local function onMSG(c, cmd)
 		return false
 	elseif command == "help" then
 		autil.reply(c, "+test, +help, +regme password, +regnick nick password level")
-		autil.reply(c, "+ban nick [minutes], +bancid CID [minutes], +banip IP [minutes], +listbans, +reloadbans")
+		if check_banner(c, true) then
+			autil.reply(c, "+ban nick [minutes], +bancid CID [minutes], +banip IP [minutes], +listbans, +reloadbans")
+		end
 		return false
 	elseif command == "regme" then
 		if not parameters:match("%S+") then
@@ -657,7 +661,10 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local victim = cm:getEntity(cm:getSID(parameters)):asClient()
+		local victim = cm:getEntity(cm:getSID(parameters))
+		if victim then
+			victim = victim:asClient()
+		end
 		if not victim then
 			autil.reply(c, "No user nick-named \"" .. parameters .. "\"")
 			return false
@@ -712,6 +719,11 @@ local function onMSG(c, cmd)
 		return false
 
 	elseif command == "listbans" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
 		str = "\nCID bans:"
 		for cid, ban in base.pairs(bans.cids) do
 			str = str .. "\n\tCID: " .. cid .. "\tLevel: " .. ban.level
@@ -726,6 +738,11 @@ local function onMSG(c, cmd)
 		return false
 
 	elseif command == "loadbans" or command == "reloadbans" then
+		local level, ok = check_banner(c)
+		if not ok then
+			return false
+		end
+
 		load_bans()
 
 		autil.reply(c, "Ban list reloaded")
@@ -770,7 +787,7 @@ local function onReceive(entity, cmd, ok)
 		end
 	end
 
-	if c:getState() == adchpp.Client_STATE_NORMAL then
+	if c:getState() == adchpp.Entity_STATE_NORMAL then
 		local allowed_level = command_min_levels[cmd:getCommand()]
 		if allowed_level then
 			user = get_user(c:getCID(), c:getField("NI"))
