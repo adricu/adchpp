@@ -100,12 +100,16 @@
 
 	%property(pluginData, getPluginData, setPluginData)
 	%property(SID, getSID)
+	%property(state, getState, setState)
+	%property(CID, getCID)
+	%property(supportList, getSupportList)
 }
 
 %extend adchpp::Client {
 	%property(ip, getIp)
-	%property(CID, getCID)
-	%property(state, getState, setState)
+	%property(udpActive, isUdpActive)
+	%property(tcpActive, isTcpActive)
+	%property(socket, getSocket)
 }
 
 %extend adchpp::PluginManager {
