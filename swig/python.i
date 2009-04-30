@@ -54,6 +54,10 @@
 	}
 %}
 
+%extend adchpp::Exception {
+	%property(error, getError)
+}
+
 %extend adchpp::AdcCommand {
 	%property(type, getType)
 	%property(parameters, getParameters)
