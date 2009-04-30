@@ -54,6 +54,17 @@
 	}
 %}
 
+%extend adchpp::AdcCommand {
+	%property(type, getType)
+	%property(parameters, getParameters)
+	%property(features, getFeatures)
+	%property(from, getFrom, setFrom)
+	%property(to, getTo, setTo)
+	%property(fourCC, getFourCC, setFourCC)
+	%property(priority, getPriority, setPriority)
+	%property(command, getCommandString)
+}
+
 %extend adchpp::Entity {
 	PyObject* getPluginData(const PluginDataHandle& handle) {
 		PyObject* ret = reinterpret_cast<PyObject*>($self->getPluginData(handle));

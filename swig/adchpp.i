@@ -329,6 +329,12 @@ public:
 		SEV_FATAL = 2
 	};
 
+	enum Priority {
+		PRIORITY_NORMAL,
+		PRIORITY_LOW,
+		PRIORITY_IGNORE
+	};
+
 	static const char TYPE_BROADCAST = 'B';
 	static const char TYPE_CLIENT = 'C';
 	static const char TYPE_DIRECT = 'D';
@@ -412,6 +418,9 @@ public:
 	void setTo(uint32_t aTo);
 	uint32_t getFrom() const;
 	void setFrom(uint32_t aFrom);
+	
+	Priority getPriority() const { return priority; }
+	void setPriority(Priority priority_) { priority = priority_; }
 
 %extend {
 	std::string getCommandString() {
