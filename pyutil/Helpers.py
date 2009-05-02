@@ -16,7 +16,7 @@ def handleCommand(filter, callback):
 
 def dump(c, code, msg):
     answer = a.AdcCommand(a.AdcCommand.CMD_STA, a.AdcCommand.TYPE_INFO, a.AdcCommand.HUB_SID)
-    answer.addParam("" + a.AdcCommand.SEV_FATAL + code).addParam(msg)
+    answer.addParam(str(a.AdcCommand.SEV_FATAL) + str(code)).addParam(msg)
     c.send(answer)
     c.disconnect(0)
     return False
@@ -120,11 +120,11 @@ class InfVerifier(object):
 
     def validateParam(self, c, cmd, params):
         if len(cmd.getParameters()) < len(params):
-            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Too few parameters for " + cmd.getCommand())
+            return self.failed(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "Too few parameters for " + cmd.getCommand())
         
         for i, param in enumerate(params):
             if not param.match(cmd.getParam(i)):
-                return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, cmd.getParam(i) + " doesn't match " + param)
+                return self.failed(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, cmd.getParam(i) + " doesn't match " + param)
         return True
     
     def validateFields(self, c, cmd, fields):
@@ -132,7 +132,7 @@ class InfVerifier(object):
             if field[0:2] in fields:
                 r = fields[field[0:2]]
                 if not r.match(field[2:]):
-                    return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, field + " doesn't match " + str(r))
+                    return self.failed(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, field + " doesn't match " + str(r))
         return True
     
 class PasswordHandler(object):
@@ -160,7 +160,7 @@ class PasswordHandler(object):
         foundc, cid = cmd.getParam("ID", 0)
         
         if not foundn or not foundc:
-            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
+            return self.failed(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 
         password = self.getPassword(nick, cid)
         if not password:
@@ -180,12 +180,12 @@ class PasswordHandler(object):
         c = e.asClient()
  
         if c.getState() != a.Client.STATE_VERIFY:
-            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
+            return self.failed(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
         
         salt, password = c.getPluginData(self.salt)
         
         if not salt:
-            return self.failed(c, adchpp.AdcCommand.ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
+            return self.failed(c, a.AdcCommand.ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
         
         c.setPluginData(self.salt, None)
         
@@ -193,7 +193,7 @@ class PasswordHandler(object):
         nick = c.getField("NI")
         
         if not self.cm.verifyPassword(c, password, salt, cmd.getParam(0)):
-            return self.failed(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
+            return self.failed(c, a.AdcCommand.ERROR_BAD_PASSWORD, "Invalid password")
 
         self.cm.enterNormal(c, True, True)
         

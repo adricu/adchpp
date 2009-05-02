@@ -28,11 +28,11 @@ namespace adchpp {
 class ADCHPP_VISIBLE Bot : public Entity {
 public:
 
-	typedef std::tr1::function<void (const BufferPtr& cmd)> SendHandler;
+	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
 	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
 
-	virtual void send(const BufferPtr& cmd) { handler(cmd); }
+	virtual void send(const BufferPtr& cmd) { handler(*this, cmd); }
 
 	using Entity::send;
 private:

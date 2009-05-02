@@ -32,6 +32,9 @@
 %typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
+%typemap(in) std::tr1::function<void (adchpp::Bot& bot, const adchpp::BufferPtr& cmd)> {
+	$1 = PyHandle($input, false);
+}
 
 %include "adchpp.i"
 
@@ -62,9 +65,9 @@
 	%property(type, getType)
 	%property(parameters, getParameters)
 	%property(features, getFeatures)
-	%property(from, getFrom, setFrom)
+	%property(source, getFrom, setFrom)
 	%property(to, getTo, setTo)
-	%property(fourCC, getFourCC, setFourCC)
+	%property(fourCC, getFourCC)
 	%property(priority, getPriority, setPriority)
 	%property(command, getCommandString)
 }
@@ -114,6 +117,11 @@
 	%property(udpActive, isUdpActive)
 	%property(tcpActive, isTcpActive)
 	%property(socket, getSocket)
+}
+
+%extend adchpp::LogManager {
+	%property(logFile, getLogFile, setLogFile)
+	%property(enabled, getEnabled, setEnabled)
 }
 
 %extend adchpp::PluginManager {

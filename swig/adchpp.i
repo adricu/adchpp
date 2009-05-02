@@ -553,7 +553,7 @@ public:
 
 class Bot : public Entity {
 public:
-	typedef std::tr1::function<void (const BufferPtr& cmd)> SendHandler;
+	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
 	Bot(uint32_t sid, const SendHandler& handler_);
 
@@ -577,6 +577,13 @@ class LogManager
 {
 public:
 	void log(const std::string& area, const std::string& msg) throw();
+
+	void setLogFile(const std::string& fileName);
+	const std::string& getLogFile() const;
+
+	void setEnabled(bool enabled_);
+	bool getEnabled() const;
+
 };
 
 %template(SignalC) Signal<void (Entity&)>;
