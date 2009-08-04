@@ -103,6 +103,7 @@ typedef unsigned __int64 uint64_t;
 #include <cerrno>
 #include <cstdarg>
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
 
 #include <string>
