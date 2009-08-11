@@ -1,8 +1,5 @@
 -- TODO
 -- Fix error types
---
--- bans:
--- un-ban
 -- clean up expired bans
 
 local base = _G
@@ -132,7 +129,7 @@ local function load_users()
 		return 
 	end
 
-	str = file:read("*a")
+	local str = file:read("*a")
 	file:close()
 	
 	if #str == 0 then
@@ -199,7 +196,7 @@ local function load_bans()
 		return
 	end
 
-	str = file:read("*a")
+	local str = file:read("*a")
 	file:close()
 
 	if #str == 0 then
@@ -283,6 +280,10 @@ local function get_user(cid, nick)
 	return user
 end
 
+local function get_user_c(c)
+	return get_user(c:getCID():toBase32(), c:getField("NI"))
+end
+
 local function update_user(user, cid, nick)
 -- only one of nick and cid may be updated...
 	if user.nick ~= nick then
@@ -357,7 +358,7 @@ local function make_ban(level, reason, minutes)
 	return ban
 end
 
-function ban_expiration_diff(ban)
+local function ban_expiration_diff(ban)
 	return os.difftime(ban.expires, os.time())
 end
 
@@ -375,7 +376,7 @@ local function ban_expiration_string(ban)
 end
 
 local function ban_info_string(ban)
-	str = "\tLevel: " .. ban.level
+	local str = "\tLevel: " .. ban.level
 	if ban.reason then
 		str = str .. "\tReason: " .. ban.reason
 	end
@@ -384,7 +385,7 @@ local function ban_info_string(ban)
 end
 
 local function dump_banned(c, ban)
-	str = "You are banned (expires: " .. ban_expiration_string(ban) .. ")"
+	local str = "You are banned (expires: " .. ban_expiration_string(ban) .. ")"
 	if ban.reason then
 		str = str .. " (reason: " .. reason .. ")"
 	end
@@ -517,7 +518,7 @@ local function onPAS(c, cmd)
 	local cid = c:getCID()
 	local nick = c:getField("NI")
 	
-	local user = get_user(c:getCID():toBase32(), c:getField("NI"))
+	local user = get_user_c(c)
 	if not user then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Can't find you now")
 		return false
@@ -583,15 +584,14 @@ local function pairsByKeys (t, f)
 end
 
 local function onMSG(c, cmd)
-	msg = cmd:getParam(0)
+	local msg = cmd:getParam(0)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 
 	if not command then
 		for re, reban in base.pairs(bans.msgsre) do
 			if msg:match(re) and (not reban.expires or ban_expiration_diff(reban) > 0) then
-				local cid = c:getCID():toBase32()
-				local ban = { cid = cid, level = reban.level, reason = reban.reason, expires = reban.expires }
-				bans.cids[cid] = ban
+				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
+				bans.cids[c:getCID():toBase32()] = ban
 				save_bans()
 				dump_banned(c, ban)
 				return false
@@ -602,47 +602,85 @@ local function onMSG(c, cmd)
 	end
 
 	add_stats('+' .. command)
-	
-	if command == "test" then
-		autil.reply(c, "Test ok")
-		return false
-	elseif command == "error" then
-		xxxxyyyy()
-		return false
-	elseif command == "help" then
-		autil.reply(c, "+test, +help, +regme password, +regnick nick password level")
+
+	if command == "help" then
+		autil.reply(c, "+help, +mass message [level], +regme password, +regnick nick password level, +test")
 		if check_banner(c, true) then
 			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +banmsgre msg-reg-exp [reason] [minutes], +listbans, +reloadbans")
 		end
 		return false
+
+	elseif command == "mass" then
+		local message, level = parameters:match("^(%S+) ?(%d*)")
+		if not message then
+			autil.reply(c, "You need to supply a message")
+			return false
+		end
+		if string.len(level) > 0 then
+			level = base.tonumber(level)
+		end
+
+		local entities = cm:getEntities()
+		local size = entities:size()
+		if size == 0 then
+			return false
+		end
+
+		-- TODO we send PMs from the originator of the mass message; eventually, we should send these from a bot.
+		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, adchpp.AdcCommand_HUB_SID)
+		mass_cmd:setFrom(c:getSID())
+		mass_cmd:addParam(message)
+		mass_cmd:addParam("PM", adchpp.AdcCommand_fromSID(mass_cmd:getFrom()))
+
+		local count = 0
+		for i = 0, size - 1 do
+			local other = entities[i]:asClient()
+			if other then
+				local ok = string.len(level) == 0 or level <= 0
+				if not ok then
+					local user = get_user_c(other)
+					ok = user and user.level >= level
+				end
+
+				if ok then
+					mass_cmd:setTo(other:getSID())
+					other:send(mass_cmd)
+					count = count + 1
+				end
+			end
+		end
+
+		autil.reply(c, "Message sent to " .. count .. " users")
+		return false
+
 	elseif command == "regme" then
 		if not parameters:match("%S+") then
 			autil.reply(c, "You need to supply a password without whitespace")
 			return false
 		end
-		
+
 		register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
-				
+
 		autil.reply(c, "You're now registered")
 		return false
+
 	elseif command == "regnick" then
 		local nick, password, level = parameters:match("^(%S+) (%S+) (%d+)")
 		if not nick or not password or not level then
 			autil.reply(c, "You must supply nick, password and level!")
 			return false
 		end
-		
-		level = tonumber(level)
-		
-		other = cm:findByNick(nick)
+		level = base.tonumber(level)
+
+		local other = cm:findByNick(nick)
 		
 		local cid
 		if other then
 			cid = other:getCID():toBase32()
 		end
-		
-		my_user = get_user(c:getCID():toBase32(), c:getField("NI"))
-		
+
+		local my_user = get_user_c(c)
+
 		if not my_user then
 			autil.reply(c, "Only registered users may register others")
 			return false
@@ -667,12 +705,17 @@ local function onMSG(c, cmd)
 		end
 
 		return false
+
+	elseif command == "test" then
+		autil.reply(c, "Test ok")
+		return false
+
 	elseif command == "stats" then
 		local now = os.time()
 		local scripttime = os.difftime(now, start_time)
 		local hubtime = os.difftime(now, adchpp.Stats_startTime)
 		
-		str = "\n"
+		local str = "\n"
 		str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
 		str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
 		
@@ -738,7 +781,6 @@ local function onMSG(c, cmd)
 		end
 
 		local ban = make_ban(level, reason, minutes)
-		ban.cid = victim_cid
 		bans.cids[victim_cid] = ban
 		save_bans()
 
@@ -758,9 +800,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		ban.cid = cid
-		bans.cids[cid] = ban
+		bans.cids[cid] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
@@ -778,9 +818,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		ban.ip = ip
-		bans.ips[ip] = ban
+		bans.ips[ip] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
@@ -798,9 +836,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		ban.nick = nick
-		bans.nicks[nick] = ban
+		bans.nicks[nick] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
@@ -818,9 +854,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		ban.nickre = re
-		bans.nicksre[re] = ban
+		bans.nicksre[re] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
@@ -838,9 +872,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		ban.msgre = re
-		bans.msgsre[re] = ban
+		bans.msgsre[re] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
@@ -852,7 +884,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		str = "\nCID bans:"
+		local str = "\nCID bans:"
 		for cid, ban in base.pairs(bans.cids) do
 			str = str .. "\n\tCID: " .. cid .. ban_info_string(ban)
 		end
@@ -897,14 +929,12 @@ local function onMSG(c, cmd)
 end
 
 local function onDSC(c, cmd)
-	sid = cmd:getParam(0)
-	
-	victim = cm:getClient(adchpp.AdcCommand_toSID(sid))
+	local victim = cm:getClient(adchpp.AdcCommand_toSID(cmd:getParam(0)))
 	if not victim then
 		autil.reply(c, "Victim not found")
 		return false
 	end
-	
+
 	victim:disconnect()
 	autil.reply(c, "Victim disconnected")
 	return false
@@ -933,7 +963,7 @@ local function onReceive(entity, cmd, ok)
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
 		local allowed_level = command_min_levels[cmd:getCommand()]
 		if allowed_level then
-			user = get_user(c:getCID(), c:getField("NI"))
+			local user = get_user_c(c)
 			if not user or user.level < allowed_level then
 				autil.reply(c, "You don't have access to " .. cmd:getCommandString())
 				return false
@@ -959,5 +989,11 @@ end
 base.pcall(load_users)
 base.pcall(load_bans)
 
-conn = cm:signalReceive():connect(onReceive)
-dis = cm:signalDisconnected():connect(onDisconnected)
+cm:signalReceive():connect(function(entity, cmd, ok)
+	local res = onReceive(entity, cmd, ok)
+	if not res then
+		cmd:setPriority(adchpp.AdcCommand_PRIORITY_IGNORE)
+	end
+	return res
+end)
+cm:signalDisconnected():connect(onDisconnected)
