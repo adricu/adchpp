@@ -657,10 +657,93 @@ local function onMSG(c, cmd)
 	add_stats('+' .. command)
 
 	if command == "help" then
-		autil.reply(c, "+help, +mass message [level], +regme password, +regnick nick password level, +stats, +test, +topic [topic]")
+		autil.reply(c, "+help, +info [nick or CID or IP] (empty = hub stats), +mass message [level], +regme password, +regnick nick password level, +test, +topic [topic]")
 		if check_banner(c, true) then
 			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +banmsgre msg-reg-exp [reason] [minutes], +listbans, +reloadbans")
 		end
+		return false
+
+	elseif command == "info" or command == "hubinfo" or command == "stats" or command == "userinfo" then
+		local str
+
+		if #parameters > 0 then
+			local user = cm:getEntity(cm:getSID(parameters)) -- by nick
+			if not user then
+				user = cm:getEntity(cm:getSID(adchpp.CID(parameters))) -- by CID
+			end
+			if not user then
+				-- by IP
+				local entities = cm:getEntities()
+				local size = entities:size()
+				if size > 0 then
+					for i = 0, size - 1 do
+						local user_c = entities[i]:asClient()
+						if user_c and user_c:getIp() == parameters then
+							user = entities[i]
+							break
+						end
+					end
+				end
+			end
+
+			if user then
+				str = "\n"
+				str = str .. "Nick: " .. user:getField("NI") .. "\n"
+				str = str .. "CID: " .. user:getField("ID") .. "\n"
+				str = str .. "IP: "
+				local user_c = user:asClient()
+				if user_c then
+					str = str .. user_c:getIp()
+				else
+					str = str .. "unknown"
+				end
+				str = str .. "\n"
+				-- TODO add more fields (share size, etc)
+
+			else
+				str = "No user found with a nick, CID or IP matching " .. parameters
+			end
+
+		else
+			local now = os.time()
+			local scripttime = os.difftime(now, start_time)
+			local hubtime = os.difftime(now, adchpp.Stats_startTime)
+
+			str = "\n"
+			str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
+			str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
+
+			str = str .. "\nADC and script commands: \n"
+			for k, v in base.pairs(stats) do
+				str = str .. v .. "\t" .. k .. "\n"
+			end
+
+			str = str .. "\nDisconnect reasons: \n"
+			for k, v in base.pairs(adchpp) do
+				if k:sub(1, 12) == "Util_REASON_" and k ~= "Util_REASON_LAST" then
+					str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k:sub(6) .. "\n"
+				end
+			end
+
+			local queued = cm:getQueuedBytes()
+			local queueBytes = adchpp.Stats_queueBytes
+			local queueCalls = adchpp.Stats_queueCalls
+			local sendBytes = adchpp.Stats_sendBytes
+			local sendCalls = adchpp.Stats_sendCalls
+			local recvBytes = adchpp.Stats_recvBytes
+			local recvCalls = adchpp.Stats_recvCalls
+
+			str = str .. "\nBandwidth stats: \n"
+			str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getEntities():size()) .. "/user)\n"
+			str = str .. adchpp.Util_formatBytes(queueBytes) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(queueBytes/hubtime) .. "/s)\n"
+			str = str .. queueCalls .. "\tQueue calls (" .. adchpp.Util_formatBytes(queueBytes/queueCalls) .. "/call)\n"
+			str = str .. adchpp.Util_formatBytes(sendBytes) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(sendBytes/hubtime) .. "/s)\n"
+			str = str .. sendCalls .. "\tSend calls (" .. adchpp.Util_formatBytes(sendBytes/sendCalls) .. "/call)\n"
+			str = str .. adchpp.Util_formatBytes(recvBytes) .. "\tTotal bytes received (" .. adchpp.Util_formatBytes(recvBytes/hubtime) .. "/s)\n"
+			str = str .. recvCalls .. "\tReceive calls (" .. adchpp.Util_formatBytes(recvBytes/recvCalls) .. "/call)\n"
+		end
+
+		autil.reply(c, str)
 		return false
 
 	elseif command == "mass" then
@@ -757,48 +840,6 @@ local function onMSG(c, cmd)
 			autil.reply(other, "You've been registered with password " .. password)
 		end
 
-		return false
-
-	elseif command == "stats" then
-		local now = os.time()
-		local scripttime = os.difftime(now, start_time)
-		local hubtime = os.difftime(now, adchpp.Stats_startTime)
-
-		local str = "\n"
-		str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
-		str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
-		
-		str = str .. "\nADC and script commands: \n"
-
-		for k, v in base.pairs(stats) do
-			str = str .. v .. "\t" .. k .. "\n"
-		end
-
-		str = str .. "\nDisconnect reasons: \n"
-		for k, v in base.pairs(adchpp) do
-			if k:sub(1, 12) == "Util_REASON_" and k ~= "Util_REASON_LAST" then
-				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k:sub(6) .. "\n"
-			end
-		end
-
-		local queued = cm:getQueuedBytes()
-		local queueBytes = adchpp.Stats_queueBytes
-		local queueCalls = adchpp.Stats_queueCalls
-		local sendBytes = adchpp.Stats_sendBytes
-		local sendCalls = adchpp.Stats_sendCalls
-		local recvBytes = adchpp.Stats_recvBytes
-		local recvCalls = adchpp.Stats_recvCalls
-
-		str = str .. "\nBandwidth stats: \n"
-		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getEntities():size()) .. "/user)\n"
-		str = str .. adchpp.Util_formatBytes(queueBytes) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(queueBytes/hubtime) .. "/s)\n"
-		str = str .. queueCalls .. "\tQueue calls (" .. adchpp.Util_formatBytes(queueBytes/queueCalls) .. "/call)\n"
-		str = str .. adchpp.Util_formatBytes(sendBytes) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(sendBytes/hubtime) .. "/s)\n"
-		str = str .. sendCalls .. "\tSend calls (" .. adchpp.Util_formatBytes(sendBytes/sendCalls) .. "/call)\n"
-		str = str .. adchpp.Util_formatBytes(recvBytes) .. "\tTotal bytes received (" .. adchpp.Util_formatBytes(recvBytes/hubtime) .. "/s)\n"
-		str = str .. recvCalls .. "\tReceive calls (" .. adchpp.Util_formatBytes(recvBytes/recvCalls) .. "/call)\n"
-
-		autil.reply(c, str)
 		return false
 
 	elseif command == "test" then
