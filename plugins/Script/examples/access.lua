@@ -1007,11 +1007,11 @@ end
 base.pcall(load_users)
 base.pcall(load_bans)
 
-cm:signalReceive():connect(function(entity, cmd, ok)
+access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	local res = onReceive(entity, cmd, ok)
 	if not res then
 		cmd:setPriority(adchpp.AdcCommand_PRIORITY_IGNORE)
 	end
 	return res
 end)
-cm:signalDisconnected():connect(onDisconnected)
+access_2 = cm:signalDisconnected():connect(onDisconnected)

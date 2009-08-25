@@ -118,7 +118,7 @@ def buildLuaModule():
 	targets.append(luadchpp)
 
 # buildRbModule() - needs threading sorted out
-buildPyModule()
+#buildPyModule()
 
 buildLuaModule()
 

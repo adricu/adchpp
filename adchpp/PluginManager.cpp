@@ -177,13 +177,12 @@ struct CommandDispatch {
 			return;
 		}
 
-		if(cmd.getParameters()[0] != name) {
+		StringList l;
+		Util::tokenize(l, cmd.getParameters()[0], ' ');
+		if(l[0] != name) {
 			return;
 		}
-
-		StringList l(cmd.getParameters().size());
 		l[0] = name.substr(1);
-		std::copy(cmd.getParameters().begin() + 1, cmd.getParameters().end(), l.begin() + 1);
 
 		cmd.setPriority(AdcCommand::PRIORITY_IGNORE);
 		f(e, l, ok);

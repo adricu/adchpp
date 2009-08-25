@@ -21,11 +21,11 @@ local prefix = "[%Y-%m-%d %H:%M:%S] "
 -- Where to read/write history file - set to nil to disable persistent history
 local history_file = adchpp.Util_getCfgPath() .. "history.txt"
 
-io = base.require('io')
-os = base.require('os')
-json = base.require('json')
-string = base.require('string')
-autil = base.require('autil')
+local io = base.require('io')
+local os = base.require('os')
+local json = base.require('json')
+local string = base.require('string')
+local autil = base.require('autil')
 
 local pos = 0
 
@@ -35,29 +35,38 @@ local function idx(p)
 	return (p % maxItems) + 1
 end
 
-local function onHistory(c, params, ok)
+local function onHistory(entity, params, ok)
+	if not ok then
+		return ok
+	end
+
+	local c = entity:asClient()
+	if not c then
+		return false
+	end
+
 	local items = defaultItems
-	if(params:size() > 1) then
-		items = tonumber(params[1])
+	if params:size() > 1 then
+		items = base.tonumber(params[1])
 		if not items then
 			return false
 		end
 	end
-	
+
 	local s = 0
-	
+
 	if items < pos then
 		s = pos - items
 	end
-	
+
 	local e = pos 
 	local msg = "Displaying last " .. (e - s) .. " messages"
-	
+
 	while s ~= e and messages[idx(s)] do
 		msg = msg .. "\r\n" .. messages[idx(s)]
 		s = s + 1
 	end
-	
+
 	autil.reply(c, msg)
 
 	return false
@@ -67,15 +76,15 @@ local function save_messages()
 	if not history_file then
 		return
 	end
-	
+
 	local s = 0
 	local e = pos
-	
+
 	if pos >= maxItems then
 		s = pos + 1
 		e = pos + maxItems
 	end
-	
+
 	local f = io.open(history_file, "w")
 
 	while s ~= e and messages[idx(s)] do
@@ -89,42 +98,41 @@ local function load_messages()
 	if not history_file then
 		return
 	end
-	
+
 	for line in io.lines(history_file) do
 		messages[idx(pos)] = line
 		pos = pos + 1
 	end
 end
 
-local function onMSG(c, cmd)
-	local nick = c:getField("NI")
+local function onMSG(entity, cmd)
+	local nick = entity:getField("NI")
 	if #nick < 1 then
 		return true
 	end
-	
+
 	local now = os.date(prefix)
 	local message = now .. '<' .. nick .. '> ' .. cmd:getParam(0)
 	messages[idx(pos)] = message
 	pos = pos + 1
-	
+
 	base.pcall(save_messages)
-	
+
 	return true
 end
 
-local function onReceive(c, cmd, ok)
-
+local function onReceive(entity, cmd, ok)
 	-- Skip messages that have been handled by others
 	if not ok then
 		return ok
 	end
-	
+
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST then
-		return onMSG(c, cmd)
+		return onMSG(entity, cmd)
 	end
 end
 
 base.pcall(load_messages)
 
-c1 = adchpp.getPM():onCommand("history", onHistory)
-c2 = adchpp.getCM():signalReceive():connect(onReceive)
+history_1 = adchpp.getPM():onCommand("history", onHistory)
+history_2 = adchpp.getCM():signalReceive():connect(onReceive)
