@@ -1,6 +1,5 @@
 -- TODO
 -- Fix error types
--- clean up expired bans
 
 local base = _G
 
@@ -225,6 +224,8 @@ local function load_bans()
 	if not bans.msgsre then
 		bans.msgsre = { }
 	end
+
+	clear_expired_bans()
 end
 
 local function save_bans()
@@ -252,16 +253,15 @@ local function make_user(cid, nick, password, level)
 end
 
 local function check_max_users()
-	
 	if max_users == -1 then
 		return
 	end
-	
+
 	if max_users == 0 then
 		return adchpp.AdcCommand_ERROR_REGGED_ONLY, "Only registered users are allowed in here"
 	end
 
-	local count = cm:getClients():size()
+	local count = cm:getEntities():size()
 	if count >= max_users then
 		return adchpp.AdcCommand_ERROR_HUB_FULL, "Hub full, please try again later"
 	end
@@ -362,6 +362,23 @@ local function ban_expiration_diff(ban)
 	return os.difftime(ban.expires, os.time())
 end
 
+local function clear_expired_bans()
+	local save = false
+
+	for k_, ban_array in base.pairs(bans) do
+		for k, ban in base.pairs(ban_array) do
+			if ban.expires and ban_expiration_diff(ban) <= 0 then
+				ban_array[k] = nil
+				save = true
+			end
+		end
+	end
+
+	if save then
+		save_bans()
+	end
+end
+
 local function ban_expiration_string(ban)
 	if ban.expires then
 		local diff = ban_expiration_diff(ban)
@@ -443,6 +460,7 @@ local function onINF(c, cmd)
 		return false
 	end
 
+	clear_expired_bans()
 	local ban = nil
 	if bans.cids[cid] then
 		ban = bans.cids[cid]
@@ -457,9 +475,6 @@ local function onINF(c, cmd)
 				break
 			end
 		end
-	end
-	if ban and ban.expires and ban_expiration_diff(ban) <= 0 then
-		ban = nil
 	end
 
 	local user = get_user(cid, nick)
@@ -588,8 +603,9 @@ local function onMSG(c, cmd)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 
 	if not command then
+		clear_expired_bans()
 		for re, reban in base.pairs(bans.msgsre) do
-			if msg:match(re) and (not reban.expires or ban_expiration_diff(reban) > 0) then
+			if msg:match(re) then
 				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
 				bans.cids[c:getCID():toBase32()] = ban
 				save_bans()
@@ -604,7 +620,7 @@ local function onMSG(c, cmd)
 	add_stats('+' .. command)
 
 	if command == "help" then
-		autil.reply(c, "+help, +mass message [level], +regme password, +regnick nick password level, +test")
+		autil.reply(c, "+help, +mass message [level], +regme password, +regnick nick password level, +stats, +test")
 		if check_banner(c, true) then
 			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +banmsgre msg-reg-exp [reason] [minutes], +listbans, +reloadbans")
 		end
@@ -706,32 +722,28 @@ local function onMSG(c, cmd)
 
 		return false
 
-	elseif command == "test" then
-		autil.reply(c, "Test ok")
-		return false
-
 	elseif command == "stats" then
 		local now = os.time()
 		local scripttime = os.difftime(now, start_time)
 		local hubtime = os.difftime(now, adchpp.Stats_startTime)
-		
+
 		local str = "\n"
 		str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
 		str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
 		
 		str = str .. "\nADC and script commands: \n"
-		
+
 		for k, v in base.pairs(stats) do
 			str = str .. v .. "\t" .. k .. "\n"
 		end
-		
+
 		str = str .. "\nDisconnect reasons: \n"
 		for k, v in base.pairs(adchpp) do
 			if k:sub(1, 12) == "Util_REASON_" and k ~= "Util_REASON_LAST" then
 				str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k:sub(6) .. "\n"
 			end
 		end
-		
+
 		local queued = cm:getQueuedBytes()
 		local queueBytes = adchpp.Stats_queueBytes
 		local queueCalls = adchpp.Stats_queueCalls
@@ -739,17 +751,21 @@ local function onMSG(c, cmd)
 		local sendCalls = adchpp.Stats_sendCalls
 		local recvBytes = adchpp.Stats_recvBytes
 		local recvCalls = adchpp.Stats_recvCalls
-		
+
 		str = str .. "\nBandwidth stats: \n"
-		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getClients():size()) .. "/user)\n"
+		str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getEntities():size()) .. "/user)\n"
 		str = str .. adchpp.Util_formatBytes(queueBytes) .. "\tTotal bytes queued (" .. adchpp.Util_formatBytes(queueBytes/hubtime) .. "/s)\n"
 		str = str .. queueCalls .. "\tQueue calls (" .. adchpp.Util_formatBytes(queueBytes/queueCalls) .. "/call)\n"
 		str = str .. adchpp.Util_formatBytes(sendBytes) .. "\tTotal bytes sent (" .. adchpp.Util_formatBytes(sendBytes/hubtime) .. "/s)\n"
 		str = str .. sendCalls .. "\tSend calls (" .. adchpp.Util_formatBytes(sendBytes/sendCalls) .. "/call)\n"
 		str = str .. adchpp.Util_formatBytes(recvBytes) .. "\tTotal bytes received (" .. adchpp.Util_formatBytes(recvBytes/hubtime) .. "/s)\n"
 		str = str .. recvCalls .. "\tReceive calls (" .. adchpp.Util_formatBytes(recvBytes/recvCalls) .. "/call)\n"
-		
+
 		autil.reply(c, str)
+		return false
+
+	elseif command == "test" then
+		autil.reply(c, "Test ok")
 		return false
 
 	elseif command == "ban" or command == "banuser" then
@@ -884,6 +900,8 @@ local function onMSG(c, cmd)
 			return false
 		end
 
+		clear_expired_bans()
+
 		local str = "\nCID bans:"
 		for cid, ban in base.pairs(bans.cids) do
 			str = str .. "\n\tCID: " .. cid .. ban_info_string(ban)
@@ -918,7 +936,7 @@ local function onMSG(c, cmd)
 			return false
 		end
 
-		load_bans()
+		base.pcall(load_bans)
 
 		autil.reply(c, "Ban list reloaded")
 		return false
