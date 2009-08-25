@@ -15,6 +15,9 @@ local string = base.require('string')
 -- Where to read/write user database
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
+-- Where to read/write the current topic
+local topic_file = adchpp.Util_getCfgPath() .. "topic.txt"
+
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
 
@@ -100,10 +103,14 @@ local table = base.require('table')
 local math = base.require('math')
 
 local start_time = os.time()
+
 local salts = { }
+
 local users = { }
 users.nicks = { }
 users.cids = { }
+
+local topic
 
 local bans = { }
 bans.cids = { }
@@ -124,7 +131,7 @@ local function load_users()
 
 	local file = io.open(users_file, "r")
 	if not file then 
-		print("Unable to open " .. users_file ..", users not loaded")
+		base.print("Unable to open " .. users_file ..", users not loaded")
 		return 
 	end
 
@@ -137,7 +144,7 @@ local function load_users()
 	
 	local userok, userlist = base.pcall(json.decode, str)
 	if not userok then
-		print("Unable to decode users file: " .. userlist)
+		base.print("Unable to decode users file: " .. userlist)
 		return
 	end
 	
@@ -154,7 +161,7 @@ end
 local function save_users()
 	local file = io.open(users_file, "w")
 	if not file then
-		print("Unable to open " .. users_file .. ", users not saved")
+		base.print("Unable to open " .. users_file .. ", users not saved")
 		return
 	end
 	
@@ -181,6 +188,36 @@ local function save_users()
 	file:close()
 end
 
+local function set_topic()
+	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
+	hub:setField("DE", topic)
+	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", topic):getBuffer())
+end
+
+local function load_topic()
+	local file = io.open(topic_file, "r")
+	if not file then
+		base.print("Unable to open " .. topic_file ..", topic not loaded")
+		return
+	end
+
+	topic = file:read("*a")
+	file:close()
+
+	set_topic()
+end
+
+local function save_topic()
+	local file = io.open(topic_file, "w")
+	if not file then
+		base.print("Unable to open " .. topic_file .. ", topic not saved")
+		return
+	end
+
+	file:write(topic)
+	file:close()
+end
+
 local function load_bans()
 	bans = { }
 	bans.cids = { }
@@ -191,7 +228,7 @@ local function load_bans()
 
 	local file = io.open(bans_file, "r")
 	if not file then
-		print("Unable to open " .. bans_file ..", bans not loaded")
+		base.print("Unable to open " .. bans_file ..", bans not loaded")
 		return
 	end
 
@@ -204,7 +241,7 @@ local function load_bans()
 
 	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		print("Unable to decode bans file: " .. list)
+		base.print("Unable to decode bans file: " .. list)
 		return
 	end
 
@@ -231,7 +268,7 @@ end
 local function save_bans()
 	local file = io.open(bans_file, "w")
 	if not file then
-		print("Unable to open " .. bans_file .. ", bans not saved")
+		base.print("Unable to open " .. bans_file .. ", bans not saved")
 		return
 	end
 
@@ -322,7 +359,7 @@ end
 
 local function register_user(cid, nick, password, level)
 	if not nick and not cid then
-		print("Can't register user with neither nick nor cid")
+		base.print("Can't register user with neither nick nor cid")
 	end
 	
 	local user = make_user(cid, nick, password, level)
@@ -620,7 +657,7 @@ local function onMSG(c, cmd)
 	add_stats('+' .. command)
 
 	if command == "help" then
-		autil.reply(c, "+help, +mass message [level], +regme password, +regnick nick password level, +stats, +test")
+		autil.reply(c, "+help, +mass message [level], +regme password, +regnick nick password level, +stats, +test, +topic [topic]")
 		if check_banner(c, true) then
 			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +banmsgre msg-reg-exp [reason] [minutes], +listbans, +reloadbans")
 		end
@@ -766,6 +803,12 @@ local function onMSG(c, cmd)
 
 	elseif command == "test" then
 		autil.reply(c, "Test ok")
+		return false
+
+	elseif command == "topic" or command == "settopic" or command == "changetopic" then
+		topic = parameters
+		save_topic()
+		set_topic()
 		return false
 
 	elseif command == "ban" or command == "banuser" then
@@ -1005,6 +1048,7 @@ local function onDisconnected(c)
 end
 
 base.pcall(load_users)
+base.pcall(load_topic)
 base.pcall(load_bans)
 
 access_1 = cm:signalReceive():connect(function(entity, cmd, ok)

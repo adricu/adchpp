@@ -403,6 +403,8 @@ public:
 
 	const std::string& getFeatures() const;
 
+    const BufferPtr& getBuffer() const;
+
 #ifndef SWIGLUA
 	bool getParam(const char* name, size_t start, std::string& OUTPUT) const;
 #endif
