@@ -19,9 +19,10 @@
 #include "stdinc.h"
 #include "LuaScript.h"
 
+#include "LuaEngine.h"
+
 #include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
-#include <adchpp/PluginManager.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -36,58 +37,29 @@ extern "C" {
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-
 }
 
 using namespace std;
 
 const string LuaScript::className = "LuaScript";
 
-namespace {
-	void prepare_cpath(lua_State* L, const string& path) {
-		lua_getfield(L, LUA_GLOBALSINDEX, "package");
-		if (!lua_istable(L, -1)) {
-			lua_pop(L, 1);
-			return;
-		}
-		lua_getfield(L, -1, "cpath");
-		if (!lua_isstring(L, -1)) {
-			lua_pop(L, 2);
-			return;
-		}
-		
-		string oldpath = lua_tostring(L, -1);
-		oldpath += ";" + path + "?.so";
-		lua_pushstring(L, oldpath.c_str());
-		lua_setfield(L, -3, "cpath");
-		
-		// Pop table
-		lua_pop(L, 2);
-	}
-}
-
-LuaScript::LuaScript(Engine* engine) : Script(engine), l(0) {
-	l = lua_open();
-	luaL_openlibs(l);
-	prepare_cpath(l, PluginManager::getInstance()->getPluginPath());
+LuaScript::LuaScript(Engine* engine) : Script(engine) {
 }
 
 LuaScript::~LuaScript() {
-	if(l)
-		lua_close(l);	
 }
 
 void LuaScript::loadFile(const string& path, const string& filename_) {
 	filename = filename_;
 	char old_dir[MAX_PATH];
 	getcwd(old_dir, MAX_PATH);
-	
+
 	chdir(path.c_str());
 
-	int error = luaL_loadfile(l, filename.c_str()) || lua_pcall(l, 0, 0, 0);	
-	
+	int error = luaL_loadfile(getEngine()->l, filename.c_str()) || lua_pcall(getEngine()->l, 0, 0, 0);
+
 	if(error) {
-		LOG(className, string("Error loading file: ") + lua_tostring(l, -1));
+		LOG(className, string("Error loading file: ") + lua_tostring(getEngine()->l, -1));
 	} else {
 		LOG(className, "Loaded " + filename);
 	}
@@ -96,5 +68,10 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 
 void LuaScript::getStats(string& str) const {
 	str += filename + "\n";
-	str += "\tUsed Memory: " + Util::toString(lua_gc(l, LUA_GCCOUNT, 0)) + " KiB\n";
+	str += "\tUsed Memory: " + Util::toString(lua_gc(getEngine()->l, LUA_GCCOUNT, 0)) + " KiB\n";
 }
+
+LuaEngine* LuaScript::getEngine() const {
+	return dynamic_cast<LuaEngine*>(engine);
+}
+

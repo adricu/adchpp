@@ -25,10 +25,10 @@ class Script {
 public:
 	Script(Engine* engine_) : engine(engine_) { }
 	virtual ~Script() { }
-		
+
 	void unload();
-	
-private:
+
+protected:
 	Engine* engine;
 };
 #endif /*SCRIPT_H_*/

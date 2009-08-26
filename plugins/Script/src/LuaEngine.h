@@ -21,6 +21,7 @@
 
 #include "Engine.h"
 
+struct lua_State;
 class LuaScript;
 
 class LuaEngine : public Engine {
@@ -32,7 +33,12 @@ public:
 	virtual void unloadScript(Script* script);
 	
 	virtual void getStats(std::string& str) const;
+
 private:
+	friend class LuaScript;
+
+	lua_State* l;
+
 	std::vector<LuaScript*> scripts;
 };
 #endif /*LUAENGINE_H_*/

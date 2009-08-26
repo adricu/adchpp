@@ -21,8 +21,8 @@
 
 #include "Script.h"
 
-struct lua_State;
 class Engine;
+class LuaEngine;
 
 class LuaScript : public Script {
 public:
@@ -34,9 +34,9 @@ public:
 	void getStats(std::string& str) const;
 	
 	static const std::string className;
-private:
 
-	lua_State* l;
+private:
+	LuaEngine* getEngine() const;
 	std::string filename;
 };
 

@@ -35,42 +35,37 @@ local function idx(p)
 	return (p % maxItems) + 1
 end
 
-local function onHistory(entity, params, ok)
-	if not ok then
-		return ok
-	end
+autil.commands.history = {
+	alias = { hist = true },
 
-	local c = entity:asClient()
-	if not c then
-		return false
-	end
-
-	local items = defaultItems
-	if params:size() > 1 then
-		items = base.tonumber(params[1])
-		if not items then
-			return false
+	command = function(c, parameters)
+		local items = defaultItems
+		if #parameters > 0 then
+			items = base.tonumber(parameters)
+			if not items then
+				return
+			end
 		end
-	end
 
-	local s = 0
+		local s = 0
 
-	if items < pos then
-		s = pos - items
-	end
+		if items < pos then
+			s = pos - items
+		end
 
-	local e = pos 
-	local msg = "Displaying last " .. (e - s) .. " messages"
+		local e = pos 
+		local msg = "Displaying last " .. (e - s) .. " messages"
 
-	while s ~= e and messages[idx(s)] do
-		msg = msg .. "\r\n" .. messages[idx(s)]
-		s = s + 1
-	end
+		while s ~= e and messages[idx(s)] do
+			msg = msg .. "\r\n" .. messages[idx(s)]
+			s = s + 1
+		end
 
-	autil.reply(c, msg)
+		autil.reply(c, msg)
+	end,
 
-	return false
-end
+	help = "[lines] - display main chat messages logged by the hub"
+}
 
 local function save_messages()
 	if not history_file then
@@ -134,5 +129,4 @@ end
 
 base.pcall(load_messages)
 
-history_1 = adchpp.getPM():onCommand("history", onHistory)
-history_2 = adchpp.getCM():signalReceive():connect(onReceive)
+history_1 = adchpp.getCM():signalReceive():connect(onReceive)

@@ -379,9 +379,9 @@ local function check_banner(c, no_reply)
 		if not no_reply then
 			autil.reply(c, "Only operators can ban")
 		end
-		return 0, false
+		return false, 0
 	end
-	return banner.level, true
+	return true, banner.level
 end
 
 local function make_ban(level, reason, minutes)
@@ -621,49 +621,35 @@ function formatSeconds(t)
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
 end
 
-local function pairsByKeys (t, f)
-	local a = {}
-	for n in base.pairs(t) do table.insert(a, n) end
-		table.sort(a, f)
-		local i = 0      -- iterator variable
-		local iter = function ()   -- iterator function
-		i = i + 1
-		if a[i] == nil then return nil
-		else return a[i], t[a[i]]
-		end
-	end
-	return iter
-end
-
-local function onMSG(c, cmd)
-	local msg = cmd:getParam(0)
-	local command, parameters = msg:match("^%+(%a+) ?(.*)")
-
-	if not command then
-		clear_expired_bans()
-		for re, reban in base.pairs(bans.msgsre) do
-			if msg:match(re) then
-				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
-				bans.cids[c:getCID():toBase32()] = ban
-				save_bans()
-				dump_banned(c, ban)
-				return false
+autil.commands.help = {
+	command = function(c, parameters)
+		-- TODO command-specific help if eg "+help mass"
+		local list = { }
+		for k, v in base.pairs(autil.commands) do
+			if (not v.protected) or (v.protected and v.protected(c)) then
+				local str = "+" .. k
+				if v.help then
+					str = str .. " " .. v.help
+				end
+				if v.alias then
+					local list_alias = { }
+					for k_alias, v_alias in base.pairs(v.alias) do
+						table.insert(list_alias, "+" .. k_alias)
+					end
+					str = str .. " (aliases: " .. table.concat(list_alias, ", ") .. ")"
+				end
+				table.insert(list, str)
 			end
 		end
-
-		return true
+		table.sort(list)
+		autil.reply(c, "Available commands:\n" .. table.concat(list, "\n"))
 	end
+}
 
-	add_stats('+' .. command)
+autil.commands.info = {
+	alias = { hubinfo = true, stats = true, userinfo = true },
 
-	if command == "help" then
-		autil.reply(c, "+help, +info [nick or CID or IP] (empty = hub stats), +mass message [level], +regme password, +regnick nick password level, +test, +topic [topic]")
-		if check_banner(c, true) then
-			autil.reply(c, "+ban nick [reason] [minutes], +bancid CID [reason] [minutes], +banip IP [reason] [minutes], +bannick nick [reason] [minutes], +bannickre nick-reg-exp [reason] [minutes], +banmsgre msg-reg-exp [reason] [minutes], +listbans, +reloadbans")
-		end
-		return false
-
-	elseif command == "info" or command == "hubinfo" or command == "stats" or command == "userinfo" then
+	command = function(c, parameters)
 		local str
 
 		if #parameters > 0 then
@@ -699,8 +685,7 @@ local function onMSG(c, cmd)
 				end
 				str = str .. "\n"
 				-- TODO add more fields (share size, etc)
-
-			else
+				else
 				str = "No user found with a nick, CID or IP matching " .. parameters
 			end
 
@@ -744,13 +729,19 @@ local function onMSG(c, cmd)
 		end
 
 		autil.reply(c, str)
-		return false
+	end,
 
-	elseif command == "mass" then
+	help = "[nick or CID or IP] - information about a user, or about the hub if no parameter given"
+}
+
+autil.commands.mass = {
+	alias = { massmessage = true },
+
+	command = function(c, parameters)
 		local message, level = parameters:match("^(%S+) ?(%d*)")
 		if not message then
 			autil.reply(c, "You need to supply a message")
-			return false
+			return
 		end
 		if string.len(level) > 0 then
 			level = base.tonumber(level)
@@ -759,7 +750,7 @@ local function onMSG(c, cmd)
 		local entities = cm:getEntities()
 		local size = entities:size()
 		if size == 0 then
-			return false
+			return
 		end
 
 		-- TODO we send PMs from the originator of the mass message; eventually, we should send these from a bot.
@@ -787,29 +778,37 @@ local function onMSG(c, cmd)
 		end
 
 		autil.reply(c, "Message sent to " .. count .. " users")
-		return false
+	end,
 
-	elseif command == "regme" then
+	help = "message [level]"
+}
+
+autil.commands.regme = {
+	command = function(c, parameters)
 		if not parameters:match("%S+") then
 			autil.reply(c, "You need to supply a password without whitespace")
-			return false
+			return
 		end
 
 		register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 
 		autil.reply(c, "You're now registered")
-		return false
+	end,
 
-	elseif command == "regnick" then
+	help = "password"
+}
+
+autil.commands.regnick = {
+	command = function(c, parameters)
 		local nick, password, level = parameters:match("^(%S+) (%S+) (%d+)")
 		if not nick or not password or not level then
 			autil.reply(c, "You must supply nick, password and level!")
-			return false
+			return
 		end
 		level = base.tonumber(level)
 
 		local other = cm:findByNick(nick)
-		
+
 		local cid
 		if other then
 			cid = other:getCID():toBase32()
@@ -819,49 +818,62 @@ local function onMSG(c, cmd)
 
 		if not my_user then
 			autil.reply(c, "Only registered users may register others")
-			return false
+			return
 		end
-		
+
 		if level >= my_user.level then
 			autil.reply(c, "You may only register to a lower level than your own")
-			return false
+			return
 		end
-		
+
 		if level < 1 then
 			autil.reply(c, "Level too low")
-			return false
+			return
 		end
-		
+
 		register_user(cid, nick, password, level)
 
 		autil.reply(c, nick .. " registered")
-		
+
 		if other then
 			autil.reply(other, "You've been registered with password " .. password)
 		end
+	end,
 
-		return false
+	help = "nick password level"
+}
 
-	elseif command == "test" then
+autil.commands.test = {
+	command = function(c)
 		autil.reply(c, "Test ok")
-		return false
+	end
+}
 
-	elseif command == "topic" or command == "settopic" or command == "changetopic" then
+autil.commands.topic = {
+	alias = { changetopic = true, hubtopic = true, settopic = true },
+
+	command = function(c, parameters)
 		topic = parameters
 		save_topic()
 		set_topic()
-		return false
+	end,
 
-	elseif command == "ban" or command == "banuser" then
-		local level, ok = check_banner(c)
+	help = "[topic]"
+}
+
+autil.commands.ban = {
+	alias = { banuser = true },
+
+	command = function(c, parameters)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		local nick, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
 		if not nick then
 			autil.reply(c, "You need to supply a nick")
-			return false
+			return
 		end
 
 		local victim = cm:getEntity(cm:getSID(nick))
@@ -870,14 +882,14 @@ local function onMSG(c, cmd)
 		end
 		if not victim then
 			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
-			return false
+			return
 		end
 
 		local victim_cid = victim:getCID():toBase32()
 		local victim_user = get_user(victim_cid, 0)
 		if victim_user and level <= victim_user.level then
 			autil.reply(c, "You can't ban users whose level is higher or equal than yours")
-			return false
+			return
 		end
 
 		local ban = make_ban(level, reason, minutes)
@@ -886,102 +898,140 @@ local function onMSG(c, cmd)
 
 		dump_banned(victim, ban)
 		autil.reply(c, "\"" .. nick .. "\" (CID: " .. cid .. ") is now banned")
-		return false
+	end,
 
-	elseif command == "bancid" then
-		local level, ok = check_banner(c)
+	help = "nick [reason] [minutes] - ban an online user",
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.bancid = {
+	command = function(c, parameters)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		local cid, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
 		if not cid then
 			autil.reply(c, "You need to supply a CID")
-			return false
+			return
 		end
 
 		bans.cids[cid] = make_ban(level, reason, minutes)
 		save_bans()
-
+	
 		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
-		return false
+	end,
 
-	elseif command == "banip" then
-		local level, ok = check_banner(c)
+	help = "CID [reason] [minutes]",
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.banip = {
+	command = function(c, parameters)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		local ip, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
 		if not ip then
 			autil.reply(c, "You need to supply an IP address")
-			return false
+			return
 		end
 
 		bans.ips[ip] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
-		return false
+	end,
 
-	elseif command == "bannick" then
-		local level, ok = check_banner(c)
+	help = "IP [reason] [minutes]",
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.bannick = {
+	command = function(c, parameters)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		local nick, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
 		if not nick then
 			autil.reply(c, "You need to supply a nick")
-			return false
+			return
 		end
 
 		bans.nicks[nick] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
-		return false
+	end,
 
-	elseif command == "bannickre" then
-		local level, ok = check_banner(c)
+	help = "nick [reason] [minutes]",
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.bannickre = {
+	command = function(c, parameters)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		local re, reason, minutes = parameters:match("^(.+) ?(%S*) ?(%d*)")
 		if not re then
 			autil.reply(c, "You need to supply a reg exp")
-			return false
+			return
 		end
 
 		bans.nicksre[re] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
-		return false
+	end,
 
-	elseif command == "banmsgre" then
-		local level, ok = check_banner(c)
+	help = "nick-reg-exp [reason] [minutes]",
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.banmsgre = {
+	command = function(c, parameters)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		local re, reason, minutes = parameters:match("^(.+) ?(%S*) ?(%d*)")
 		if not re then
 			autil.reply(c, "You need to supply a reg exp")
-			return false
+			return
 		end
 
 		bans.msgsre[re] = make_ban(level, reason, minutes)
 		save_bans()
 
 		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
-		return false
+	end,
 
-	elseif command == "listbans" then
-		local level, ok = check_banner(c)
+	help = "msg-reg-exp [reason] [minutes]",
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.listbans = {
+	alias = { showbans = true },
+
+	command = function(c)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		clear_expired_bans()
@@ -1012,19 +1062,54 @@ local function onMSG(c, cmd)
 		end
 
 		autil.reply(c, str)
-		return false
+	end,
 
-	elseif command == "loadbans" or command == "reloadbans" then
-		local level, ok = check_banner(c)
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.loadbans = {
+	alias = { reloadbans = true },
+
+	command = function(c)
+		local ok, level = check_banner(c)
 		if not ok then
-			return false
+			return
 		end
 
 		base.pcall(load_bans)
 
 		autil.reply(c, "Ban list reloaded")
-		return false
+	end,
 
+	protected = function(c) return check_banner(c, true) end
+}
+
+local function onMSG(c, cmd)
+	local msg = cmd:getParam(0)
+	local command, parameters = msg:match("^%+(%a+) ?(.*)")
+
+	if not command then
+		clear_expired_bans()
+		for re, reban in base.pairs(bans.msgsre) do
+			if msg:match(re) then
+				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
+				bans.cids[c:getCID():toBase32()] = ban
+				save_bans()
+				dump_banned(c, ban)
+				return false
+			end
+		end
+
+		return true
+	end
+
+	add_stats('+' .. command)
+
+	for k, v in base.pairs(autil.commands) do
+		if k == command or (v.alias and v.alias[command]) then
+			v.command(c, parameters)
+			return false
+		end
 	end
 
 	return true

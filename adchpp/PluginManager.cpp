@@ -160,12 +160,7 @@ struct CommandDispatch {
 	CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) : name('+' + name_), f(f_) { }
 
 	void operator()(Entity& e, AdcCommand& cmd, bool& ok) {
-		Client* cc = dynamic_cast<Client*>(&e);
-		if(!cc) {
-			return;
-		}
-
-		if(cc->getState() != Client::STATE_NORMAL) {
+		if(e.getState() != Entity::STATE_NORMAL) {
 			return;
 		}
 
