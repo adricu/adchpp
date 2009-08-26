@@ -734,6 +734,33 @@ autil.commands.info = {
 	help = "[nick or CID or IP] - information about a user, or about the hub if no parameter given"
 }
 
+autil.commands.listregs = {
+	alias = { listreg = true, listregged = true, reggedusers = true, showreg = true, showregs = true, showregged = true },
+
+	command = function(c, parameters)
+		local user = get_user_c(c)
+		if not user then
+			autil.reply(c, "Only registered users can use this command")
+			return
+		end
+
+		local str = "Registered users with a level >= " .. user.level .. ":\n"
+		for k, v in base.pairs(users.nicks) do
+			if v.level >= user.level then
+				str = str .. "Nick: " .. k .. "\n"
+			end
+		end
+		for k, v in base.pairs(users.cids) do
+			if v.level >= user.level then
+				str = str .. "CID: " .. k .. "\n"
+			end
+		end
+		autil.reply(c, str)
+	end,
+
+	protected = function(c) return get_user_c(c) end
+}
+
 autil.commands.mass = {
 	alias = { massmessage = true },
 
@@ -1026,7 +1053,7 @@ autil.commands.banmsgre = {
 }
 
 autil.commands.listbans = {
-	alias = { showbans = true },
+	alias = { listban = true, listbanned = true, showban = true, showbans = true, showbanned = true },
 
 	command = function(c)
 		local ok, level = check_banner(c)
