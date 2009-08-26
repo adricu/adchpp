@@ -744,14 +744,14 @@ autil.commands.listregs = {
 			return
 		end
 
-		local str = "Registered users with a level >= " .. user.level .. ":\n"
+		local str = "Registered users with a level <= " .. user.level .. " (your level):\n"
 		for k, v in base.pairs(users.nicks) do
-			if v.level >= user.level then
+			if v.level <= user.level then
 				str = str .. "Nick: " .. k .. "\n"
 			end
 		end
 		for k, v in base.pairs(users.cids) do
-			if v.level >= user.level then
+			if v.level <= user.level then
 				str = str .. "CID: " .. k .. "\n"
 			end
 		end
