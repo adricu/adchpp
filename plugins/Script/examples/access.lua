@@ -361,7 +361,7 @@ local function register_user(cid, nick, password, level)
 	if not nick and not cid then
 		base.print("Can't register user with neither nick nor cid")
 	end
-	
+
 	local user = make_user(cid, nick, password, level)
 	if nick then
 		users.nicks[nick] = user
@@ -834,13 +834,20 @@ autil.commands.regme = {
 }
 
 autil.commands.regnick = {
+	alias = { reguser = true },
+
 	command = function(c, parameters)
-		local nick, password, level = parameters:match("^(%S+) (%S+) (%d+)")
-		if not nick or not password or not level then
-			autil.reply(c, "You must supply nick, password and level!")
+		local my_user = get_user_c(c)
+		if not my_user then
+			autil.reply(c, "Only registered users may register others")
 			return
 		end
-		level = base.tonumber(level)
+
+		local nick, password, level = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		if not nick then
+			autil.reply(c, "You must supply a nick")
+			return
+		end
 
 		local other = cm:findByNick(nick)
 
@@ -849,20 +856,33 @@ autil.commands.regnick = {
 			cid = other:getCID():toBase32()
 		end
 
-		local my_user = get_user_c(c)
-
-		if not my_user then
-			autil.reply(c, "Only registered users may register others")
-			return
+		if string.len(level) > 0 then
+			level = base.tonumber(level)
+			if level >= my_user.level then
+				autil.reply(c, "You may only register to a lower level than your own (" .. my_user.level .. ")")
+				return
+			end
+		else
+			level = my_user.level - 1
 		end
-
-		if level >= my_user.level then
-			autil.reply(c, "You may only register to a lower level than your own")
-			return
-		end
-
 		if level < 1 then
 			autil.reply(c, "Level too low")
+			return
+		end
+
+		if #password == 0 then
+			-- un-reg
+			if cid then
+				users.cids[cid] = nil
+			end
+			users.nicks[nick] = nil
+			save_users()
+
+			autil.reply(c, nick .. " un-registered")
+
+			if other then
+				autil.reply(other, "You've been un-registered")
+			end
 			return
 		end
 
@@ -875,7 +895,9 @@ autil.commands.regnick = {
 		end
 	end,
 
-	help = "nick password level"
+	help = "nick [password] [level] - register a user; use no password to un-reg; level defaults to your own level minus one",
+
+	protected = function(c) return get_user_c(c) end
 }
 
 autil.commands.test = {
