@@ -657,25 +657,17 @@ autil.commands.info = {
 			if not user then
 				user = cm:getEntity(cm:getSID(adchpp.CID(parameters))) -- by CID
 			end
-			if not user then
-				-- by IP
-				local entities = cm:getEntities()
-				local size = entities:size()
-				if size > 0 then
-					for i = 0, size - 1 do
-						local user_c = entities[i]:asClient()
-						if user_c and user_c:getIp() == parameters then
-							user = entities[i]
-							break
-						end
-					end
-				end
-			end
 
 			if user then
+				local field_function = function(field, text)
+					if user:hasField(field) then
+						str = str .. text .. ": " .. user:getField(field) .. "\n"
+					end
+				end
+
 				str = "\n"
-				str = str .. "Nick: " .. user:getField("NI") .. "\n"
-				str = str .. "CID: " .. user:getField("ID") .. "\n"
+				field_function("NI", "Nick")
+				field_function("ID", "CID")
 				str = str .. "IP: "
 				local user_c = user:asClient()
 				if user_c then
@@ -684,9 +676,44 @@ autil.commands.info = {
 					str = str .. "unknown"
 				end
 				str = str .. "\n"
-				-- TODO add more fields (share size, etc)
+				field_function("DE", "Description")
+				field_function("SS", "Share size (bytes)")
+				field_function("SF", "Number of shared files")
+				field_function("VE", "Client identification")
+				field_function("US", "Max upload speed (bytes/s)")
+				field_function("DS", "Max download speed (bytes/s)")
+				field_function("SL", "Max slots")
+				field_function("AS", "Speed limit for auto-slots (bytes/s)")
+				field_function("AM", "Minimum auto-slots")
+				field_function("EM", "E-mail")
+				field_function("HN", "Hubs where user is a normal user")
+				field_function("HR", "Hubs where user is registered")
+				field_function("HO", "Hubs where user is operator")
+				field_function("AW", "Away")
+				field_function("SU", "Protocol supports")
+
+			else
+				-- by IP
+				local users_ip = { }
+				local entities = cm:getEntities()
+				local size = entities:size()
+				if size > 0 then
+					for i = 0, size - 1 do
+						local user_c = entities[i]:asClient()
+						if user_c and user_c:getIp() == parameters then
+							table.insert(users_ip, entities[i])
+						end
+					end
+				end
+				if table.getn(users_ip) > 0 then
+					str = "Users with the IP " .. parameters .. ":\n"
+					for i, v in base.ipairs(users_ip) do
+						str = str .. v:getField("NI") .. "\n"
+					end
+
 				else
-				str = "No user found with a nick, CID or IP matching " .. parameters
+					str = "No user found with a nick, CID or IP matching " .. parameters
+				end
 			end
 
 		else
