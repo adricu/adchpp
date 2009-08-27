@@ -924,7 +924,14 @@ autil.commands.regnick = {
 
 	help = "nick [password] [level] - register a user; use no password to un-reg; level defaults to your own level minus one",
 
-	protected = function(c) return get_user_c(c) end
+	protected = function(c)
+		local user = get_user_c(c)
+		if not user then
+			return false
+		end
+
+		return user.level > 1
+	end
 }
 
 autil.commands.test = {
