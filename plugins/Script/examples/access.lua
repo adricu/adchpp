@@ -810,6 +810,14 @@ autil.commands.mass = {
 	help = "message [level]"
 }
 
+autil.commands.myip = {
+	alias = { getip = true, getmyip = true, ip = true, showip = true, showmyip = true },
+
+	command = function(c)
+		autil.reply(c, "Your IP: " .. c:getIp())
+	end
+}
+
 autil.commands.regme = {
 	command = function(c, parameters)
 		if not parameters:match("%S+") then
