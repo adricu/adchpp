@@ -7,17 +7,6 @@ module("history")
 base.require('luadchpp')
 local adchpp = base.luadchpp
 
--- Options
-
--- Number of messages to keep
-local maxItems = 500
-
--- Number of messages to display if user doesn't select anthing else
-local defaultItems = 50
-
--- Prefix to put before each message (as seen by 
-local prefix = "[%Y-%m-%d %H:%M:%S] "
-
 -- Where to read/write history file - set to nil to disable persistent history
 local history_file = adchpp.Util_getCfgPath() .. "history.txt"
 
@@ -31,15 +20,33 @@ local pos = 0
 
 local messages = {}
 
+autil.settings.history_max = {
+	help = "Number of messages to keep",
+
+	value = 500
+}
+
+autil.settings.history_default = {
+	help = "Number of messages to display if the user doesn't select anything else",
+
+	value = 50
+}
+
+autil.settings.history_prefix = {
+	help = "Prefix to put before each message",
+
+	value = "[%Y-%m-%d %H:%M:%S] "
+}
+
 local function idx(p)
-	return (p % maxItems) + 1
+	return (p % autil.settings.history_max.value) + 1
 end
 
 autil.commands.history = {
 	alias = { hist = true },
 
 	command = function(c, parameters)
-		local items = defaultItems
+		local items = autil.settings.history_default.value
 		if #parameters > 0 then
 			items = base.tonumber(parameters)
 			if not items then
@@ -75,9 +82,9 @@ local function save_messages()
 	local s = 0
 	local e = pos
 
-	if pos >= maxItems then
+	if pos >= autil.settings.history_max.value then
 		s = pos + 1
-		e = pos + maxItems
+		e = pos + autil.settings.history_max.value
 	end
 
 	local f = io.open(history_file, "w")
@@ -106,7 +113,7 @@ local function onMSG(entity, cmd)
 		return true
 	end
 
-	local now = os.date(prefix)
+	local now = os.date(autil.settings.history_prefix.value)
 	local message = now .. '<' .. nick .. '> ' .. cmd:getParam(0)
 	messages[idx(pos)] = message
 	pos = pos + 1

@@ -10,19 +10,14 @@ base.require("luadchpp")
 local adchpp = base.luadchpp
 local string = base.require('string')
 
--- Configuration
-
 -- Where to read/write user database
 local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 
--- Where to read/write the current topic
-local topic_file = adchpp.Util_getCfgPath() .. "topic.txt"
+-- Where to read/write settings
+local settings_file = adchpp.Util_getCfgPath() .. "settings.txt"
 
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
-
--- Maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed
-local max_users = -1
 
 -- Users with level lower than the specified will not be allowed to run command at all
 local command_min_levels = {
@@ -93,8 +88,6 @@ local user_commands = {
 	Disconnect = "HDSC %[userSID]\n"
 }
 
--- The rest
-
 local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
@@ -110,8 +103,6 @@ local users = { }
 users.nicks = { }
 users.cids = { }
 
-local topic
-
 local bans = { }
 bans.cids = { }
 bans.ips = { }
@@ -124,6 +115,25 @@ local stats = { }
 local cm = adchpp.getCM()
 
 function hasbit(x, p) return x % (p + p) >= p end
+
+autil.settings.maxusers = {
+	alias = { max_users = true, user_max = true, users_max = true, usermax = true, usersmax = true },
+
+	help = "Maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed",
+
+	value = -1
+}
+
+autil.settings.topic = {
+	change = function()
+		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", autil.settings.topic.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", autil.settings.topic.value):getBuffer())
+	end,
+
+	help = "Hub topic",
+
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE")
+}
 
 local function load_users()
 	users.cids = { }
@@ -188,33 +198,49 @@ local function save_users()
 	file:close()
 end
 
-local function set_topic()
-	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
-	hub:setField("DE", topic)
-	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", topic):getBuffer())
-end
-
-local function load_topic()
-	local file = io.open(topic_file, "r")
+local function load_settings()
+	local file = io.open(settings_file, "r")
 	if not file then
-		base.print("Unable to open " .. topic_file ..", topic not loaded")
+		base.print("Unable to open " .. settings_file ..", settings not loaded")
 		return
 	end
 
-	topic = file:read("*a")
+	local str = file:read("*a")
 	file:close()
 
-	set_topic()
-end
-
-local function save_topic()
-	local file = io.open(topic_file, "w")
-	if not file then
-		base.print("Unable to open " .. topic_file .. ", topic not saved")
+	if #str == 0 then
 		return
 	end
 
-	file:write(topic)
+	local ok, list = base.pcall(json.decode, str)
+	if not ok then
+		base.print("Unable to decode settings file: " .. list)
+		return
+	end
+
+	for k, v in base.pairs(list) do
+		if autil.settings[k] then
+			local change = autil.settings[k].value ~= v
+			autil.settings[k].value = v
+			if change and autil.settings[k].change then
+				autil.settings[k].change()
+			end
+		end
+	end
+end
+
+local function save_settings()
+	local file = io.open(settings_file, "w")
+	if not file then
+		base.print("Unable to open " .. settings_file .. ", settings not saved")
+		return
+	end
+
+	local list = { }
+	for k, v in base.pairs(autil.settings) do
+		list[k] = v.value
+	end
+	file:write(json.encode(list))
 	file:close()
 end
 
@@ -290,16 +316,16 @@ local function make_user(cid, nick, password, level)
 end
 
 local function check_max_users()
-	if max_users == -1 then
+	if autil.settings.maxusers.value == -1 then
 		return
 	end
 
-	if max_users == 0 then
+	if autil.settings.maxusers.value == 0 then
 		return adchpp.AdcCommand_ERROR_REGGED_ONLY, "Only registered users are allowed in here"
 	end
 
 	local count = cm:getEntities():size()
-	if count >= max_users then
+	if count >= autil.settings.maxusers.value then
 		return adchpp.AdcCommand_ERROR_HUB_FULL, "Hub full, please try again later"
 	end
 	return
@@ -334,7 +360,7 @@ local function update_user(user, cid, nick)
 		end
 		user.nick = nick
 		users.nicks[user.nick] = user
-		save_users()
+		base.pcall(save_users())
 		return true, "Registration data updated (new nick)"
 	end
 	
@@ -350,7 +376,7 @@ local function update_user(user, cid, nick)
 		
 		user.cid = cid
 		users.cids[user.cid] = user
-		save_users()
+		base.pcall(save_users())
 		return true, "Registration data updated (new CID)"
 	end
 	
@@ -370,7 +396,7 @@ local function register_user(cid, nick, password, level)
 		users.cids[cid] = user
 	end
 
-	save_users()
+	base.pcall(save_users())
 end
 
 local function check_banner(c, no_reply)
@@ -412,7 +438,7 @@ local function clear_expired_bans()
 	end
 
 	if save then
-		save_bans()
+		base.pcall(save_bans())
 	end
 end
 
@@ -621,29 +647,141 @@ function formatSeconds(t)
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
 end
 
-autil.commands.help = {
+autil.commands.cfg = {
+	alias = { changecfg = true, changeconfig = true, config = true, var = true, changevar = true, setvar = true, setcfg = true, setconfig = true },
+
 	command = function(c, parameters)
-		-- TODO command-specific help if eg "+help mass"
-		local list = { }
-		for k, v in base.pairs(autil.commands) do
-			if (not v.protected) or (v.protected and v.protected(c)) then
-				local str = "+" .. k
-				if v.help then
-					str = str .. " " .. v.help
-				end
-				if v.alias then
-					local list_alias = { }
-					for k_alias, v_alias in base.pairs(v.alias) do
-						table.insert(list_alias, "+" .. k_alias)
-					end
-					str = str .. " (aliases: " .. table.concat(list_alias, ", ") .. ")"
-				end
-				table.insert(list, str)
+		if not autil.commands.cfg.protected(c) then
+			return
+		end
+
+		local name, value = parameters:match("^(%S+) (.+)")
+		if not name or not value then
+			autil.reply(c, "You need to supply a variable name and a value")
+			return
+		end
+
+		local setting = nil
+		for k, v in base.pairs(autil.settings) do
+			if k == name or (v.alias and v.alias[name]) then
+				setting = v
+				break
 			end
 		end
-		table.sort(list)
-		autil.reply(c, "Available commands:\n" .. table.concat(list, "\n"))
-	end
+		if not setting then
+			autil.reply(c, "The name " .. name .. " doesn't correspond to any setting variable, use \"+help cfg\" to list all variables")
+			return
+		end
+
+		local old = setting.value
+		if value == old then
+			autil.reply(c, "The value is the same as before, no change done")
+			return
+		end
+
+		local type = base.type(old)
+		if type == "boolean" then
+			value = value ~= "0"
+		elseif type == "number" then
+			local num = base.tonumber(value)
+			if not num then
+				autil.reply(c, "Only numbers are accepted for the variable " .. name)
+				return
+			end
+			value = num
+		end
+
+		setting.value = value
+
+		if setting.change then
+			setting.change()
+		end
+
+		base.pcall(save_settings)
+		autil.reply(c, "Variable " .. name .. " changed to " .. base.tostring(setting.value))
+	end,
+
+	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
+
+	helplong = function()
+		local str = "List of all settings variables:\n"
+		for k, v in base.pairs(autil.settings) do
+			str = str .. k
+			if v.help then
+				str = str .. " - " .. v.help
+			end
+			if v.alias then
+				local list_alias = { }
+				for k_alias, v_alias in base.pairs(v.alias) do
+					table.insert(list_alias, k_alias)
+				end
+				table.sort(list_alias)
+				str = str .. " (aliases: " .. table.concat(list_alias, ", ") .. ")"
+			end
+			str = str .. "\n"
+		end
+		return str
+	end,
+
+	protected = function(c) return check_banner(c, true) end
+}
+
+autil.commands.help = {
+	command = function(c, parameters)
+		local command_help = function(k, v)
+			local str = "+" .. k
+			if v.help then
+				str = str .. " " .. v.help
+			end
+			if v.alias then
+				local list_alias = { }
+				for k_alias, v_alias in base.pairs(v.alias) do
+					table.insert(list_alias, "+" .. k_alias)
+				end
+				table.sort(list_alias)
+				str = str .. " (aliases: " .. table.concat(list_alias, ", ") .. ")"
+			end
+			return str
+		end
+
+		if #parameters > 0 then
+			local command = nil
+			for k, v in base.pairs(autil.commands) do
+				if k == parameters or (v.alias and v.alias[parameters]) then
+					command = { k = k, v = v }
+					break
+				end
+			end
+
+			if not command then
+				autil.reply(c, "The command +" .. parameters .. " doesn't exist")
+				return
+			end
+
+			local str = "\n" .. command_help(command.k, command.v)
+			if command.v.helplong then
+				str = str .. "\n\n"
+				if base.type(command.v.helplong) == "function" then
+					str = str .. command.v.helplong()
+				else
+					str = str .. command.v.helplong
+				end
+			end
+			autil.reply(c, str)
+
+		else
+			local list = { }
+			for k, v in base.pairs(autil.commands) do
+				if (not v.protected) or (v.protected and v.protected(c)) then
+					table.insert(list, command_help(k, v))
+				end
+			end
+			table.sort(list)
+			autil.reply(c, "Available commands:\n" .. table.concat(list, "\n"))
+		end
+	end,
+
+	help = "[command] - list all available commands, or display detailed information about one specific command"
 }
 
 autil.commands.info = {
@@ -903,7 +1041,7 @@ autil.commands.regnick = {
 				users.cids[cid] = nil
 			end
 			users.nicks[nick] = nil
-			save_users()
+			base.pcall(save_users())
 
 			autil.reply(c, nick .. " un-registered")
 
@@ -940,18 +1078,6 @@ autil.commands.test = {
 	end
 }
 
-autil.commands.topic = {
-	alias = { changetopic = true, hubtopic = true, settopic = true },
-
-	command = function(c, parameters)
-		topic = parameters
-		save_topic()
-		set_topic()
-	end,
-
-	help = "[topic]"
-}
-
 autil.commands.ban = {
 	alias = { banuser = true },
 
@@ -985,7 +1111,7 @@ autil.commands.ban = {
 
 		local ban = make_ban(level, reason, minutes)
 		bans.cids[victim_cid] = ban
-		save_bans()
+		base.pcall(save_bans())
 
 		dump_banned(victim, ban)
 		autil.reply(c, "\"" .. nick .. "\" (CID: " .. cid .. ") is now banned")
@@ -1010,7 +1136,7 @@ autil.commands.bancid = {
 		end
 
 		bans.cids[cid] = make_ban(level, reason, minutes)
-		save_bans()
+		base.pcall(save_bans())
 	
 		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
 	end,
@@ -1034,7 +1160,7 @@ autil.commands.banip = {
 		end
 
 		bans.ips[ip] = make_ban(level, reason, minutes)
-		save_bans()
+		base.pcall(save_bans())
 
 		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
 	end,
@@ -1058,7 +1184,7 @@ autil.commands.bannick = {
 		end
 
 		bans.nicks[nick] = make_ban(level, reason, minutes)
-		save_bans()
+		base.pcall(save_bans())
 
 		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
 	end,
@@ -1082,7 +1208,7 @@ autil.commands.bannickre = {
 		end
 
 		bans.nicksre[re] = make_ban(level, reason, minutes)
-		save_bans()
+		base.pcall(save_bans())
 
 		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
 	end,
@@ -1106,7 +1232,7 @@ autil.commands.banmsgre = {
 		end
 
 		bans.msgsre[re] = make_ban(level, reason, minutes)
-		save_bans()
+		base.pcall(save_bans())
 
 		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
 	end,
@@ -1185,7 +1311,7 @@ local function onMSG(c, cmd)
 			if msg:match(re) then
 				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
 				bans.cids[c:getCID():toBase32()] = ban
-				save_bans()
+				base.pcall(save_bans())
 				dump_banned(c, ban)
 				return false
 			end
@@ -1265,7 +1391,7 @@ local function onDisconnected(c)
 end
 
 base.pcall(load_users)
-base.pcall(load_topic)
+base.pcall(load_settings)
 base.pcall(load_bans)
 
 access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
