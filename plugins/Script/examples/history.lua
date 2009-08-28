@@ -21,19 +21,19 @@ local pos = 0
 local messages = {}
 
 autil.settings.history_max = {
-	help = "Number of messages to keep",
+	help = "number of messages to keep for +history",
 
 	value = 500
 }
 
 autil.settings.history_default = {
-	help = "Number of messages to display if the user doesn't select anything else",
+	help = "number of messages to display in +history if the user doesn't select anything else",
 
 	value = 50
 }
 
 autil.settings.history_prefix = {
-	help = "Prefix to put before each message",
+	help = "prefix to put before each message in +history",
 
 	value = "[%Y-%m-%d %H:%M:%S] "
 }

@@ -116,21 +116,34 @@ local cm = adchpp.getCM()
 
 function hasbit(x, p) return x % (p + p) >= p end
 
+autil.settings.hubname = {
+	change = function()
+		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", autil.settings.hubname.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", autil.settings.hubname.value):getBuffer())
+	end,
+
+	help = "hub name",
+
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
+}
+
 autil.settings.maxusers = {
 	alias = { max_users = true, user_max = true, users_max = true, usermax = true, usersmax = true },
 
-	help = "Maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed",
+	help = "maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed",
 
 	value = -1
 }
 
 autil.settings.topic = {
+	alias = { hubtopic = true, hubdescription = true },
+
 	change = function()
 		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", autil.settings.topic.value)
 		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", autil.settings.topic.value):getBuffer())
 	end,
 
-	help = "Hub topic",
+	help = "hub topic",
 
 	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE")
 }
