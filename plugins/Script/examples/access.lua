@@ -706,7 +706,7 @@ autil.commands.cfg = {
 	helplong = function()
 		local str = "List of all settings variables:\n"
 		for k, v in base.pairs(autil.settings) do
-			str = str .. k
+			str = str .. k .. " - current value: " .. v.value
 			if v.help then
 				str = str .. " - " .. v.help
 			end
