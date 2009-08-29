@@ -373,7 +373,7 @@ local function update_user(user, cid, nick)
 		end
 		user.nick = nick
 		users.nicks[user.nick] = user
-		base.pcall(save_users())
+		base.pcall(save_users)
 		return true, "Registration data updated (new nick)"
 	end
 	
@@ -389,7 +389,7 @@ local function update_user(user, cid, nick)
 		
 		user.cid = cid
 		users.cids[user.cid] = user
-		base.pcall(save_users())
+		base.pcall(save_users)
 		return true, "Registration data updated (new CID)"
 	end
 	
@@ -409,7 +409,7 @@ local function register_user(cid, nick, password, level)
 		users.cids[cid] = user
 	end
 
-	base.pcall(save_users())
+	base.pcall(save_users)
 end
 
 local function check_banner(c, no_reply)
@@ -451,7 +451,7 @@ local function clear_expired_bans()
 	end
 
 	if save then
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 	end
 end
 
@@ -1054,7 +1054,7 @@ autil.commands.regnick = {
 				users.cids[cid] = nil
 			end
 			users.nicks[nick] = nil
-			base.pcall(save_users())
+			base.pcall(save_users)
 
 			autil.reply(c, nick .. " un-registered")
 
@@ -1124,7 +1124,7 @@ autil.commands.ban = {
 
 		local ban = make_ban(level, reason, minutes)
 		bans.cids[victim_cid] = ban
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 
 		dump_banned(victim, ban)
 		autil.reply(c, "\"" .. nick .. "\" (CID: " .. cid .. ") is now banned")
@@ -1149,7 +1149,7 @@ autil.commands.bancid = {
 		end
 
 		bans.cids[cid] = make_ban(level, reason, minutes)
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 	
 		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
 	end,
@@ -1173,7 +1173,7 @@ autil.commands.banip = {
 		end
 
 		bans.ips[ip] = make_ban(level, reason, minutes)
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 
 		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
 	end,
@@ -1197,7 +1197,7 @@ autil.commands.bannick = {
 		end
 
 		bans.nicks[nick] = make_ban(level, reason, minutes)
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 
 		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
 	end,
@@ -1221,7 +1221,7 @@ autil.commands.bannickre = {
 		end
 
 		bans.nicksre[re] = make_ban(level, reason, minutes)
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 
 		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
 	end,
@@ -1245,7 +1245,7 @@ autil.commands.banmsgre = {
 		end
 
 		bans.msgsre[re] = make_ban(level, reason, minutes)
-		base.pcall(save_bans())
+		base.pcall(save_bans)
 
 		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
 	end,
@@ -1324,7 +1324,7 @@ local function onMSG(c, cmd)
 			if msg:match(re) then
 				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
 				bans.cids[c:getCID():toBase32()] = ban
-				base.pcall(save_bans())
+				base.pcall(save_bans)
 				dump_banned(c, ban)
 				return false
 			end
