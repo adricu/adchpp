@@ -127,6 +127,14 @@ autil.settings.hubname = {
 	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
 }
 
+autil.settings.maxmsglength = {
+	alias = { maxmessagelength = true },
+
+	help = "maximum number of characters allowed per chat message, 0 = no limit",
+
+	value = 0
+}
+
 autil.settings.maxusers = {
 	alias = { max_users = true, user_max = true, users_max = true, usermax = true, usersmax = true },
 
@@ -730,9 +738,9 @@ autil.commands.cfg = {
 	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
 
 	helplong = function()
-		local str = "List of all settings variables:\n"
+		local list = { }
 		for k, v in base.pairs(autil.settings) do
-			str = str .. k .. " - current value: " .. v.value
+			local str = k .. " - current value: " .. v.value
 			if v.help then
 				str = str .. " - " .. v.help
 			end
@@ -744,9 +752,10 @@ autil.commands.cfg = {
 				table.sort(list_alias)
 				str = str .. " (aliases: " .. table.concat(list_alias, ", ") .. ")"
 			end
-			str = str .. "\n"
+			table.insert(list, str)
 		end
-		return str
+		table.sort(list)
+		return "List of all settings variables:\n" .. table.concat(list, "\n")
 	end,
 
 	protected = is_op
@@ -1333,9 +1342,18 @@ autil.commands.loadbans = {
 
 local function onMSG(c, cmd)
 	local msg = cmd:getParam(0)
-	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 
-	if not command then
+	local command, parameters = msg:match("^%+(%a+) ?(.*)")
+	if command then
+		for k, v in base.pairs(autil.commands) do
+			if k == command or (v.alias and v.alias[command]) then
+				add_stats('+' .. command)
+				v.command(c, parameters)
+				return false
+			end
+		end
+
+	else
 		clear_expired_bans()
 		for re, reban in base.pairs(bans.msgsre) do
 			if msg:match(re) then
@@ -1346,17 +1364,11 @@ local function onMSG(c, cmd)
 				return false
 			end
 		end
-
-		return true
 	end
 
-	add_stats('+' .. command)
-
-	for k, v in base.pairs(autil.commands) do
-		if k == command or (v.alias and v.alias[command]) then
-			v.command(c, parameters)
-			return false
-		end
+	if autil.settings.maxmsglength.value > 0 and string.len(msg) > autil.settings.maxmsglength.value then
+		autil.reply(c, "Your message contained too many characters, max allowed is " .. autil.settings.maxmsglength.value)
+		return false
 	end
 
 	return true
