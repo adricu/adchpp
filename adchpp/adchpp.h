@@ -99,12 +99,13 @@ typedef unsigned __int64 uint64_t;
 
 #endif
 
-#include <sys/time.h>
 #include <cerrno>
+#include <inttypes.h> /// @todo when c++0x, use <ctypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 
 #include <string>
 #include <vector>
