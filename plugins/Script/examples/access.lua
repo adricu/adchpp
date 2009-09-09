@@ -114,9 +114,9 @@ local stats = { }
 
 local cm = adchpp.getCM()
 
-function hasbit(x, p) return x % (p + p) >= p end
-
 autil.settings.hubname = {
+	alias = { changehubname = true, sethubname = true },
+
 	change = function()
 		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", autil.settings.hubname.value)
 		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", autil.settings.hubname.value):getBuffer())
@@ -136,7 +136,7 @@ autil.settings.maxusers = {
 }
 
 autil.settings.topic = {
-	alias = { hubtopic = true, hubdescription = true },
+	alias = { changetopic = true, hubtopic = true, hubdescription = true, settopic = true },
 
 	change = function()
 		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", autil.settings.topic.value)
@@ -360,6 +360,19 @@ local function get_user_c(c)
 	return get_user(c:getCID():toBase32(), c:getField("NI"))
 end
 
+local function has_level(c, level)
+	local user = get_user_c(c)
+	if not user then
+		return false
+	end
+
+	return user.level >= level
+end
+
+local function is_op(c)
+	return has_level(c, level_op)
+end
+
 local function update_user(user, cid, nick)
 -- only one of nick and cid may be updated...
 	if user.nick ~= nick then
@@ -413,7 +426,7 @@ local function register_user(cid, nick, password, level)
 end
 
 local function check_banner(c, no_reply)
-	local banner = get_user(c:getCID():toBase32(), 0)
+	local banner = get_user_c(c)
 	if not banner or banner.level < level_op then
 		if not no_reply then
 			autil.reply(c, "Only operators can ban")
@@ -736,7 +749,7 @@ autil.commands.cfg = {
 		return str
 	end,
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.help = {
@@ -768,6 +781,11 @@ autil.commands.help = {
 
 			if not command then
 				autil.reply(c, "The command +" .. parameters .. " doesn't exist")
+				return
+			end
+
+			if command.v.protected and not command.v.protected(c) then
+				autil.reply(c, "You don't have access to the +" .. parameters .. " command")
 				return
 			end
 
@@ -943,6 +961,10 @@ autil.commands.mass = {
 	alias = { massmessage = true },
 
 	command = function(c, parameters)
+		if not autil.commands.mass.protected(c) then
+			return
+		end
+
 		local message, level = parameters:match("^(%S+) ?(%d*)")
 		if not message then
 			autil.reply(c, "You need to supply a message")
@@ -985,7 +1007,9 @@ autil.commands.mass = {
 		autil.reply(c, "Message sent to " .. count .. " users")
 	end,
 
-	help = "message [level]"
+	help = "message [level]",
+
+	protected = is_op
 }
 
 autil.commands.myip = {
@@ -1075,14 +1099,7 @@ autil.commands.regnick = {
 
 	help = "nick [password] [level] - register a user; use no password to un-reg; level defaults to your own level minus one",
 
-	protected = function(c)
-		local user = get_user_c(c)
-		if not user then
-			return false
-		end
-
-		return user.level > 1
-	end
+	protected = function(c) return has_level(c, 2) end
 }
 
 autil.commands.test = {
