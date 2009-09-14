@@ -46,6 +46,11 @@ typedef signed short int16_t;
 typedef signed int int32_t;
 typedef signed long long int64_t;
 typedef unsigned int time_t;
+#ifdef SWIGLUA
+#define sid_t int
+#else
+#define sid_t uint32_t
+#endif
 
 using namespace std;
 
@@ -370,13 +375,13 @@ public:
 
 	AdcCommand();
 	explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType);
-	explicit AdcCommand(uint32_t cmd, char aType, uint32_t aFrom);
+	explicit AdcCommand(uint32_t cmd, char aType, sid_t aFrom);
 	explicit AdcCommand(const std::string& aLine) throw(ParseException);
 	AdcCommand(const AdcCommand& rhs);
 
 	static uint32_t toSID(const std::string& aSID);
-	static std::string fromSID(const uint32_t aSID);
-	static void appendSID(std::string& str, uint32_t aSID);
+	static std::string fromSID(const sid_t aSID);
+	static void appendSID(std::string& str, sid_t aSID);
 
 	static uint32_t toCMD(uint8_t a, uint8_t b, uint8_t c);
 	//static uint32_t toCMD(const char* str);
@@ -416,10 +421,10 @@ public:
 
 	static void escape(const std::string& s, std::string& out);
 
-	uint32_t getTo() const;
-	void setTo(uint32_t aTo);
-	uint32_t getFrom() const;
-	void setFrom(uint32_t aFrom);
+	sid_t getTo() const;
+	void setTo(sid_t aTo);
+	sid_t getFrom() const;
+	void setFrom(sid_t aFrom);
 	
 	Priority getPriority() const { return priority; }
 	void setPriority(Priority priority_) { priority = priority_; }
@@ -607,7 +612,7 @@ public:
 	uint32_t getSID(const std::string& nick) const throw();
 	uint32_t getSID(const CID& cid) const throw();
 
-	Entity* getEntity(uint32_t aSid) throw();
+	Entity* getEntity(sid_t aSid) throw();
 	Bot* createBot(const Bot::SendHandler& handler);
 
 	// EntityMap& getEntities() throw() { return entities; }
