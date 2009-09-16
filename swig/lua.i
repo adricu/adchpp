@@ -162,7 +162,10 @@ private:
 
 %}
 
-%typemap(in, checkfn="lua_isnumber") int64_t,uint64_t,const int64_t&, const uint64_t& {
+%typemap(in, checkfn="lua_isnumber") int64_t,uint64_t,const int64_t&, const uint64_t&,
+// include unsigned in here to bypass the standard typemap for unsigned numbers that fails with HUB_SID
+uint32_t, const uint32_t&
+{
 	$1 = ($1_ltype)lua_tonumber(L,$input);
 }
 %typemap(out) int64_t,uint64_t,const int64_t&, const uint64_t& {
