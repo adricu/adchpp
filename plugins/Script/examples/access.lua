@@ -368,13 +368,17 @@ local function get_user_c(c)
 	return get_user(c:getCID():toBase32(), c:getField("NI"))
 end
 
-local function has_level(c, level)
+local function get_level(c)
 	local user = get_user_c(c)
 	if not user then
-		return false
+		return 0
 	end
 
-	return user.level >= level
+	return user.level
+end
+
+local function has_level(c, level)
+	return get_level(c) >= level
 end
 
 local function is_op(c)
@@ -431,17 +435,6 @@ local function register_user(cid, nick, password, level)
 	end
 
 	base.pcall(save_users)
-end
-
-local function check_banner(c, no_reply)
-	local banner = get_user_c(c)
-	if not banner or banner.level < level_op then
-		if not no_reply then
-			autil.reply(c, "Only operators can ban")
-		end
-		return false, 0
-	end
-	return true, banner.level
 end
 
 local function make_ban(level, reason, minutes)
@@ -939,6 +932,50 @@ autil.commands.info = {
 	help = "[nick or CID or IP] - information about a user, or about the hub if no parameter given"
 }
 
+autil.commands.kick = {
+	alias = { drop = true, kick = true },
+
+	command = function(c, parameters)
+		local level = get_level(c)
+		if level < level_op then
+			return
+		end
+
+		local nick, reason = parameters:match("^(%S+) ?(%S*)")
+		if not nick then
+			autil.reply(c, "You need to supply a nick")
+			return
+		end
+
+		local victim = cm:getEntity(cm:getSID(nick))
+		if victim then
+			victim = victim:asClient()
+		end
+		if not victim then
+			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
+			return
+		end
+
+		local victim_cid = victim:getCID():toBase32()
+		local victim_user = get_user(victim_cid, 0)
+		if victim_user and level <= victim_user.level then
+			autil.reply(c, "You can't kick users whose level is higher or equal than yours")
+			return
+		end
+
+		local text = "You have been kicked"
+		if reason then
+			text = text .. " (reason: " .. reason .. ")"
+		end
+		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, text)
+		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") has been kicked")
+	end,
+
+	help = "user [reason] - disconnect the user, she can reconnect whenever she wants to",
+
+	protected = is_op
+}
+
 autil.commands.listregs = {
 	alias = { listreg = true, listregged = true, reggedusers = true, showreg = true, showregs = true, showregged = true },
 
@@ -1121,8 +1158,8 @@ autil.commands.ban = {
 	alias = { banuser = true },
 
 	command = function(c, parameters)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1153,18 +1190,18 @@ autil.commands.ban = {
 		base.pcall(save_bans)
 
 		dump_banned(victim, ban)
-		autil.reply(c, "\"" .. nick .. "\" (CID: " .. cid .. ") is now banned")
+		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned")
 	end,
 
 	help = "nick [reason] [minutes] - ban an online user",
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.bancid = {
 	command = function(c, parameters)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1182,13 +1219,13 @@ autil.commands.bancid = {
 
 	help = "CID [reason] [minutes]",
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.banip = {
 	command = function(c, parameters)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1206,13 +1243,13 @@ autil.commands.banip = {
 
 	help = "IP [reason] [minutes]",
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.bannick = {
 	command = function(c, parameters)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1230,13 +1267,13 @@ autil.commands.bannick = {
 
 	help = "nick [reason] [minutes]",
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.bannickre = {
 	command = function(c, parameters)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1254,13 +1291,13 @@ autil.commands.bannickre = {
 
 	help = "nick-reg-exp [reason] [minutes]",
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.banmsgre = {
 	command = function(c, parameters)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1278,15 +1315,15 @@ autil.commands.banmsgre = {
 
 	help = "msg-reg-exp [reason] [minutes]",
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.listbans = {
 	alias = { listban = true, listbanned = true, showban = true, showbans = true, showbanned = true },
 
 	command = function(c)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1320,15 +1357,15 @@ autil.commands.listbans = {
 		autil.reply(c, str)
 	end,
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 autil.commands.loadbans = {
 	alias = { reloadbans = true },
 
 	command = function(c)
-		local ok, level = check_banner(c)
-		if not ok then
+		local level = get_level(c)
+		if level < level_op then
 			return
 		end
 
@@ -1337,7 +1374,7 @@ autil.commands.loadbans = {
 		autil.reply(c, "Ban list reloaded")
 	end,
 
-	protected = function(c) return check_banner(c, true) end
+	protected = is_op
 }
 
 local function onMSG(c, cmd)
