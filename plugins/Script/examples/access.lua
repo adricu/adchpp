@@ -576,11 +576,18 @@ local function onINF(c, cmd)
 			return false
 		end
 
+		if not cm:verifyIp(c, cmd) then
+			return false
+		end
+
 		-- check if banned
 		if ban and ban.level > 0 then
 			dump_banned(c, ban)
 			return false
 		end
+
+		-- allow in
+		return true
 	end
 
 	if ban and ban.level > user.level then
@@ -599,7 +606,7 @@ local function onINF(c, cmd)
 	if not cm:verifyINF(c, cmd) then
 		return false
 	end
-	
+
 	salts[c:getSID()] = cm:enterVerify(c, true)
 	return false
 end
