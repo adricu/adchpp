@@ -67,6 +67,7 @@ void loadXML(const string& aFileName)
 				while(xml.findChild("Server")) {
 					ServerInfoPtr server;
 
+					bool secure;
 					if(xml.getBoolChildAttrib("TLS")) {
 						TLSServerInfoPtr p(new TLSServerInfo);
 						p->cert = xml.getChildAttrib("Certificate");
@@ -75,12 +76,14 @@ void loadXML(const string& aFileName)
 						p->dh = xml.getChildAttrib("DHParams");
 
 						server = p;
+						secure = true;
 					} else {
 						server.reset(new ServerInfo);
+						secure = false;
 					}
 
 					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
-					printf("Listening on port %d\n", server->port);
+					printf("Listening on port %d (secure: %s)\n", server->port, secure ? "yes" : "no");
 					servers.push_back(server);
 				}
 
