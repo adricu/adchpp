@@ -28,7 +28,7 @@ end
 base.pcall(load_motd)
 
 motd_1 = adchpp.getCM():signalState():connect(function(entity)
-	if entity:getState() == adchpp.Entity_STATE_NORMAL then
+	if motd and entity:getState() == adchpp.Entity_STATE_NORMAL then
 		autil.reply(entity, motd)
 	end
 end)
