@@ -83,8 +83,15 @@ void loadXML(const string& aFileName)
 					}
 
 					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
-					printf("Listening on port %d (secure: %s)\n", server->port, secure ? "yes" : "no");
-					servers.push_back(server);
+#ifndef HAVE_OPENSSL
+					if(secure)
+						printf("Error listening on port %d: This ADCH++ hasn't been compiled with support for secure connections\n", server->port);
+					else
+#endif
+					{
+						printf("Listening on port %d (secure: %s)\n", server->port, secure ? "yes" : "no");
+						servers.push_back(server);
+					}
 				}
 
 				SocketManager::getInstance()->setServers(servers);
