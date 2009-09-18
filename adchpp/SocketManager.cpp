@@ -138,7 +138,9 @@ public:
 	void prepareHandshake(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			boost::intrusive_ptr<TLSSocketStream> tls = boost::static_pointer_cast<TLSSocketStream>(socket->sock);
-			socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
+			try {
+				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
+			} catch(const system_error&) { }
 			tls->sock.async_handshake(ssl::stream_base::server, std::tr1::bind(&SocketFactory::completeAccept, from_this(), std::tr1::placeholders::_1, socket));
 		}
 
@@ -149,7 +151,9 @@ public:
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			boost::intrusive_ptr<SimpleSocketStream> s = boost::static_pointer_cast<SimpleSocketStream>(socket->sock);
-			socket->setIp(s->sock.lowest_layer().remote_endpoint().address().to_string());
+			try {
+				socket->setIp(s->sock.lowest_layer().remote_endpoint().address().to_string());
+			} catch(const system_error&) { }
 		}
 
 		completeAccept(ec, socket);

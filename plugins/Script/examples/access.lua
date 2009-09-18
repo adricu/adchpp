@@ -581,9 +581,6 @@ local function onINF(c, cmd)
 			dump_banned(c, ban)
 			return false
 		end
-
-		-- allow in
-		return true
 	end
 
 	if ban and ban.level > user.level then
@@ -591,7 +588,7 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	if user.level >= level_op then
+	if user and user.level >= level_op then
 		cmd:addParam("CT4")
 		cmd:addParam("OP1") -- old name
 	else
