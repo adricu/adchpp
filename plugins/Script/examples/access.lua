@@ -63,7 +63,7 @@ local inf_fields = {
 local context_hub = "[H]"
 local context_bcast = "[BF]"
 local context_direct = "[DE]"
-local context_send = "[BFDE]"
+local context_send = "[BDEFH]"
 local context_hubdirect = "[HDE]"
 
 local command_contexts = {
@@ -82,10 +82,6 @@ local command_contexts = {
 	[adchpp.AdcCommand_CMD_GET] = context_hub,
 	[adchpp.AdcCommand_CMD_GFI] = context_hub,
 	[adchpp.AdcCommand_CMD_SND] = context_hub,
-}
-
-local user_commands = {
-	Disconnect = "HDSC %[userSID]\n"
 }
 
 local io = base.require('io')
@@ -512,39 +508,39 @@ local function onINF(c, cmd)
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Don't hide")
 		return false
 	end
-	
+
 	if #cmd:getParam("CT", 0) > 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide what type you are")
 		return false
 	end
-	
+
 	if #cmd:getParam("OP", 0) > 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's an OP")
 		return false
 	end
-	
+
 	if #cmd:getParam("RG", 0) > 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's registered")
 		return false
 	end
-	
+
 	if #cmd:getParam("HU", 0) > 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I'm the hub, not you")
 		return false
 	end
-	
+
 	if #cmd:getParam("BO", 0) > 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You're not a bot")
 		return false
 	end
-	
+
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
 		return true
 	end
-	
+
 	local nick = cmd:getParam("NI", 0)
 	local cid = cmd:getParam("ID", 0)
-	
+
 	if #nick == 0 or #cid == 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return false
@@ -616,23 +612,23 @@ local function onPAS(c, cmd)
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Not in VERIFY state")
 		return false
 	end
-	
+
 	local salt = salts[c:getSID()]
-	
+
 	if not salt then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
 		return false
 	end
-	
+
 	local cid = c:getCID()
 	local nick = c:getField("NI")
-	
+
 	local user = get_user_c(c)
 	if not user then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Can't find you now")
 		return false
 	end
-	
+
 	local password = ""
 	if user.password then
 		password = user.password
@@ -642,30 +638,19 @@ local function onPAS(c, cmd)
 		autil.dump(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
 		return false
 	end
-	
+
 	local updateOk, message = update_user(user, cid:toBase32(), nick)
 	if not updateOk then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, message)
 		return false
 	end
-	
+
 	if message then
 		autil.reply(c, message)
 	end
 
 	autil.reply(c, "Welcome back")
 	cm:enterNormal(c, true, true)
-
-	if user.level >= level_op and (c:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or
-		c:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))) then
-		for k, v in base.pairs(user_commands) do
-			ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-			ucmd:addParam(k)
-			ucmd:addParam("TT", v)
-			ucmd:addParam("CT", "2")
-			c:send(ucmd)
-		end
-	end
 	return false
 end
 
@@ -755,7 +740,12 @@ autil.commands.cfg = {
 		return "List of all settings variables:\n" .. table.concat(list, "\n")
 	end,
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { params = {
+		autil.line_ucmd("Name of the setting to change"),
+		autil.line_ucmd("New value for the setting")
+	} }
 }
 
 autil.commands.help = {
@@ -818,7 +808,11 @@ autil.commands.help = {
 		end
 	end,
 
-	help = "[command] - list all available commands, or display detailed information about one specific command"
+	help = "[command] - list all available commands, or display detailed information about one specific command",
+
+	user_command = { params = {
+		autil.line_ucmd("Command name (facultative)")
+	} }
 }
 
 autil.commands.info = {
@@ -933,7 +927,9 @@ autil.commands.info = {
 		autil.reply(c, str)
 	end,
 
-	help = "[nick or CID or IP] - information about a user, or about the hub if no parameter given"
+	help = "[nick or CID or IP] - information about a user, or about the hub if no parameter given",
+
+	user_command = { user_params = { "%[userNI]" } }
 }
 
 autil.commands.kick = {
@@ -977,7 +973,18 @@ autil.commands.kick = {
 
 	help = "user [reason] - disconnect the user, she can reconnect whenever she wants to",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("User"),
+			autil.line_ucmd("Reason (facultative)")
+		},
+		user_params = {
+			"%[userNI]",
+			autil.line_ucmd("Reason (facultative)")
+		}
+	}
 }
 
 autil.commands.listregs = {
@@ -1057,9 +1064,14 @@ autil.commands.mass = {
 		autil.reply(c, "Message sent to " .. count .. " users")
 	end,
 
-	help = "message [level]",
+	help = "message [min-level]",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { params = {
+		autil.line_ucmd("Message"),
+		autil.line_ucmd("Minimum level (facultative)")
+	} }
 }
 
 autil.commands.myip = {
@@ -1082,7 +1094,9 @@ autil.commands.regme = {
 		autil.reply(c, "You're now registered")
 	end,
 
-	help = "password"
+	help = "password",
+
+	user_command = { params = { autil.line_ucmd("Password") } }
 }
 
 autil.commands.regnick = {
@@ -1149,13 +1163,28 @@ autil.commands.regnick = {
 
 	help = "nick [password] [level] - register a user; use no password to un-reg; level defaults to your own level minus one",
 
-	protected = function(c) return has_level(c, 2) end
+	protected = function(c) return has_level(c, 2) end,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("Nick"),
+			autil.line_ucmd("Password (leave empty to un-reg)"),
+			autil.line_ucmd("Level (facultative; defaults to your own level minus one)")
+		},
+		user_params = {
+			"%[userNI]",
+			autil.line_ucmd("Password (leave empty to un-reg)"),
+			autil.line_ucmd("Level (facultative; defaults to your own level minus one)")
+		}
+	}
 }
 
 autil.commands.test = {
 	command = function(c)
 		autil.reply(c, "Test ok")
-	end
+	end,
+
+	help = "- make the hub reply \"Test ok\""
 }
 
 autil.commands.ban = {
@@ -1199,7 +1228,20 @@ autil.commands.ban = {
 
 	help = "nick [reason] [minutes] - ban an online user",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("Nick"),
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		},
+		user_params = {
+			"%[userNI]",
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		}
+	}
 }
 
 autil.commands.bancid = {
@@ -1223,7 +1265,20 @@ autil.commands.bancid = {
 
 	help = "CID [reason] [minutes]",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("CID"),
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		},
+		user_params = {
+			"%[userCID]",
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		}
+	}
 }
 
 autil.commands.banip = {
@@ -1247,7 +1302,20 @@ autil.commands.banip = {
 
 	help = "IP [reason] [minutes]",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("IP"),
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		},
+		user_params = {
+			"%[userI4]",
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		}
+	}
 }
 
 autil.commands.bannick = {
@@ -1271,7 +1339,13 @@ autil.commands.bannick = {
 
 	help = "nick [reason] [minutes]",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { params = {
+		autil.line_ucmd("Nick to forbid"),
+		autil.line_ucmd("Reason (facultative)"),
+		autil.line_ucmd("Minutes (facultative)")
+	} }
 }
 
 autil.commands.bannickre = {
@@ -1295,7 +1369,13 @@ autil.commands.bannickre = {
 
 	help = "nick-reg-exp [reason] [minutes]",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { params = {
+		autil.line_ucmd("Reg Exp of nicks to forbid"),
+		autil.line_ucmd("Reason (facultative)"),
+		autil.line_ucmd("Minutes (facultative)")
+	} }
 }
 
 autil.commands.banmsgre = {
@@ -1319,7 +1399,13 @@ autil.commands.banmsgre = {
 
 	help = "msg-reg-exp [reason] [minutes]",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { params = {
+		autil.line_ucmd("Reg Exp of chat messages to forbid"),
+		autil.line_ucmd("Reason (facultative)"),
+		autil.line_ucmd("Minutes (facultative)")
+	} }
 }
 
 autil.commands.listbans = {
@@ -1415,18 +1501,6 @@ local function onMSG(c, cmd)
 	return true
 end
 
-local function onDSC(c, cmd)
-	local victim = cm:getClient(adchpp.AdcCommand_toSID(cmd:getParam(0)))
-	if not victim then
-		autil.reply(c, "Victim not found")
-		return false
-	end
-
-	victim:disconnect()
-	autil.reply(c, "Victim disconnected")
-	return false
-end
-
 local function onReceive(entity, cmd, ok)
 	add_stats(cmd:getCommandString())
 
@@ -1464,13 +1538,74 @@ local function onReceive(entity, cmd, ok)
 		return onPAS(c, cmd)
 	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
 		return onMSG(c, cmd)
-	elseif cmd:getCommandString() == "DSC" then
-		return onDSC(c, cmd)
 	end
 end
 
 local function onDisconnected(c)
 	salts[c:getSID()] = nil
+end
+
+local function send_user_commands(c)
+	local list = { }
+	for k, v in base.pairs(autil.commands) do
+		if (not v.protected) or (v.protected and v.protected(c)) then
+			table.insert(list, k)
+		end
+	end
+	table.sort(list)
+
+	local send_ucmd = function(c, name, command, context)
+		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+		ucmd:addParam("+" .. name)
+
+		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
+		local str = "+" .. name
+
+		local params = nil
+		if context == 1 and command.user_command and command.user_command.hub_params then
+			params = command.user_command.hub_params
+		elseif context == 2 and command.user_command and command.user_command.user_params then
+			params = command.user_command.user_params
+		elseif command.user_command and command.user_command.params then
+			params = command.user_command.params
+		end
+		if params then
+			for i_param, v_param in base.ipairs(params) do
+				str = str .. " " .. v_param
+			end
+		end
+
+		back_cmd:addParam(str)
+		ucmd:addParam("TT", back_cmd:toString())
+
+		ucmd:addParam("CT", base.tostring(context))
+
+		c:send(ucmd)
+	end
+
+	for i, name in base.ipairs(list) do
+		local command = autil.commands[name]
+
+		local hub_sent = false
+		if command.user_command and command.user_command.hub_params then
+			send_ucmd(c, name, command, 1)
+			hub_sent = true
+		end
+
+		local user_sent = false
+		if command.user_command and command.user_command.user_params then
+			send_ucmd(c, name, command, 2)
+			user_sent = true
+		end
+
+		if (not hub_sent) and (not user_sent) then
+			send_ucmd(c, name, command, 3)
+		elseif not hub_sent then
+			send_ucmd(c, name, command, 1)
+		elseif not user_sent then
+			send_ucmd(c, name, command, 2)
+		end
+	end
 end
 
 base.pcall(load_users)
@@ -1485,3 +1620,16 @@ access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	return res
 end)
 access_2 = cm:signalDisconnected():connect(onDisconnected)
+access_3 = cm:signalState():connect(function(entity)
+	base.print("signalestate 1")
+	if entity:getState() == adchpp.Entity_STATE_NORMAL and (
+		entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
+		) then
+		base.print("signalestate 2")
+		local c = entity:asClient()
+		if c then
+			base.print("signalestate 3")
+			send_user_commands(c)
+		end
+	end
+end)

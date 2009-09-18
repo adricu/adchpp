@@ -20,7 +20,16 @@ settings = { }
 -- * help: information about this command, displayed in +help.
 -- * helplong: detailed information about this command, displayed in +help command-name.
 -- * protected: function(Client c) returning whether the command is to be shown in +help.
+-- * user_command: table containing information about the user command which will refer to this
+--                 command. Possible fields each user_command table can contain:
+--                 ** hub_params: list of arguments to be passed to this command for hub menus.
+--                 ** params: list of arguments to be passed to this command for all menus.
+--                 ** user_params: list of arguments to be passed to this command for user menus.
 commands = { }
+
+function line_ucmd(str)
+	return "%[line:" .. str .. "]"
+end
 
 function info(m)
 	local answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
