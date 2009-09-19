@@ -941,7 +941,7 @@ autil.commands.kick = {
 			return
 		end
 
-		local nick, reason = parameters:match("^(%S+) ?(%S*)")
+		local nick, reason = parameters:match("^(%S+) ?(.*)")
 		if not nick then
 			autil.reply(c, "You need to supply a nick")
 			return
@@ -1022,8 +1022,9 @@ autil.commands.mass = {
 			return
 		end
 
-		local message, level = parameters:match("^(%S+) ?(%d*)")
-		if not message then
+		local level_pos, _, level = parameters:find(" ?(%d*)$")
+		local message = parameters:sub(0, level_pos - 1)
+		if #message <= 0 then
 			autil.reply(c, "You need to supply a message")
 			return
 		end
@@ -1196,7 +1197,13 @@ autil.commands.ban = {
 			return
 		end
 
-		local nick, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
+		parameters = parameters:sub(0, minutes_pos - 1)
+		if #parameters <= 0 then
+			autil.reply(c, "Bad arguments")
+			return
+		end
+		local nick, reason = parameters:match("^(%S+) ?(.*)")
 		if not nick then
 			autil.reply(c, "You need to supply a nick")
 			return
@@ -1251,7 +1258,13 @@ autil.commands.bancid = {
 			return
 		end
 
-		local cid, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
+		parameters = parameters:sub(0, minutes_pos - 1)
+		if #parameters <= 0 then
+			autil.reply(c, "Bad arguments")
+			return
+		end
+		local cid, reason = parameters:match("^(%S+) ?(.*)")
 		if not cid then
 			autil.reply(c, "You need to supply a CID")
 			return
@@ -1288,7 +1301,13 @@ autil.commands.banip = {
 			return
 		end
 
-		local ip, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
+		parameters = parameters:sub(0, minutes_pos - 1)
+		if #parameters <= 0 then
+			autil.reply(c, "Bad arguments")
+			return
+		end
+		local ip, reason = parameters:match("^(%S+) ?(.*)")
 		if not ip then
 			autil.reply(c, "You need to supply an IP address")
 			return
@@ -1325,7 +1344,13 @@ autil.commands.bannick = {
 			return
 		end
 
-		local nick, reason, minutes = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
+		parameters = parameters:sub(0, minutes_pos - 1)
+		if #parameters <= 0 then
+			autil.reply(c, "Bad arguments")
+			return
+		end
+		local nick, reason = parameters:match("^(%S+) ?(.*)")
 		if not nick then
 			autil.reply(c, "You need to supply a nick")
 			return
@@ -1355,9 +1380,15 @@ autil.commands.bannickre = {
 			return
 		end
 
-		local re, reason, minutes = parameters:match("^(.+) ?(%S*) ?(%d*)")
+		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
+		parameters = parameters:sub(0, minutes_pos - 1)
+		if #parameters <= 0 then
+			autil.reply(c, "Bad arguments")
+			return
+		end
+		local re, reason = parameters:match("<([^>]+)> ?(.*)")
 		if not re then
-			autil.reply(c, "You need to supply a reg exp")
+			autil.reply(c, "You need to supply a reg exp (within brackets)")
 			return
 		end
 
@@ -1367,12 +1398,12 @@ autil.commands.bannickre = {
 		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
 	end,
 
-	help = "nick-reg-exp [reason] [minutes]",
+	help = "<nick-reg-exp> [reason] [minutes] - ban nicks that match the given reg exp (must be within brackets)",
 
 	protected = is_op,
 
 	user_command = { params = {
-		autil.line_ucmd("Reg Exp of nicks to forbid"),
+		"<" .. autil.line_ucmd("Reg Exp of nicks to forbid") .. ">",
 		autil.line_ucmd("Reason (facultative)"),
 		autil.line_ucmd("Minutes (facultative)")
 	} }
@@ -1385,9 +1416,15 @@ autil.commands.banmsgre = {
 			return
 		end
 
-		local re, reason, minutes = parameters:match("^(.+) ?(%S*) ?(%d*)")
+		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
+		parameters = parameters:sub(0, minutes_pos - 1)
+		if #parameters <= 0 then
+			autil.reply(c, "Bad arguments")
+			return
+		end
+		local re, reason = parameters:match("<([^>]+)> ?(.*)")
 		if not re then
-			autil.reply(c, "You need to supply a reg exp")
+			autil.reply(c, "You need to supply a reg exp (within brackets)")
 			return
 		end
 
@@ -1397,12 +1434,12 @@ autil.commands.banmsgre = {
 		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
 	end,
 
-	help = "msg-reg-exp [reason] [minutes]",
+	help = "msg-reg-exp [reason] [minutes] - ban originators of messages that match the given reg exp (must be within brackets)",
 
 	protected = is_op,
 
 	user_command = { params = {
-		autil.line_ucmd("Reg Exp of chat messages to forbid"),
+		"<" .. autil.line_ucmd("Reg Exp of chat messages to forbid") .. ">",
 		autil.line_ucmd("Reason (facultative)"),
 		autil.line_ucmd("Minutes (facultative)")
 	} }
