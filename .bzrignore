@@ -8,5 +8,6 @@
 ./build
 ./config.log
 ./doc
-*.pot
 logs
+custom.py
+openssl/

@@ -1,8 +1,8 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
+#include "intrusive_ptr.h"
 #include "Pool.h"
-#include "Util.h"
 #include "FastAlloc.h"
 
 namespace adchpp {

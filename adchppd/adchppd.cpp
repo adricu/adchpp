@@ -65,31 +65,23 @@ void loadXML(const string& aFileName)
 				ServerInfoList servers;
 
 				while(xml.findChild("Server")) {
-					ServerInfoPtr server;
+					ServerInfoPtr server(new ServerInfo);
+					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
 
-					bool secure;
 					if(xml.getBoolChildAttrib("TLS")) {
-						TLSServerInfoPtr p(new TLSServerInfo);
-						p->cert = xml.getChildAttrib("Certificate");
-						p->pkey = xml.getChildAttrib("PrivateKey");
-						p->trustedPath = xml.getChildAttrib("TrustedPath");
-						p->dh = xml.getChildAttrib("DHParams");
-
-						server = p;
-						secure = true;
-					} else {
-						server.reset(new ServerInfo);
-						secure = false;
+						server->TLSParams.cert = xml.getChildAttrib("Certificate");
+						server->TLSParams.pkey = xml.getChildAttrib("PrivateKey");
+						server->TLSParams.trustedPath = xml.getChildAttrib("TrustedPath");
+						server->TLSParams.dh = xml.getChildAttrib("DHParams");
 					}
 
-					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
 #ifndef HAVE_OPENSSL
-					if(secure)
+					if(server->secure())
 						printf("Error listening on port %d: This ADCH++ hasn't been compiled with support for secure connections\n", server->port);
 					else
 #endif
 					{
-						printf("Listening on port %d (secure: %s)\n", server->port, secure ? "yes" : "no");
+						printf("Listening on port %d (secure: %s)\n", server->port, server->secure() ? "yes" : "no");
 						servers.push_back(server);
 					}
 				}

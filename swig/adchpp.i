@@ -95,6 +95,18 @@ public:
 
 }
 
+/* some SWIG hackery: SWIG can't parse nested C++ structs so we take TLSInfo out as a global class,
+then redeclare it with a typedef */
+struct TLSInfo {
+	std::string cert;
+	std::string pkey;
+	std::string trustedPath;
+	std::string dh;
+};
+%{
+typedef ServerInfo::TLSInfo TLSInfo;
+%}
+
 namespace adchpp {
 
 void initialize(const std::string& configPath);
@@ -111,32 +123,17 @@ struct ServerInfo {
 	std::string ip;
 	unsigned short port;
 
+	TLSInfo TLSParams;
+	bool secure() const;
+
 	%extend {
 		static adchpp::ServerInfoPtr create() {
 			return adchpp::ServerInfoPtr(new adchpp::ServerInfo);
 		}
 	}
-
 };
 
 typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
-
-class TLSServerInfo : public ServerInfo {
-public:
-	std::string cert;
-	std::string pkey;
-	std::string trustedPath;
-	std::string dh;
-
-	%extend {
-		static adchpp::TLSServerInfoPtr create() {
-			return adchpp::TLSServerInfoPtr(new adchpp::TLSServerInfo);
-		}
-	}
-
-};
-
-typedef boost::intrusive_ptr<TLSServerInfo> TLSServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager {
@@ -764,7 +761,6 @@ public:
 
 %template (ServerInfoPtr) boost::intrusive_ptr<ServerInfo>;
 %template (ManagedConnectrionPtr) boost::intrusive_ptr<ManagedConnection>;
-%template(TLSServerInfoPtr) boost::intrusive_ptr<TLSServerInfo>;
 
 }
 

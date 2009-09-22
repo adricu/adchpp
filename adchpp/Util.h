@@ -20,64 +20,8 @@
 #define ADCHPP_UTIL_H
 
 #include "Pool.h"
-#include "Mutex.h"
-
-namespace std { namespace tr1 {
-
-template<typename T>
-struct hash<boost::intrusive_ptr<T> > {
-	size_t operator()(const boost::intrusive_ptr<T>& t) const { return hash<T*>()(t.get()); }
-};
-
-} }
 
 namespace adchpp {
-
-template<typename T>
-class intrusive_ptr_base
-{
-public:
-	bool unique() throw() {
-		return (refs == 1);
-	}
-
-	boost::intrusive_ptr<T> from_this() { return boost::intrusive_ptr<T>(static_cast<T*>(this)); }
-
-protected:
-	intrusive_ptr_base() throw() : refs(0) { }
-
-private:
-	friend void intrusive_ptr_add_ref(intrusive_ptr_base* p) {
-#ifdef _WIN32
-	InterlockedIncrement(&p->refs);
-#else
-	FastMutex::Lock l(mtx);
-	p->refs++;
-#endif
-	}
-
-	friend void intrusive_ptr_release(intrusive_ptr_base* p) {
-#ifdef _WIN32
-	if(!InterlockedDecrement(&p->refs))
-		delete static_cast<T*>(p);
-#else
-	FastMutex::Lock l(intrusive_ptr_base::mtx);
-	if(!--p->refs)
-		delete static_cast<T*>(p);
-#endif
-	}
-
-#ifndef _WIN32
-	ADCHPP_DLL static FastMutex mtx;
-#endif
-
-	volatile long refs;
-};
-
-#ifndef _WIN32
-template<typename T>
-FastMutex intrusive_ptr_base<T>::mtx;
-#endif
 
 /** Evaluates op(pair<T1, T2>.first, compareTo) */
 template<class T1, class T2, class op = std::equal_to<T1> >

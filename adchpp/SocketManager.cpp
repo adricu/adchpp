@@ -23,6 +23,7 @@
 #include "LogManager.h"
 #include "TimerManager.h"
 #include "ManagedSocket.h"
+#include "ServerInfo.h"
 #include "SimpleXML.h"
 
 #ifdef HAVE_OPENSSL
@@ -97,17 +98,16 @@ public:
 		handler(handler_)
 	{
 #ifdef HAVE_OPENSSL
-		TLSServerInfoPtr tls = boost::dynamic_pointer_cast<TLSServerInfo>(info);
-		if(tls) {
+		if(info->secure()) {
 			context.reset(new boost::asio::ssl::context(io, ssl::context::tlsv1_server));
 		    context->set_options(
 		        boost::asio::ssl::context::no_sslv2
 		        | boost::asio::ssl::context::no_sslv3
 		        | boost::asio::ssl::context::single_dh_use);
 		    //context->set_password_callback(boost::bind(&server::get_password, this));
-		    context->use_certificate_chain_file(tls->cert);
-		    context->use_private_key_file(tls->pkey, boost::asio::ssl::context::pem);
-		    context->use_tmp_dh_file(tls->dh);
+		    context->use_certificate_chain_file(info->TLSParams.cert);
+		    context->use_private_key_file(info->TLSParams.pkey, boost::asio::ssl::context::pem);
+		    context->use_tmp_dh_file(info->TLSParams.dh);
 		}
 #endif
 
@@ -119,8 +119,7 @@ public:
 			return;
 		}
 #ifdef HAVE_OPENSSL
-		TLSServerInfoPtr tls = boost::dynamic_pointer_cast<TLSServerInfo>(serverInfo);
-		if(tls) {
+		if(serverInfo->secure()) {
 			TLSSocketStream* s = new TLSSocketStream(io, *context);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
 			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::prepareHandshake, from_this(), std::tr1::placeholders::_1, socket));

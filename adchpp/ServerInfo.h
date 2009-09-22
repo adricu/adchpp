@@ -16,34 +16,32 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef FORWARD_H_
-#define FORWARD_H_
+#ifndef ADCHPP_SERVER_INFO_H
+#define ADCHPP_SERVER_INFO_H
+
+#include "intrusive_ptr.h"
 
 namespace adchpp {
 
-class Client;
+struct ServerInfo : intrusive_ptr_base<ServerInfo> {
+	std::string ip;
+	unsigned short port;
 
-class Entity;
+	struct TLSInfo {
+		std::string cert;
+		std::string pkey;
+		std::string trustedPath;
+		std::string dh;
 
-/// Named parameter map (INF etc), AdcCommand::toField offers conversion
-typedef std::map<uint16_t, std::string> FieldMap;
-
-class ManagedSocket;
-typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;
-
-class PluginManager;
-
-struct ServerInfo;
-typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
-typedef std::vector<ServerInfoPtr> ServerInfoList;
-
-class SimpleXML;
-
-class SocketFactory;
-typedef boost::intrusive_ptr<SocketFactory> SocketFactoryPtr;
-
-class SocketManager;
+	private:
+		friend struct ServerInfo;
+		bool secure() const {
+			return !cert.empty() && !pkey.empty() && !trustedPath.empty() && !dh.empty();
+		}
+	} TLSParams;
+	bool secure() const { return TLSParams.secure(); }
+};
 
 }
 
-#endif /*FORWARD_H_*/
+#endif

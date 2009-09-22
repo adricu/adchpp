@@ -22,35 +22,13 @@
 #include "common.h"
 
 #include "forward.h"
-#include "Thread.h"
+#include "ServerInfo.h"
 #include "Singleton.h"
 #include "Util.h"
 
 #include <boost/asio.hpp>
 
 namespace adchpp {
-
-class SocketManager;
-
-class ServerInfo : public intrusive_ptr_base<ServerInfo> {
-public:
-	std::string ip;
-	unsigned short port;
-	virtual ~ServerInfo() { }
-};
-
-typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
-
-class TLSServerInfo : public ServerInfo {
-public:
-	std::string cert;
-	std::string pkey;
-	std::string trustedPath;
-	std::string dh;
-};
-
-typedef boost::intrusive_ptr<TLSServerInfo> TLSServerInfoPtr;
-typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
@@ -76,7 +54,7 @@ private:
 	boost::asio::io_service io;
 	std::auto_ptr<boost::asio::io_service::work> work;
 
-	std::vector<ServerInfoPtr> servers;
+	ServerInfoList servers;
 	std::vector<SocketFactoryPtr> factories;
 
 	IncomingHandler incomingHandler;

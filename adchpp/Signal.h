@@ -19,7 +19,7 @@
 #ifndef ADCHPP_SIGNAL_H
 #define ADCHPP_SIGNAL_H
 
-#include "Util.h"
+#include "intrusive_ptr.h"
 
 namespace adchpp {
 
