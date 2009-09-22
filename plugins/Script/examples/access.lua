@@ -1658,14 +1658,11 @@ access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 end)
 access_2 = cm:signalDisconnected():connect(onDisconnected)
 access_3 = cm:signalState():connect(function(entity)
-	base.print("signalestate 1")
 	if entity:getState() == adchpp.Entity_STATE_NORMAL and (
 		entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
 		) then
-		base.print("signalestate 2")
 		local c = entity:asClient()
 		if c then
-			base.print("signalestate 3")
 			send_user_commands(c)
 		end
 	end
