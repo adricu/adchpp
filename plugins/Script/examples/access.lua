@@ -451,7 +451,7 @@ end
 local function clear_expired_bans()
 	local save = false
 
-	for k_, ban_array in base.pairs(bans) do
+	for _, ban_array in base.pairs(bans) do
 		for k, ban in base.pairs(ban_array) do
 			if ban.expires and ban_expiration_diff(ban) <= 0 then
 				ban_array[k] = nil
@@ -577,7 +577,7 @@ local function onINF(c, cmd)
 		end
 
 		-- check if banned
-		if ban and ban.level > 0 then
+		if ban then
 			dump_banned(c, ban)
 			return false
 		end
@@ -586,7 +586,7 @@ local function onINF(c, cmd)
 		return true
 	end
 
-	if ban and ban.level > user.level then
+	if ban and ban.level >= user.level then
 		dump_banned(c, ban)
 		return false
 	end
@@ -1518,9 +1518,10 @@ local function onMSG(c, cmd)
 		end
 
 	else
+		local level = get_level(c)
 		clear_expired_bans()
 		for re, reban in base.pairs(bans.msgsre) do
-			if msg:match(re) then
+			if reban.level >= level and msg:match(re) then
 				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
 				bans.cids[c:getCID():toBase32()] = ban
 				base.pcall(save_bans)
