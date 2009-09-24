@@ -32,7 +32,7 @@ NOTE: The hub will not run on Windows 9x/ME
 
 To compile the sources you will also need (other versions might work but I don't use them):
 
-* GCC 4.2+ (Linux or http://www.mingw.org[MinGW])
+* GCC 4.4+ (Linux or http://www.mingw.org[MinGW])
 * http://www.scons.org[SCons 0.98.5]
 * http://www.swig.org[SWIG 1.3.39]
 * http://www.python.org[Python] 2.5 (Windows) or 2.4+ (Linux)
@@ -44,7 +44,13 @@ To build ADCH++ from source you have to:
 * Install Python and ensure it's in your PATH
 * Install SCons and ensure it's in your PATH
 * Windows: Install MinGW and ensure it's in your PATH
-* Linux: Install GCC and appropriate header files
+* Linux: Install GCC and appropriate header files, in particular, these packages spring to mind:
+	** gcc-c++
+	** libstdc++-devel
+	** readline-devel
+* To compile with support for secure connections, you need OpenSSL:
+	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory
+	** Linux: if you don't have it already, get the openssl-devel package
 * In the source folder, type "scons -h" to see additional compile options
 * Type "scons" to create a debug build. "scons mode=release" will create a
   release build.

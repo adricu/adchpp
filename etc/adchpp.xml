@@ -18,10 +18,6 @@
 			 plugins can use the logs as well... -->
 		<LogFile type="string">logs/adchpp%Y%m.log</LogFile>
 
-<!-- Flood protection -->
-		<FloodAdd>1</FloodAdd>
-		<FloodThreshold>25</FloodThreshold>
-
 <!-- Advanced connection settings (don't change unless you at least think you know what you're doing) -->
 		<!-- Maximum send size, changes how much data is sent at most to a single user per
 			 call to the socket api. Experiment with this, lower settings might be more fair
@@ -53,6 +49,22 @@
 	</Settings>
 	
 	<Servers>
+		<!--
+		One <Server> tag per listening connection.
+
+		To create secure connections, set TLS="1" and define the following (preferably absolute)
+		paths: Certificate, PrivateKey, TrustedPath, DHParams. An example secure server setting:
+		<Server Port="2780" TLS="1" Certificate="certs/cacert.pem" PrivateKey="certs/privkey.pem" TrustedPath="certs/trusted/" DHParams="certs/dhparam.pem"/>
+
+		Simple OpenSSL commands to generate files used for secure connections:
+		openssl genrsa -out privkey.pem 2048
+		openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
+		openssl dhparam -outform PEM -out dhparam.pem 1024
+
+		Alternatively, you can use the cert generator contributed on
+		<http://launchpadlibrarian.net/31960965/Cert_Generator.7z>.
+
+		-->
 		<Server Port="2780"/>
 	</Servers>
 
