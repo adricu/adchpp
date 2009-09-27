@@ -285,6 +285,7 @@ bool ClientManager::handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw() 
 
 	if(c.getState() == Client::STATE_IDENTIFY) {
 		enterNormal(c, true, true);
+		return false;
 	}
 
 	return true;
