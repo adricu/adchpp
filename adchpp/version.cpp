@@ -9,8 +9,8 @@
 #define strver(s) #s
 
 #define APPNAME "ADCH++"
-#define VERSIONSTRING "2.2.0 (r" xstrver(ADCHPP_REVISION) ")"
-#define VERSIONFLOAT 2.2
+#define VERSIONSTRING "2.3.0 (r" xstrver(ADCHPP_REVISION) ")"
+#define VERSIONFLOAT 2.3
 
 #ifndef NDEBUG
 #define BUILDSTRING "Debug"

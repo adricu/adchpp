@@ -1,4 +1,4 @@
--- --
+-- 2.3 2008-09-29 --
 * Fix service install on Windows
 * Fix plugins not being unloaded correctly
 * Use boost asio for sockets instead of home brew
