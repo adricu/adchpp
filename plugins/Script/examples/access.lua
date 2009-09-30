@@ -1188,6 +1188,23 @@ autil.commands.test = {
 	help = "- make the hub reply \"Test ok\""
 }
 
+-- simply map to +cfg topic
+autil.commands.topic = {
+	alias = autil.settings.topic.alias,
+
+	command = function(c, parameters)
+		autil.commands.cfg.command(c, "topic " .. parameters)
+	end,
+
+	help = "topic - change the hub topic (shortcut to +cfg topic)",
+
+	protected = autil.commands.cfg.protected,
+
+	user_command = { params = {
+		autil.line_ucmd("New topic")
+	} }
+}
+
 autil.commands.ban = {
 	alias = { banuser = true },
 
