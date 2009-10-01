@@ -1594,6 +1594,8 @@ local function onReceive(entity, cmd, ok)
 	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
 		return onMSG(c, cmd)
 	end
+
+	return true
 end
 
 local function onDisconnected(c)

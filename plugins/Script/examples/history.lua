@@ -136,6 +136,8 @@ local function onReceive(entity, cmd, ok)
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST then
 		return onMSG(entity, cmd)
 	end
+
+	return true
 end
 
 base.pcall(load_messages)
