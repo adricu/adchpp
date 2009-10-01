@@ -490,7 +490,7 @@ end
 local function dump_banned(c, ban)
 	local str = "You are banned (expires: " .. ban_expiration_string(ban) .. ")"
 	if ban.reason then
-		str = str .. " (reason: " .. reason .. ")"
+		str = str .. " (reason: " .. ban.reason .. ")"
 	end
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, str)
 end
