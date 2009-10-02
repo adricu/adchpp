@@ -2,7 +2,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "ADCH++"
-!define PRODUCT_VERSION "2.3"
+!define PRODUCT_VERSION "2.4"
 !define PRODUCT_PUBLISHER "Jacek Sieka"
 !define PRODUCT_WEB_SITE "http://adchpp.sourceforge.net"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\adchppd.exe"
@@ -126,16 +126,21 @@ Section -un.Service
     
 SectionEnd
 
-Section Uninstall
-  Delete "$INSTDIR\${PRODUCT_NAME}.url"
-  Delete "$INSTDIR\uninst.exe"
-  Delete "$INSTDIR\config\users.txt"
+Section -un.remSettings
+  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to remove all ADCH++ configuration and accounts ?" IDYES Remove IDNO NoRemove
+  Remove: Delete "$INSTDIR\config\users.txt"
   Delete "$INSTDIR\config\history.txt"
   Delete "$INSTDIR\config\settings.txt"
   Delete "$INSTDIR\config\motd.txt"
   Delete "$INSTDIR\config\bans.txt"
   Delete "$INSTDIR\config\Script.xml"
   Delete "$INSTDIR\config\adchpp.xml"
+  NoRemove:
+SectionEnd
+
+Section Uninstall
+  Delete "$INSTDIR\${PRODUCT_NAME}.url"
+  Delete "$INSTDIR\uninst.exe"
   Delete "$INSTDIR\Scripts\json.lua"
   Delete "$INSTDIR\Scripts\access.lua"
   Delete "$INSTDIR\Scripts\autil.lua"
