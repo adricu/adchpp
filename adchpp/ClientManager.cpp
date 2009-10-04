@@ -478,7 +478,7 @@ void ClientManager::removeEntity(Entity& c) throw() {
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Client::STATE_NORMAL) {
 		entities.erase(c.getSID());
-		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())).getBuffer());
+		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())).addParam("DI", "1").getBuffer());
 	} else {
 		removeLogins(c);
 	}

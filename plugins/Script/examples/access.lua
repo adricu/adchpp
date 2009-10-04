@@ -492,7 +492,18 @@ local function dump_banned(c, ban)
 	if ban.reason then
 		str = str .. " (reason: " .. ban.reason .. ")"
 	end
-	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, str)
+
+	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
+		cmd:addParam("MS" .. str)
+
+		local expires
+		if ban.expires then
+			expires = ban_expiration_diff(ban)
+		else
+			expires = -1
+		end
+		cmd:addParam("TL" .. base.tostring(expires))
+	end)
 end
 
 local function onINF(c, cmd)
@@ -964,10 +975,13 @@ autil.commands.kick = {
 		end
 
 		local text = "You have been kicked"
-		if reason then
+		if string.len(reason) > 0 then
 			text = text .. " (reason: " .. reason .. ")"
 		end
-		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, text)
+		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
+			cmd:addParam("ID" .. adchpp.AdcCommand_fromSID(c:getSID()))
+			:addParam("MS" .. text)
+		end)
 		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") has been kicked")
 	end,
 
@@ -1383,11 +1397,18 @@ autil.commands.bannick = {
 
 	protected = is_op,
 
-	user_command = { params = {
-		autil.line_ucmd("Nick to forbid"),
-		autil.line_ucmd("Reason (facultative)"),
-		autil.line_ucmd("Minutes (facultative)")
-	} }
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("Nick"),
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		},
+		user_params = {
+			"%[userNI]",
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		}
+	}
 }
 
 autil.commands.bannickre = {

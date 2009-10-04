@@ -32,18 +32,31 @@ function line_ucmd(str)
 end
 
 function info(m)
-	local answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-	answer:addParam(m)
-	return answer
+	return adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+	:addParam(m)
 end
 
 function reply(c, m)
 	c:send(info(m))
 end
 
-function dump(c, code, msg)
-	local answer = adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-	answer:addParam(adchpp.AdcCommand_SEV_FATAL .. code):addParam(msg)
-	c:send(answer)
-	c:disconnect(0)
+-- params: either a message string or a function(AdcCommand QUI_command).
+function dump(c, code, params)
+	local msg
+
+	local cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_QUI, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+	:addParam(adchpp.AdcCommand_fromSID(c:getSID())):addParam("DI1")
+	if base.type(params) == "function" then
+		params(cmd)
+		msg = cmd:getParam("MS", 1)
+	else
+		msg = params
+		cmd:addParam("MS" .. msg)
+	end
+
+	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+	:addParam(adchpp.AdcCommand_SEV_FATAL .. code):addParam(msg))
+
+	c:send(cmd)
+	c:disconnect(adchpp.Util_REASON_PLUGIN)
 end
