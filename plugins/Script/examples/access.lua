@@ -1097,6 +1097,57 @@ autil.commands.myip = {
 	end
 }
 
+autil.commands.redirect = {
+	alias = { forward = true },
+
+	command = function(c, parameters)
+		local level = get_level(c)
+		if level < level_op then
+			return
+		end
+
+		local nick, address = parameters:match("^(%S+) (.+)")
+		if not nick or not address then
+			autil.reply(c, "You need to supply a nick and an address")
+			return
+		end
+
+		local victim = cm:getEntity(cm:getSID(nick))
+		if victim then
+			victim = victim:asClient()
+		end
+		if not victim then
+			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
+			return
+		end
+
+		local victim_cid = victim:getCID():toBase32()
+		local victim_user = get_user(victim_cid, 0)
+		if victim_user and level <= victim_user.level then
+			autil.reply(c, "You can't redirect users whose level is higher or equal than yours")
+			return
+		end
+
+		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd) cmd:addParam("RD" .. address) end)
+		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") has been redirected to \"" .. address .. "\"")
+	end,
+
+	help = "nick address",
+
+	protected = is_op,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("Nick"),
+			autil.line_ucmd("Address")
+		},
+		user_params = {
+			"%[userNI]",
+			autil.line_ucmd("Address")
+		}
+	}
+}
+
 autil.commands.regme = {
 	command = function(c, parameters)
 		if not parameters:match("%S+") then
