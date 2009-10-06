@@ -438,7 +438,7 @@ local function make_ban(level, reason, minutes)
 	if string.len(reason) > 0 then
 		ban.reason = reason
 	end
-	if string.len(minutes) > 0 then
+	if minutes and string.len(minutes) > 0 then
 		ban.expires = os.time() + minutes * 60
 	end
 	return ban
@@ -557,23 +557,6 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	clear_expired_bans()
-	local ban = nil
-	if bans.cids[cid] then
-		ban = bans.cids[cid]
-	elseif bans.ips[c:getIp()] then
-		ban = bans.ips[c:getIp()]
-	elseif bans.nicks[nick] then
-		ban = bans.nicks[nick]
-	else
-		for re, reban in base.pairs(bans.nicksre) do
-			if nick:match(re) then
-				ban = reban
-				break
-			end
-		end
-	end
-
 	local user = get_user(cid, nick)
 	if not user then
 		-- non-reg user
@@ -583,23 +566,8 @@ local function onINF(c, cmd)
 			return false
 		end
 
-		if not cm:verifyIp(c, cmd) then
-			return false
-		end
-
-		-- check if banned
-		if ban then
-			dump_banned(c, ban)
-			return false
-		end
-
-		-- allow in
+		-- let ClientManager further verify this INF
 		return true
-	end
-
-	if ban and ban.level >= user.level then
-		dump_banned(c, ban)
-		return false
 	end
 
 	if user and user.level >= level_op then
@@ -1279,11 +1247,13 @@ autil.commands.ban = {
 			return
 		end
 
-		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
-		parameters = parameters:sub(0, minutes_pos - 1)
-		if #parameters <= 0 then
-			autil.reply(c, "Bad arguments")
-			return
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
 		end
 		local nick, reason = parameters:match("^(%S+) ?(.*)")
 		if not nick then
@@ -1340,11 +1310,13 @@ autil.commands.bancid = {
 			return
 		end
 
-		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
-		parameters = parameters:sub(0, minutes_pos - 1)
-		if #parameters <= 0 then
-			autil.reply(c, "Bad arguments")
-			return
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
 		end
 		local cid, reason = parameters:match("^(%S+) ?(.*)")
 		if not cid then
@@ -1383,11 +1355,13 @@ autil.commands.banip = {
 			return
 		end
 
-		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
-		parameters = parameters:sub(0, minutes_pos - 1)
-		if #parameters <= 0 then
-			autil.reply(c, "Bad arguments")
-			return
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
 		end
 		local ip, reason = parameters:match("^(%S+) ?(.*)")
 		if not ip then
@@ -1426,11 +1400,13 @@ autil.commands.bannick = {
 			return
 		end
 
-		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
-		parameters = parameters:sub(0, minutes_pos - 1)
-		if #parameters <= 0 then
-			autil.reply(c, "Bad arguments")
-			return
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
 		end
 		local nick, reason = parameters:match("^(%S+) ?(.*)")
 		if not nick then
@@ -1469,11 +1445,13 @@ autil.commands.bannickre = {
 			return
 		end
 
-		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
-		parameters = parameters:sub(0, minutes_pos - 1)
-		if #parameters <= 0 then
-			autil.reply(c, "Bad arguments")
-			return
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
 		end
 		local re, reason = parameters:match("<([^>]+)> ?(.*)")
 		if not re then
@@ -1505,11 +1483,13 @@ autil.commands.banmsgre = {
 			return
 		end
 
-		local minutes_pos, _, minutes = parameters:find(" ?(%d*)$")
-		parameters = parameters:sub(0, minutes_pos - 1)
-		if #parameters <= 0 then
-			autil.reply(c, "Bad arguments")
-			return
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
 		end
 		local re, reason = parameters:match("<([^>]+)> ?(.*)")
 		if not re then
@@ -1750,11 +1730,37 @@ access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 end)
 access_2 = cm:signalDisconnected():connect(onDisconnected)
 access_3 = cm:signalState():connect(function(entity)
-	if entity:getState() == adchpp.Entity_STATE_NORMAL and (
-		entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
-		) then
+	if entity:getState() == adchpp.Entity_STATE_NORMAL then
 		local c = entity:asClient()
-		if c then
+		if not c then
+			return
+		end
+
+		local cid = c:getCID():toBase32()
+		local nick = c:getField("NI")
+
+		clear_expired_bans()
+		local ban = nil
+		if bans.cids[cid] then
+			ban = bans.cids[cid]
+		elseif bans.ips[c:getIp()] then
+			ban = bans.ips[c:getIp()]
+		elseif bans.nicks[nick] then
+			ban = bans.nicks[nick]
+		else
+			for re, reban in base.pairs(bans.nicksre) do
+				if nick:match(re) then
+					ban = reban
+					break
+				end
+			end
+		end
+		if ban and ban.level > get_level(c) then
+			dump_banned(c, ban)
+			return
+		end
+
+		if entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0")) then
 			send_user_commands(c)
 		end
 	end
