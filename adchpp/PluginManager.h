@@ -186,13 +186,16 @@ public:
 		return registry;
 	}
 
-	typedef std::tr1::function<void (Entity&, const StringList&, bool& ok)> CommandSlot;
+	typedef SignalTraits<void (Entity&, const StringList&, bool&)>::Signal CommandSignal;
+	typedef CommandSignal::Slot CommandSlot;
 	/**
 	 * Utility function to handle +-commands from clients
 	 * The parameters are the same as ClientManager::signalReceive, only that the parameters will
 	 * have been parsed already, and the function will only be called if the command name matches
 	 */
 	ADCHPP_DLL ClientManager::SignalReceive::Connection onCommand(const std::string& commandName, const CommandSlot& f);
+	/// Handle +-commands set by another script, and possibly prevent them from being dispatched
+	ADCHPP_DLL CommandSignal& getCommandSignal(const std::string& commandName);
 
 	/** @internal */
 	void load();
@@ -214,6 +217,18 @@ private:
 		PLUGIN_UNLOAD pluginUnload;
 	};
 
+	struct CommandDispatch {
+		CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_);
+
+		void operator()(Entity& e, AdcCommand& cmd, bool& ok);
+
+	private:
+		std::string name;
+		PluginManager::CommandSlot f;
+	};
+
+	friend struct CommandDispatch;
+
 	friend class Singleton<PluginManager>;
 	ADCHPP_DLL static PluginManager* instance;
 
@@ -231,6 +246,10 @@ private:
 	PluginManager() throw();
 
 	bool loadPlugin(const std::string& file);
+
+	typedef std::tr1::unordered_map<std::string, CommandSignal> CommandHandlers;
+	CommandHandlers commandHandlers;
+	bool handleCommand(Entity& e, const StringList& l);
 };
 
 }

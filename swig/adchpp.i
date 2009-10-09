@@ -571,7 +571,6 @@ public:
 private:
 };
 
-
 class LogManager
 {
 public:
@@ -585,16 +584,24 @@ public:
 
 };
 
-%template(SignalC) Signal<void (Entity&)>;
-%template(SignalTraitsC) SignalTraits<void (Entity&)>;
-%template(SignalCA) Signal<void (Entity&, AdcCommand&)>;
-%template(SignalTraitsCA) SignalTraits<void (Entity&, AdcCommand&)>;
-%template(SignalCAI) Signal<void (Entity&, AdcCommand&, bool&)>;
-%template(SignalTraitsCAI) SignalTraits<void (Entity&, AdcCommand&, bool&)>;
-%template(SignalCI) Signal<void (Entity&, int)>;
-%template(SignalTraitsCI) SignalTraits<void (Entity&, int)>;
-%template(SignalCS) Signal<void (Entity&, const std::string&)>;
-%template(SignalTraitsCS) SignalTraits<void (Entity&, const std::string&)>;
+%template(SignalE) Signal<void (Entity&)>;
+%template(SignalTraitsE) SignalTraits<void (Entity&)>;
+
+%template(SignalEAB) Signal<void (Entity&, AdcCommand&, bool&)>;
+%template(SignalTraitsEAB) SignalTraits<void (Entity&, AdcCommand&, bool&)>;
+
+%template(SignalES) Signal<void (Entity&, const std::string&)>;
+%template(SignalTraitsES) SignalTraits<void (Entity&, const std::string&)>;
+
+%template(SignalEcAB) Signal<void (Entity&, const AdcCommand&, bool&)>;
+%template(SignalTraitsEcAB) SignalTraits<void (Entity&, const AdcCommand&, bool&)>;
+
+%template(SignalEI) Signal<void (Entity&, int)>;
+%template(SignalTraitsEI) SignalTraits<void (Entity&, int)>;
+
+%template(SignalESB) Signal<void (Entity&, const StringList&, bool&)>;
+%template(SignalTraitsESB) SignalTraits<void (Entity&, const StringList&, bool&)>;
+
 %template(SignalS) Signal<void (const SimpleXML&)>;
 %template(SignalTraitsS) SignalTraits<void (const SimpleXML&)>;
 
@@ -750,13 +757,15 @@ public:
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();
-//	typedef std::tr1::function<void (Client&, const StringList&, int& override)> CommandSlot;
+
+	typedef SignalTraits<void (Entity&, const StringList&, bool&)>::Signal CommandSignal;
+	typedef CommandSignal::Slot CommandSlot;
 	%extend {
-		ManagedConnectionPtr onCommand(const std::string& commandName, std::tr1::function<void (Entity&, const StringList&, bool& override)> f) {
+		ManagedConnectionPtr onCommand(const std::string& commandName, const CommandSlot& f) {
 			return ManagedConnectionPtr(new ManagedConnection(self->onCommand(commandName, f)));
 		}
 	}
-
+	CommandSignal& getCommandSignal(const std::string& commandName);
 };
 
 %template (ServerInfoPtr) boost::intrusive_ptr<ServerInfo>;

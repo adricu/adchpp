@@ -52,6 +52,9 @@ BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
 	PluginManager* pm = PluginManager::getInstance();
 	bloomHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<HashBloom>);
 	pendingHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<PendingItem>);
+
+	statsConn = ManagedConnectionPtr(new ManagedConnection(pm->onCommand("stats",
+		std::tr1::bind(&BloomManager::onStats, this, _1))));
 }
 
 BloomManager::~BloomManager() {
@@ -120,19 +123,6 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 
 		c.setDataMode(bind(&BloomManager::onData, this, _1, _2, _3), bytes);
 		ok = false;
-	} else if(cmd.getCommand() == AdcCommand::CMD_MSG && cmd.getParameters().size() >= 1) {
-		if(cmd.getParam(0).compare(0, 6, "+stats") == 0) {
-			string stats = "\nBloom filter statistics:";
-			stats += "\nTotal outgoing searches: " + Util::toString(searches);
-			stats += "\nOutgoing TTH searches: " + Util::toString(tthSearches) + " (" + Util::toString(tthSearches * 100. / searches) + "% of total)";
-			stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
-			int64_t bytes = getBytes();
-			size_t clients = ClientManager::getInstance()->getEntities().size();
-//			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
-			stats += "\nApproximate memory usage: " + Util::formatBytes(bytes) + ", " + Util::formatBytes(static_cast<double>(bytes) / clients) + "/client";
-			c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));
-			ok = false;
-		}
 	}
 }
 
@@ -152,6 +142,7 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 		}
 	}
 }
+
 int64_t BloomManager::getBytes() const {
 	int64_t bytes = 0;
 	// TODO
@@ -173,4 +164,16 @@ void BloomManager::onData(Entity& c, const uint8_t* data, size_t len) {
 		bloom->reset(pending->buffer, pending->k, h);
 		c.clearPluginData(pendingHandle);
 	}
+}
+
+void BloomManager::onStats(Entity& c) {
+	string stats = "\nBloom filter statistics:";
+	stats += "\nTotal outgoing searches: " + Util::toString(searches);
+	stats += "\nOutgoing TTH searches: " + Util::toString(tthSearches) + " (" + Util::toString(tthSearches * 100. / searches) + "% of total)";
+	stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
+	int64_t bytes = getBytes();
+	size_t clients = ClientManager::getInstance()->getEntities().size();
+	//			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
+	stats += "\nApproximate memory usage: " + Util::formatBytes(bytes) + ", " + Util::formatBytes(static_cast<double>(bytes) / clients) + "/client";
+	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));
 }

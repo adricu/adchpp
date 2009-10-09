@@ -214,7 +214,7 @@ public:
 	}
 	static std::string toString(long long val) {
 		char buf[32];
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32__)
 		sprintf(buf, "%I64d", val);
 #else
 		sprintf(buf, "%lld", val);
@@ -223,7 +223,7 @@ public:
 	}
 	static std::string toString(unsigned long long val) {
 		char buf[32];
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32__)
 		sprintf(buf, "%I64u", val);
 #else
 		sprintf(buf, "%llu", val);

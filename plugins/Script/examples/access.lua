@@ -24,7 +24,7 @@ local command_min_levels = {
 --	[adchpp.AdcCommand_CMD_MSG] = 2
 }
 
--- Users with a level above the one specified here are operators
+-- Users with a level equal to or above the one specified here are operators
 local level_op = 2
 
 -- Regexes for the various fields. 
@@ -1116,6 +1116,14 @@ autil.commands.redirect = {
 	}
 }
 
+autil.commands.reload = {
+	command = function() end, -- empty on purpose, this is handled via PluginManager::handleCommand
+
+	help = "- reload scripts",
+
+	protected = is_op
+}
+
 autil.commands.regme = {
 	command = function(c, parameters)
 		if not parameters:match("%S+") then
@@ -1728,7 +1736,9 @@ access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	end
 	return res
 end)
+
 access_2 = cm:signalDisconnected():connect(onDisconnected)
+
 access_3 = cm:signalState():connect(function(entity)
 	if entity:getState() == adchpp.Entity_STATE_NORMAL then
 		local c = entity:asClient()
@@ -1764,4 +1774,11 @@ access_3 = cm:signalState():connect(function(entity)
 			send_user_commands(c)
 		end
 	end
+end)
+
+access_4 = adchpp.getPM():getCommandSignal("reload"):connect(function(entity, list, ok)
+	if not ok then
+		return ok
+	end
+	return is_op(entity)
 end)

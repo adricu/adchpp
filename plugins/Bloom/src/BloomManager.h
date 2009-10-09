@@ -61,11 +61,13 @@ private:
 
 	ClientManager::SignalReceive::ManagedConnection receiveConn;
 	ClientManager::SignalSend::ManagedConnection sendConn;
+	ClientManager::SignalReceive::ManagedConnection statsConn;
 
 	int64_t getBytes() const;
 	void onReceive(Entity& c, AdcCommand& cmd, bool&);
 	void onSend(Entity& c, const AdcCommand& cmd, bool&);
 	void onData(Entity& c, const uint8_t* data, size_t len);
+	void onStats(Entity& c);
 };
 
 #endif //ACCESSMANAGER_H

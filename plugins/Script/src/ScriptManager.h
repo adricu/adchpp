@@ -65,10 +65,10 @@ private:
 	void clearEngines();
 
 	ClientManager::SignalReceive::ManagedConnection reloadConn;
-	ClientManager::SignalReceive::ManagedConnection scriptsConn;
+	ClientManager::SignalReceive::ManagedConnection statsConn;
 
-	void onReload(Entity& c, const StringList& params, bool& ok);
-	void onScripts(Entity& c, const StringList& params, bool& ok);
+	void onReload(Entity& c);
+	void onStats(Entity& c);
 };
 
 #endif //ACCESSMANAGER_H

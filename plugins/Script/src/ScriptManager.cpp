@@ -40,7 +40,10 @@ const string ScriptManager::className = "ScriptManager";
 ScriptManager::ScriptManager() {
 	LOG(className, "Starting");
 
-	reloadConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("reload", std::tr1::bind(&ScriptManager::onReload, this, _1, _2, _3))));
+	reloadConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("reload",
+		std::tr1::bind(&ScriptManager::onReload, this, _1))));
+	statsConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("stats",
+		std::tr1::bind(&ScriptManager::onStats, this, _1))));
 
 	load();
 }
@@ -89,12 +92,12 @@ void ScriptManager::reload() {
 	load();
 }
 
-void ScriptManager::onReload(Entity& c, const StringList& cmd, bool& ok) {
+void ScriptManager::onReload(Entity& c) {
 	PluginManager::getInstance()->attention(std::tr1::bind(&ScriptManager::reload, this));
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Reloading scripts"));
 }
 
-void ScriptManager::onScripts(Entity& c, const StringList& cmd, bool& ok) {
+void ScriptManager::onStats(Entity& c) {
 	string tmp("Currently loaded scripts:\n");
 	for(vector<Engine*>::const_iterator i = engines.begin(); i != engines.end(); ++i) {
 		(*i)->getStats(tmp);

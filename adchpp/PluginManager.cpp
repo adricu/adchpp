@@ -156,39 +156,52 @@ void PluginManager::shutdown() {
 	active.clear();
 }
 
-struct CommandDispatch {
-	CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) : name('+' + name_), f(f_) { }
+PluginManager::CommandDispatch::CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) :
+name('+' + name_),
+f(f_)
+{
+}
 
-	void operator()(Entity& e, AdcCommand& cmd, bool& ok) {
-		if(e.getState() != Entity::STATE_NORMAL) {
-			return;
-		}
-
-		if(cmd.getCommand() != AdcCommand::CMD_MSG) {
-			return;
-		}
-
-		if(cmd.getParameters().size() < 1) {
-			return;
-		}
-
-		StringList l;
-		Util::tokenize(l, cmd.getParameters()[0], ' ');
-		if(l[0] != name) {
-			return;
-		}
-		l[0] = name.substr(1);
-
-		cmd.setPriority(AdcCommand::PRIORITY_IGNORE);
-		f(e, l, ok);
+void PluginManager::CommandDispatch::operator()(Entity& e, AdcCommand& cmd, bool& ok) {
+	if(e.getState() != Entity::STATE_NORMAL) {
+		return;
 	}
 
-	std::string name;
-	PluginManager::CommandSlot f;
-};
+	if(cmd.getCommand() != AdcCommand::CMD_MSG) {
+		return;
+	}
+
+	if(cmd.getParameters().size() < 1) {
+		return;
+	}
+
+	StringList l;
+	Util::tokenize(l, cmd.getParameters()[0], ' ');
+	if(l[0] != name) {
+		return;
+	}
+	l[0] = name.substr(1);
+
+	if(!PluginManager::getInstance()->handleCommand(e, l)) {
+		return;
+	}
+
+	cmd.setPriority(AdcCommand::PRIORITY_IGNORE);
+	f(e, l, ok);
+}
 
 ClientManager::SignalReceive::Connection PluginManager::onCommand(const std::string& commandName, const CommandSlot& f) {
 	return ClientManager::getInstance()->signalReceive().connect(CommandDispatch(commandName, f));
+}
+
+PluginManager::CommandSignal& PluginManager::getCommandSignal(const std::string& commandName) {
+	return commandHandlers[commandName];
+}
+
+bool PluginManager::handleCommand(Entity& e, const StringList& l) {
+	bool ok = true;
+	commandHandlers[l[0]](e, l, ok);
+	return ok;
 }
 
 }
