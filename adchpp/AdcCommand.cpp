@@ -22,6 +22,7 @@
 
 namespace adchpp {
 
+#ifdef __MINGW32__ /// @todo go figure why MinGW needs these...
 const char AdcCommand::TYPE_BROADCAST;
 const char AdcCommand::TYPE_CLIENT;
 const char AdcCommand::TYPE_DIRECT;
@@ -30,26 +31,7 @@ const char AdcCommand::TYPE_FEATURE;
 const char AdcCommand::TYPE_INFO;
 const char AdcCommand::TYPE_HUB;
 const char AdcCommand::TYPE_UDP;
-
-const uint32_t AdcCommand::CMD_SUP;
-const uint32_t AdcCommand::CMD_STA;
-const uint32_t AdcCommand::CMD_INF;
-const uint32_t AdcCommand::CMD_MSG;
-const uint32_t AdcCommand::CMD_SCH;
-const uint32_t AdcCommand::CMD_RES;
-const uint32_t AdcCommand::CMD_CTM;
-const uint32_t AdcCommand::CMD_RCM;
-const uint32_t AdcCommand::CMD_GPA;
-const uint32_t AdcCommand::CMD_PAS;
-const uint32_t AdcCommand::CMD_QUI;
-const uint32_t AdcCommand::CMD_GET;
-const uint32_t AdcCommand::CMD_GFI;
-const uint32_t AdcCommand::CMD_SND;
-const uint32_t AdcCommand::CMD_SID;
-// Extensions
-const uint32_t AdcCommand::CMD_CMD;
-
-const uint32_t AdcCommand::HUB_SID;
+#endif
 
 using namespace std;
 

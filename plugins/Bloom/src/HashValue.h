@@ -43,7 +43,6 @@ struct HashValue {
 };
 
 namespace std { namespace tr1 {
-template<>
 template<typename T>
 struct hash<HashValue<T> > {
 	size_t operator()(const HashValue<T>& rhs) const { return *(size_t*)rhs.data; }

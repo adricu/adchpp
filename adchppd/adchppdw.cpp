@@ -35,73 +35,8 @@ static const string modName = "adchpp";
 #define LOGERROR(func) LOG(modName, func " failed: " + Util::translateError(GetLastError()))
 #define PRINTERROR(func) fprintf(stderr, func " failed: 0x%x, %s", GetLastError(), Util::translateError(GetLastError()).c_str())
 
-#ifdef _MSC_VER
-#include "ExtendedTrace.h"
-RecursiveMutex cs;
-enum { DEBUG_BUFSIZE = 8192 };
-static char guard[DEBUG_BUFSIZE];
-static int recursion = 0;
-static char tth[192*8/(5*8)+2];
-static bool firstException = true;
 
-static char buf[DEBUG_BUFSIZE];
-
-#define LIT(s) s, sizeof(s)-1
-
-LONG __stdcall DCUnhandledExceptionFilter( LPEXCEPTION_POINTERS e )
-{
-	RecursiveMutex::Lock l(cs);
-
-	if(recursion++ > 30)
-		exit(-1);
-
-#ifdef NDEBUG
-	// The release version loads the dll and pdb:s here...
-	EXTENDEDTRACEINITIALIZE( Util::getAppPath().c_str() );
-#endif
-
-	if(firstException) {
-		File::deleteFile(Util::getCfgPath() + "exceptioninfo.txt");
-		firstException = false;
-	}
-
-	printf("Writing to %s\n", (Util::getCfgPath()).c_str());
-	File f(Util::getCfgPath() + "exceptioninfo.txt", File::WRITE, File::OPEN | File::CREATE);
-	f.setEndPos(0);
-
-	DWORD exceptionCode = e->ExceptionRecord->ExceptionCode ;
-
-	sprintf(buf, "Code: %x\r\nVersion: %s\r\n",
-		exceptionCode, versionString.c_str());
-
-	f.write(buf, strlen(buf));
-
-	time_t now;
-	time(&now);
-	strftime(buf, DEBUG_BUFSIZE, "Time: %Y-%m-%d %H:%M:%S\r\n", localtime(&now));
-
-	f.write(buf, strlen(buf));
-
-	f.write(LIT("TTH: "));
-	f.write(tth, strlen(tth));
-	f.write(LIT("\r\n"));
-
-    f.write(LIT("\r\n"));
-
-	STACKTRACE2(f, e->ContextRecord->Eip, e->ContextRecord->Esp, e->ContextRecord->Ebp);
-
-	f.write(LIT("\r\n"));
-
-	f.close();
-
-	PRINTERROR(_T("Fatal error encountered, debug info in exceptioninfo.txt"));
-#ifdef NDEBUG
-	EXTENDEDTRACEUNINITIALIZE();
-#endif
-	return EXCEPTION_CONTINUE_SEARCH;
-}
-
-#elif defined(_WIN32)  // mingw?
+#ifdef __MINGW32__
 struct ExceptionHandler
 {
 	ExceptionHandler() {
@@ -168,12 +103,6 @@ static void removeService(const TCHAR* name) {
 }
 
 static void init(const string& configPath) {
-
-#if defined(_MSC_VER) && !defined(NDEBUG)
-	EXTENDEDTRACEINITIALIZE( Util::getAppPath().c_str() );
-	SetUnhandledExceptionFilter(&DCUnhandledExceptionFilter);
-#endif
-
 	initialize(configPath);
 
 	if(asService)
@@ -192,9 +121,6 @@ static void uninit() {
 	LOG(modName, versionString + " shut down");
 	printf("Shutting down.");
 	shutdown(&f2);
-#if defined(_MSC_VER) && !defined(NDEBUG)
-	EXTENDEDTRACEUNINITIALIZE();
-#endif
 	printf(".\n");
 	cleanup();
 }
@@ -289,7 +215,7 @@ static void runService(const TCHAR* name, const string& configPath) {
 
 static void runConsole(const string& configPath) {
 	asService = false;
-	printf("Starting");
+	printf("Starting\n");
 	init(configPath);
 	printf(".");
 	try {
@@ -314,7 +240,7 @@ int CDECL wmain(int argc, wchar_t* argv[]) {
 int CDECL main(int argc, char* argv[]) {
 #endif
 
-	string configPath = Util::getAppPath() + _T("config\\");
+	string configPath = Util::getAppPath() + "config\\";
 
 	int task = 0;
 
@@ -342,7 +268,7 @@ int CDECL main(int argc, char* argv[]) {
 				printf("Config dir must be an absolute path\n");
 				return 2;
 			}
-			if(cfg[cfg.length() - 1] != _T('\\')) {
+			if(cfg[cfg.length() - 1] != '\\') {
 				cfg += '\\';
 			}
 			configPath = cfg;

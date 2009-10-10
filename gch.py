@@ -1,73 +1,79 @@
-# $Id: gch.py 320 2006-07-18 15:58:09Z tim $
-# 
+# -*- coding: utf-8 -*-
+# $Id$
+#
 # SCons builder for gcc's precompiled headers
-# Copyright (C) 2006  Tim Blechmann
-# 
+# Copyright (C) 2006, 2007  Tim Blechmann
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-# $Revision: 320 $
-# $LastChangedRevision: 320 $
-# $LastChangedDate: 2006-07-18 17:58:09 +0200 (tis, 18 jul 2006) $
-# $LastChangedBy: tim $
+# $Revision$
+# $LastChangedRevision$
+# $LastChangedDate$
+# $LastChangedBy$
+
+# this script is part of nova <http://tim.klingt.org/nova>. it is accessible in its git repo or
+# directly at <http://tim.klingt.org/git?p=nova.git;a=blob;f=gch.py;hb=HEAD>.
+
+# includes minor changes for DC++.
 
 import SCons.Action
 import SCons.Builder
 import SCons.Scanner.C
 import SCons.Util
-import SCons
+import SCons.Script
 
-GchAction = SCons.Action.Action('$GCHCOM')
-GchShAction = SCons.Action.Action('$GCHSHCOM')
+SCons.Script.EnsureSConsVersion(0,96,92)
+
+GchAction = SCons.Action.Action('$GCHCOM', '$GCHCOMSTR')
+GchShAction = SCons.Action.Action('$GCHSHCOM', '$GCHSHCOMSTR')
 
 def gen_suffix(env, sources):
     return sources[0].get_suffix() + env['GCHSUFFIX']
 
-if SCons.__version__ == "0.96.1":
-    scanner = SCons.Scanner.C.CScan()
-else:
-    scanner = SCons.Scanner.C.CScanner()
 
 GchShBuilder = SCons.Builder.Builder(action = GchShAction,
-                                     source_scanner = scanner,
+                                     source_scanner = SCons.Scanner.C.CScanner(),
                                      suffix = gen_suffix)
 
 GchBuilder = SCons.Builder.Builder(action = GchAction,
-                                   source_scanner = scanner,
+                                   source_scanner = SCons.Scanner.C.CScanner(),
                                    suffix = gen_suffix)
 
-def static_pch_emitter(target,source,env):
-    SCons.Defaults.StaticObjectEmitter( target, source, env )
-	
-    path = scanner.path(env)
-    deps = scanner(source[0], env, path)
-    if env.has_key('Gch') and env['Gch']:
-        if env['Gch'].path[:-4] in [x.path for x in deps]:
-            env.Depends(target, env['Gch'])
+
+def pch_emitter(target, source, env, emitter, gchstr):
+    if env.has_key(gchstr) and env[gchstr]:
+        emitter( target, source, env )
+
+        scanner = SCons.Scanner.C.CScanner()
+        path = scanner.path(env)
+
+        deps = scanner(source[0], env, path)
+        depstrings = set([str(x) for x in deps])
+
+        if str(env[gchstr].sources[0]) in depstrings:
+            env.Depends(target, env[gchstr])
 
     return (target, source)
+
+
+def static_pch_emitter(target,source,env):
+    return pch_emitter(target, source, env, SCons.Defaults.StaticObjectEmitter, "Gch")
 
 def shared_pch_emitter(target,source,env):
-    SCons.Defaults.SharedObjectEmitter( target, source, env )
-
-    path = scanner.path(env)
-    deps = scanner(source[0], env, path)
-    if env.has_key('GchSh') and env['GchSh']:
-        if env['GchSh'].path[:-4] in [x.path for x in deps]:
-            env.Depends(target, env['GchSh'])
-    return (target, source)
+    return pch_emitter(target, source, env, SCons.Defaults.SharedObjectEmitter, "GchSh")
 
 def generate(env):
     """
@@ -93,8 +99,8 @@ def generate(env):
         env['BUILDERS']['Gch'] = bld
         env['BUILDERS']['GchSh'] = bldsh
 
-    env['GCHCOM']     = '$CXX $CXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS -o $TARGET -x c++-header -c $SOURCE'
-    env['GCHSHCOM']   = '$CXX $SHCXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS -o $TARGET -x c++-header -c $SOURCE'
+    env['GCHCOM']     = '$CXX -o $TARGET -x c++-header -c $CCFLAGS $CXXFLAGS $_CCCOMCOM $SOURCE'
+    env['GCHSHCOM']   = '$CXX -o $TARGET -x c++-header -c $SHCCFLAGS $SHCXXFLAGS $_CCCOMCOM $SOURCE'
     env['GCHSUFFIX']  = '.gch'
 
     for suffix in SCons.Util.Split('.c .C .cc .cxx .cpp .c++'):

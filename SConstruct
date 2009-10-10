@@ -6,7 +6,7 @@ import os,sys
 from build_util import Dev
 
 gcc_flags = {
-	'common': ['-ggdb', '-Wall', '-Wextra', '-Wno-unused-parameter', '-Wno-missing-field-initializers', '-fexceptions'],
+	'common': ['-g', '-Wall', '-Wextra', '-Wno-unused-parameter', '-Wno-missing-field-initializers', '-fexceptions'],
 	'debug': [], 
 	'release' : ['-O3']
 }
@@ -18,12 +18,22 @@ gcc_xxflags = {
 }
 
 msvc_flags = {
-	# 4512: assn not generated, 4100: <something annoying, forget which>, 4189: var init'd, unused, 4996: fn unsafe, use fn_s
+	# 4100: unreferenced formal parameter
 	# 4121: alignment of member sensitive to packing
-	'common' : ['/W4', '/EHsc', '/Zi', '/GR', '/wd4121', '/wd4100', '/wd4189', '/wd4996', '/wd4512'],
-	'debug' : ['/MD'],
-	'release' : ['/O2', '/MD']
+	# 4127: conditional expression is constant
+	# 4189: var init'd, unused
+	# 4290: exception spec ignored
+	# 4510: no default constructor
+	# 4512: assn not generated
+	# 4610: no default constructor
+	# 4800: converting from BOOL to bool
+	# 4996: fn unsafe, use fn_s
+	'common' : ['/W4', '/EHsc', '/Zi', '/GR', '/wd4100', '/wd4121', '/wd4127', '/wd4189', '/wd4290', '/wd4510', '/wd4512', '/wd4610', '/wd4800', '/wd4996'],
+	'debug' : ['/MDd', '/LDd'],
+	'release' : ['/O2', '/MD', '/LD']
 }
+# we set /LD(d) by default for all sub-projects, since most of them are DLLs. don't forget to
+# remove it when building executables!
 
 msvc_xxflags = {
 	'common' : [],
@@ -32,7 +42,7 @@ msvc_xxflags = {
 }
 
 gcc_link_flags = {
-	'common' : ['-ggdb', '-Wl,--no-undefined', '-time'],
+	'common' : ['-g', '-Wl,--no-undefined', '-time'],
 	'debug' : [],
 	'release' : []				
 }
@@ -45,7 +55,7 @@ msvc_link_flags = {
 
 msvc_defs = {
 	'common' : ['_REENTRANT'],
-	'debug' : ['_DEBUG'],
+	'debug' : ['_DEBUG', '_HAS_ITERATOR_DEBUGGING=0', '_SECURE_SCL=0'],
 	'release' : ['NDEBUG']
 }
 
@@ -80,30 +90,35 @@ opts.AddVariables(
 	BoolVariable('i18n', 'Rebuild i18n files in debug build', 'no'),
 	BoolVariable('nls', 'Build with internationalization support', 'yes'),
 	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-'),
+	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix'))
 )
 
 opts.Update(defEnv)
 Help(opts.GenerateHelpText(defEnv))
 
-tools = ARGUMENTS.get('tools', tooldef)
+# workaround for SCons 1.2 which hard-codes possible archs (only allows 'x86' and 'amd64'...)
+# TODO remove when SCons knows about all available archs
+MSVS_ARCH = defEnv['arch']
+if MSVS_ARCH == 'x64':
+	MSVS_ARCH = 'amd64'
 
-toolset = [tools, 'swig']
-
-env = Environment(ENV=os.environ, tools = toolset, options=opts)
+env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, MSVS_ARCH = MSVS_ARCH)
 
 mode = env['mode']
 if mode not in gcc_flags:
 	print "Unknown mode, exiting"
 	Exit(1)
 
-dev = Dev(mode, tools, env)
+dev = Dev(mode, env['tools'], env)
 dev.prepare()
 
 env.SConsignFile()
 
 env.Append(CPPPATH = ["#/boost/boost/tr1/tr1/", "#/boost/"])
 env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
+if env['CC'] == 'cl': # MSVC
+	env.Append(CPPDEFINES = ['BOOST_ALL_NO_LIB=1'])
 
 if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
@@ -136,11 +151,7 @@ if env['CC'] == 'cl': # MSVC
 	xxflags = msvc_xxflags
 	link_flags = msvc_link_flags
 	defs = msvc_defs
-	
-	# This is for msvc8
-	# Embed generated manifest in file
-	env['SHLINKCOM'] = [env['SHLINKCOM'], 'mt.exe -manifest ${TARGET}.manifest -outputresource:$TARGET;2']
-	env['LINKCOM'] = [env['LINKCOM'], 'mt.exe -manifest ${TARGET}.manifest -outputresource:$TARGET;1']
+
 else:
 	flags = gcc_flags
 	xxflags = gcc_xxflags

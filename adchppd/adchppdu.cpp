@@ -145,7 +145,7 @@ static void runDaemon(const string& configPath) {
 }
 
 static void runConsole(const string& configPath) {
-	printf(_("Starting"));
+	printf(_("Starting\n"));
 	initialize(configPath);
 	init();
 	LOG(modName, versionString + " starting from console");

@@ -32,14 +32,14 @@ if 'HAVE_OPENSSL' in env['CPPDEFINES']:
 				env.Prepend(LIBS = ['ssleay32d', 'libeay32d'])
 			else:
 				env.Prepend(LIBS = ['ssleay32', 'libeay32'])
+			env.Append(LIBS = ['advapi32', 'user32'])
 		else:
 			env.Prepend(LIBS = ['ssl', 'crypto'])
 		env.Append(LIBS = ['gdi32']) # something in OpenSSL uses CreateDC etc...
 		env.Append(CPPPATH=['#/openssl/include'])
 		openssl_lib = '#/openssl/lib/'
-		# todo
-		#if env['arch'] != 'x86':
-		#	openssl_lib += env['arch'] + '/'
+		if env['arch'] != 'x86':
+			openssl_lib += env['arch'] + '/'
 		env.Append(LIBPATH=[openssl_lib])
 	else:
 		env.Prepend(LIBS = ['ssl', 'crypto'])

@@ -8,7 +8,12 @@ class Dev:
 		self.mode = mode
 		self.tools = tools
 		self.env = env
-	
+
+		self.build_root = '#/build/' + self.mode + '-' + self.tools
+		if env['arch'] != 'x86':
+			self.build_root += '-' + env['arch']
+		self.build_root += '/'
+
 	def prepare(self):
 		if not self.env['verbose']:
 			self.env['CCCOMSTR'] = "Compiling $TARGET (static)"
@@ -51,7 +56,7 @@ class Dev:
 		return sys.platform == 'win32' or 'mingw' in self.env['TOOLS']
 
 	def get_build_root(self):
-		return '#/build/' + self.mode + '-' + self.tools + '/'
+		return self.build_root
 
 	def get_build_path(self, source_path):
 		return self.get_build_root() + source_path
@@ -72,9 +77,15 @@ class Dev:
 		sources = self.get_sources(source_path, source_glob)
 
 		if precompiled_header is not None:
+			for i, source in enumerate(sources):
+				if source.find(precompiled_header + '.cpp') != -1:
+					# the PCH/GCH builder will take care of this one
+					del sources[i]
+
 			if env['CC'] == 'cl': # MSVC
 				env['PCHSTOP'] = precompiled_header + '.h'
 				env['PCH'] = env.PCH(self.get_target(source_path, precompiled_header + '.pch', False), precompiled_header + '.cpp')[0]
+
 			elif 'gcc' in env['TOOLS']:
 				env['Gch'] = env.Gch(self.get_target(source_path, precompiled_header + '.gch', False), precompiled_header + '.h')[0]
 		
@@ -113,13 +124,16 @@ def CheckPKGConfig(context, version):
 	ret = context.TryAction('pkg-config --atleast-pkgconfig-version=%s' % version)[0]
 	context.Result( ret )
 	return ret
-	
+
 def CheckPKG(context, name):
 	context.Message( 'Checking for %s... ' % name )
 	ret = context.TryAction('pkg-config --exists "%s"' % name)[0]
 	if ret:
 		context.env.ParseConfig('pkg-config --cflags --libs "%s"' % name)
-		
+
 	context.Result( ret )
 	return ret
-	   
+
+def array_remove(array, to_remove):
+	if to_remove in array:
+		array.remove(to_remove)

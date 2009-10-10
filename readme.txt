@@ -32,10 +32,13 @@ NOTE: The hub will not run on Windows 9x/ME
 
 To compile the sources you will also need (other versions might work but I don't use them):
 
-* GCC 4.4+ (Linux or http://www.mingw.org[MinGW])
+* A C++ compiler, such as:
+	** GCC 4.4+ (Linux or http://www.mingw.org[MinGW])
+	** Microsoft Visual C++ 9.0 (2008) with at least Service Pack 1 and https://connect.microsoft.com/VisualStudio/Downloads/DownloadDetails.aspx?DownloadID=17034&amp;wa=wsignin1.0[this hotfixed-hotfix]
 * http://www.scons.org[SCons 0.98.5]
 * http://www.swig.org[SWIG 1.3.39]
 * http://www.python.org[Python] 2.5 (Windows) or 2.4+ (Linux)
+* Optional: http://www.openssl.org[OpenSSL 1.0.0-beta3]
 
 == Building
 To build ADCH++ from source you have to:
@@ -43,13 +46,13 @@ To build ADCH++ from source you have to:
 * Install SWIG and ensure it's in your PATH
 * Install Python and ensure it's in your PATH
 * Install SCons and ensure it's in your PATH
-* Windows: Install MinGW and ensure it's in your PATH
+* Windows with MinGW: Install MinGW and ensure it's in your PATH
 * Linux: Install GCC and appropriate header files, in particular, these packages spring to mind:
 	** gcc-c++
 	** libstdc++-devel
 	** readline-devel
 * To compile with support for secure connections, you need OpenSSL:
-	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory
+	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory. append a 'd' to debug libs and put x64 / ia64 libs into openssl/lib/x64 / openssl/lib/ia64 respectively.
 	** Linux: if you don't have it already, get the openssl-devel package
 * In the source folder, type "scons -h" to see additional compile options
 * Type "scons" to create a debug build. "scons mode=release" will create a

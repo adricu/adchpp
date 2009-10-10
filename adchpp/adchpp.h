@@ -32,13 +32,6 @@
 # define _ATL_SECURE_NO_DEPRECATE 1
 # define _CRT_NON_CONFORMING_SWPRINTFS 1
 
-# pragma warning(disable: 4711) // function 'xxx' selected for automatic inline expansion
-# pragma warning(disable: 4786) // identifier was truncated to '255' characters in the debug information
-# pragma warning(disable: 4290) // C++ Exception Specification ignored
-# pragma warning(disable: 4127) // constant expression
-# pragma warning(disable: 4710) // function not inlined
-# pragma warning(disable: 4503) // decorated name length exceeded, name was truncated
-
 typedef signed __int8 int8_t;
 typedef signed __int16 int16_t;
 typedef signed __int32 int32_t;
@@ -51,7 +44,7 @@ typedef unsigned __int64 uint64_t;
 
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define _LL(x) x##ll
 # define _ULL(x) x##ull
 # define I64_FMT "%I64d"
@@ -99,10 +92,12 @@ typedef unsigned __int64 uint64_t;
 
 #endif
 
+#ifndef _MSC_VER
 #include <sys/time.h>
+#include <inttypes.h> /// @todo when c++0x, use <cinttypes>
+#endif
 
 #include <cerrno>
-#include <inttypes.h> /// @todo when c++0x, use <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>

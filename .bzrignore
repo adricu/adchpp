@@ -11,3 +11,4 @@
 logs
 custom.py
 openssl/
+*.pdb

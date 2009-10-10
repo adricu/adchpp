@@ -227,8 +227,7 @@ void Util::tokenize(StringList& lst, const string& str, char sep, string::size_t
 
 #ifdef _WIN32
 string Util::getAppPath() {
-	string tmp(MAX_PATH + 1, '\0');
-	tmp.resize(GetModuleFileName(NULL, &tmp[0], MAX_PATH));
+	string tmp = getAppName();
 	string::size_type i = tmp.rfind('\\');
 	if(i != string::npos)
 		tmp.erase(i+1);
@@ -236,8 +235,8 @@ string Util::getAppPath() {
 }
 
 string Util::getAppName() {
-	string tmp(MAX_PATH + 1, _T('\0'));
-	tmp.resize(GetModuleFileName(NULL, &tmp[0], MAX_PATH));
+	string tmp(MAX_PATH + 1, '\0');
+	tmp.resize(::GetModuleFileNameA(NULL, &tmp[0], MAX_PATH));
 	return tmp;
 }
 
