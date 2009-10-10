@@ -195,12 +195,20 @@ ClientManager::SignalReceive::Connection PluginManager::onCommand(const std::str
 }
 
 PluginManager::CommandSignal& PluginManager::getCommandSignal(const std::string& commandName) {
-	return commandHandlers[commandName];
+	CommandHandlers::iterator i = commandHandlers.find(commandName);
+	if(i == commandHandlers.end())
+		return commandHandlers.insert(make_pair(commandName, CommandSignal())).first->second;
+
+	return i->second;
 }
 
 bool PluginManager::handleCommand(Entity& e, const StringList& l) {
+	CommandHandlers::iterator i = commandHandlers.find(l[0]);
+	if(i == commandHandlers.end())
+		return true;
+
 	bool ok = true;
-	commandHandlers[l[0]](e, l, ok);
+	i->second(e, l, ok);
 	return ok;
 }
 
