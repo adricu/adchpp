@@ -19,6 +19,9 @@ env.Append(CPPPATH = ['.'])
 
 env.Append(CPPDEFINES=["BUILDING_ADCHPP=1"])
 
+if env['CC'] == 'cl': # MSVC
+	env.Append(LIBS = ['advapi32', 'user32'])
+
 if 'HAVE_DL' in env['CPPDEFINES']:
     env.Append(LIBS = ['dl'])
 
@@ -32,7 +35,6 @@ if 'HAVE_OPENSSL' in env['CPPDEFINES']:
 				env.Prepend(LIBS = ['ssleay32d', 'libeay32d'])
 			else:
 				env.Prepend(LIBS = ['ssleay32', 'libeay32'])
-			env.Append(LIBS = ['advapi32', 'user32'])
 		else:
 			env.Prepend(LIBS = ['ssl', 'crypto'])
 		env.Append(LIBS = ['gdi32']) # something in OpenSSL uses CreateDC etc...
