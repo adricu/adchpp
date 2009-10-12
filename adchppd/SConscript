@@ -18,8 +18,7 @@ if env['CC'] == 'cl': # MSVC
 	array_remove(env['CCFLAGS'], '/LD')
 	array_remove(env['CCFLAGS'], '/LDd')
 
-	if 'HAVE_OPENSSL' in env['CPPDEFINES']:
-		env.Append(LIBS = ['advapi32'])
+	env.Append(LIBS = ['advapi32'])
 
 #if env['nls']:
 #	headers=dev.get_sources(source_path, "*.h")
