@@ -35,4 +35,4 @@
 #include "lstrlib.c"
 #include "ltablib.c"
 
-/*#include "lua.c"*/
+#include "lua.c"
