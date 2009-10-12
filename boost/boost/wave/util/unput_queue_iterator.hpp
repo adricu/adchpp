@@ -219,12 +219,12 @@ public:
     // objects are equal and the base iterators are equal as well
         OtherDerivedT const &rhs = static_cast<OtherDerivedT const &>(x);
         return 
-            (unput_queue.empty() && rhs.unput_queue.empty() ||
+            ((unput_queue.empty() && rhs.unput_queue.empty()) ||
               (&unput_queue == &rhs.unput_queue &&
                unput_queue.begin() == rhs.unput_queue.begin()
               )
             ) &&
-            get_base_iterator() == rhs.get_base_iterator(); 
+            (get_base_iterator() == rhs.get_base_iterator()); 
     }
 
 private:
@@ -283,13 +283,13 @@ namespace impl {
         static return_type 
         generate(iterator_type &it)
         {
-            return return_t(it.base(), last);
+            return return_type(it.base(), last);
         }
 
         static return_type 
         generate(ContainerT &queue, iterator_type &it)
         {
-            return return_t(it.base(), queue);
+            return return_type(it.base(), queue);
         }
     };
     

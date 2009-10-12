@@ -1,6 +1,7 @@
 * Improve Lua scripts
 * Clients are disconnected with the DI flag of QUI
 * Update to Lua 5.1.4
+* Update to boost 1.40
 
 -- 2.4 2008-10-02 --
 * Improve Lua scripts

@@ -9,7 +9,7 @@
 /////////1/////////2/////////3/////////4/////////5/////////6/////////7/////////8
 // void_cast.hpp:   interface for run-time casting of void pointers.
 
-// (C) Copyright 2002 Robert Ramey - http://www.rrsd.com . 
+// (C) Copyright 2002-2009 Robert Ramey - http://www.rrsd.com . 
 // Use, modification and distribution is subject to the Boost Software
 // License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -17,12 +17,18 @@
 
 //  See http://www.boost.org for updates, documentation, and revision history.
 
+#include <cstddef> // for ptrdiff_t
+#include <boost/weak_ptr.hpp>
+#include <boost/noncopyable.hpp>
+
+#include <boost/serialization/config.hpp>
 #include <boost/serialization/smart_cast.hpp>
 #include <boost/serialization/singleton.hpp>
 #include <boost/serialization/force_include.hpp>
 #include <boost/serialization/type_info_implementation.hpp>
-#include <boost/serialization/config.hpp>
-#include <boost/serialization/force_include.hpp>
+#include <boost/serialization/extended_type_info.hpp>
+#include <boost/type_traits/is_virtual_base_of.hpp>
+
 #include <boost/config/abi_prefix.hpp> // must be the last header
 
 #ifdef BOOST_MSVC
@@ -82,9 +88,9 @@ void_downcast(
 
 namespace void_cast_detail {
 
-class BOOST_SERIALIZATION_DECL(BOOST_PP_EMPTY()) void_caster
+class BOOST_SERIALIZATION_DECL(BOOST_PP_EMPTY()) void_caster :
+    private boost::noncopyable
 {
-    friend struct void_caster_compare ;
     friend 
     BOOST_SERIALIZATION_DECL(void const *)
     boost::serialization::void_upcast(
@@ -99,27 +105,46 @@ class BOOST_SERIALIZATION_DECL(BOOST_PP_EMPTY()) void_caster
         extended_type_info const & base,
         void const * const
     );
+protected:
+    void recursive_register(bool includes_virtual_base = false) const;
+    void recursive_unregister() const;
+public:
     // Data members
-    const extended_type_info & m_derived;
-    const extended_type_info & m_base;
+    const extended_type_info * m_derived;
+    const extended_type_info * m_base;
+    boost::weak_ptr<const extended_type_info> m_derived_observer;
+    boost::weak_ptr<const extended_type_info> m_base_observer;
+    /*const*/ std::ptrdiff_t m_difference;
+    const bool m_heap; // allocated on the heap
+
+    // note that void_casters are keyed on value of
+    // member extended type info records - NOT their
+    // addresses.  This is necessary in order for the
+    // void cast operations to work across dll and exe
+    // module boundries.
+    bool operator<(const void_caster & rhs) const;
+
+    const void_caster & operator*(){
+        return *this;
+    }
     // each derived class must re-implement these;
     virtual void const * upcast(void const * const t) const = 0;
     virtual void const * downcast(void const * const t) const = 0;
-    // cw 8.3 requires this!!
-    void_caster& operator=(void_caster const &);
-protected:
-    void
-    static_register() const;
-    void
-    static_unregister() const;
-public:
     // Constructor
     void_caster(
-        extended_type_info const & derived,
-        extended_type_info const & base
-    );
-    virtual ~void_caster(){};
-    bool operator==(const void_caster & rhs) const;
+        extended_type_info const * derived,
+        extended_type_info const * base,
+        std::ptrdiff_t difference = 0,
+        bool heap = false
+    ) :
+        m_derived(derived),
+        m_base(base),
+        m_derived_observer(derived->get_weak_ptr()),
+        m_base_observer(base->get_weak_ptr()),
+        m_difference(difference),
+        m_heap(heap)
+    {}
+    virtual ~void_caster(){}
 };
 
 template <class Derived, class Base>
@@ -141,23 +166,68 @@ class void_caster_primitive :
         return b;
     }
 public:
-    BOOST_DLLEXPORT void_caster_primitive() BOOST_USED;
+    void_caster_primitive();
     ~void_caster_primitive();
 };
 
 template <class Derived, class Base>
-BOOST_DLLEXPORT void_caster_primitive<Derived, Base>::void_caster_primitive() :
+void_caster_primitive<Derived, Base>::void_caster_primitive() :
     void_caster( 
-        type_info_implementation<Derived>::type::get_const_instance(), 
-        type_info_implementation<Base>::type::get_const_instance()
+        & type_info_implementation<Derived>::type::get_const_instance(), 
+        & type_info_implementation<Base>::type::get_const_instance(),
+        // note:I wanted to display from 0 here, but at least one compiler
+        // treated 0 by not shifting it at all.
+        reinterpret_cast<std::ptrdiff_t>(
+            static_cast<Derived *>(
+                reinterpret_cast<Base *>(1)
+            )
+        ) - 1
     )
 {
-    static_register();
+    recursive_register();
 }
 
 template <class Derived, class Base>
 void_caster_primitive<Derived, Base>::~void_caster_primitive(){
-    static_unregister();
+    recursive_unregister();
+}
+
+template <class Derived, class Base>
+class void_caster_virtual_base : 
+    public void_caster
+{
+public:
+    virtual void const * downcast(void const * const t) const {
+        const Derived * d = 
+            dynamic_cast<const Derived *>(
+                static_cast<const Base *>(t)
+            );
+        return d;
+    }
+    virtual void const * upcast(void const * const t) const {
+        const Base * b = 
+            dynamic_cast<const Base *>(
+                static_cast<const Derived *>(t)
+            );
+        return b;
+    }
+    void_caster_virtual_base();
+    ~void_caster_virtual_base();
+};
+
+template <class Derived, class Base>
+void_caster_virtual_base<Derived,Base>::void_caster_virtual_base() :
+    void_caster( 
+        & (type_info_implementation<Derived>::type::get_const_instance()), 
+        & (type_info_implementation<Base>::type::get_const_instance())
+    )
+{
+    recursive_register(true);
+}
+
+template <class Derived, class Base>
+void_caster_virtual_base<Derived,Base>::~void_caster_virtual_base(){
+    recursive_unregister();
 }
 
 } // void_cast_detail 
@@ -179,9 +249,17 @@ inline const void_cast_detail::void_caster & void_cast_register(
     Derived const * /* dnull = NULL */, 
     Base const * /* bnull = NULL */
 ){
-    return singleton<void_cast_detail::void_caster_primitive<
-        Derived, Base
-    > >::get_const_instance();
+    typedef
+        BOOST_DEDUCED_TYPENAME mpl::eval_if<boost::is_virtual_base_of<Base,Derived>,
+            mpl::identity<
+                void_cast_detail::void_caster_virtual_base<Derived, Base>
+            >
+        ,// else
+            mpl::identity<
+                void_cast_detail::void_caster_primitive<Derived, Base>
+            >
+        >::type typex;
+    return singleton<typex>::get_const_instance();
 }
 
 } // namespace serialization

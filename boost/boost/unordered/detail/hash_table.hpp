@@ -1,6 +1,6 @@
 
 // Copyright (C) 2003-2004 Jeremy B. Maitin-Shepard.
-// Copyright (C) 2005-2008 Daniel James
+// Copyright (C) 2005-2009 Daniel James
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -12,6 +12,11 @@
 #endif
 
 #include <boost/config.hpp>
+#include <boost/unordered/detail/config.hpp>
+
+#if !defined(BOOST_UNORDERED_EMPLACE_LIMIT)
+#define BOOST_UNORDERED_EMPLACE_LIMIT 10
+#endif
 
 #include <cstddef>
 #include <boost/config/no_tr1/cmath.hpp>
@@ -28,18 +33,40 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/aligned_storage.hpp>
 #include <boost/type_traits/alignment_of.hpp>
+#include <boost/type_traits/remove_reference.hpp>
+#include <boost/type_traits/remove_const.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/and.hpp>
+#include <boost/mpl/or.hpp>
+#include <boost/mpl/not.hpp>
 #include <boost/detail/workaround.hpp>
 #include <boost/utility/swap.hpp>
+#include <boost/preprocessor/seq/size.hpp>
+#include <boost/preprocessor/seq/enum.hpp>
 
 #include <boost/mpl/aux_/config/eti.hpp>
 
-#if defined(BOOST_HAS_RVALUE_REFS) && defined(BOOST_HAS_VARIADIC_TMPL)
-#include <boost/type_traits/remove_reference.hpp>
-#include <boost/type_traits/remove_const.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/mpl/not.hpp>
+#if !(defined(BOOST_UNORDERED_STD_FORWARD))
+
+#include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/enum_binary_params.hpp>
+#include <boost/preprocessor/repetition/repeat_from_to.hpp>
+
+#define BOOST_UNORDERED_TEMPLATE_ARGS(z, n) \
+    BOOST_PP_ENUM_PARAMS_Z(z, n, typename Arg)
+#define BOOST_UNORDERED_FUNCTION_PARAMS(z, n) \
+    BOOST_PP_ENUM_BINARY_PARAMS_Z(z, n, Arg, const& arg)
+#define BOOST_UNORDERED_CALL_PARAMS(z, n) \
+    BOOST_PP_ENUM_PARAMS_Z(z, n, arg)
+
+#endif
+
+#if defined(BOOST_MSVC)
+#pragma warning(push)
+#if BOOST_MSVC >= 1400
+#pragma warning(disable:4267) // conversion from 'size_t' to 'unsigned int',
+                              // possible loss of data.
+#endif
 #endif
 
 #if BOOST_WORKAROUND(__BORLANDC__, <= 0x0582)
@@ -58,7 +85,7 @@ namespace boost {
     namespace unordered_detail {
         template <class T> struct type_wrapper {};
 
-        static const std::size_t default_initial_bucket_count = 50;
+        static const std::size_t default_initial_bucket_count = 11;
         static const float minimum_max_load_factor = 1e-3f;
 
         inline std::size_t double_to_size_t(double f)
@@ -76,18 +103,25 @@ namespace boost {
             static std::ptrdiff_t const length;
         };
 
-        template<typename T>
-        std::size_t const prime_list_template<T>::value[] = {
-            5ul, 11ul, 17ul, 29ul, 37ul, 53ul, 67ul, 79ul,
-            97ul, 131ul, 193ul, 257ul, 389ul, 521ul, 769ul,
-            1031ul, 1543ul, 2053ul, 3079ul, 6151ul, 12289ul, 24593ul,
-            49157ul, 98317ul, 196613ul, 393241ul, 786433ul,
-            1572869ul, 3145739ul, 6291469ul, 12582917ul, 25165843ul,
-            50331653ul, 100663319ul, 201326611ul, 402653189ul, 805306457ul,
-            1610612741ul, 3221225473ul, 4294967291ul };
+#define BOOST_UNORDERED_PRIMES \
+        (5ul)(11ul)(17ul)(29ul)(37ul)(53ul)(67ul)(79ul) \
+        (97ul)(131ul)(193ul)(257ul)(389ul)(521ul)(769ul) \
+        (1031ul)(1543ul)(2053ul)(3079ul)(6151ul)(12289ul)(24593ul) \
+        (49157ul)(98317ul)(196613ul)(393241ul)(786433ul) \
+        (1572869ul)(3145739ul)(6291469ul)(12582917ul)(25165843ul) \
+        (50331653ul)(100663319ul)(201326611ul)(402653189ul)(805306457ul) \
+        (1610612741ul)(3221225473ul)(4294967291ul)
 
         template<typename T>
-        std::ptrdiff_t const prime_list_template<T>::length = 28;
+        std::size_t const prime_list_template<T>::value[] = {
+            BOOST_PP_SEQ_ENUM(BOOST_UNORDERED_PRIMES)
+        };
+
+        template<typename T>
+        std::ptrdiff_t const prime_list_template<T>::length
+            = BOOST_PP_SEQ_SIZE(BOOST_UNORDERED_PRIMES);
+
+#undef BOOST_UNORDERED_PRIMES
 
         typedef prime_list_template<std::size_t> prime_list;
 
@@ -224,10 +258,15 @@ namespace boost {
             functions_ptr func_; // The currently active functions.
         };
         
+#if defined(BOOST_MSVC)
+#  define BOOST_UNORDERED_DESTRUCT(x, type) (x)->~type();
+#else
+#  define BOOST_UNORDERED_DESTRUCT(x, type) boost::unordered_detail::destroy(x)
         template <typename T>
         void destroy(T* x) {
             x->~T();
         }
+#endif
     }
 }
 
@@ -300,5 +339,9 @@ namespace boost {
 
 #undef BOOST_UNORDERED_BORLAND_BOOL
 #undef BOOST_UNORDERED_MSVC_RESET_PTR
+
+#if defined(BOOST_MSVC)
+#pragma warning(pop)
+#endif
 
 #endif // BOOST_UNORDERED_DETAIL_HASH_TABLE_HPP_INCLUDED

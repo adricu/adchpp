@@ -47,6 +47,17 @@ namespace std{
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/type_traits/is_polymorphic.hpp>
 
+#define DONT_USE_HAS_NEW_OPERATOR (                    \
+    defined(__BORLANDC__)                              \
+    || defined(__IBMCPP__)                             \
+    || defined(BOOST_MSVC) && (BOOST_MSVC <= 1300)     \
+    || defined(__SUNPRO_CC) && (__SUBPRO_CC < 0x590)   \
+)
+
+#if ! DONT_USE_HAS_NEW_OPERATOR
+#include <boost/type_traits/has_new_operator.hpp>
+#endif
+
 #include <boost/mpl/eval_if.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/identity.hpp>
@@ -60,13 +71,14 @@ namespace std{
 #include <boost/mpl/not.hpp>
 #include <boost/mpl/bool.hpp>
 
- #ifndef BOOST_SERIALIZATION_DEFAULT_TYPE_INFO   
-     #include <boost/serialization/extended_type_info_typeid.hpp>   
- #endif 
+#ifndef BOOST_SERIALIZATION_DEFAULT_TYPE_INFO   
+    #include <boost/serialization/extended_type_info_typeid.hpp>   
+#endif
 // the following is need only for dynamic cast of polymorphic pointers
 #include <boost/archive/detail/basic_iarchive.hpp>
 #include <boost/archive/detail/basic_iserializer.hpp>
-#include <boost/archive/detail/archive_pointer_iserializer.hpp>
+#include <boost/archive/detail/basic_pointer_iserializer.hpp>
+#include <boost/archive/detail/archive_serializer_map.hpp>
 #include <boost/archive/archive_exception.hpp>
 
 #include <boost/serialization/serialization.hpp>
@@ -107,15 +119,15 @@ private:
     virtual void destroy(/*const*/ void *address) const {
         boost::serialization::access::destroy(static_cast<T *>(address));
     }
-    // private constructor to inhibit any existence other than the 
-    // static one
-public:
+protected:
+    // protected constructor since it's always created by singleton
     explicit iserializer() :
         basic_iserializer(
             boost::serialization::type_info_implementation<T>::type
                 ::get_const_instance()
         )
     {}
+public:
     virtual BOOST_DLLEXPORT void load_object_data(
         basic_iarchive & ar,
         void *x, 
@@ -147,6 +159,12 @@ BOOST_DLLEXPORT void iserializer<Archive, T>::load_object_data(
     void *x, 
     const unsigned int file_version
 ) const {
+    // trap case where the program cannot handle the current version
+    if(file_version > version())
+        boost::serialization::throw_exception(archive::archive_exception(
+            boost::archive::archive_exception::unsupported_class_version
+        ));
+
     // make sure call is routed through the higest interface that might
     // be specialized by the user.
     boost::serialization::serialize_adl(
@@ -157,8 +175,8 @@ BOOST_DLLEXPORT void iserializer<Archive, T>::load_object_data(
 }
 
 template<class Archive, class T>
-class pointer_iserializer
-  : public archive_pointer_iserializer<Archive>
+class pointer_iserializer :
+    public basic_pointer_iserializer
 {
 private:
     virtual const basic_iserializer & get_basic_serializer() const {
@@ -171,8 +189,10 @@ private:
         void * & x,
         const unsigned int file_version
     ) const BOOST_USED;
-public:
+protected:
+    // this should alway be a singleton so make the constructor protected
     pointer_iserializer();
+    ~pointer_iserializer();
 };
 
 // note trick to be sure that operator new is using class specific
@@ -186,36 +206,34 @@ public:
 //    }
 //}
 
-// note: this should really be a member of the load_ptr function
-// below but some compilers still complain about this.
 template<class T>
 struct heap_allocator
 {
-    #if 0
-        // note: this fails on msvc 7.0 and gcc 3.2
-        template <class U, U x> struct test;
-        typedef char* yes;
-        typedef int* no;
-        template <class U>
-        yes has_op_new(U*, test<void* (*)(std::size_t), &U::operator new>* = 0);
-        no has_op_new(...);
-
-        template<class U>
-        T * new_operator(U);
-
-        T * new_operator(yes){
-            return (T::operator new)(sizeof(T));
-        }
-        T * new_operator(no){
-            return static_cast<T *>(operator new(sizeof(T)));
-        }
+    // boost::has_new_operator<T> doesn't work on these compilers
+    #if DONT_USE_HAS_NEW_OPERATOR
+        // This doesn't handle operator new overload for class T
         static T * invoke(){
-            return new_operator(has_op_new(static_cast<T *>(NULL)));
+            return static_cast<T *>(operator new(sizeof(T)));
         }
     #else
-        // while this doesn't handle operator new overload for class T
-        static T * invoke(){
-            return static_cast<T *>(operator new(sizeof(T)));
+        struct has_new_operator {
+            static T* invoke() {
+                return static_cast<T *>((T::operator new)(sizeof(T)));
+            }
+        };
+        struct doesnt_have_new_operator {
+            static T* invoke() {
+                return static_cast<T *>(operator new(sizeof(T)));
+            }
+        };
+        static T * invoke() {
+            typedef BOOST_DEDUCED_TYPENAME
+                mpl::eval_if<
+                    boost::has_new_operator<T>,
+                    mpl::identity<has_new_operator >,
+                    mpl::identity<doesnt_have_new_operator >    
+                >::type typex;
+            return typex::invoke();
         }
     #endif
 };
@@ -245,6 +263,8 @@ private:
     T* m_p;
 };
 
+// note: BOOST_DLLEXPORT is so that code for polymorphic class
+// serialized only through base class won't get optimized out
 template<class Archive, class T>
 BOOST_DLLEXPORT void pointer_iserializer<Archive, T>::load_object_ptr(
     basic_iarchive & ar, 
@@ -287,7 +307,7 @@ BOOST_DLLEXPORT void pointer_iserializer<Archive, T>::load_object_ptr(
 
 template<class Archive, class T>
 pointer_iserializer<Archive, T>::pointer_iserializer() :
-    archive_pointer_iserializer<Archive>(
+    basic_pointer_iserializer(
         boost::serialization::type_info_implementation<T>::type
             ::get_const_instance()
     )
@@ -295,6 +315,12 @@ pointer_iserializer<Archive, T>::pointer_iserializer() :
     boost::serialization::singleton<
         iserializer<Archive, T>
     >::get_mutable_instance().set_bpis(this);
+    archive_serializer_map<Archive>::insert(this);
+}
+
+template<class Archive, class T>
+pointer_iserializer<Archive, T>::~pointer_iserializer(){
+    archive_serializer_map<Archive>::erase(this);
 }
 
 template<class Archive, class T>
@@ -448,8 +474,7 @@ struct load_pointer_type {
         const basic_pointer_iserializer * bpis_ptr = register_type(ar, *t);
         const basic_pointer_iserializer * newbpis_ptr = ar.load_pointer(
             * reinterpret_cast<void **>(&t),
-            bpis_ptr,
-            archive_pointer_iserializer<Archive>::find
+            bpis_ptr
         );
         // if the pointer isn't that of the base class
         if(newbpis_ptr != bpis_ptr){
@@ -474,6 +499,9 @@ struct load_array_type {
         typedef BOOST_DEDUCED_TYPENAME remove_extent<T>::type value_type;
         
         // convert integers to correct enum to load
+        // determine number of elements in the array. Consider the
+        // fact that some machines will align elements on boundries
+        // other than characters.
         int current_count = sizeof(t) / (
             static_cast<char *>(static_cast<void *>(&t[1])) 
             - static_cast<char *>(static_cast<void *>(&t[0]))

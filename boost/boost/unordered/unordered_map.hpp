@@ -1,6 +1,6 @@
 
 // Copyright (C) 2003-2004 Jeremy B. Maitin-Shepard.
-// Copyright (C) 2005-2008 Daniel James.
+// Copyright (C) 2005-2009 Daniel James.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -21,6 +21,10 @@
 #include <boost/unordered/detail/move.hpp>
 #endif
 
+#if !defined(BOOST_NO_0X_HDR_INITIALIZER_LIST)
+#include <initializer_list>
+#endif
+
 #if defined(BOOST_MSVC)
 #pragma warning(push)
 #if BOOST_MSVC >= 1400
@@ -35,6 +39,9 @@ namespace boost
     template <class Key, class T, class Hash, class Pred, class Alloc>
     class unordered_map
     {
+#if BOOST_WORKAROUND(__BORLANDC__, < 0x0582)
+    public:
+#endif
         typedef boost::unordered_detail::hash_types_unique_keys<
             std::pair<const Key, T>, Key, Hash, Pred, Alloc
         > implementation;
@@ -98,11 +105,22 @@ namespace boost
         unordered_map(InputIterator f, InputIterator l,
                 size_type n,
                 const hasher &hf = hasher(),
-                const key_equal &eql = key_equal(),
-                const allocator_type &a = allocator_type())
+                const key_equal &eql = key_equal())
+            : base(f, l, n, hf, eql, allocator_type())
+        {
+        }
+
+        template <class InputIterator>
+        unordered_map(InputIterator f, InputIterator l,
+                size_type n,
+                const hasher &hf,
+                const key_equal &eql,
+                const allocator_type &a)
             : base(f, l, n, hf, eql, a)
         {
         }
+
+        ~unordered_map() {}
 
 #if defined(BOOST_HAS_RVALUE_REFS)
         unordered_map(unordered_map&& other)
@@ -135,7 +153,7 @@ namespace boost
 #endif
 #endif
 
-#if !defined(BOOST_NO_INITIALIZER_LISTS)
+#if !defined(BOOST_NO_0X_HDR_INITIALIZER_LIST)
         unordered_map(std::initializer_list<value_type> list,
                 size_type n = boost::unordered_detail::default_initial_bucket_count,
                 const hasher &hf = hasher(),
@@ -219,30 +237,74 @@ namespace boost
 
         // modifiers
 
-#if defined(BOOST_HAS_RVALUE_REFS) && defined(BOOST_HAS_VARIADIC_TMPL)
+#if defined(BOOST_UNORDERED_STD_FORWARD)
         template <class... Args>
         std::pair<iterator, bool> emplace(Args&&... args)
         {
             return boost::unordered_detail::pair_cast<iterator, bool>(
-                base.insert(std::forward<Args>(args)...));
+                base.emplace(std::forward<Args>(args)...));
         }
 
         template <class... Args>
         iterator emplace_hint(const_iterator hint, Args&&... args)
         {
-            return iterator(base.insert_hint(get(hint), std::forward<Args>(args)...));
+            return iterator(base.emplace_hint(get(hint), std::forward<Args>(args)...));
         }
+#else
+
+        std::pair<iterator, bool> emplace(value_type const& v = value_type())
+        {
+            return boost::unordered_detail::pair_cast<iterator, bool>(
+                base.emplace(v));
+        }
+
+        iterator emplace_hint(const_iterator hint, value_type const& v = value_type())
+        {
+            return iterator(base.emplace_hint(get(hint), v));
+        }
+
+#define BOOST_UNORDERED_EMPLACE(z, n, _)                                        \
+            template <                                                          \
+                BOOST_UNORDERED_TEMPLATE_ARGS(z, n)                             \
+            >                                                                   \
+            std::pair<iterator, bool> emplace(                                  \
+                BOOST_UNORDERED_FUNCTION_PARAMS(z, n)                           \
+            )                                                                   \
+            {                                                                   \
+                return boost::unordered_detail::pair_cast<iterator, bool>(      \
+                    base.emplace(                                               \
+                        BOOST_UNORDERED_CALL_PARAMS(z, n)                       \
+                    ));                                                         \
+            }                                                                   \
+                                                                                \
+            template <                                                          \
+                BOOST_UNORDERED_TEMPLATE_ARGS(z, n)                             \
+            >                                                                   \
+            iterator emplace_hint(const_iterator hint,                          \
+                BOOST_UNORDERED_FUNCTION_PARAMS(z, n)                           \
+            )                                                                   \
+            {                                                                   \
+                return iterator(base.emplace_hint(get(hint),                    \
+                        BOOST_UNORDERED_CALL_PARAMS(z, n)                       \
+                ));                                                             \
+            }
+
+        BOOST_PP_REPEAT_FROM_TO(1, BOOST_UNORDERED_EMPLACE_LIMIT,
+            BOOST_UNORDERED_EMPLACE, _)
+
+#undef BOOST_UNORDERED_EMPLACE
+
 #endif
 
         std::pair<iterator, bool> insert(const value_type& obj)
         {
             return boost::unordered_detail::pair_cast<iterator, bool>(
-                    base.insert(obj));
+                    base.emplace(obj));
         }
 
         iterator insert(const_iterator hint, const value_type& obj)
         {
-            return iterator(base.insert_hint(get(hint), obj));
+            return iterator(base.emplace_hint(get(hint), obj));
         }
 
         template <class InputIterator>
@@ -411,7 +473,7 @@ namespace boost
 #if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
         friend bool operator==(unordered_map const&, unordered_map const&);
         friend bool operator!=(unordered_map const&, unordered_map const&);
-#else
+#elif !BOOST_WORKAROUND(__BORLANDC__, < 0x0582)
         friend bool operator==<Key, T, Hash, Pred, Alloc>(unordered_map const&, unordered_map const&);
         friend bool operator!=<Key, T, Hash, Pred, Alloc>(unordered_map const&, unordered_map const&);
 #endif
@@ -441,6 +503,9 @@ namespace boost
     template <class Key, class T, class Hash, class Pred, class Alloc>
     class unordered_multimap
     {
+#if BOOST_WORKAROUND(__BORLANDC__, < 0x0582)
+    public:
+#endif
         typedef boost::unordered_detail::hash_types_equivalent_keys<
             std::pair<const Key, T>, Key, Hash, Pred, Alloc
         > implementation;
@@ -504,11 +569,22 @@ namespace boost
         unordered_multimap(InputIterator f, InputIterator l,
                 size_type n,
                 const hasher &hf = hasher(),
-                const key_equal &eql = key_equal(),
-                const allocator_type &a = allocator_type())
+                const key_equal &eql = key_equal())
+          : base(f, l, n, hf, eql, allocator_type())
+        {
+        }
+
+        template <class InputIterator>
+        unordered_multimap(InputIterator f, InputIterator l,
+                size_type n,
+                const hasher &hf,
+                const key_equal &eql,
+                const allocator_type &a)
           : base(f, l, n, hf, eql, a)
         {
         }
+
+        ~unordered_multimap() {}
 
 #if defined(BOOST_HAS_RVALUE_REFS)
         unordered_multimap(unordered_multimap&& other)
@@ -541,7 +617,7 @@ namespace boost
 #endif
 #endif
 
-#if !defined(BOOST_NO_INITIALIZER_LISTS)
+#if !defined(BOOST_NO_0X_HDR_INITIALIZER_LIST)
         unordered_multimap(std::initializer_list<value_type> list,
                 size_type n = boost::unordered_detail::default_initial_bucket_count,
                 const hasher &hf = hasher(),
@@ -626,28 +702,72 @@ namespace boost
 
         // modifiers
 
-#if defined(BOOST_HAS_RVALUE_REFS) && defined(BOOST_HAS_VARIADIC_TMPL)
+#if defined(BOOST_UNORDERED_STD_FORWARD)
         template <class... Args>
         iterator emplace(Args&&... args)
         {
-            return iterator(base.insert(std::forward<Args>(args)...));
+            return iterator(base.emplace(std::forward<Args>(args)...));
         }
 
         template <class... Args>
         iterator emplace_hint(const_iterator hint, Args&&... args)
         {
-            return iterator(base.insert_hint(get(hint), std::forward<Args>(args)...));
+            return iterator(base.emplace_hint(get(hint), std::forward<Args>(args)...));
         }
+#else
+
+        iterator emplace(value_type const& v = value_type())
+        {
+            return iterator(base.emplace(v));
+        }
+        
+        iterator emplace_hint(const_iterator hint, value_type const& v = value_type())
+        {
+            return iterator(base.emplace_hint(get(hint), v));
+        }
+
+
+#define BOOST_UNORDERED_EMPLACE(z, n, _)                                        \
+            template <                                                          \
+                BOOST_UNORDERED_TEMPLATE_ARGS(z, n)                             \
+            >                                                                   \
+            iterator emplace(                                                   \
+                BOOST_UNORDERED_FUNCTION_PARAMS(z, n)                           \
+            )                                                                   \
+            {                                                                   \
+                return iterator(                                                \
+                    base.emplace(                                               \
+                        BOOST_UNORDERED_CALL_PARAMS(z, n)                       \
+                    ));                                                         \
+            }                                                                   \
+                                                                                \
+            template <                                                          \
+                BOOST_UNORDERED_TEMPLATE_ARGS(z, n)                             \
+            >                                                                   \
+            iterator emplace_hint(const_iterator hint,                          \
+                BOOST_UNORDERED_FUNCTION_PARAMS(z, n)                           \
+            )                                                                   \
+            {                                                                   \
+                return iterator(base.emplace_hint(get(hint),                    \
+                        BOOST_UNORDERED_CALL_PARAMS(z, n)                       \
+                ));                                                             \
+            }
+
+        BOOST_PP_REPEAT_FROM_TO(1, BOOST_UNORDERED_EMPLACE_LIMIT,
+            BOOST_UNORDERED_EMPLACE, _)
+
+#undef BOOST_UNORDERED_EMPLACE
+
 #endif
 
         iterator insert(const value_type& obj)
         {
-            return iterator(base.insert(obj));
+            return iterator(base.emplace(obj));
         }
 
         iterator insert(const_iterator hint, const value_type& obj)
         {
-            return iterator(base.insert_hint(get(hint), obj));
+            return iterator(base.emplace_hint(get(hint), obj));
         }
 
         template <class InputIterator>
@@ -801,7 +921,7 @@ namespace boost
 #if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
         friend bool operator==(unordered_multimap const&, unordered_multimap const&);
         friend bool operator!=(unordered_multimap const&, unordered_multimap const&);
-#else
+#elif !BOOST_WORKAROUND(__BORLANDC__, < 0x0582)
         friend bool operator==<Key, T, Hash, Pred, Alloc>(unordered_multimap const&, unordered_multimap const&);
         friend bool operator!=<Key, T, Hash, Pred, Alloc>(unordered_multimap const&, unordered_multimap const&);
 #endif

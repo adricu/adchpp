@@ -35,6 +35,9 @@ namespace std{
 #include <boost/serialization/nvp.hpp>
 #include <boost/archive/detail/register_archive.hpp>
 
+#include <boost/archive/detail/decl.hpp>
+#include <boost/archive/detail/abi_prefix.hpp> // must be the last header
+
 // determine if its necessary to handle (u)int64_t specifically
 // i.e. that its not a synonym for (unsigned) long
 // if there is no 64 bit int or if its the same as a long
@@ -63,8 +66,8 @@ namespace serialization {
 } // namespace serialization
 namespace archive {
 namespace detail {
-    class basic_iarchive;
-    class basic_iserializer;
+    class BOOST_ARCHIVE_DECL(BOOST_PP_EMPTY()) basic_iarchive;
+    class BOOST_ARCHIVE_DECL(BOOST_PP_EMPTY()) basic_iarchive;
 }
 
 class polymorphic_iarchive;
@@ -156,10 +159,7 @@ public:
     ) = 0;
     virtual const detail::basic_pointer_iserializer * load_pointer(
         void * & t,
-        const detail::basic_pointer_iserializer * bpis_ptr,
-        const detail::basic_pointer_iserializer * (*finder)(
-            const boost::serialization::extended_type_info & type
-        )
+        const detail::basic_pointer_iserializer * bpis_ptr
     ) = 0;
 };
 
@@ -188,5 +188,7 @@ public:
 
 // required by export
 BOOST_SERIALIZATION_REGISTER_ARCHIVE(boost::archive::polymorphic_iarchive)
+
+#include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
 
 #endif // BOOST_ARCHIVE_POLYMORPHIC_IARCHIVE_HPP

@@ -86,7 +86,7 @@ T log1p_imp(T const & x, const Policy& pol, const mpl::int_<0>&)
          function, 0, pol);
 
    result_type a = abs(result_type(x));
-   if(a > result_type(0.5L))
+   if(a > result_type(0.5f))
       return log(1 + result_type(x));
    // Note that without numeric_limits specialisation support, 
    // epsilon just returns zero, and our "optimisation" will always fail:
@@ -384,7 +384,7 @@ inline double log1p(double x, const Policy& pol)
    if(u == 1.0) 
       return x; 
    else
-      return log(u)*(x/(u-1.0));
+      return ::log(u)*(x/(u-1.0));
 }
 template <class Policy>
 inline float log1p(float x, const Policy& pol)
@@ -404,7 +404,7 @@ inline long double log1p(long double x, const Policy& pol)
    if(u == 1.0) 
       return x; 
    else
-      return log(u)*(x/(u-1.0));
+      return ::logl(u)*(x/(u-1.0));
 }
 #endif
 
@@ -432,7 +432,7 @@ inline typename tools::promote_args<T>::type
          function, 0, pol);
 
    result_type a = abs(result_type(x));
-   if(a > result_type(0.95L))
+   if(a > result_type(0.95f))
       return log(1 + result_type(x)) - result_type(x);
    // Note that without numeric_limits specialisation support, 
    // epsilon just returns zero, and our "optimisation" will always fail:

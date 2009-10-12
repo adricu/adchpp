@@ -1,4 +1,4 @@
-//Copyright (c) 2006-2008 Emil Dotchevski and Reverge Studios, Inc.
+//Copyright (c) 2006-2009 Emil Dotchevski and Reverge Studios, Inc.
 
 //Distributed under the Boost Software License, Version 1.0. (See accompanying
 //file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -6,21 +6,40 @@
 #ifndef UUID_FA5836A2CADA11DC8CD47C8555D89593
 #define UUID_FA5836A2CADA11DC8CD47C8555D89593
 
+#include <boost/config.hpp>
+#ifdef BOOST_NO_EXCEPTIONS
+#error This header requires exception handling to be enabled.
+#endif
 #include <boost/exception/exception.hpp>
+#include <boost/exception/info.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception/detail/type_info.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 #include <new>
+#include <ios>
 
 namespace
 boost
     {
+#ifndef BOOST_NO_RTTI
+    typedef error_info<struct tag_original_exception_type,std::type_info const *> original_exception_type;
+
+    inline
+    std::string
+    to_string( original_exception_type const & x )
+        {
+        return x.value()->name();
+        }
+#endif
+
     class exception_ptr;
     exception_ptr current_exception();
     void rethrow_exception( exception_ptr const & );
 
     class
-    exception_ptr
+    exception_ptr:
+        public exception_detail::exception_ptr_base
         {
         typedef bool exception_ptr::*unspecified_bool_type;
         friend exception_ptr current_exception();
@@ -48,6 +67,22 @@ boost
             BOOST_ASSERT(c);
             }
 
+        void
+        _rethrow() const
+            {
+            BOOST_ASSERT(*this);
+            if( bad_alloc_ )
+                throw enable_current_exception(std::bad_alloc());
+            else
+                c_->rethrow();
+            }
+
+        bool
+        _empty() const
+            {
+            return !bad_alloc_ && !c_;
+            }
+
         public:
 
         exception_ptr():
@@ -57,7 +92,7 @@ boost
 
         operator unspecified_bool_type() const
             {
-            return (bad_alloc_ || c_) ? &exception_ptr::bad_alloc_ : 0;
+            return _empty() ? 0 : &exception_ptr::bad_alloc_;
             }
 
         friend
@@ -88,9 +123,16 @@ boost
             }
 
         explicit
+        unknown_exception( std::exception const & e )
+            {
+            add_original_type(e);
+            }
+
+        explicit
         unknown_exception( boost::exception const & e ):
             boost::exception(e)
             {
+            add_original_type(e);
             }
 
         ~unknown_exception() throw()
@@ -99,7 +141,7 @@ boost
 
         private:
 
-		exception_detail::clone_base const *
+        exception_detail::clone_base const *
         clone() const
             {
             return new unknown_exception(*this);
@@ -109,6 +151,15 @@ boost
         rethrow() const
             {
             throw*this;
+            }
+
+        template <class E>
+        void
+        add_original_type( E const & e )
+            {
+#ifndef BOOST_NO_RTTI
+            (*this) << original_exception_type(&typeid(e));
+#endif
             }
         };
 
@@ -128,12 +179,14 @@ boost
             current_exception_std_exception_wrapper( T const & e1 ):
                 T(e1)
                 {
+                add_original_type(e1);
                 }
 
             current_exception_std_exception_wrapper( T const & e1, boost::exception const & e2 ):
                 T(e1),
                 boost::exception(e2)
                 {
+                add_original_type(e1);
                 }
 
             ~current_exception_std_exception_wrapper() throw()
@@ -152,6 +205,15 @@ boost
             rethrow() const
                 {
                 throw *this;
+                }
+
+            template <class E>
+            void
+            add_original_type( E const & e )
+                {
+#ifndef BOOST_NO_RTTI
+                (*this) << original_exception_type(&typeid(e));
+#endif
                 }
             };
 
@@ -189,23 +251,23 @@ boost
         current_exception_std_exception( T const & e1 )
             {
             if( boost::exception const * e2 = get_boost_exception(&e1) )
-                return shared_ptr<clone_base const>(new current_exception_std_exception_wrapper<T>(e1,*e2));
+                return shared_ptr<current_exception_std_exception_wrapper<T> const>(new current_exception_std_exception_wrapper<T>(e1,*e2));
             else
-                return shared_ptr<clone_base const>(new current_exception_std_exception_wrapper<T>(e1));
+                return shared_ptr<current_exception_std_exception_wrapper<T> const>(new current_exception_std_exception_wrapper<T>(e1));
             }
 
         inline
         shared_ptr<clone_base const>
         current_exception_unknown_exception()
             {
-            return shared_ptr<clone_base const>(new unknown_exception());
+            return shared_ptr<unknown_exception const>(new unknown_exception());
             }
 
         inline
         shared_ptr<clone_base const>
         current_exception_unknown_boost_exception( boost::exception const & e )
             {
-            return shared_ptr<clone_base const>(new unknown_exception(e));
+            return shared_ptr<unknown_exception const>(new unknown_exception(e));
             }
 
         inline
@@ -215,7 +277,7 @@ boost
             if( boost::exception const * be = get_boost_exception(&e) )
                 return current_exception_unknown_boost_exception(*be);
             else
-                return current_exception_unknown_exception();
+                return shared_ptr<unknown_exception const>(new unknown_exception(e));
             }
 
         inline
@@ -232,7 +294,17 @@ boost
                 return shared_ptr<exception_detail::clone_base const>(e.clone());
                 }
             catch(
+            std::domain_error & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
             std::invalid_argument & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
+            std::length_error & e )
                 {
                 return exception_detail::current_exception_std_exception(e);
                 }
@@ -243,6 +315,31 @@ boost
                 }
             catch(
             std::logic_error & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
+            std::range_error & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
+            std::overflow_error & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
+            std::underflow_error & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
+            std::ios_base::failure & e )
+                {
+                return exception_detail::current_exception_std_exception(e);
+                }
+            catch(
+            std::runtime_error & e )
                 {
                 return exception_detail::current_exception_std_exception(e);
                 }
@@ -338,11 +435,26 @@ boost
     void
     rethrow_exception( exception_ptr const & p )
         {
-        BOOST_ASSERT(p);
-        if( p.bad_alloc_ )
-            throw enable_current_exception(std::bad_alloc());
-        else
-            p.c_->rethrow();
+        p._rethrow();
+        }
+
+    inline
+    std::string
+    to_string( exception_ptr const & p )
+        {
+        std::string s='\n'+diagnostic_information(p);
+        std::string padding("  ");
+        std::string r;
+        bool f=false;
+        for( std::string::const_iterator i=s.begin(),e=s.end(); i!=e; ++i )
+            {
+            if( f )
+                r+=padding;
+            char c=*i;
+            r+=c;
+            f=(c=='\n');
+            }
+        return r;
         }
     }
 
