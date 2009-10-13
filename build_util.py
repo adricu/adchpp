@@ -78,7 +78,10 @@ class Dev:
 		sources = self.get_sources(source_path, source_glob)
 
 		if precompiled_header is not None or shared_precompiled_header is not None:
-			pch = precompiled_header if shared_precompiled_header is None else shared_precompiled_header
+			if shared_precompiled_header is None:
+				pch = precompiled_header
+			else:
+				pch = shared_precompiled_header
 
 			for i, source in enumerate(sources):
 				if source.find(pch + '.cpp') != -1:
@@ -90,7 +93,10 @@ class Dev:
 				env['PCH'] = env.PCH(self.get_target(source_path, pch + '.pch', False), pch + '.cpp')[0]
 
 			elif 'gcc' in env['TOOLS']:
-				gch_tool = 'Gch' if shared_precompiled_header is None else 'GchSh'
+				if shared_precompiled_header is None:
+					gch_tool = 'Gch'
+				else:
+					gch_tool = 'GchSh'
 				exec "env['" + gch_tool + "'] = env." + gch_tool + "(self.get_target(source_path, pch + '.gch', False), pch + '.h')[0]"
 
 		return (env, self.get_target(source_path, name, in_bin), sources)

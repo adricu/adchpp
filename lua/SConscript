@@ -6,7 +6,7 @@ if dev.is_win32():
 	env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
 else:
 	env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
-	env.Append(LIBS=['m', 'dl'])	
+	env.Append(LIBS=['m', 'dl', 'readline'])
 
 if '-fvisibility=hidden' in env['CCFLAGS']:
 	env['CCFLAGS'].remove('-fvisibility=hidden')

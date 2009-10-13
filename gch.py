@@ -27,7 +27,7 @@
 # this script is part of nova <http://tim.klingt.org/nova>. it is accessible in its git repo or
 # directly at <http://tim.klingt.org/git?p=nova.git;a=blob;f=gch.py;hb=HEAD>.
 
-# includes minor changes for DC++.
+# includes minor changes for ADCH++.
 
 import SCons.Action
 import SCons.Builder
@@ -54,9 +54,9 @@ GchBuilder = SCons.Builder.Builder(action = GchAction,
 
 
 def pch_emitter(target, source, env, emitter, gchstr):
-    if env.has_key(gchstr) and env[gchstr]:
-        emitter( target, source, env )
+    emitter(target, source, env)
 
+    if env.has_key(gchstr) and env[gchstr]:
         scanner = SCons.Scanner.C.CScanner()
         path = scanner.path(env)
 
