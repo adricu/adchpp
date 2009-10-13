@@ -4,7 +4,7 @@ import os
 
 class Dev:
 	def __init__(self, mode, tools, env):
-		
+
 		self.mode = mode
 		self.tools = tools
 		self.env = env
@@ -35,7 +35,7 @@ class Dev:
 
 		if 'mingw' in self.env['TOOLS']:
 			self.env.Append(LINKFLAGS=["-Wl,--enable-runtime-pseudo-reloc"])
-			
+
 			if sys.platform != 'win32':
 				if self.env.get('prefix') is not None:
 					prefix = self.env['prefix']
@@ -51,7 +51,7 @@ class Dev:
 				self.env['LIBPREFIX'] = 'lib'
 				self.env['LIBSUFFIX'] = '.a'
 				self.env['SHLIBSUFFIX'] = '.dll'
-				
+
 	def is_win32(self):
 		return sys.platform == 'win32' or 'mingw' in self.env['TOOLS']
 
@@ -60,35 +60,39 @@ class Dev:
 
 	def get_build_path(self, source_path):
 		return self.get_build_root() + source_path
-	
+
 	def get_target(self, source_path, name, in_bin = True):
 		if in_bin:
 			return self.get_build_root() + 'bin/' + name
 		else:
 			return self.get_build_root() + source_path + name
-		
+
 	def get_sources(self, source_path, source_glob):
 		return map(lambda x: self.get_build_path(source_path) + x, glob.glob(source_glob))
-		
-	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True, precompiled_header = None):
+
+	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True,
+			precompiled_header = None, shared_precompiled_header = None):
 		env = self.env.Clone()
 		env.BuildDir(self.get_build_path(source_path), '.', duplicate = 0)
 
 		sources = self.get_sources(source_path, source_glob)
 
-		if precompiled_header is not None:
+		if precompiled_header is not None or shared_precompiled_header is not None:
+			pch = precompiled_header if shared_precompiled_header is None else shared_precompiled_header
+
 			for i, source in enumerate(sources):
-				if source.find(precompiled_header + '.cpp') != -1:
+				if source.find(pch + '.cpp') != -1:
 					# the PCH/GCH builder will take care of this one
 					del sources[i]
 
 			if env['CC'] == 'cl': # MSVC
-				env['PCHSTOP'] = precompiled_header + '.h'
-				env['PCH'] = env.PCH(self.get_target(source_path, precompiled_header + '.pch', False), precompiled_header + '.cpp')[0]
+				env['PCHSTOP'] = pch + '.h'
+				env['PCH'] = env.PCH(self.get_target(source_path, pch + '.pch', False), pch + '.cpp')[0]
 
 			elif 'gcc' in env['TOOLS']:
-				env['Gch'] = env.Gch(self.get_target(source_path, precompiled_header + '.gch', False), precompiled_header + '.h')[0]
-		
+				gch_tool = 'Gch' if shared_precompiled_header is None else 'GchSh'
+				exec "env['" + gch_tool + "'] = env." + gch_tool + "(self.get_target(source_path, pch + '.gch', False), pch + '.h')[0]"
+
 		return (env, self.get_target(source_path, name, in_bin), sources)
 
 	def build(self, source_path, local_env = None):
@@ -106,13 +110,13 @@ class Dev:
 		potfile = 'po/' + name + '.pot'
 		buildenv['PACKAGE'] = name
 		ret = buildenv.PotBuild(potfile, sources)
-		
+
 		for po_file in p_oze:
 			buildenv.Precious(buildenv.PoBuild(po_file, [potfile]))
 			lang = os.path.basename(po_file)[:-3]
 			mo_file = self.get_target(source_path, "locale/" + lang + "/LC_MESSAGES/" + name + ".mo", True)
 			buildenv.MoBuild (mo_file, po_file)
-		
+
 #		for lang in languages:
 #			modir = (os.path.join (install_prefix, 'share/locale/' + lang + '/LC_MESSAGES/'))
 #			moname = domain + '.mo'

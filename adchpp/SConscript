@@ -13,7 +13,7 @@ def getRevision(env):
  
 Import('dev source_path')
 
-env, target, sources = dev.prepare_build(source_path, 'adchpp', precompiled_header = 'adchpp')
+env, target, sources = dev.prepare_build(source_path, 'adchpp', shared_precompiled_header = 'adchpp')
 
 env.Append(CPPPATH = ['.'])
 

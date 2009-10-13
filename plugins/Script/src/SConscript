@@ -1,11 +1,8 @@
 Import('dev source_path')
 
-env, target, sources = dev.prepare_build(source_path, 'Script')
+env, target, sources = dev.prepare_build(source_path, 'Script', shared_precompiled_header = 'stdinc')
 env['SHLIBPREFIX'] = ''
 
-if 'gcc' in env['TOOLS']:
-	env['GchSh'] = env.GchSh('stdinc.h')[0]
-		
 env.Append(CPPPATH = ['#/lua/', '.', '#'])
 env.Append(LIBS = ['adchpp', 'alua'])
 
