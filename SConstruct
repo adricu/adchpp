@@ -1,6 +1,6 @@
 # vim: set filetype: py
 
-EnsureSConsVersion(0, 98, 5)
+EnsureSConsVersion(0, 98, 4)
 
 import os,sys
 from build_util import Dev

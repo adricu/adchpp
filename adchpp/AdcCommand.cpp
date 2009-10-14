@@ -22,7 +22,7 @@
 
 namespace adchpp {
 
-#ifdef __MINGW32__ /// @todo go figure why MinGW needs these...
+#ifdef __GNUC__ /// @todo go figure why some GCCs need these...
 const char AdcCommand::TYPE_BROADCAST;
 const char AdcCommand::TYPE_CLIENT;
 const char AdcCommand::TYPE_DIRECT;
