@@ -1,0 +1,289 @@
+= Getting started with ADCH++
+Author: Toast <swe_toast@users.sourceforge.com> 
+Document Version 0.1
+
+image:images/adchpp_icon.png[]
+
+== INSTALLATION
+First off you have too choose whether to run a debug or a release build of adchpp, the difference between a debug and release build is the following a debug build shows the protocol at work like session id etc.
+
+_This is how a debug build looks_
+
+image:images/img_adchpp_debug_build.png[]
+
+_This is how a release build looks_
+
+image:images/img_adchpp_release_build.png[]
+
+=== Download
+
+The adchpp setup can be found at the Sourceforge web site located at http://sourceforge.net/projects/adchpp/. 
+On that page there are links to the ADCH++ distribution.
+
+    * A EXE files that gives the users an uninstaller option.
+    * A ZIP file that contains the binary and the configuration files.
+    * A ZIP file with with the source for that distribution for those that wants to compile themselves.
+
+
+=== Installation on windows
+
+If your using the zip file just unpack to directory and skip this part. Run the setup file to begin installation. The installation consists of three main screens.
+
+image:images/img_adchpp_install_1.png[] *1. Welcome Screen*
+
+image:images/img_adchpp_install_2.png[] *2. License Agreement*
+
+image:images/img_adchpp_install_3.png[] *3. Installation Path*
+
+Once the installation has completed, we are going to go ahead with the configuration.
+
+== Basic configuration
+
+All the settings for adchpp is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as notepad) and start changing values to your wishes.
+
+=== MOTD (Message of the day)
+
+The MOTD is stored within motd.txt so enter your text into it and it will show upon login for everyone that enters your hub.
+
+=== Using tls settings
+
+To create secure connections, set TLS="1" and define the following (preferably absolute)
+paths: Certificate, PrivateKey, TrustedPath, DHParams. An example secure server setting:
+
+insert this to adchpp.xml on the server line:
+
+	<Server Port="2780" TLS="1" Certificate="certs/cacert.pem" PrivateKey="certs/privkey.pem" TrustedPath="certs/trusted/" DHParams="certs/dhparam.pem"/>
+
+Simple OpenSSL commands to generate files used for secure connections:
+
+	openssl genrsa -out privkey.pem 2048
+	openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
+	openssl dhparam -outform PEM -out dhparam.pem 1024
+
+Alternatively, you can use the cert generator contributed on:
+http://launchpadlibrarian.net/31960965/Cert_Generator.7z
+
+Windows:
+http://www.slproweb.com/products/Win32OpenSSL.html
+
+Linux Debian/Ubuntu:
+	sudo apt-get openssl
+
+Linux Redhat:
+	yum install openssl
+
+=== Additional settings
+
+There are also additional settings that can only be enabled via hub commands those are stored in settings.txt (this guide will show how to make that further down).
+
+== Accounts
+
+All the user accounts are stored in users.txt this guide will explain how to create a user account
+
+first edit your adchpp.xml located in the config folder and enter ports and name for the hub then start it up enter and type
+
+	+regme <your desired password>
+
+example:
+
+	[09-10-02][21:37:19] *** Connecting to adc://localhost:411
+	[09-10-02][21:37:19] *** Connected
+	[09-10-02][21:37:19] <ADCH++> MOTD content goes here
+	[09-10-02][21:37:56] <Testuser> +regme test
+	[09-10-02][21:37:26] <ADCH++> You're now registered
+
+example users.txt
+
+	[{"password":"test","nick":"Testuser","level":1,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
+
+Change this to:
+	
+	[{"password":"test","nick":"Testuser","level":10,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
+
+reconnect to the hub again and now you will have access to administrator commands so you can reg new admins inside the hub with the command:
+
+	+regnick <nick> <password> <level>
+
+== Scripts
+
+Things like scripts can be enabled from scripts.xml stored in the config folder the scripts themselves are stored in the Scripts folder.
+
+How to turn off scripts in scripts.xml:
+
+example:
+	
+	<Script>motd.lua</Script>
+
+Change to:
+
+	<!--Script>motd.lua</Script-->
+
+or delete the line
+
+IMPORTANT: Linux Users make your your path to the scripts folder is an absolute path.
+
+=== Making new scripts
+
+The LUA api can be found at http://adchpp.sourceforge.net/doc for anyone that wishes to contribute scripts for ADCH++ and the hubsoft itself supports LUA 5.1.4 (http://www.lua.org/docs.html).
+
+Submit new scripts either at https://bugs.launchpad.net/adchpp or http://www.adcportal.com/
+
+== Working with hub commands
+
+A simple way to find out how stuff works is by typing +help as we promised the guide will show additional configuration you should type
+
+	+help cfg
+
+example:
+
+	+cfg name value - change hub configuration, use "+help cfg" to list all variables (aliases: +changecfg, +changeconfig, +changevar, +config, +setcfg, +setconfig, +setvar, +var)
+
+List of all settings variables:
+
+	history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
+	history_max - current value: 500 - number of messages to keep for +history
+	history_prefix - current value: [%Y-%m-%d %H:%M:%S] - prefix to put before each message in +history
+	hubname - current value: DCDev Public - hub name (aliases: changehubname, sethubname)
+	maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
+	maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, usermax, user_max, usersmax, users_max)
+	topic - current value: get your build today at http://builds.adcportal.com - hub topic (aliases: changetopic, hubdescription, hubtopic, settopic)
+
+These are all settings stored in settings.txt.
+
+=== Setting the hub to private
+
+Here is how you set your hub to private so that registered users only can access
+
+	+cfg maxusers 0
+
+The variable "maxusers" has the following description:
+
+	maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, usermax, user_max, usersmax, users_max)
+
+now if anyone is trying to access the hub without an account they will receive this message
+
+	[09-10-02][22:07:09] <ADCH++> Only registered users are allowed in here
+
+=== Setting the hub to register to download
+
+So what does reg to download mean well its pretty simple if user is a guest and the reg to download lines are inserted they need to get an account on the server to be able to download anything from others by using the following command
+
+	+regme <password>
+
+locate your access.lua in the script folder and edit the following line:
+
+	local command_min_levels = {
+	-- [adchpp.AdcCommand_CMD_MSG] = 2
+
+change this line to:
+
+	local command_min_levels = {
+	[adchpp.AdcCommand_CMD_CTM] = 1,
+	[adchpp.AdcCommand_CMD_RCM] = 1,
+	[adchpp.AdcCommand_CMD_SCH] = 1
+
+CTM = connect to me
+RCM = reverse ctm
+SCH = search
+MSG = message
+
+Profiles levels range from 1-10
+
+1 being registered on server
+10 being hub administrator
+
+=== Working with banmsgre
+
+This is a very powerful system for getting rid of unwanted spam, it uses regular expressions for detecting unwanted content in your hub it requires knowledge of how to write a regular expression string so it might not be for the beginners.
+
+	+banmsgre <regexp> <reason> <time>
+	
+Example:
+
+	+banmsgre <http://www\.spam\.com> unwanted spam 99
+
+For more information about regular expression go to this site:
+http://www.regular-expressions.info/
+
+== Additional information
+
+Here is some additional information for any new user that wants to use ADCH++
+
+=== Omg my hubsoft just crashed!!
+
+In the event of a total crash the hubsoft generates a RPT file in folder where the binary is located submit this to the official bug tracker at launchpad https://bugs.launchpad.net/adchpp
+
+=== LUA errors
+
+Sometimes lua scripts can preform errors and that will show up in the windows of ADCH++ while its running
+
+	access.lua:491: attempt to concatenate global 'reason' (a nil value)
+	stack traceback:
+	access.lua:491: in function 'dump_banned'
+	access.lua:579: in function <access.lua:496>
+	(tail call): ?
+	access.lua:1652: in function <access.lua:1651>
+
+If you get similar errors while running your hubsoft do report them at the official bug tracker at launchpad https://bugs.launchpad.net/adchpp
+
+=== Missing DLLS
+
+If your using the MSVC Builds you might get a error message that certain DLL files are missing there is a simple solution you need to download and install these packages.
+
+http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2[Microsoft Visual C\++ 2008 SP1 Redistributable Package (x86)]
+
+http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E[Microsoft Visual C\++ 2008 SP1 Redistributable Package (x64)]
+
+=== I still dont get it!!
+
+Well lucky you then cause we have an answer tracker for questions
+
+https://answers.launchpad.net/adchpp you could additionally use ADCPortal also for questions http://www.adcportal.com
+
+=== So what extensions does this hubsoft support
+
+*BLOM* - this extension that allows hub software to create a map (bloom filter) of the shared files on the hub, but with minimal effort, e.g. the hub doesn't keep a list of files, but a filter that never produces false negatives but only possible false positives. This can potentially save bandwidth and effort on the client side.
+
+*UCMD* - User commands are used to send hub-specific commands to the client which provide useful shortcuts for the user.
+
+*ADCS* - ADCS is an extension that has the goal of adding the TLS/SSL layer just over the TCP layer and beneath the application layer (where ADC runs). This way, the ADC protocol remains unchanged while the connections are encrypted.
+
+NOTE: _All of these extensions are early implementations not final since they are in draft mode (2009-10-15)_
+
+== So you wanna be hardcore!!
+
+This part is not recommended for the newbie user this is for the novice or expert user this part will tell you how to compile
+
+A C\++ compiler, such as:
+    
+	* GCC 4.4+ Linux or http://www.mingw.org or Microsoft Visual C++ 9.0 (2008) with at least Service Pack 1 (see notes)
+    * SCons 0.98.5 http://www.scons.org
+    * SWIG 1.3.39 http://www.swig.org
+    * Python 2.5 (Windows) or 2.4+ (Linux) http://www.python.org
+    * Optional: OpenSSL 1.0.0-beta3 http://www.openssl.org
+
+MinGW Builds
+to build a debug version use: scons
+to build a release version use: scons mode=release
+
+MSVC Builds
+to build a x86 debug version use: scons tools=default
+to build a x86 release version use: scons tools=default mode=release
+to build a x64 debug version use: scons tools=default arch=x64
+to build a x64 release version use: scons tools=default mode=release arch=x64
+
+NOTE: https://connect.microsoft.com/VisualStudio/Downloads/DownloadDetails.aspx?DownloadID=17034&amp;wa=wsignin1.0[Microsoft Visual C++ 9.0 (2008) SP1 requires a hotfix to compile]
+
+=== Right on the bleeding edge
+
+We have an open bzr repository that we use for publishing the source to adchpp its located at launchpad https://code.launchpad.net/adchpp
+
+It requires that you the user have bzr tools installed
+http://bazaar-vcs.org/en/
+
+we also have a build archive for windows users that don't want to install a lot of compile tools themselves its located at
+http://builds.adcportal.com/
+
+== Congratulations!
+If you have read this far and successfully followed the instruction, congratulations. You now know the basics of using ADCH\+\+. What has been described on this page is the bare minimum needed to use ADCH++. There are many other features. It is highly recommended that you explore the program and try new functions for yourself. Most of all, enjoy yourself. Good luck and happy sharing.
+// vim: set syntax=asciidoc:

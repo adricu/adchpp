@@ -91,7 +91,8 @@ opts.AddVariables(
 	BoolVariable('nls', 'Build with internationalization support', 'yes'),
 	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-'),
 	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
-	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix'))
+	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix')),
+	BoolVariable('docs', 'Build docs (requires asciidoc)', 'no')
 )
 
 opts.Update(defEnv)
@@ -243,3 +244,18 @@ dev.build('swig/')
 for plugin in env['plugins']:
 	dev.build('plugins/' + plugin + '/')
 
+if env['docs']:
+	if env.WhereIs('asciidoc') is None:
+		print 'asciidoc not found, docs won\'t be built'
+
+	else:
+		def asciidoc(target, source, env):
+			env.Execute('asciidoc -o"' + str(target[0]) + '" "' + str(source[0]) + '"')
+
+		doc_path = '#/build/docs/'
+
+		env.Command(doc_path + 'readme.html', '#/readme.txt', asciidoc)
+
+		guide_path = '#/docs/user_guide/'
+		env.Command(doc_path + 'user_guide/index.html', guide_path + 'user_guide.txt', asciidoc)
+		env.Command(doc_path + 'user_guide/images', guide_path + 'images', Copy('$TARGET', '$SOURCE'))
