@@ -1065,6 +1065,35 @@ autil.commands.myip = {
 	end
 }
 
+autil.commands.mypass = {
+	alias = { changepass = true, mypassword = true, changepassword = true, setpass = true, setpassword = true },
+
+	command = function(c, parameters)
+		local user = get_user_c(c)
+		if not user then
+			autil.reply(c, "You are not registered, register with +regme")
+			return
+		end
+
+		if #parameters <= 0 then
+			autil.reply(c, "You must provide a new password")
+			return
+		end
+
+		user.password = parameters
+		base.pcall(save_users)
+		autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
+	end,
+
+	help = "new_pass - change your password, make sure you change it in your client options too",
+
+	protected = function(c) return get_user_c(c) end,
+
+	user_command = { params = {
+		autil.line_ucmd("New password")
+	} }
+}
+
 autil.commands.redirect = {
 	alias = { forward = true },
 
