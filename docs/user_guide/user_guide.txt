@@ -4,8 +4,9 @@ Document Version 0.1
 
 image:images/adchpp_icon.png[]
 
-== INSTALLATION
-First off you have too choose whether to run a debug or a release build of adchpp, the difference between a debug and release build is the following a debug build shows the protocol at work like session id etc.
+== Installation
+
+First off you have to choose whether to run a debug or a release build of adchpp, the difference between a debug and release build is the following a debug build shows the protocol at work like session id etc.
 
 _This is how a debug build looks_
 
@@ -17,17 +18,17 @@ image:images/img_adchpp_release_build.png[]
 
 === Download
 
-The adchpp setup can be found at the Sourceforge web site located at http://sourceforge.net/projects/adchpp/. 
+The ADCH\++ setup can be found at the Sourceforge web site located at http://sourceforge.net/projects/adchpp/. 
 On that page there are links to the ADCH++ distribution.
 
-    * A EXE files that gives the users an uninstaller option.
+    * An EXE file that gives the users an uninstaller option.
     * A ZIP file that contains the binary and the configuration files.
-    * A ZIP file with with the source for that distribution for those that wants to compile themselves.
+    * A ZIP file with the source for that distribution for those that want to compile themselves.
 
 
-=== Installation on windows
+=== Installation on Windows
 
-If your using the zip file just unpack to directory and skip this part. Run the setup file to begin installation. The installation consists of three main screens.
+If you're using the zip file just unpack to directory and skip this part. Run the setup file to begin installation. The installation consists of three main screens.
 
 image:images/img_adchpp_install_1.png[] *1. Welcome Screen*
 
@@ -35,17 +36,32 @@ image:images/img_adchpp_install_2.png[] *2. License Agreement*
 
 image:images/img_adchpp_install_3.png[] *3. Installation Path*
 
-Once the installation has completed, we are going to go ahead with the configuration.
+CAUTION: Windows Vista and Windows 7 should not install to program files directory if they don't know how to workaround UAC and store configuration files with http://vistaonwindows.com/environment_variables.html[windows environment variables] if you feel that its too hard just install it to another folder where UAC doesn't apply a good alternative path is: _c:\Users\<Your Account>\_
 
+=== Installing on Linux
+
+Here is a example on how you can install ADCH\++ on Linux the example is for Debian based distrobution.
+
+	wget https://sourceforge.net/projects/adchpp/files/ADCH%2B%2B%20Unstable/ADCH%2B%2B%202.4/ADCH%2B%2B.2.4-noarch-src.zip
+	sudo apt-get install python gcc scons swig
+	cd adchpp
+	scons mode=release
+	cd build/release-default/bin/
+	mkdir config
+	mkdir scripts
+	cp -rf plugins/Script/examples build/release-default/bin/scripts
+	cp -rf etc/ build/release-default/bin/config
+	./adchpp -c build/release-default/bin/config
+	
 == Basic configuration
 
-All the settings for adchpp is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as notepad) and start changing values to your wishes.
+All the settings for ADCH\++ is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as Notepad) and start changing values to your wishes.
 
 === MOTD (Message of the day)
 
-The MOTD is stored within motd.txt so enter your text into it and it will show upon login for everyone that enters your hub.
+The MOTD is stored within motd.txt so enter your text into it and it will show upon login for everyone who enters your hub.
 
-=== Using tls settings
+=== Using Transport Layer Security (TLS)
 
 To create secure connections, set TLS="1" and define the following (preferably absolute)
 paths: Certificate, PrivateKey, TrustedPath, DHParams. An example secure server setting:
@@ -61,7 +77,10 @@ Simple OpenSSL commands to generate files used for secure connections:
 	openssl dhparam -outform PEM -out dhparam.pem 1024
 
 Alternatively, you can use the cert generator contributed on:
+
 http://launchpadlibrarian.net/31960965/Cert_Generator.7z
+
+http://builds.adcportal.com/adchpp/cert_generator/adchpp_cert_generator.7z
 
 Windows:
 http://www.slproweb.com/products/Win32OpenSSL.html
@@ -74,13 +93,11 @@ Linux Redhat:
 
 === Additional settings
 
-There are also additional settings that can only be enabled via hub commands those are stored in settings.txt (this guide will show how to make that further down).
+There are also additional settings that can only be enabled via hub commands, which are stored in settings.txt (this guide will show how to make that further down).
 
 == Accounts
 
-All the user accounts are stored in users.txt this guide will explain how to create a user account
-
-first edit your adchpp.xml located in the config folder and enter ports and name for the hub then start it up enter and type
+All the user accounts are stored in users.txt. This guide will explain how to create a user account. "First, edit your adchpp.xml, located in the config folder, and enter ports and a name for the hub. Then, start it up and enter:
 
 	+regme <your desired password>
 
@@ -205,14 +222,41 @@ Example:
 For more information about regular expression go to this site:
 http://www.regular-expressions.info/
 
-== Additional information
+== Issues and problems
+Not every software is perfect they all got flaws and can preform wierd or unwanted features and its very important that the developer is aware of such features, 
+so how do you (the user) fit into this well in the event that you find a bug try and recreate it so you have a consistant log of the problem so that you can give feedback to the developer.
 
-Here is some additional information for any new user that wants to use ADCH++
+=== Hub crash (core dumps)
 
-=== Omg my hubsoft just crashed!!
+In the event of a total crash the hubsoft generates file called adchppd.RPT in folder where the binary is located, here is how an adchppd.RPT may look like:
 
-In the event of a total crash the hubsoft generates a RPT file in folder where the binary is located submit this to the official bug tracker at launchpad https://bugs.launchpad.net/adchpp
+	-------------------
 
+	Error occured on Sunday, September 27, 2009 at 11:08:23.
+
+	H:\BZR Stuff\adchpp\build\release-mingw\bin\adchppd.exe caused a Breakpoint at location 6905059f in module H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll.
+
+	Registers:
+	eax=00000080 ebx=02bffca0 ecx=76740849 edx=00000000 esi=69059b05 edi=02bffcd7
+	eip=6905059f esp=02bffc94 ebp=02bffd1c iopl=0         nv up ei pl nz na pe nc
+	cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+
+	Call stack:
+	6905059F  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:6905059F  __w32sp_grab  ../../../../gcc-4.4.1/libgcc/../gcc/config/i386/w32-sharedptr.c:15
+	6904F764  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:6904F764  _Unwind_SjLj_Register  ../../../../gcc-4.4.1/libgcc/../gcc/unwind-sjlj.c:169
+	69041657  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:69041657  __tcf_1  c:/dev tools/mingw/bin/../lib/gcc/mingw32/4.4.1/include/c++/bits/basic_string.h:281
+	69041086  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:69041086BFD 2.13.90 20030111 assertion fail ../../src/bfd/libbfd.c:584Dwarf Error: found dwarf version '56067', this reader only handles version 2 information.
+	69041106  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:69041106
+	77C097C0  C:\Windows\SysWOW64\ntdll.dll:77C097C0  RtlQueryEnvironmentVariable
+	77C1DCE2  C:\Windows\SysWOW64\ntdll.dll:77C1DCE2  LdrShutdownProcess
+	77C1DB84  C:\Windows\SysWOW64\ntdll.dll:77C1DB84  RtlExitUserProcess
+	7625699E  C:\Windows\syswow64\kernel32.dll:7625699E  AttachConsole
+	761B3677  C:\Windows\syswow64\kernel32.dll:761B3677  BaseThreadInitThunk
+	77C09D72  C:\Windows\SysWOW64\ntdll.dll:77C09D72  RtlInitializeExceptionChain
+	77C09D45  C:\Windows\SysWOW64\ntdll.dll:77C09D45  RtlInitializeExceptionChain
+
+TIP: Always submit adchppd.RPT to the bugtracker located at launchpad https://bugs.launchpad.net/adchpp
+	
 === LUA errors
 
 Sometimes lua scripts can preform errors and that will show up in the windows of ADCH++ while its running
@@ -224,9 +268,9 @@ Sometimes lua scripts can preform errors and that will show up in the windows of
 	(tail call): ?
 	access.lua:1652: in function <access.lua:1651>
 
-If you get similar errors while running your hubsoft do report them at the official bug tracker at launchpad https://bugs.launchpad.net/adchpp
+TIP: If you get similar errors while running your hubsoft do report them at the official bug tracker at launchpad https://bugs.launchpad.net/adchpp
 
-=== Missing DLLS
+=== Missing dlls
 
 If your using the MSVC Builds you might get a error message that certain DLL files are missing there is a simple solution you need to download and install these packages.
 
@@ -234,7 +278,7 @@ http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D
 
 http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E[Microsoft Visual C\++ 2008 SP1 Redistributable Package (x64)]
 
-=== I still dont get it!!
+=== Is something still unclear ?
 
 Well lucky you then cause we have an answer tracker for questions
 
@@ -250,7 +294,7 @@ https://answers.launchpad.net/adchpp you could additionally use ADCPortal also f
 
 NOTE: _All of these extensions are early implementations not final since they are in draft mode (2009-10-15)_
 
-== So you wanna be hardcore!!
+== Compiling and testing
 
 This part is not recommended for the newbie user this is for the novice or expert user this part will tell you how to compile
 
@@ -263,20 +307,22 @@ A C\++ compiler, such as:
     * Optional: OpenSSL 1.0.0-beta3 http://www.openssl.org
 
 MinGW Builds
-to build a debug version use: scons
-to build a release version use: scons mode=release
+
+	to build a debug version use: scons
+	to build a release version use: scons mode=release
 
 MSVC Builds
-to build a x86 debug version use: scons tools=default
-to build a x86 release version use: scons tools=default mode=release
-to build a x64 debug version use: scons tools=default arch=x64
-to build a x64 release version use: scons tools=default mode=release arch=x64
 
-NOTE: https://connect.microsoft.com/VisualStudio/Downloads/DownloadDetails.aspx?DownloadID=17034&amp;wa=wsignin1.0[Microsoft Visual C++ 9.0 (2008) SP1 requires a hotfix to compile]
+	to build a x86 debug version use: scons tools=default
+	to build a x86 release version use: scons tools=default mode=release
+	to build a x64 debug version use: scons tools=default arch=x64
+	to build a x64 release version use: scons tools=default mode=release arch=x64
+	
+IMPORTANT: ADCH\++ requires Microsoft Visual C++ 9.0 (2008) SP1 Hotfix to compile, https://connect.microsoft.com/VisualStudio/Downloads/DownloadDetails.aspx?DownloadID=17034&amp;wa=wsignin1.0[click here] to get it
 
 === Right on the bleeding edge
 
-We have an open bzr repository that we use for publishing the source to adchpp its located at launchpad https://code.launchpad.net/adchpp
+We have an open bzr repository that we use for publishing the source to ADCH++ its located at launchpad https://code.launchpad.net/adchpp
 
 It requires that you the user have bzr tools installed
 http://bazaar-vcs.org/en/
