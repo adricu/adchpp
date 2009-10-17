@@ -1,6 +1,6 @@
 = Getting started with ADCH++
 Author: Toast <swe_toast@users.sourceforge.com> 
-Document Version 0.1
+Document Version 0.2
 
 image:images/adchpp_icon.png[]
 
@@ -25,7 +25,6 @@ On that page there are links to the ADCH++ distribution.
     * A ZIP file that contains the binary and the configuration files.
     * A ZIP file with the source for that distribution for those that want to compile themselves.
 
-
 === Installation on Windows
 
 If you're using the zip file just unpack to directory and skip this part. Run the setup file to begin installation. The installation consists of three main screens.
@@ -40,10 +39,14 @@ CAUTION: Windows Vista and Windows 7 should not install to program files directo
 
 === Installing on Linux
 
-Here is a example on how you can install ADCH\++ on Linux the example is for Debian based distrobution.
+Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions.
 
 	wget https://sourceforge.net/projects/adchpp/files/ADCH%2B%2B%20Unstable/ADCH%2B%2B%202.4/ADCH%2B%2B.2.4-noarch-src.zip
-	sudo apt-get install python gcc scons swig
+	
+	Debian: sudo apt-get install python scons swig gcc-c++ openssl-dev readline-dev
+	
+	Redhat: yum install gcc-c++ python scons swig openssl-devel readline-devel
+	
 	cd adchpp
 	scons mode=release
 	cd build/release-default/bin/
@@ -51,11 +54,12 @@ Here is a example on how you can install ADCH\++ on Linux the example is for Deb
 	mkdir scripts
 	cp -rf plugins/Script/examples build/release-default/bin/scripts
 	cp -rf etc/ build/release-default/bin/config
-	./adchpp -c build/release-default/bin/config
-	
+			
 == Basic configuration
 
 All the settings for ADCH\++ is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as Notepad) and start changing values to your wishes.
+
+TIP: Linux users should enable the following line in adchpp.xml <!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"--> by removing !-- and -- from the line and editing the path to your adchpp directory.
 
 === MOTD (Message of the day)
 
@@ -86,11 +90,13 @@ Windows:
 http://www.slproweb.com/products/Win32OpenSSL.html
 
 Linux Debian/Ubuntu:
-	sudo apt-get openssl
+	sudo install apt-get openssl
 
 Linux Redhat:
 	yum install openssl
 
+TIP: Remember that if you have specified TLS=1 in the config that you need to connect with the prefix adcs://
+	
 === Additional settings
 
 There are also additional settings that can only be enabled via hub commands, which are stored in settings.txt (this guide will show how to make that further down).
@@ -222,6 +228,26 @@ Example:
 For more information about regular expression go to this site:
 http://www.regular-expressions.info/
 
+== Running ADCH++ with paramters
+
+	Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
+	
+* -c specifies a path to configuration directory
+* -d deamon service _(Linux only)_
+* -i service mode _(Windows only)_
+* -v version number
+* -h help message
+	
+	examples:
+	(Linux)
+	adchppd -c /home/test/adchpp/bin/config/
+	(Windows)
+	adchppd.exe -c c:/users/test/adchpp/bin/config/
+	(Linux)
+	adchppd -d
+	(Windows)
+	adchppd.exe -i adchpp
+	
 == Issues and problems
 Not every software is perfect they all got flaws and can preform wierd or unwanted features and its very important that the developer is aware of such features, 
 so how do you (the user) fit into this well in the event that you find a bug try and recreate it so you have a consistant log of the problem so that you can give feedback to the developer.
