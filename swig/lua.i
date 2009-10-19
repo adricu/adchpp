@@ -215,3 +215,23 @@ uint32_t, const uint32_t&
 		return std::string();
 	}
 }
+
+%extend adchpp::Entity {
+	std::string getPluginData(const PluginDataHandle& handle) {
+		void* ret = $self->getPluginData(handle);
+		if(ret) {
+			return *reinterpret_cast<std::string*>(ret);
+		}
+		return std::string();
+	}
+
+	void setPluginData(const PluginDataHandle& handle, std::string data) {
+		$self->setPluginData(handle, reinterpret_cast<void*>(new std::string(data)));
+	}
+}
+
+%extend adchpp::PluginManager {
+	PluginDataHandle registerPluginData() {
+		return PluginManager::getInstance()->registerPluginData(PluginData::simpleDataDeleter<std::string>);
+	}
+}
