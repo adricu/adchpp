@@ -217,7 +217,7 @@ uint32_t, const uint32_t&
 }
 
 %extend adchpp::Entity {
-	std::string getPluginData(const PluginDataHandle& handle) {
+	std::string getStringData(const PluginDataHandle& handle) {
 		void* ret = $self->getPluginData(handle);
 		if(ret) {
 			return *reinterpret_cast<std::string*>(ret);
@@ -225,13 +225,29 @@ uint32_t, const uint32_t&
 		return std::string();
 	}
 
-	void setPluginData(const PluginDataHandle& handle, std::string data) {
+	void setStringData(const PluginDataHandle& handle, std::string data) {
 		$self->setPluginData(handle, reinterpret_cast<void*>(new std::string(data)));
+	}
+
+	ByteVector getByteVectorData(const PluginDataHandle& handle) {
+		void* ret = $self->getPluginData(handle);
+		if(ret) {
+			return *reinterpret_cast<ByteVector*>(ret);
+		}
+		return ByteVector();
+	}
+
+	void setByteVectorData(const PluginDataHandle& handle, ByteVector data) {
+		$self->setPluginData(handle, reinterpret_cast<void*>(new ByteVector(data)));
 	}
 }
 
 %extend adchpp::PluginManager {
-	PluginDataHandle registerPluginData() {
+	PluginDataHandle registerStringData() {
 		return PluginManager::getInstance()->registerPluginData(PluginData::simpleDataDeleter<std::string>);
+	}
+
+	PluginDataHandle registerByteVectorData() {
+		return PluginManager::getInstance()->registerPluginData(PluginData::simpleDataDeleter<ByteVector>);
 	}
 }

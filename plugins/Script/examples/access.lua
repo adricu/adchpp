@@ -93,8 +93,6 @@ local math = base.require('math')
 
 local start_time = os.time()
 
-local salts = { }
-
 local users = { }
 users.nicks = { }
 users.cids = { }
@@ -109,6 +107,9 @@ bans.msgsre = { }
 local stats = { }
 
 local cm = adchpp.getCM()
+local pm = adchpp.getPM()
+
+local saltsHandle = pm:registerByteVectorData()
 
 autil.settings.hubname = {
 	alias = { changehubname = true, sethubname = true },
@@ -164,17 +165,17 @@ local function load_users()
 
 	local str = file:read("*a")
 	file:close()
-	
+
 	if #str == 0 then
 		return
 	end
-	
+
 	local userok, userlist = base.pcall(json.decode, str)
 	if not userok then
 		base.print("Unable to decode users file: " .. userlist)
 		return
 	end
-	
+
 	for k, user in base.pairs(userlist) do
 		if user.cid then
 			users.cids[user.cid] = user
@@ -191,10 +192,10 @@ local function save_users()
 		base.print("Unable to open " .. users_file .. ", users not saved")
 		return
 	end
-	
+
 	local userlist = { }
 	local nicksdone = { }
-	
+
 	local i = 1
 	for k, user in base.pairs(users.cids) do
 		userlist[i] = user
@@ -203,14 +204,14 @@ local function save_users()
 		end
 		i = i + 1
 	end
-	
+
 	for k, user in base.pairs(users.nicks) do
 		if not nicksdone[user] then
 			userlist[i] = user
 			i = i + 1
 		end
 	end
-	
+
 	file:write(json.encode(userlist))
 	file:close()
 end
@@ -582,7 +583,7 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	salts[c:getSID()] = cm:enterVerify(c, true)
+	c:setByteVectorData(saltsHandle, cm:enterVerify(c, true))
 	return false
 end
 
@@ -592,7 +593,7 @@ local function onPAS(c, cmd)
 		return false
 	end
 
-	local salt = salts[c:getSID()]
+	local salt = c:getByteVectorData(saltsHandle)
 
 	if not salt then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
@@ -1687,10 +1688,6 @@ local function onReceive(entity, cmd, ok)
 	return true
 end
 
-local function onDisconnected(c)
-	salts[c:getSID()] = nil
-end
-
 local function send_user_commands(c)
 	local list = { }
 	for k, v in base.pairs(autil.commands) do
@@ -1766,9 +1763,7 @@ access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	return res
 end)
 
-access_2 = cm:signalDisconnected():connect(onDisconnected)
-
-access_3 = cm:signalState():connect(function(entity)
+access_2 = cm:signalState():connect(function(entity)
 	if entity:getState() == adchpp.Entity_STATE_NORMAL then
 		local c = entity:asClient()
 		if not c then
@@ -1805,7 +1800,7 @@ access_3 = cm:signalState():connect(function(entity)
 	end
 end)
 
-access_4 = adchpp.getPM():getCommandSignal("reload"):connect(function(entity, list, ok)
+access_3 = pm:getCommandSignal("reload"):connect(function(entity, list, ok)
 	if not ok then
 		return ok
 	end
