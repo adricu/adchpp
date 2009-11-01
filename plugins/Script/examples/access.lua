@@ -27,6 +27,9 @@ local command_min_levels = {
 -- Users with a level equal to or above the one specified here are operators
 local level_op = 2
 
+-- ADC extensions this script adds support for
+local extensions = { "PING" }
+
 -- Regexes for the various fields. 
 local cid_regex = "^" .. string.rep("[A-Z2-7]", 39) .. "$" -- No way of expressing exactly 39 chars without being explicit it seems
 local pid_regex = cid_regex
@@ -120,6 +123,14 @@ local function description_change()
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
 end
 
+autil.settings.address = {
+	alias = { host = true, dns = true },
+
+	help = "host address (DNS or IP)",
+
+	value = adchpp.Util_getLocalIp()
+}
+
 autil.settings.description = {
 	alias = { hubdescription = true },
 
@@ -159,12 +170,30 @@ autil.settings.name = {
 	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
 }
 
+autil.settings.network = {
+	value = ""
+}
+
+autil.settings.owner = {
+	alias = { ownername = true },
+
+	help = "owner name",
+
+	value = ""
+}
+
 autil.settings.topic = {
 	alias = { hubtopic = true },
 
 	change = description_change,
 
 	help = "hub topic",
+
+	value = ""
+}
+
+autil.settings.website = {
+	alias = { url = true },
 
 	value = ""
 }
@@ -521,6 +550,61 @@ local function dump_banned(c, ban)
 		end
 		cmd:addParam("TL" .. base.tostring(expires))
 	end)
+end
+
+local function onSUP(c, cmd)
+	if c:getState() ~= adchpp.Entity_STATE_PROTOCOL or not c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) then
+		-- let ClientManager verify this SUP
+		return true
+	end
+
+	-- imitate ClientManager::handle(AdcCommand::SUP, ...)
+
+	if not cm:verifySUP(c, cmd) then
+		return false
+	end
+
+	-- imitate ClientManager::enterIdentify
+
+	base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. " entering IDENTIFY (supports 'PING')")
+
+	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
+
+	c:send(hub:getSUP())
+	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_HUB, adchpp.AdcCommand_HUB_SID)
+	:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
+
+	local entities = cm:getEntities()
+	local uc = entities:size()
+	local ss = 0
+	local sf = 0
+	if uc > 0 then
+		for i = 0, uc - 1 do
+			local entity = entities[i]
+			ss = ss + entity:getField("SS")
+			sf = sf + entity:getField("SF")
+		end
+	end
+
+	-- add PING-specific information
+	local inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_HUB, adchpp.AdcCommand_HUB_SID)
+	hub:getAllFields(inf)
+	inf:addParam("HH" .. autil.settings.address.value)
+	:addParam("WS" .. autil.settings.website.value)
+	:addParam("NE" .. autil.settings.network.value)
+	:addParam("OW" .. autil.settings.owner.value)
+	:addParam("UC" .. base.tostring(uc))
+	:addParam("SS" .. base.tostring(ss))
+	:addParam("SF" .. base.tostring(sf))
+	:addParam("UP" .. base.tostring(os.difftime(os.time(), adchpp.Stats_startTime)))
+	if autil.settings.maxusers.value > 0 then
+		inf:addParam("MC" .. base.tostring(autil.settings.maxusers.value))
+	end
+	c:send(inf)
+
+	c:setState(adchpp.Entity_STATE_IDENTIFY)
+
+	return false
 end
 
 local function onINF(c, cmd)
@@ -1693,11 +1777,16 @@ local function onReceive(entity, cmd, ok)
 		end
 	end
 
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_SUP then
+		return onSUP(c, cmd)
+	end
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_INF then
 		return onINF(c, cmd)
-	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
+	end
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
 		return onPAS(c, cmd)
-	elseif cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
+	end
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
 		return onMSG(c, cmd)
 	end
 
@@ -1770,6 +1859,10 @@ end
 base.pcall(load_users)
 base.pcall(load_settings)
 base.pcall(load_bans)
+
+table.foreach(extensions, function(k, v)
+	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(v))
+end)
 
 access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	local res = onReceive(entity, cmd, ok)
