@@ -5,7 +5,7 @@ Import('dev source_path')
 env, target, sources = dev.prepare_build(source_path, 'adchppd', 'adchppd.cpp')
 
 if dev.is_win32():
-	sources += [dev.get_build_path(source_path) + 'adchppdw.cpp']
+	sources += [dev.get_build_path(source_path) + 'adchppdw.cpp', env.RES(dev.get_sources(source_path, 'res/*.rc'))]
 else:
 	sources += [dev.get_build_path(source_path) + 'adchppdu.cpp']
 

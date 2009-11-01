@@ -3,6 +3,7 @@
 * Update to Lua 5.1.4
 * Update to boost 1.40
 * Better support of Python extensions
+* Add an icon and version info to the Windows daemon
 
 -- 2.4 2008-10-02 --
 * Improve Lua scripts
