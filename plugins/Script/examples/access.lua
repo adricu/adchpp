@@ -111,17 +111,23 @@ local pm = adchpp.getPM()
 
 local saltsHandle = pm:registerByteVectorData()
 
-autil.settings.hubname = {
-	alias = { changehubname = true, sethubname = true },
+local function description_change()
+	local description = autil.settings.description.value
+	if #autil.settings.topic.value > 0 then
+		description = description .. " - " .. autil.settings.topic.value
+	end
+	cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", description)
+	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
+end
 
-	change = function()
-		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", autil.settings.hubname.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", autil.settings.hubname.value):getBuffer())
-	end,
+autil.settings.description = {
+	alias = { hubdescription = true },
 
-	help = "hub name",
+	change = description_change,
 
-	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
+	help = "hub description",
+
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE")
 }
 
 autil.settings.maxmsglength = {
@@ -140,17 +146,27 @@ autil.settings.maxusers = {
 	value = -1
 }
 
-autil.settings.topic = {
-	alias = { changetopic = true, hubtopic = true, hubdescription = true, settopic = true },
+autil.settings.name = {
+	alias = { hubname = true },
 
 	change = function()
-		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", autil.settings.topic.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", autil.settings.topic.value):getBuffer())
+		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", autil.settings.name.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", autil.settings.name.value):getBuffer())
 	end,
+
+	help = "hub name",
+
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
+}
+
+autil.settings.topic = {
+	alias = { hubtopic = true },
+
+	change = description_change,
 
 	help = "hub topic",
 
-	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE")
+	value = ""
 }
 
 local function load_users()
@@ -1261,7 +1277,7 @@ autil.commands.test = {
 
 -- simply map to +cfg topic
 autil.commands.topic = {
-	alias = autil.settings.topic.alias,
+	alias = { changetopic = true, settopic = true, changehubtopic = true, sethubtopic = true },
 
 	command = function(c, parameters)
 		autil.commands.cfg.command(c, "topic " .. parameters)
