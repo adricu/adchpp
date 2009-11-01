@@ -96,18 +96,19 @@ local math = base.require('math')
 
 local start_time = os.time()
 
-local users = { }
-users.nicks = { }
-users.cids = { }
+local users = {}
+users.nicks = {}
+users.cids = {}
 
-local bans = { }
-bans.cids = { }
-bans.ips = { }
-bans.nicks = { }
-bans.nicksre = { }
-bans.msgsre = { }
+local bans = {}
+bans.cids = {}
+bans.ips = {}
+bans.nicks = {}
+bans.nicksre = {}
+bans.msgsre = {}
+bans.muted = {}
 
-local stats = { }
+local stats = {}
 
 local cm = adchpp.getCM()
 local pm = adchpp.getPM()
@@ -308,12 +309,13 @@ local function save_settings()
 end
 
 local function load_bans()
-	bans = { }
-	bans.cids = { }
-	bans.ips = { }
-	bans.nicks = { }
-	bans.nicksre = { }
-	bans.msgsre = { }
+	bans = {}
+	bans.cids = {}
+	bans.ips = {}
+	bans.nicks = {}
+	bans.nicksre = {}
+	bans.msgsre = {}
+	bans.muted = {}
 
 	local file = io.open(bans_file, "r")
 	if not file then
@@ -336,19 +338,22 @@ local function load_bans()
 
 	bans = list
 	if not bans.cids then
-		bans.cids = { }
+		bans.cids = {}
 	end
 	if not bans.ips then
-		bans.ips = { }
+		bans.ips = {}
 	end
 	if not bans.nicks then
-		bans.nicks = { }
+		bans.nicks = {}
 	end
 	if not bans.nicksre then
-		bans.nicksre = { }
+		bans.nicksre = {}
 	end
 	if not bans.msgsre then
-		bans.msgsre = { }
+		bans.msgsre = {}
+	end
+	if not bans.muted then
+		bans.muted = {}
 	end
 
 	clear_expired_bans()
@@ -533,11 +538,16 @@ local function ban_info_string(ban)
 	return str
 end
 
-local function dump_banned(c, ban)
-	local str = "You are banned (expires: " .. ban_expiration_string(ban) .. ")"
+local function ban_return_info(ban)
+	local str = " (expires: " .. ban_expiration_string(ban) .. ")"
 	if ban.reason then
 		str = str .. " (reason: " .. ban.reason .. ")"
 	end
+	return str
+end
+
+local function dump_banned(c, ban)
+	local str = "You are banned " .. ban_return_info(ban)
 
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
 		cmd:addParam("MS" .. str)
@@ -1158,6 +1168,70 @@ autil.commands.mass = {
 	} }
 }
 
+autil.commands.mute = {
+	alias = { stfu = true },
+
+	command = function(c, parameters)
+		local level = get_level(c)
+		if level < level_op then
+			return
+		end
+
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(0, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
+		end
+		local nick, reason = parameters:match("^(%S+) ?(.*)")
+		if not nick then
+			autil.reply(c, "You need to supply a nick")
+			return
+		end
+
+		local victim = cm:getEntity(cm:getSID(nick))
+		if victim then
+			victim = victim:asClient()
+		end
+		if not victim then
+			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
+			return
+		end
+
+		local victim_cid = victim:getCID():toBase32()
+		local victim_user = get_user(victim_cid, 0)
+		if victim_user and level <= victim_user.level then
+			autil.reply(c, "You can't mute users whose level is higher or equal than yours")
+			return
+		end
+
+		local ban = make_ban(level, reason, minutes)
+		bans.muted[victim_cid] = ban
+		base.pcall(save_bans)
+
+		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted")
+	end,
+
+	help = "nick [reason] [minutes] - mute an online user (set minutes to 0 to un-mute)",
+
+	protected = is_op,
+
+	user_command = {
+		hub_params = {
+			autil.line_ucmd("Nick"),
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		},
+		user_params = {
+			"%[userNI]",
+			autil.line_ucmd("Reason (facultative)"),
+			autil.line_ucmd("Minutes (facultative)")
+		}
+	}
+}
+
 autil.commands.myip = {
 	alias = { getip = true, getmyip = true, ip = true, showip = true, showmyip = true },
 
@@ -1423,7 +1497,7 @@ autil.commands.ban = {
 		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned")
 	end,
 
-	help = "nick [reason] [minutes] - ban an online user",
+	help = "nick [reason] [minutes] - ban an online user (set minutes to 0 to un-ban)",
 
 	protected = is_op,
 
@@ -1468,7 +1542,7 @@ autil.commands.bancid = {
 		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
 	end,
 
-	help = "CID [reason] [minutes]",
+	help = "CID [reason] [minutes] (set minutes to 0 to un-ban)",
 
 	protected = is_op,
 
@@ -1513,7 +1587,7 @@ autil.commands.banip = {
 		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
 	end,
 
-	help = "IP [reason] [minutes]",
+	help = "IP [reason] [minutes] (set minutes to 0 to un-ban)",
 
 	protected = is_op,
 
@@ -1558,7 +1632,7 @@ autil.commands.bannick = {
 		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
 	end,
 
-	help = "nick [reason] [minutes]",
+	help = "nick [reason] [minutes] (set minutes to 0 to un-ban)",
 
 	protected = is_op,
 
@@ -1593,7 +1667,7 @@ autil.commands.bannickre = {
 		end
 		local re, reason = parameters:match("<([^>]+)> ?(.*)")
 		if not re then
-			autil.reply(c, "You need to supply a reg exp (within brackets)")
+			autil.reply(c, "You need to supply a reg exp (within '<' and '>' brackets)")
 			return
 		end
 
@@ -1603,7 +1677,7 @@ autil.commands.bannickre = {
 		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
 	end,
 
-	help = "<nick-reg-exp> [reason] [minutes] - ban nicks that match the given reg exp (must be within brackets)",
+	help = "<nick-reg-exp> [reason] [minutes] - ban nicks that match the given reg exp (must be within '<' and '>' brackets) (set minutes to 0 to un-ban)",
 
 	protected = is_op,
 
@@ -1631,7 +1705,7 @@ autil.commands.banmsgre = {
 		end
 		local re, reason = parameters:match("<([^>]+)> ?(.*)")
 		if not re then
-			autil.reply(c, "You need to supply a reg exp (within brackets)")
+			autil.reply(c, "You need to supply a reg exp (within '<' and '>' brackets)")
 			return
 		end
 
@@ -1641,7 +1715,7 @@ autil.commands.banmsgre = {
 		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
 	end,
 
-	help = "msg-reg-exp [reason] [minutes] - ban originators of messages that match the given reg exp (must be within brackets)",
+	help = "msg-reg-exp [reason] [minutes] - ban originators of messages that match the given reg exp (must be within '<' and '>' brackets) (set minutes to 0 to un-ban)",
 
 	protected = is_op,
 
@@ -1688,6 +1762,11 @@ autil.commands.listbans = {
 			str = str .. "\n\tReg exp: " .. msgre .. ban_info_string(ban)
 		end
 
+		str = str .. "\n\nMuted:"
+		for cid, ban in base.pairs(bans.muted) do
+			str = str .. "\n\tCID: " .. cid .. ban_info_string(ban)
+		end
+
 		autil.reply(c, str)
 	end,
 
@@ -1712,6 +1791,13 @@ autil.commands.loadbans = {
 }
 
 local function onMSG(c, cmd)
+	clear_expired_bans()
+	local muted = bans.muted[c:getCID():toBase32()]
+	if muted then
+		autil.reply(c, "You are muted " .. ban_return_info(muted))
+		return false
+	end
+
 	local msg = cmd:getParam(0)
 
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
