@@ -747,8 +747,11 @@ public:
 	//typedef HASH_MAP<std::string, Plugin*> Registry;
 	//typedef Registry::iterator RegistryIter;
 
-	const StringList& getPluginList() const;
-	const std::string& getPluginPath() const;
+ 	const StringList& getPluginList() const;
+ 	const std::string& getPluginPath() const;
+	void setPluginList(const StringList& pluginList);
+	void setPluginPath(const std::string& name);
+	
 	//int getPluginId() { return pluginIds++; }
 
 	//bool registerPlugin(const std::string& name, Plugin* ptr);

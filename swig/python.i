@@ -67,7 +67,6 @@
 	%property(features, getFeatures)
 	%property(source, getFrom, setFrom)
 	%property(to, getTo, setTo)
-	%property(fourCC, getFourCC)
 	%property(priority, getPriority, setPriority)
 	%property(command, getCommandString)
 }
@@ -128,6 +127,8 @@
 	PluginDataHandle registerPluginData() {
 		return PluginManager::getInstance()->registerPluginData(&decRef);
 	}
+	%property(pluginPath, getPluginPath, setPluginPath)
+	%property(pluginList, getPluginList, setPluginList)
 }
 
 %{
