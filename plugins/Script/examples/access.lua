@@ -116,9 +116,9 @@ local pm = adchpp.getPM()
 local saltsHandle = pm:registerByteVectorData()
 
 local function description_change()
-	local description = autil.settings.description.value
-	if #autil.settings.topic.value > 0 then
-		description = description .. " - " .. autil.settings.topic.value
+	local description = autil.settings.topic.value
+	if #autil.settings.topic.value == 0 then
+		description = autil.settings.description.value
 	end
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", description)
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
@@ -188,7 +188,7 @@ autil.settings.topic = {
 
 	change = description_change,
 
-	help = "hub topic",
+	help = "hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists",
 
 	value = ""
 }
@@ -581,7 +581,7 @@ local function onSUP(c, cmd)
 	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
 
 	c:send(hub:getSUP())
-	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_HUB, adchpp.AdcCommand_HUB_SID)
+	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
 
 	local entities = cm:getEntities()
@@ -596,10 +596,12 @@ local function onSUP(c, cmd)
 		end
 	end
 
-	-- add PING-specific information
-	local inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_HUB, adchpp.AdcCommand_HUB_SID)
+	local inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	hub:getAllFields(inf)
-	inf:addParam("HH" .. autil.settings.address.value)
+	inf:delParam("DE", 0)
+	inf:addParam("DE", autil.settings.description.value)
+	-- add PING-specific information
+	:addParam("HH" .. autil.settings.address.value)
 	:addParam("WS" .. autil.settings.website.value)
 	:addParam("NE" .. autil.settings.network.value)
 	:addParam("OW" .. autil.settings.owner.value)
@@ -761,9 +763,9 @@ autil.commands.cfg = {
 			return
 		end
 
-		local name, value = parameters:match("^(%S+) (.+)")
-		if not name or not value then
-			autil.reply(c, "You need to supply a variable name and a value")
+		local name, value = parameters:match("^(%S+) ?(.*)")
+		if not name then
+			autil.reply(c, "You need to supply a variable name")
 			return
 		end
 
@@ -780,12 +782,17 @@ autil.commands.cfg = {
 		end
 
 		local old = setting.value
-		if value == old then
-			autil.reply(c, "The value is the same as before, no change done")
-			return
+		local type = base.type(old)
+
+		if not value or #value == 0 then
+			-- no value; make up a default one
+			if type == "boolean" or type == "number" then
+				value = "0"
+			elseif type == "string" then
+				value = ""
+			end
 		end
 
-		local type = base.type(old)
 		if type == "boolean" then
 			value = value ~= "0"
 		elseif type == "number" then
@@ -797,14 +804,17 @@ autil.commands.cfg = {
 			value = num
 		end
 
-		setting.value = value
+		if value == old then
+			autil.reply(c, "The value is the same as before, no change done")
+			return
+		end
 
+		setting.value = value
 		if setting.change then
 			setting.change()
 		end
-
 		base.pcall(save_settings)
-		autil.reply(c, "Variable " .. name .. " changed to " .. base.tostring(setting.value))
+		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
 	end,
 
 	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
@@ -1023,7 +1033,7 @@ autil.commands.info = {
 }
 
 autil.commands.kick = {
-	alias = { drop = true, kick = true },
+	alias = { drop = true, dropuser = true, kickuser = true },
 
 	command = function(c, parameters)
 		local level = get_level(c)
@@ -1787,6 +1797,8 @@ autil.commands.loadbans = {
 		autil.reply(c, "Ban list reloaded")
 	end,
 
+	help = "- reload the ban list",
+
 	protected = is_op
 }
 
@@ -1904,8 +1916,8 @@ local function send_user_commands(c)
 			params = command.user_command.params
 		end
 		if params then
-			for i_param, v_param in base.ipairs(params) do
-				str = str .. " " .. v_param
+			for _, param in base.ipairs(params) do
+				str = str .. " " .. param
 			end
 		end
 
@@ -1946,8 +1958,8 @@ base.pcall(load_users)
 base.pcall(load_settings)
 base.pcall(load_bans)
 
-table.foreach(extensions, function(k, v)
-	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(v))
+table.foreach(extensions, function(_, extension)
+	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))
 end)
 
 access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
