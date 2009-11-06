@@ -300,6 +300,9 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 			dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
 			if(j->size() == 2) {
 				// Clearing is ok
+			} else if(Util::isPrivateIp(c.getIp())) {
+				dcdebug("Skipping local ip %s\n",c.getIp().c_str());
+				c.setFlag(Client::FLAG_OK_IP);
 			} else if(j->compare(2, j->size() - 2, "0.0.0.0") == 0) {
 				c.setField("I4", c.getIp());
 				*j = "I4" + c.getIp();

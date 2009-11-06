@@ -508,4 +508,19 @@ uint32_t Util::rand() {
 	return y;
 }
 
+bool Util::isPrivateIp(std::string const& ip) {
+	struct in_addr addr;
+
+	addr.s_addr = inet_addr(ip.c_str());
+
+	if (addr.s_addr != INADDR_NONE) {
+		unsigned long haddr = ntohl(addr.s_addr);
+		return ((haddr & 0xff000000) == 0x0a000000 || // 10.0.0.0/8
+				(haddr & 0xff000000) == 0x7f000000 || // 127.0.0.0/8
+				(haddr & 0xfff00000) == 0xac100000 || // 172.16.0.0/12
+				(haddr & 0xffff0000) == 0xc0a80000);  // 192.168.0.0/16
+	}
+	return false;
+}
+ 
 }

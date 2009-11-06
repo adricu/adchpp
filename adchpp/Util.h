@@ -249,6 +249,7 @@ public:
 	static uint32_t rand(uint32_t low, uint32_t high) { return rand(high-low) + low; }
 	static double randd() { return ((double)rand()) / ((double)0xffffffff); }
 
+	static bool isPrivateIp(std::string const& ip); 
 private:
 	ADCHPP_DLL static std::string cfgPath;
 };
