@@ -563,15 +563,15 @@ local function dump_banned(c, ban)
 end
 
 local function onSUP(c, cmd)
-	if c:getState() ~= adchpp.Entity_STATE_PROTOCOL or not c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) then
-		-- let ClientManager verify this SUP
-		return true
-	end
-
 	-- imitate ClientManager::handle(AdcCommand::SUP, ...)
 
 	if not cm:verifySUP(c, cmd) then
 		return false
+	end
+
+	if c:getState() ~= adchpp.Entity_STATE_PROTOCOL or not c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) then
+		-- let ClientManager further process this SUP
+		return true
 	end
 
 	-- imitate ClientManager::enterIdentify
