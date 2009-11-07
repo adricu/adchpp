@@ -562,6 +562,42 @@ local function dump_banned(c, ban)
 	end)
 end
 
+local function verify_info(c, cid, nick)
+	if #nick == 0 or #cid == 0 then
+		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
+		return false
+	end
+
+	local level = 0
+	local user = get_user(cid, nick) -- can't use get_user_c if checking the first INF
+	if user then
+		level = user.level
+	end
+
+	clear_expired_bans()
+	local ban = nil
+	if bans.cids[cid] then
+		ban = bans.cids[cid]
+	elseif bans.ips[c:getIp()] then
+		ban = bans.ips[c:getIp()]
+	elseif bans.nicks[nick] then
+		ban = bans.nicks[nick]
+	else
+		for re, reban in base.pairs(bans.nicksre) do
+			if nick:match(re) then
+				ban = reban
+				break
+			end
+		end
+	end
+	if ban and ban.level > level then
+		dump_banned(c, ban)
+		return false
+	end
+
+	return true
+end
+
 local function onSUP(c, cmd)
 	-- imitate ClientManager::handle(AdcCommand::SUP, ...)
 
@@ -659,14 +695,12 @@ local function onINF(c, cmd)
 	end
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		return true
+		return verify_info(c, c:getCID():toBase32(), c:getField("NI"))
 	end
 
 	local nick = cmd:getParam("NI", 0)
 	local cid = cmd:getParam("ID", 0)
-
-	if #nick == 0 or #cid == 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
+	if not verify_info(c, cid, nick) then
 		return false
 	end
 
@@ -1973,35 +2007,9 @@ end)
 access_2 = cm:signalState():connect(function(entity)
 	if entity:getState() == adchpp.Entity_STATE_NORMAL then
 		local c = entity:asClient()
-		if not c then
-			return
-		end
-
-		local cid = c:getCID():toBase32()
-		local nick = c:getField("NI")
-
-		clear_expired_bans()
-		local ban = nil
-		if bans.cids[cid] then
-			ban = bans.cids[cid]
-		elseif bans.ips[c:getIp()] then
-			ban = bans.ips[c:getIp()]
-		elseif bans.nicks[nick] then
-			ban = bans.nicks[nick]
-		else
-			for re, reban in base.pairs(bans.nicksre) do
-				if nick:match(re) then
-					ban = reban
-					break
-				end
-			end
-		end
-		if ban and ban.level > get_level(c) then
-			dump_banned(c, ban)
-			return
-		end
-
-		if entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0")) then
+		if c and (
+			entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
+			) then
 			send_user_commands(c)
 		end
 	end
