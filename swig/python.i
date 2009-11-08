@@ -29,6 +29,9 @@
 %typemap(in) std::tr1::function<void (adchpp::Entity&, adchpp::AdcCommand&, bool&)> {
 	$1 = PyHandle($input, false);
 }
+%typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::AdcCommand&, bool&)> {
+	$1 = PyHandle($input, false);
+}
 %typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
@@ -241,6 +244,27 @@ struct PyHandle {
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 
 		if(!ret.valid()) {
+			PyErr_Print();
+			return;
+		}
+
+		if(PyInt_Check(ret)) {
+			i &= static_cast<bool>(PyInt_AsLong(ret));
+		}
+	}
+	
+	void operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(3));
+
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
+		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
+		PyTuple_SetItem(args, 2, getBool(i));
+
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
+
+		if(!ret.valid()) {
+			PyErr_Print();
 			PyErr_Print();
 			return;
 		}
