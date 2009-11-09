@@ -217,6 +217,7 @@ void SocketManager::startup() throw(ThreadException) {
 void SocketManager::shutdown() {
 	work.reset();
 	addJob(std::tr1::bind(&SocketManager::closeFactories, this));
+	io.stop();
 	join();
 }
 
