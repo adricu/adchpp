@@ -1,7 +1,18 @@
 -- This is an example script that scripters might want to use as a basis for their work. It
 -- documents the bare minimum needed to make an Lua script interface with ADCH++.
+
 -- For more detailed information, peeking into other, more evolved (but less documented) example
--- scripts as well as the Doxygen documentation of ADCH++ would be a good idea.
+-- scripts as well as the Doxygen documentation of ADCH++ <http://adchpp.sourceforge.net/doc> would
+-- be a good idea.
+
+-- Generally, to reach member "bar" of the class "foo" of ADCH++, one has to use: adchpp.foo_bar.
+-- Examples: adchpp.Util_getCfgPath(), adchpp.AdcCommand_CMD_MSG, adchpp.Entity_STATE_NORMAL...
+
+-- When manipulating Entity objects, it can be useful to convert them to Client objects (which
+-- are aware of socket features such as a send method) by using:
+-- local client = entity:asClient()
+
+-- Feel free to use <https://answers.launchpad.net/adchpp> or <www.adcportal.com> if you need help.
 
 -- The global functions of Lua are privately imported into "base"; therefore, be sure to always
 -- reference it when calling these functions; eg base.print("blah"), base.pcall(protected_func)...
