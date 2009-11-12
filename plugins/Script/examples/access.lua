@@ -1899,13 +1899,13 @@ local function onReceive(entity, cmd, ok)
 	end
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		local allowed_level = command_min_levels[cmd:getCommand()]
-		if allowed_level then
-			local user = get_user_c(c)
-			if not user or user.level < allowed_level then
-				autil.reply(c, "You don't have access to " .. cmd:getCommandString())
-				return false
-			end
+		local min_level = command_min_levels[cmd:getCommand()]
+		if min_level and get_level(c) < min_level then
+			local fourCC = cmd:getFourCC()
+			c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+			:addParam(adchpp.AdcCommand_SEV_RECOVERABLE .. adchpp.AdcCommand_ERROR_COMMAND_ACCESS)
+			:addParam("You don't have access to the " .. fourCC .. " command"):addParam("FC" .. fourCC))
+			return false
 		end
 	end
 

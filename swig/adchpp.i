@@ -387,7 +387,7 @@ public:
 	void parse(const std::string& aLine) throw(ParseException);
 	uint32_t getCommand() const;
 	char getType() const;
-
+	std::string getFourCC() const;
 	StringList& getParameters();
 	//const StringList& getParameters() const;
 
