@@ -66,6 +66,10 @@ def buildPyModule():
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-modern', '-features', 'autodoc=1'])
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
+		
+	if env['tools'] == 'mingw' and env['mode'] == 'debug':
+		print 'Skipping python module'
+		return
 
 	import distutils.sysconfig
 	
@@ -81,7 +85,10 @@ def buildPyModule():
 		pyprefix = env['python']
 		incpath = os.path.join(pyprefix, "include")
 		libpath = os.path.join(pyprefix, "libs")
-		version = '25' # We only support 2.5.x for now
+		version = sys.version[0]+sys.version[2]
+		if not(version == '26' or version == '25'):
+			print 'Invalid Python version:', version
+			return
 
 		env.Append(LIBPATH=[libpath])
 		env.Append(LIBS=["python"+version])
@@ -118,7 +125,9 @@ def buildLuaModule():
 	targets.append(luadchpp)
 
 # buildRbModule() - needs threading sorted out
-#buildPyModule()
+
+
+buildPyModule()
 
 buildLuaModule()
 
