@@ -1,6 +1,6 @@
 # vim: set filetype: py
 
-EnsureSConsVersion(0, 98, 4)
+EnsureSConsVersion(0, 98, 5)
 
 import os,sys
 from build_util import Dev
@@ -111,6 +111,17 @@ if mode not in gcc_flags:
 	print "Unknown mode, exiting"
 	Exit(1)
 
+# filter out boost from dependencies to get a speedier rebuild scan
+# this means that if boost changes, scons -c needs to be run
+# delete .sconsign.dblite to see the effects of this if you're upgrading
+def filterBoost(x):
+	return [y for y in x if str(y).find('boost') == -1]
+
+SourceFileScanner.function['.c'].recurse_nodes = filterBoost
+SourceFileScanner.function['.cpp'].recurse_nodes = filterBoost
+SourceFileScanner.function['.h'].recurse_nodes = filterBoost
+SourceFileScanner.function['.hpp'].recurse_nodes = filterBoost
+
 dev = Dev(mode, env['tools'], env)
 dev.prepare()
 
@@ -136,7 +147,7 @@ else:
 	if mode == 'debug':
 		env.Append(LIBS = ['stlportg.5.1'])
 	else:
-		env.Append(LIBS = ['stlport.5.1'])	
+		env.Append(LIBS = ['stlport.5.1'])
 
 	# assume STLPort has tr1 containers
 	env.Append(CPPDEFINES = ['BOOST_HAS_TR1'])

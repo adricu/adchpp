@@ -36,7 +36,6 @@ public:
 	virtual int getVersion() = 0;
 };
 
-
 typedef std::tr1::function<void (void*)> PluginDataDeleter;
 
 class PluginData {

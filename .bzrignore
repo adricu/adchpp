@@ -11,3 +11,5 @@ logs
 custom.py
 openssl/
 *.pdb
+*.gch
+*.pot
