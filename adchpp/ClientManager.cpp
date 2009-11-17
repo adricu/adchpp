@@ -49,7 +49,7 @@ ClientManager::~ClientManager() throw() {
 
 Bot* ClientManager::createBot(const Bot::SendHandler& handler) {
 	Bot* ret = new Bot(makeSID(), handler);
-	enterIdentify(*ret, false);
+	//enterIdentify(*ret, false);
 	return ret;
 }
 
@@ -170,7 +170,7 @@ void ClientManager::onConnected(Client& c) throw() {
 	signalConnected_(c);
 }
 
-void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
+void ClientManager::onReceive(Entity& c, AdcCommand& cmd) throw() {
 	if(!(cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_DIRECT || cmd.getType()
 		== AdcCommand::TYPE_ECHO || cmd.getType() == AdcCommand::TYPE_FEATURE || cmd.getType() == AdcCommand::TYPE_HUB)) {
 		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid command type"));
@@ -178,8 +178,12 @@ void ClientManager::onReceive(Client& c, AdcCommand& cmd) throw() {
 		return;
 	}
 
-	if(checkFlooding(c, cmd)) {
-		return;
+	Client *cc = dynamic_cast<Client*>(&c);
+
+	if(cc) {
+		if(checkFlooding(*cc, cmd)) {
+			return;
+		}
 	}
 
 	bool ok = true;
@@ -198,13 +202,13 @@ void ClientManager::onBadLine(Client& c, const string& aLine) throw() {
 	signalBadLine_(c, aLine);
 }
 
-void ClientManager::badState(Client& c, const AdcCommand& cmd) throw() {
+void ClientManager::badState(Entity& c, const AdcCommand& cmd) throw() {
 	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command").addParam("FC",
 		cmd.getFourCC()));
 	c.disconnect(Util::REASON_BAD_STATE);
 }
 
-bool ClientManager::handleDefault(Client& c, AdcCommand& cmd) throw() {
+bool ClientManager::handleDefault(Entity& c, AdcCommand& cmd) throw() {
 	if(c.getState() != Client::STATE_NORMAL) {
 		badState(c, cmd);
 		return false;
@@ -212,7 +216,7 @@ bool ClientManager::handleDefault(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw() {
+bool ClientManager::handle(AdcCommand::SUP, Entity& c, AdcCommand& cmd) throw() {
 	if(!verifySUP(c, cmd)) {
 		return false;
 	}
@@ -226,7 +230,7 @@ bool ClientManager::handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw() 
 	return true;
 }
 
-bool ClientManager::verifySUP(Client& c, AdcCommand& cmd) throw() {
+bool ClientManager::verifySUP(Entity& c, AdcCommand& cmd) throw() {
 	c.updateSupports(cmd);
 
 	if(!c.hasSupport(AdcCommand::toFourCC("BASE"))) {
@@ -246,9 +250,13 @@ bool ClientManager::verifySUP(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::verifyINF(Client& c, AdcCommand& cmd) throw() {
-	if(!verifyIp(c, cmd))
-		return false;
+bool ClientManager::verifyINF(Entity& c, AdcCommand& cmd) throw() {
+	Client* cc = dynamic_cast<Client*>(&c);
+
+	if(cc) {
+		if(!verifyIp(*cc, cmd))
+			return false;
+	}
 
 	if(!verifyCID(c, cmd))
 		return false;
@@ -260,7 +268,7 @@ bool ClientManager::verifyINF(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::verifyPassword(Client& c, const string& password, const ByteVector& salt,
+bool ClientManager::verifyPassword(Entity& c, const string& password, const ByteVector& salt,
 	const string& suppliedHash) {
 	TigerHash tiger;
 	tiger.update(&password[0], password.size());
@@ -274,7 +282,7 @@ bool ClientManager::verifyPassword(Client& c, const string& password, const Byte
 	return false;
 }
 
-bool ClientManager::handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw() {
+bool ClientManager::handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw() {
 	if(c.getState() != Client::STATE_IDENTIFY && c.getState() != Client::STATE_NORMAL) {
 		badState(c, cmd);
 		return false;
@@ -318,7 +326,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
+bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	if(cmd.getParam("ID", 0, strtmp)) {
 		dcdebug("%s verifying CID\n", AdcCommand::fromSID(c.getSID()).c_str());
 		if(c.getState() != Client::STATE_IDENTIFY) {
@@ -375,7 +383,7 @@ bool ClientManager::verifyCID(Client& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
-bool ClientManager::verifyNick(Client& c, const AdcCommand& cmd) throw() {
+bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	if(cmd.getParam("NI", 0, strtmp)) {
 		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
 		for(string::size_type i = 0; i < strtmp.length(); ++i) {

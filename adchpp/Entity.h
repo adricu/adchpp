@@ -119,6 +119,8 @@ public:
 	ADCHPP_DLL void setFlag(size_t aFlag);
 	ADCHPP_DLL void unsetFlag(size_t aFlag);
 
+	ADCHPP_DLL virtual void disconnect(Util::Reason reason) = 0;
+
 protected:
 	virtual ~Entity();
 

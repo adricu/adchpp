@@ -1,4 +1,4 @@
-%module pyadchpp
+%module(directors="1") pyadchpp
 
 %runtime %{
 #ifdef socklen_t
@@ -35,7 +35,7 @@
 %typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Bot& bot, const adchpp::BufferPtr& cmd)> {
+%typemap(in) std::tr1::function<void (adchpp::Bot&, const adchpp::BufferPtr&)> {
 	$1 = PyHandle($input, false);
 }
 
@@ -134,7 +134,14 @@
 	%property(pluginList, getPluginList, setPluginList)
 }
 
-%{
+
+%extend adchpp::ClientManager {
+	Bot* createBot(PyObject *obj) {
+		return self->createBot(PyHandle(obj, false));
+	}
+}
+
+%runtime %{
 struct PyGIL {
 	PyGIL() { state = PyGILState_Ensure(); }
 	~PyGIL() { PyGILState_Release(state); }
@@ -142,7 +149,7 @@ struct PyGIL {
 };
 
 struct PyHandle {
-	PyHandle(PyObject* obj_, bool newRef) : obj(obj_) { if(!newRef) Py_XINCREF(obj); }
+	PyHandle(PyObject* obj_, bool newRef) : obj(obj_) { if(!newRef) { Py_XINCREF(obj); } }
 	PyHandle(const PyHandle& rhs) : obj(rhs.obj) { Py_XINCREF(obj); }
 
 	PyHandle& operator=(const PyHandle& rhs) {
@@ -175,7 +182,29 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c) {
+	void operator()(adchpp::Entity& c);
+
+	void operator()(adchpp::Entity& c, const std::string& str);
+
+	void operator()(adchpp::Entity& c, int i);
+
+	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd);
+
+	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, bool& i);
+	
+	void operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i);
+
+	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i);
+	void operator()(adchpp::Bot& c, const adchpp::BufferPtr& ptr);
+private:
+	PyObject* obj;
+};
+
+%}
+
+%{
+
+	void PyHandle::operator()(adchpp::Entity& c) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(1));
 
@@ -188,7 +217,7 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c, const std::string& str) {
+	void PyHandle::operator()(adchpp::Entity& c, const std::string& str) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(2));
 
@@ -203,7 +232,7 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c, int i) {
+	void PyHandle::operator()(adchpp::Entity& c, int i) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(2));
 
@@ -218,7 +247,7 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd) {
+	void PyHandle::operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(2));
 
@@ -233,7 +262,7 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, bool& i) {
+	void PyHandle::operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, bool& i) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(3));
 
@@ -253,7 +282,7 @@ struct PyHandle {
 		}
 	}
 	
-	void operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i) {
+	void PyHandle::operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(3));
 
@@ -274,7 +303,7 @@ struct PyHandle {
 		}
 	}
 
-	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i) {
+	void PyHandle::operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i) {
 		PyGIL gil;
 		PyObject* args(PyTuple_New(3));
 
@@ -289,8 +318,14 @@ struct PyHandle {
 		}
 	}
 
-private:
-	PyObject* obj;
-};
+	void PyHandle::operator()(adchpp::Bot& c, const adchpp::BufferPtr& ptr) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(2));
+
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Bot, 0 |  0 ));
+		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&ptr), SWIGTYPE_p_adchpp__BufferPtr, 0 |  0 ));
+
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
+	}
 %}
 

@@ -41,9 +41,12 @@ def run():
     
     try:
         a.startup()
+        
+        import plugins
+        
         raw_input("Running...")
-    except:
-        print "\n\nFATAL: Can't start ADCH++: %s\n"
+    except Exception as e:
+        print "\n\nFATAL: Can't start ADCH++: %s\n" % e
     
     a.shutdown()
     

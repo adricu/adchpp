@@ -43,7 +43,7 @@ public:
 	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
 
 	/** @param reason The statistic to update */
-	ADCHPP_DLL void disconnect(Util::Reason reason) throw();
+	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
 	const ManagedSocketPtr& getSocket() throw() { return socket; }
 	const ManagedSocketPtr& getSocket() const throw() { return socket; }
 	const std::string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }

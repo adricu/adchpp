@@ -105,23 +105,23 @@ public:
 	/**
 	 * Do all SUP verifications and update client data. Call if you stop SUP but still want the default processing.
 	 */
-	ADCHPP_DLL bool verifySUP(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifySUP(Entity& c, AdcCommand& cmd) throw();
 
 	/**
 	 * Do all INF verifications and update client data. Call if you stop INF but still want the default processing.
 	 */
-	ADCHPP_DLL bool verifyINF(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyINF(Entity& c, AdcCommand& cmd) throw();
 
 	/**
 	 * Verify nick on INF (check that its not a dupe etc...)
 	 * @return false if the client was disconnected
 	 */
-	ADCHPP_DLL bool verifyNick(Client& c, const AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyNick(Entity& c, const AdcCommand& cmd) throw();
 
 	/**
 	 * Verify password
 	 */
-	ADCHPP_DLL bool verifyPassword(Client& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
+	ADCHPP_DLL bool verifyPassword(Entity& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
 
 	/**
 	 * Verify that IP is correct and replace any zero addresses.
@@ -131,7 +131,7 @@ public:
 	/**
 	 * Verify that CID is correct and corresponds to PID
 	 */
-	ADCHPP_DLL bool verifyCID(Client& c, AdcCommand& cmd) throw();
+	ADCHPP_DLL bool verifyCID(Entity& c, AdcCommand& cmd) throw();
 
 	/** Update the state of c (this fires signalState as well) */
 	ADCHPP_DLL void setState(Entity& c, Entity::State newState) throw();
@@ -157,6 +157,8 @@ public:
 
 private:
 	friend class Client;
+	friend class Entity;
+	friend class Bot;
 
 	std::deque<std::pair<Client*, uint32_t> > logins;
 
@@ -187,20 +189,20 @@ private:
 	void removeLogins(Entity& c) throw();
 	void removeEntity(Entity& c) throw();
 
-	bool handle(AdcCommand::SUP, Client& c, AdcCommand& cmd) throw();
-	bool handle(AdcCommand::INF, Client& c, AdcCommand& cmd) throw();
-	bool handleDefault(Client& c, AdcCommand& cmd) throw();
+	bool handle(AdcCommand::SUP, Entity& c, AdcCommand& cmd) throw();
+	bool handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw();
+	bool handleDefault(Entity& c, AdcCommand& cmd) throw();
 
-	template<typename T> bool handle(T, Client& c, AdcCommand& cmd) throw() { return handleDefault(c, cmd); }
+	template<typename T> bool handle(T, Entity& c, AdcCommand& cmd) throw() { return handleDefault(c, cmd); }
 
 	void handleIncoming(const ManagedSocketPtr& sock) throw();
 
 	void onConnected(Client&) throw();
-	void onReceive(Client&, AdcCommand&) throw();
+	void onReceive(Entity&, AdcCommand&) throw();
 	void onBadLine(Client&, const std::string&) throw();
 	void onFailed(Client&) throw();
 
-	void badState(Client& c, const AdcCommand& cmd) throw();
+	void badState(Entity& c, const AdcCommand& cmd) throw();
 
 	SignalConnected::Signal signalConnected_;
 	SignalReceive::Signal signalReceive_;

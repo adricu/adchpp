@@ -20,14 +20,24 @@
 
 #include "Bot.h"
 #include "AdcCommand.h"
+#include "ClientManager.h"
 
 namespace adchpp {
 
 Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(handler_) {
 	setFlag(FLAG_BOT);
 
-	// Fake a cid
+	// Fake a CID (maybe this should be permanent?)
 	setCID(CID::generate());
+}
+
+void Bot::disconnect(Util::Reason reason) throw() {
+	// @todo
+}
+
+void Bot::inject(AdcCommand& cmd) {
+	// @todo maybe make async?
+	ClientManager::getInstance()->onReceive(*this, cmd);
 }
 
 }

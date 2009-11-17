@@ -198,11 +198,12 @@ private:
 };
 
 class Client;
+class Entity;
 
 template<class T>
 class CommandHandler {
 public:
-	bool dispatch(Client& c, AdcCommand& cmd) {
+	bool dispatch(Entity& c, AdcCommand& cmd) {
 #define C(n) case AdcCommand::CMD_##n: return ((T*)this)->handle(AdcCommand::n(), c, cmd); break;
 		switch(cmd.getCommand()) {
 			C(SUP);

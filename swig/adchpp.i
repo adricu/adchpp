@@ -109,6 +109,8 @@ typedef ServerInfo::TLSInfo TLSInfo;
 
 namespace adchpp {
 
+class BufferPtr;
+
 void initialize(const std::string& configPath);
 void cleanup();
 
@@ -369,6 +371,8 @@ public:
 	explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType);
 	explicit AdcCommand(uint32_t cmd, char aType, uint32_t aFrom);
 	explicit AdcCommand(const std::string& aLine) throw(ParseException);
+    explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException);
+	
 	AdcCommand(const AdcCommand& rhs);
 
 	static uint32_t toSID(const std::string& aSID);
@@ -552,12 +556,10 @@ public:
 
 class Bot : public Entity {
 public:
-	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
-
-	Bot(uint32_t sid, const SendHandler& handler_);
-
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
+	
+	void inject(AdcCommand& cmd);
 private:
 	SendHandler handler;
 };
@@ -612,11 +614,11 @@ public:
 	uint32_t getSID(const CID& cid) const throw();
 
 	Entity* getEntity(uint32_t aSid) throw();
-	Bot* createBot(const Bot::SendHandler& handler);
-
+	
 	// EntityMap& getEntities() throw() { return entities; }
 
 	%extend{
+
 	EntityList getEntities() throw() {
 		EntityList ret;
 		for(ClientManager::EntityMap::iterator i = self->getEntities().begin(); i != self->getEntities().end(); ++i) {
@@ -739,6 +741,14 @@ public:
 	}
 };
 
+class Plugin {
+public:
+	Plugin() { }
+	virtual ~Plugin() { }
+	/** @return API version for a plugin (incremented every time API changes) */
+	virtual int getVersion() = 0;
+};
+
 class PluginManager
 {
 public:
@@ -754,9 +764,9 @@ public:
 	
 	//int getPluginId() { return pluginIds++; }
 
-	//bool registerPlugin(const std::string& name, Plugin* ptr);
-	//bool unregisterPlugin(const std::string& name);
-	//Plugin* getPlugin(const std::string& name);
+	bool registerPlugin(const std::string& name, Plugin* ptr);
+	bool unregisterPlugin(const std::string& name);
+	Plugin* getPlugin(const std::string& name);
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();
