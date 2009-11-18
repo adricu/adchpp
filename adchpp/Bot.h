@@ -34,7 +34,7 @@ public:
 
 	virtual void send(const BufferPtr& cmd) { handler(*this, cmd); }
 
-	void inject(AdcCommand& cmd);
+	ADCHPP_DLL void inject(AdcCommand& cmd);
 
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
 
