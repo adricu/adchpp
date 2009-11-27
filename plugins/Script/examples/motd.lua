@@ -18,7 +18,7 @@ local motd
 local function load_motd()
 	local fp = io.open(file, "r")
 	if not fp then
-		base.print("Unable to open " .. file ..", MOTD not loaded")
+		base.print("Unable to open " .. file .. ", MOTD not loaded")
 		return
 	end
 	motd = fp:read("*a")

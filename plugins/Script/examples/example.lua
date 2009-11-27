@@ -52,6 +52,7 @@ end)
 -- ClientManager::signalReceive: called when an AdcCommand cmd is received from Entity entity.
 example_2 = cm:signalReceive():connect(function(entity, cmd, ok)
 	local res = (function(entity, cmd, ok)
+		-- Skip messages that have been handled and deemed as discardable by others.
 		if not ok then
 			return ok
 		end
@@ -77,6 +78,7 @@ end)
 -- PluginManager::getCommandSignal(string): called when a +command managed by another plugin is
 -- being executed.
 example_5 = pm:getCommandSignal("blah"):connect(function(entity, list, ok)
+	-- Skip messages that have been handled and deemed as discardable by others.
 	if not ok then
 		return ok
 	end

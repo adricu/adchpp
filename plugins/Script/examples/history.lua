@@ -60,7 +60,7 @@ autil.commands.history = {
 			s = pos - items
 		end
 
-		local e = pos 
+		local e = pos
 		local msg = "Displaying last " .. (e - s) .. " messages"
 
 		while s ~= e and messages[idx(s)] do
@@ -128,7 +128,6 @@ local function onMSG(entity, cmd)
 end
 
 local function onReceive(entity, cmd, ok)
-	-- Skip messages that have been handled by others
 	if not ok then
 		return ok
 	end

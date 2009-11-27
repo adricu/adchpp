@@ -12,7 +12,7 @@ local adchpp = base.luadchpp
 -- * change: function called when the value has changed.
 -- * help: information about this setting, displayed in +help cfg.
 -- * value: the value of this setting. [compulsory]
-settings = { }
+settings = {}
 
 -- List of +commands handled by the main script. Possible fields each command can contain:
 -- * alias: other names that can also trigger this command.
@@ -25,7 +25,7 @@ settings = { }
 --                 ** hub_params: list of arguments to be passed to this command for hub menus.
 --                 ** params: list of arguments to be passed to this command for all menus.
 --                 ** user_params: list of arguments to be passed to this command for user menus.
-commands = { }
+commands = {}
 
 function line_ucmd(str)
 	return "%[line:" .. str .. "]"

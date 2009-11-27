@@ -200,13 +200,13 @@ autil.settings.website = {
 }
 
 local function load_users()
-	users.cids = { }
-	users.nicks = { }
+	users.cids = {}
+	users.nicks = {}
 
 	local file = io.open(users_file, "r")
-	if not file then 
-		base.print("Unable to open " .. users_file ..", users not loaded")
-		return 
+	if not file then
+		base.print("Unable to open " .. users_file .. ", users not loaded")
+		return
 	end
 
 	local str = file:read("*a")
@@ -222,7 +222,7 @@ local function load_users()
 		return
 	end
 
-	for k, user in base.pairs(userlist) do
+	for _, user in base.pairs(userlist) do
 		if user.cid then
 			users.cids[user.cid] = user
 		end
@@ -239,11 +239,11 @@ local function save_users()
 		return
 	end
 
-	local userlist = { }
-	local nicksdone = { }
+	local userlist = {}
+	local nicksdone = {}
 
 	local i = 1
-	for k, user in base.pairs(users.cids) do
+	for _, user in base.pairs(users.cids) do
 		userlist[i] = user
 		if user.nick then
 			nicksdone[user] = 1
@@ -251,7 +251,7 @@ local function save_users()
 		i = i + 1
 	end
 
-	for k, user in base.pairs(users.nicks) do
+	for _, user in base.pairs(users.nicks) do
 		if not nicksdone[user] then
 			userlist[i] = user
 			i = i + 1
@@ -265,7 +265,7 @@ end
 local function load_settings()
 	local file = io.open(settings_file, "r")
 	if not file then
-		base.print("Unable to open " .. settings_file ..", settings not loaded")
+		base.print("Unable to open " .. settings_file .. ", settings not loaded")
 		return
 	end
 
@@ -300,7 +300,7 @@ local function save_settings()
 		return
 	end
 
-	local list = { }
+	local list = {}
 	for k, v in base.pairs(autil.settings) do
 		list[k] = v.value
 	end
@@ -319,7 +319,7 @@ local function load_bans()
 
 	local file = io.open(bans_file, "r")
 	if not file then
-		base.print("Unable to open " .. bans_file ..", bans not loaded")
+		base.print("Unable to open " .. bans_file .. ", bans not loaded")
 		return
 	end
 
@@ -401,13 +401,15 @@ end
 
 local function get_user(cid, nick)
 	local user
+
 	if cid then
 		user = users.cids[cid]
 	end
-	
+
 	if not user and nick then
-		user = users.nicks[nick]		
+		user = users.nicks[nick]
 	end
+
 	return user
 end
 
@@ -433,13 +435,14 @@ local function is_op(c)
 end
 
 local function update_user(user, cid, nick)
--- only one of nick and cid may be updated...
+	-- only one of nick and cid may be updated...
+
 	if user.nick ~= nick then
 		if users.nicks[nick] then
 			-- new nick taken...
 			return false, "Nick taken by another registered user"
 		end
-		
+
 		if user.nick then
 			users.nicks[user.nick] = nil
 		end
@@ -448,31 +451,27 @@ local function update_user(user, cid, nick)
 		base.pcall(save_users)
 		return true, "Registration data updated (new nick)"
 	end
-	
+
 	if user.cid ~= cid then
 		if users.cids[cid] then
 			-- new cid taken...
 			return false, "CID taken by another registered user"
 		end
-		
+
 		if user.cid then
 			users.cids[user.cid] = nil
 		end
-		
+
 		user.cid = cid
 		users.cids[user.cid] = user
 		base.pcall(save_users)
 		return true, "Registration data updated (new CID)"
 	end
-	
+
 	return true
 end
 
 local function register_user(cid, nick, password, level)
-	if not nick and not cid then
-		base.print("Can't register user with neither nick nor cid")
-	end
-
 	local user = make_user(cid, nick, password, level)
 	if nick then
 		users.nicks[nick] = user
@@ -547,7 +546,7 @@ local function ban_return_info(ban)
 end
 
 local function dump_banned(c, ban)
-	local str = "You are banned " .. ban_return_info(ban)
+	local str = "You are banned" .. ban_return_info(ban)
 
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
 		cmd:addParam("MS" .. str)
@@ -854,14 +853,14 @@ autil.commands.cfg = {
 	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
 
 	helplong = function()
-		local list = { }
+		local list = {}
 		for k, v in base.pairs(autil.settings) do
 			local str = k .. " - current value: " .. v.value
 			if v.help then
 				str = str .. " - " .. v.help
 			end
 			if v.alias then
-				local list_alias = { }
+				local list_alias = {}
 				for k_alias, v_alias in base.pairs(v.alias) do
 					table.insert(list_alias, k_alias)
 				end
@@ -890,7 +889,7 @@ autil.commands.help = {
 				str = str .. " " .. v.help
 			end
 			if v.alias then
-				local list_alias = { }
+				local list_alias = {}
 				for k_alias, v_alias in base.pairs(v.alias) do
 					table.insert(list_alias, "+" .. k_alias)
 				end
@@ -931,7 +930,7 @@ autil.commands.help = {
 			autil.reply(c, str)
 
 		else
-			local list = { }
+			local list = {}
 			for k, v in base.pairs(autil.commands) do
 				if (not v.protected) or (v.protected and v.protected(c)) then
 					table.insert(list, command_help(k, v))
@@ -979,6 +978,7 @@ autil.commands.info = {
 					str = str .. "unknown"
 				end
 				str = str .. "\n"
+				str = str .. "Level: " .. get_level(user) .. "\n"
 				field_function("DE", "Description")
 				field_function("SS", "Share size (bytes)")
 				field_function("SF", "Number of shared files")
@@ -997,7 +997,7 @@ autil.commands.info = {
 
 			else
 				-- by IP
-				local users_ip = { }
+				local users_ip = {}
 				local entities = cm:getEntities()
 				local size = entities:size()
 				if size > 0 then
@@ -1285,28 +1285,29 @@ autil.commands.myip = {
 }
 
 autil.commands.mypass = {
-	alias = { changepass = true, mypassword = true, changepassword = true, setpass = true, setpassword = true },
+	alias = { regme = true, changepass = true, mypassword = true, changepassword = true, setpass = true, setpassword = true },
 
 	command = function(c, parameters)
-		local user = get_user_c(c)
-		if not user then
-			autil.reply(c, "You are not registered, register with +regme")
-			return
-		end
-
 		if #parameters <= 0 then
-			autil.reply(c, "You must provide a new password")
+			autil.reply(c, "You must provide a password")
 			return
 		end
 
-		user.password = parameters
+		local user = get_user_c(c)
+		if user then
+			-- already regged
+			user.password = parameters
+			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
+
+		else
+			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
+			autil.reply(c, "You're now registered with the password \"" .. parameters .. "\"")
+		end
+
 		base.pcall(save_users)
-		autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 	end,
 
 	help = "new_pass - change your password, make sure you change it in your client options too",
-
-	protected = function(c) return get_user_c(c) end,
 
 	user_command = { params = {
 		autil.line_ucmd("New password")
@@ -1372,23 +1373,6 @@ autil.commands.reload = {
 	protected = is_op
 }
 
-autil.commands.regme = {
-	command = function(c, parameters)
-		if not parameters:match("%S+") then
-			autil.reply(c, "You need to supply a password without whitespace")
-			return
-		end
-
-		register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
-
-		autil.reply(c, "You're now registered")
-	end,
-
-	help = "password",
-
-	user_command = { params = { autil.line_ucmd("Password") } }
-}
-
 autil.commands.regnick = {
 	alias = { reguser = true },
 
@@ -1399,9 +1383,17 @@ autil.commands.regnick = {
 			return
 		end
 
-		local nick, password, level = parameters:match("^(%S+) ?(%S*) ?(%d*)")
+		local level_pos, _, level = parameters:find(" (%d*)$")
+		if level_pos then
+			parameters = parameters:sub(0, level_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
+		end
+		local nick, password = parameters:match("^(%S+) ?(.*)")
 		if not nick then
-			autil.reply(c, "You must supply a nick")
+			autil.reply(c, "You need to supply a nick")
 			return
 		end
 
@@ -1412,7 +1404,13 @@ autil.commands.regnick = {
 			cid = other:getCID():toBase32()
 		end
 
-		if string.len(level) > 0 then
+		local other_user = get_user(cid, nick)
+		if other_user and other_user.level >= my_user.level then
+			autil.reply(c, "There is already a registered user with a level higher or equal than yours with this nick")
+			return
+		end
+
+		if level and string.len(level) > 0 then
 			level = base.tonumber(level)
 			if level >= my_user.level then
 				autil.reply(c, "You may only register to a lower level than your own (" .. my_user.level .. ")")
@@ -1434,7 +1432,7 @@ autil.commands.regnick = {
 			users.nicks[nick] = nil
 			base.pcall(save_users)
 
-			autil.reply(c, nick .. " un-registered")
+			autil.reply(c, "\"" .. nick .. "\" un-registered")
 
 			if other then
 				autil.reply(other, "You've been un-registered")
@@ -1444,10 +1442,10 @@ autil.commands.regnick = {
 
 		register_user(cid, nick, password, level)
 
-		autil.reply(c, nick .. " registered")
+		autil.reply(c, "\"" .. nick .. "\" has been registered")
 
 		if other then
-			autil.reply(other, "You've been registered with password " .. password)
+			autil.reply(other, "You've been registered with password \"" .. password .. "\"")
 		end
 	end,
 
@@ -1836,11 +1834,11 @@ autil.commands.loadbans = {
 	protected = is_op
 }
 
-local function onMSG(c, cmd)
+local function onMainChatMSG(c, cmd)
 	clear_expired_bans()
 	local muted = bans.muted[c:getCID():toBase32()]
 	if muted then
-		autil.reply(c, "You are muted " .. ban_return_info(muted))
+		autil.reply(c, "You are muted" .. ban_return_info(muted))
 		return false
 	end
 
@@ -1918,15 +1916,15 @@ local function onReceive(entity, cmd, ok)
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
 		return onPAS(c, cmd)
 	end
-	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
-		return onMSG(c, cmd)
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST then
+		return onMainChatMSG(c, cmd)
 	end
 
 	return true
 end
 
 local function send_user_commands(c)
-	local list = { }
+	local list = {}
 	for k, v in base.pairs(autil.commands) do
 		if (not v.protected) or (v.protected and v.protected(c)) then
 			table.insert(list, k)
