@@ -134,11 +134,16 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 		if(cmd.getParam("TR", 0, tmp)) {
 			tthSearches++;
 			HashBloom* bloom = reinterpret_cast<HashBloom*>(c.getPluginData(bloomHandle));
-			if(bloom && !bloom->match(TTHValue(tmp))) {
-				// Stop it
+			if(bloom) {
+				if(!bloom->match(TTHValue(tmp)))
+					ok = false;
+			} else if(c.hasSupport(FEATURE)) {
+				// this client supports BLOOM but hasn't provided any table
+				ok = false;
+			}
+			if(!ok) {
 				stopped++;
 				dcdebug("Stopping search\n");
-				ok = false;
 			}
 		}
 	}
