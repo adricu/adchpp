@@ -23,11 +23,14 @@ settings = {}
 -- * user_command: table containing information about the user command which will refer to this
 --                 command. Possible fields each user_command table can contain:
 --                 ** hub_params: list of arguments to be passed to this command for hub menus.
+--                 ** name: name of the user command (defaults to capitalized command name).
 --                 ** params: list of arguments to be passed to this command for all menus.
 --                 ** user_params: list of arguments to be passed to this command for user menus.
 commands = {}
 
-function line_ucmd(str)
+ucmd_sep = "\\" -- TODO should be '/' per the spec but DC++ uses '\'...
+
+function ucmd_line(str)
 	return "%[line:" .. str .. "]"
 end
 

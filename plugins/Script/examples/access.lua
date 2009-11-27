@@ -875,10 +875,13 @@ autil.commands.cfg = {
 
 	protected = is_op,
 
-	user_command = { params = {
-		autil.line_ucmd("Name of the setting to change"),
-		autil.line_ucmd("New value for the setting")
-	} }
+	user_command = {
+		name = "Hub management" .. autil.ucmd_sep .. "Change a setting",
+		params = {
+			autil.ucmd_line("Name of the setting to change"),
+			autil.ucmd_line("New value for the setting")
+		}
+	}
 }
 
 autil.commands.help = {
@@ -944,7 +947,7 @@ autil.commands.help = {
 	help = "[command] - list all available commands, or display detailed information about one specific command",
 
 	user_command = { params = {
-		autil.line_ucmd("Command name (facultative)")
+		autil.ucmd_line("Command name (facultative)")
 	} }
 }
 
@@ -1114,12 +1117,13 @@ autil.commands.kick = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("User"),
-			autil.line_ucmd("Reason (facultative)")
+			autil.ucmd_line("User"),
+			autil.ucmd_line("Reason (facultative)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Kick",
 		user_params = {
 			"%[userNI]",
-			autil.line_ucmd("Reason (facultative)")
+			autil.ucmd_line("Reason (facultative)")
 		}
 	}
 }
@@ -1206,10 +1210,13 @@ autil.commands.mass = {
 
 	protected = is_op,
 
-	user_command = { params = {
-		autil.line_ucmd("Message"),
-		autil.line_ucmd("Minimum level (facultative)")
-	} }
+	user_command = {
+		name = "Hub management" .. autil.ucmd_sep .. "Mass message",
+		params = {
+			autil.ucmd_line("Message"),
+			autil.ucmd_line("Minimum level (facultative)")
+		}
+	}
 }
 
 autil.commands.mute = {
@@ -1264,14 +1271,15 @@ autil.commands.mute = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("Nick"),
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Nick"),
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Mute",
 		user_params = {
 			"%[userNI]",
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		}
 	}
 }
@@ -1281,7 +1289,9 @@ autil.commands.myip = {
 
 	command = function(c)
 		autil.reply(c, "Your IP: " .. c:getIp())
-	end
+	end,
+
+	user_command = { name = "My IP" }
 }
 
 autil.commands.mypass = {
@@ -1309,9 +1319,10 @@ autil.commands.mypass = {
 
 	help = "new_pass - change your password, make sure you change it in your client options too",
 
-	user_command = { params = {
-		autil.line_ucmd("New password")
-	} }
+	user_command = {
+		name = "My pass",
+		params = { autil.ucmd_line("New password") }
+	}
 }
 
 autil.commands.redirect = {
@@ -1355,12 +1366,13 @@ autil.commands.redirect = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("Nick"),
-			autil.line_ucmd("Address")
+			autil.ucmd_line("Nick"),
+			autil.ucmd_line("Address")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Redirect",
 		user_params = {
 			"%[userNI]",
-			autil.line_ucmd("Address")
+			autil.ucmd_line("Address")
 		}
 	}
 }
@@ -1370,7 +1382,9 @@ autil.commands.reload = {
 
 	help = "- reload scripts",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { name = "Hub management" .. autil.ucmd_sep .. "Reload scripts" }
 }
 
 autil.commands.regnick = {
@@ -1455,14 +1469,15 @@ autil.commands.regnick = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("Nick"),
-			autil.line_ucmd("Password (leave empty to un-reg)"),
-			autil.line_ucmd("Level (facultative; defaults to your own level minus one)")
+			autil.ucmd_line("Nick"),
+			autil.ucmd_line("Password (leave empty to un-reg)"),
+			autil.ucmd_line("Level (facultative; defaults to your own level minus one)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Register nick",
 		user_params = {
 			"%[userNI]",
-			autil.line_ucmd("Password (leave empty to un-reg)"),
-			autil.line_ucmd("Level (facultative; defaults to your own level minus one)")
+			autil.ucmd_line("Password (leave empty to un-reg)"),
+			autil.ucmd_line("Level (facultative; defaults to your own level minus one)")
 		}
 	}
 }
@@ -1487,9 +1502,10 @@ autil.commands.topic = {
 
 	protected = autil.commands.cfg.protected,
 
-	user_command = { params = {
-		autil.line_ucmd("New topic")
-	} }
+	user_command = {
+		name = "Hub management" .. autil.ucmd_sep .. "Change the topic",
+		params = { autil.ucmd_line("New topic") }
+	}
 }
 
 autil.commands.ban = {
@@ -1545,14 +1561,15 @@ autil.commands.ban = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("Nick"),
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Nick"),
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban",
 		user_params = {
 			"%[userNI]",
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		}
 	}
 }
@@ -1590,14 +1607,15 @@ autil.commands.bancid = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("CID"),
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("CID"),
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban CID",
 		user_params = {
 			"%[userCID]",
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		}
 	}
 }
@@ -1635,14 +1653,15 @@ autil.commands.banip = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("IP"),
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("IP"),
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban IP",
 		user_params = {
 			"%[userI4]",
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		}
 	}
 }
@@ -1680,14 +1699,15 @@ autil.commands.bannick = {
 
 	user_command = {
 		hub_params = {
-			autil.line_ucmd("Nick"),
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Nick"),
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		},
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban nick",
 		user_params = {
 			"%[userNI]",
-			autil.line_ucmd("Reason (facultative)"),
-			autil.line_ucmd("Minutes (facultative)")
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
 		}
 	}
 }
@@ -1723,11 +1743,14 @@ autil.commands.bannickre = {
 
 	protected = is_op,
 
-	user_command = { params = {
-		"<" .. autil.line_ucmd("Reg Exp of nicks to forbid") .. ">",
-		autil.line_ucmd("Reason (facultative)"),
-		autil.line_ucmd("Minutes (facultative)")
-	} }
+	user_command = {
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban nick (reg exp)",
+		params = {
+			"<" .. autil.ucmd_line("Reg exp of nicks to forbid") .. ">",
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
+		}
+	}
 }
 
 autil.commands.banmsgre = {
@@ -1761,11 +1784,14 @@ autil.commands.banmsgre = {
 
 	protected = is_op,
 
-	user_command = { params = {
-		"<" .. autil.line_ucmd("Reg Exp of chat messages to forbid") .. ">",
-		autil.line_ucmd("Reason (facultative)"),
-		autil.line_ucmd("Minutes (facultative)")
-	} }
+	user_command = {
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban chat (reg exp)",
+		params = {
+			"<" .. autil.ucmd_line("Reg exp of chat messages to forbid") .. ">",
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Minutes (facultative)")
+		}
+	}
 }
 
 autil.commands.listbans = {
@@ -1812,7 +1838,9 @@ autil.commands.listbans = {
 		autil.reply(c, str)
 	end,
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { name = "Hub management" .. autil.ucmd_sep .. "List bans" }
 }
 
 autil.commands.loadbans = {
@@ -1831,7 +1859,9 @@ autil.commands.loadbans = {
 
 	help = "- reload the ban list",
 
-	protected = is_op
+	protected = is_op,
+
+	user_command = { name = "Hub management" .. autil.ucmd_sep .. "Reload bans" }
 }
 
 local function onMainChatMSG(c, cmd)
@@ -1916,7 +1946,9 @@ local function onReceive(entity, cmd, ok)
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
 		return onPAS(c, cmd)
 	end
-	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST then
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and (
+		cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST or cmd:getType() == adchpp.AdcCommand_TYPE_HUB
+		) then
 		return onMainChatMSG(c, cmd)
 	end
 
@@ -1924,20 +1956,28 @@ local function onReceive(entity, cmd, ok)
 end
 
 local function send_user_commands(c)
+	local names = {}
 	local list = {}
 	for k, v in base.pairs(autil.commands) do
 		if (not v.protected) or (v.protected and v.protected(c)) then
-			table.insert(list, k)
+			local name
+			if v.user_command and v.user_command.name then
+				name = v.user_command.name
+			else
+				name = string.upper(string.sub(k, 1, 1)) .. string.sub(k, 2)
+			end
+			table.insert(list, name)
+			names[name] = k
 		end
 	end
 	table.sort(list)
 
-	local send_ucmd = function(c, name, command, context)
+	local send_ucmd = function(c, name, internal_name, command, context)
 		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-		ucmd:addParam("+" .. name)
+		ucmd:addParam("ADCH++" .. autil.ucmd_sep .. name)
 
 		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
-		local str = "+" .. name
+		local str = "+" .. internal_name
 
 		local params = nil
 		if context == 1 and command.user_command and command.user_command.hub_params then
@@ -1961,27 +2001,28 @@ local function send_user_commands(c)
 		c:send(ucmd)
 	end
 
-	for i, name in base.ipairs(list) do
-		local command = autil.commands[name]
+	for _, name in base.ipairs(list) do
+		local internal_name = names[name]
+		local command = autil.commands[internal_name]
 
 		local hub_sent = false
 		if command.user_command and command.user_command.hub_params then
-			send_ucmd(c, name, command, 1)
+			send_ucmd(c, name, internal_name, command, 1)
 			hub_sent = true
 		end
 
 		local user_sent = false
 		if command.user_command and command.user_command.user_params then
-			send_ucmd(c, name, command, 2)
+			send_ucmd(c, name, internal_name, command, 2)
 			user_sent = true
 		end
 
 		if (not hub_sent) and (not user_sent) then
-			send_ucmd(c, name, command, 3)
+			send_ucmd(c, name, internal_name, command, 3)
 		elseif not hub_sent then
-			send_ucmd(c, name, command, 1)
+			send_ucmd(c, name, internal_name, command, 1)
 		elseif not user_sent then
-			send_ucmd(c, name, command, 2)
+			send_ucmd(c, name, internal_name, command, 2)
 		end
 	end
 end

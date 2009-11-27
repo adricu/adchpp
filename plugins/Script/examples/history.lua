@@ -73,9 +73,10 @@ autil.commands.history = {
 
 	help = "[lines] - display main chat messages logged by the hub",
 
-	user_command = { params = {
-		autil.line_ucmd("Number of lines to display (facultative)")
-	} }
+	user_command = {
+		name = "Chat history",
+		params = { autil.ucmd_line("Number of lines to display (facultative)") }
+	}
 }
 
 local function save_messages()
