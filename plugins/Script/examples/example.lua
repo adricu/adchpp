@@ -51,13 +51,13 @@ end)
 
 -- ClientManager::signalReceive: called when an AdcCommand cmd is received from Entity entity.
 example_2 = cm:signalReceive():connect(function(entity, cmd, ok)
-	local res = function(entity, cmd, ok)
+	local res = (function(entity, cmd, ok)
 		if not ok then
 			return ok
 		end
 		-- Process signalReceive here.
 		-- Return true to let the command be dispatched, false to block it.
-	end
+	end)(entity, cmd, ok)
 	if not res then
 		cmd:setPriority(adchpp.AdcCommand_PRIORITY_IGNORE)
 	end
