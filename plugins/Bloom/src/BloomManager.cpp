@@ -64,9 +64,6 @@ BloomManager::~BloomManager() {
 static const uint32_t FEATURE = AdcCommand::toFourCC("BLO0");
 
 void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
-	if(!ok)
-		return;
-
 	string tmp;
 
 	Client* cc = dynamic_cast<Client*>(&e);
