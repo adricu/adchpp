@@ -11,7 +11,7 @@ local adchpp = base.luadchpp
 -- * alias: other names that can also be used to reach this setting.
 -- * change: function called when the value has changed.
 -- * help: information about this setting, displayed in +help cfg.
--- * value: the value of this setting. [compulsory]
+-- * value: the value of this setting, either a number or a string. [compulsory]
 settings = {}
 
 -- List of +commands handled by the main script. Possible fields each command can contain:

@@ -132,6 +132,14 @@ autil.settings.address = {
 	value = adchpp.Util_getLocalIp()
 }
 
+autil.settings.allowreg = {
+	alias = { allowregistration = true },
+
+	help = "authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow",
+
+	value = 1
+}
+
 autil.settings.description = {
 	alias = { hubdescription = true },
 
@@ -819,16 +827,14 @@ autil.commands.cfg = {
 
 		if not value or #value == 0 then
 			-- no value; make up a default one
-			if type == "boolean" or type == "number" then
+			if type == "number" then
 				value = "0"
-			elseif type == "string" then
+			else
 				value = ""
 			end
 		end
 
-		if type == "boolean" then
-			value = value ~= "0"
-		elseif type == "number" then
+		if type == "number" then
 			local num = base.tonumber(value)
 			if not num then
 				autil.reply(c, "Only numbers are accepted for the variable " .. name)
@@ -1309,15 +1315,21 @@ autil.commands.mypass = {
 			user.password = parameters
 			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 
-		else
+		elseif autil.settings.allowreg.value ~= 0 then
 			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 			autil.reply(c, "You're now registered with the password \"" .. parameters .. "\"")
+
+		else
+			autil.reply(c, "You are not allowed to register by yourself; ask an operator to do it for you")
+			return
 		end
 
 		base.pcall(save_users)
 	end,
 
 	help = "new_pass - change your password, make sure you change it in your client options too",
+
+	protected = function(c) return autil.settings.allowreg.value ~=0 or has_level(c, 2) end,
 
 	user_command = {
 		name = "My pass",
