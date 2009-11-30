@@ -47,6 +47,13 @@ public:
 			(*i++)(t0);
 		}
 	}
+	template<typename T0>
+	void operator()(const T0& t0) {
+		typename SlotList::iterator end = slots.end();
+		for(typename SlotList::iterator i = slots.begin(); i != end;) {
+			(*i++)(t0);
+		}
+	}
 
 	template<typename T0, typename T1>
 	void operator()(T0& t0, T1& t1) {

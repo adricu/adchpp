@@ -43,6 +43,7 @@ void LogManager::log(const string& area, const string& msg) throw() {
 
 void LogManager::dolog(const string& msg) throw() {
 	dcdebug("Logging: %s\n", msg.c_str());
+	signalLog_(msg);
 	if(getEnabled()) {
 		string logFile = Util::formatTime(File::makeAbsolutePath(Util::getCfgPath(), getLogFile()));
 		FastMutex::Lock l(mtx);

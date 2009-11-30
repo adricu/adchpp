@@ -66,6 +66,7 @@ void shutdown() {
 %nodefaultdtor LogManager;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
+%nodefaultdtor LogManager;
 
 namespace adchpp {
 	class Client;
@@ -573,18 +574,7 @@ public:
 private:
 };
 
-class LogManager
-{
-public:
-	void log(const std::string& area, const std::string& msg) throw();
 
-	void setLogFile(const std::string& fileName);
-	const std::string& getLogFile() const;
-
-	void setEnabled(bool enabled_);
-	bool getEnabled() const;
-
-};
 
 %template(SignalE) Signal<void (Entity&)>;
 %template(SignalTraitsE) SignalTraits<void (Entity&)>;
@@ -606,6 +596,23 @@ public:
 
 %template(SignalS) Signal<void (const SimpleXML&)>;
 %template(SignalTraitsS) SignalTraits<void (const SimpleXML&)>;
+
+%template(SignalSt) Signal<void (const std::string&)>;
+%template(SignalTraitsSt) SignalTraits<void (const std::string&)>;
+
+class LogManager
+{
+public:
+	void log(const std::string& area, const std::string& msg) throw();
+
+	void setLogFile(const std::string& fileName);
+	const std::string& getLogFile() const;
+
+	void setEnabled(bool enabled_);
+	bool getEnabled() const;
+	typedef SignalTraits<void (const std::string&)> SignalLog;
+	SignalLog::Signal& signalLog() { return signalLog_; }
+};
 
 class ClientManager
 {

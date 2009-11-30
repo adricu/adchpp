@@ -14,6 +14,9 @@
 %typemap(in) std::tr1::function<void ()> {
 	$1 = PyHandle($input, false);
 }
+%typemap(in) std::tr1::function<void ( const std::string&)> {
+	$1 = PyHandle($input, false);
+}
 %typemap(in) std::tr1::function<void (adchpp::Entity&)> {
 	$1 = PyHandle($input, false);
 }
@@ -182,6 +185,8 @@ struct PyHandle {
 		}
 	}
 
+	void operator()(const std::string& str);
+
 	void operator()(adchpp::Entity& c);
 
 	void operator()(adchpp::Entity& c, const std::string& str);
@@ -209,6 +214,20 @@ private:
 		PyObject* args(PyTuple_New(1));
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
+
+		if(!ret.valid()) {
+			PyErr_Print();
+			return;
+		}
+	}
+	
+	void PyHandle::operator()(const std::string& str) {
+		PyGIL gil;
+		PyObject* args(PyTuple_New(1));
+
+		PyTuple_SetItem(args,0, PyString_FromString(str.c_str()));
+
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 
 		if(!ret.valid()) {

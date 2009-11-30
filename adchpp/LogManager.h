@@ -21,9 +21,9 @@
 
 #include "Singleton.h"
 #include "Mutex.h"
+#include "Signal.h"
 
 namespace adchpp {
-
 /**
  * Log writing utilities.
  */
@@ -42,6 +42,10 @@ public:
 
 	void setEnabled(bool enabled_) { enabled = enabled_; }
 	bool getEnabled() const { return enabled; }
+
+	typedef SignalTraits<void (const std::string&)> SignalLog;
+	SignalLog::Signal& signalLog() { return signalLog_; }
+
 private:
 	friend class Singleton<LogManager>;
 	ADCHPP_DLL static LogManager* instance;
@@ -51,7 +55,8 @@ private:
 
 	LogManager();
 	virtual ~LogManager() throw() { }
-
+	
+	SignalLog::Signal signalLog_;
 	ADCHPP_DLL void dolog(const std::string& msg) throw();
 };
 
