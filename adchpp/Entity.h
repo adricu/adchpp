@@ -56,7 +56,7 @@ public:
 		FLAG_EXT_AWAY = 0x102,
 		/** Plugins can use these flags to disable various checks */
 		/** Bypass ip check */
-		FLAG_OK_IP = 0x104
+		FLAG_OK_IP = 0x200
 	};
 
 
