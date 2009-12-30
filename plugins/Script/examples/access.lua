@@ -197,6 +197,12 @@ autil.settings.owner = {
 	value = ""
 }
 
+autil.settings.passinlist = {
+	help = "show passwords in +listregs, 1 = show, 0 = don't show",
+
+	value = 1
+}
+
 autil.settings.topic = {
 	alias = { hubtopic = true },
 
@@ -1155,18 +1161,26 @@ autil.commands.listregs = {
 			return
 		end
 
-		local str = "Registered users with a level <= " .. user.level .. " (your level):\n"
+		local parse_pass = function(user)
+			if autil.settings.passinlist ~=0 and user.password then
+				return "\tPass: " .. user.password
+			end
+			return ""
+		end
+		local list = {}
 		for k, v in base.pairs(users.nicks) do
 			if v.level <= user.level then
-				str = str .. "Nick: " .. k .. "\n"
+				table.insert(list, "Nick: " .. k .. parse_pass(v))
 			end
 		end
 		for k, v in base.pairs(users.cids) do
 			if v.level <= user.level then
-				str = str .. "CID: " .. k .. "\n"
+				table.insert(list, "CID: " .. k .. parse_pass(v))
 			end
 		end
-		autil.reply(c, str)
+		table.sort(list)
+
+		autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level):\n" .. table.concat(list, "\n"))
 	end,
 
 	protected = function(c) return get_user_c(c) end
