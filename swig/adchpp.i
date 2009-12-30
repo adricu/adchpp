@@ -66,7 +66,6 @@ void shutdown() {
 %nodefaultdtor LogManager;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
-%nodefaultdtor LogManager;
 
 namespace adchpp {
 	class Client;
