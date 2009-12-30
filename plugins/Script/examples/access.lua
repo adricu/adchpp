@@ -132,6 +132,12 @@ autil.settings.address = {
 	value = adchpp.Util_getLocalIp()
 }
 
+autil.settings.allownickchange = {
+	help = "authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow",
+
+	value = 1
+}
+
 autil.settings.allowreg = {
 	alias = { allowregistration = true },
 
@@ -446,6 +452,10 @@ local function update_user(user, cid, nick)
 	-- only one of nick and cid may be updated...
 
 	if user.nick ~= nick then
+		if autil.settings.allownickchange.value == 0 then
+			return false, "This hub doesn't allow registered users to change their nick; ask an operator to delete your current registration data if you really want a new nick. Please connect again with your current registered nick: " .. user.nick
+		end
+
 		if users.nicks[nick] then
 			-- new nick taken...
 			return false, "Nick taken by another registered user"
@@ -454,6 +464,7 @@ local function update_user(user, cid, nick)
 		if user.nick then
 			users.nicks[user.nick] = nil
 		end
+
 		user.nick = nick
 		users.nicks[user.nick] = user
 		base.pcall(save_users)
