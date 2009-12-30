@@ -172,6 +172,14 @@ autil.settings.maxusers = {
 	value = -1
 }
 
+autil.settings.menuname = {
+	alias = { ucmdname = true },
+
+	help = "title of the main user command menu sent to clients",
+
+	value = "ADCH++"
+}
+
 autil.settings.name = {
 	alias = { hubname = true },
 
@@ -1162,7 +1170,7 @@ autil.commands.listregs = {
 		end
 
 		local parse_pass = function(user)
-			if autil.settings.passinlist ~=0 and user.password then
+			if autil.settings.passinlist.value ~=0 and user.password then
 				return "\tPass: " .. user.password
 			end
 			return ""
@@ -2011,7 +2019,7 @@ local function send_user_commands(c)
 
 	local send_ucmd = function(c, name, internal_name, command, context)
 		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-		ucmd:addParam("ADCH++" .. autil.ucmd_sep .. name)
+		ucmd:addParam(autil.settings.menuname.value .. autil.ucmd_sep .. name)
 
 		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
 		local str = "+" .. internal_name
