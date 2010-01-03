@@ -133,7 +133,8 @@ void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t byt
 
 		readBuf->resize(bytes);
 
-		dataHandler(readBuf);
+		if(dataHandler)
+			dataHandler(readBuf);
 		readBuf.reset();
 
 		prepareRead();
@@ -144,7 +145,8 @@ void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t byt
 
 void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() {
 	if(!ec) {
-		connectedHandler();
+		if(connectedHandler)
+			connectedHandler();
 		prepareRead();
 	} else {
 		failSocket(ec);
@@ -156,6 +158,8 @@ void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
 	if(failedHandler) {
 		failedHandler();
 		failedHandler = FailedHandler();
+		dataHandler = DataHandler();
+		connectedHandler = ConnectedHandler();
 	}
 }
 
