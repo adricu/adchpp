@@ -56,7 +56,11 @@ public:
 	SocketStream(X& x) : sock(x) { }
 
 	template<typename X, typename Y>
-	SocketStream(X& x, Y& y) : sock(x, y) { }
+	SocketStream(X& x, Y& y) : sock(x, y) {
+		// By default, we linger for 30 seconds (this will happen when the stream
+		// is deallocated without calling close first)
+		sock.lowest_layer().set_option(socket_base::linger(true, 30));
+	}
 
 	virtual void read(const BufferPtr& buf, const Handler& handler) {
 		sock.async_read_some(boost::asio::buffer(buf->data(), buf->size()), handler);
@@ -77,6 +81,8 @@ public:
 	}
 
 	virtual void close() {
+		// Abortive close, just go away...
+		sock.lowest_layer().set_option(socket_base::linger(false, 0));
 		sock.lowest_layer().close();
 	}
 

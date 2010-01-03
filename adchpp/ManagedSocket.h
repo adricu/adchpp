@@ -63,6 +63,7 @@ public:
 	static size_t getDefaultMaxBufferSize() { return defaultMaxBufferSize; }
 
 	static size_t getOverflowTimeout() { return overflowTimeout; }
+
 private:
 	static size_t defaultMaxBufferSize;
 	static size_t overflowTimeout;
@@ -78,7 +79,7 @@ private:
 	void prepareRead() throw();
 	void completeRead(const boost::system::error_code& ec, size_t bytes) throw();
 
-	void failSocket(int error) throw();
+	void failSocket(const boost::system::error_code& error) throw();
 
 	void shutdown() { /*sock.shutdown();*/ }
 	void close() { /*sock.disconnect();*/ }

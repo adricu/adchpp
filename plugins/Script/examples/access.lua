@@ -112,6 +112,7 @@ local stats = {}
 
 local cm = adchpp.getCM()
 local pm = adchpp.getPM()
+local sm = adchpp.getSM()
 
 local saltsHandle = pm:registerByteVectorData()
 
@@ -1073,6 +1074,17 @@ autil.commands.info = {
 					str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k:sub(6) .. "\n"
 				end
 			end
+			
+			str = str .. "\nSocket errors: \n"
+			
+			local keys = sm.errors:keys()
+			local size = keys:size()
+			
+			for i = 0, size - 1 do
+				local k = keys[i]
+				str = str .. k .. "\t" .. sm.errors:get(k) .. "\n"
+			end
+			
 
 			local queued = cm:getQueuedBytes()
 			local queueBytes = adchpp.Stats_queueBytes

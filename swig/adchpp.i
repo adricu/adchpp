@@ -24,6 +24,7 @@ using namespace adchpp;
 %include "std_vector.i"
 %include "std_except.i"
 %include "std_pair.i"
+%include "std_map.i"
 
 %include "carrays.i"
 
@@ -79,6 +80,7 @@ namespace adchpp {
 %template(TStringList) std::vector<std::string>;
 %template(TByteVector) std::vector<uint8_t>;
 %template(TServerInfoList) std::vector<boost::intrusive_ptr<adchpp::ServerInfo> >;
+%template(TIntIntMap) std::map<std::string, int>;
 
 %inline%{
 	namespace adchpp {
@@ -141,7 +143,8 @@ typedef std::vector<ServerInfoPtr> ServerInfoList;
 class SocketManager {
 public:
 	void setServers(const ServerInfoList& servers_);
-
+	
+	std::map<std::string, int> errors;
 };
 
 template<typename F>

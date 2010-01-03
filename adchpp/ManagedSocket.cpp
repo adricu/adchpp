@@ -84,8 +84,8 @@ void ManagedSocket::prepareWrite() throw() {
 	}
 
 	if(!outBuf.empty() && !writing) {
-		sock->write(outBuf, bind(&ManagedSocket::completeWrite, from_this(), _1, _2));
 		writing = true;
+		sock->write(outBuf, bind(&ManagedSocket::completeWrite, from_this(), _1, _2));
 	}
 }
 
@@ -115,7 +115,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 		prepareWrite();
 	} else {
-		failSocket(0);
+		failSocket(ec);
 	}
 }
 
@@ -138,7 +138,7 @@ void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t byt
 
 		prepareRead();
 	} else {
-		failSocket(0);
+		failSocket(ec);
 	}
 }
 
@@ -147,12 +147,13 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 		connectedHandler();
 		prepareRead();
 	} else {
-		failSocket(0);
+		failSocket(ec);
 	}
 }
 
-void ManagedSocket::failSocket(int) throw() {
+void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
 	if(failedHandler) {
+		SocketManager::getInstance()->errors[code.message()]++;
 		failedHandler();
 		failedHandler = FailedHandler();
 	}

@@ -43,6 +43,7 @@ public:
 	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 
+	std::map<std::string, int> errors;
 private:
 	friend class ManagedSocket;
 	friend class SocketFactory;

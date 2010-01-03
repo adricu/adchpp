@@ -251,3 +251,15 @@ uint32_t, const uint32_t&
 		return PluginManager::getInstance()->registerPluginData(PluginData::simpleDataDeleter<ByteVector>);
 	}
 }
+
+%extend std::map<std::string, int> {
+	std::vector<std::string> keys() {
+		std::vector<std::string> ret;
+		
+		for(std::map<std::string, int>::const_iterator i = $self->begin(), iend = $self->end(); i != iend; ++i) {
+			ret.push_back(i->first);
+		}
+		
+		return ret;
+	}
+}
