@@ -44,9 +44,7 @@ public:
 
 	/** @param reason The statistic to update */
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
-	const ManagedSocketPtr& getSocket() throw() { return socket; }
-	const ManagedSocketPtr& getSocket() const throw() { return socket; }
-	const std::string& getIp() const throw() { dcassert(socket != NULL); return getSocket()->getIp(); }
+	const std::string& getIp() const throw() { dcassert(socket != NULL); return socket->getIp(); }
 
 	/**
 	 * Set data mode for aBytes bytes.

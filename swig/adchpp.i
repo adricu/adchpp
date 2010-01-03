@@ -536,8 +536,6 @@ public:
 
 	/** @param reason The statistic to update */
 	void disconnect(Util::Reason reason) throw();
-	const ManagedSocketPtr& getSocket() throw();
-	const ManagedSocketPtr& getSocket() const throw();
 	const std::string& getIp() const throw();
 
 	/**

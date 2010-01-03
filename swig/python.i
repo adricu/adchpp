@@ -121,7 +121,6 @@
 	%property(ip, getIp)
 	%property(udpActive, isUdpActive)
 	%property(tcpActive, isTcpActive)
-	%property(socket, getSocket)
 }
 
 %extend adchpp::LogManager {
