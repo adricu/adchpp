@@ -152,8 +152,8 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 }
 
 void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
+	SocketManager::getInstance()->errors[code.message()]++;
 	if(failedHandler) {
-		SocketManager::getInstance()->errors[code.message()]++;
 		failedHandler();
 		failedHandler = FailedHandler();
 	}
