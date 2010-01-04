@@ -303,26 +303,25 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 	if(c.isSet(Client::FLAG_OK_IP))
 		return true;
 
-	for(StringIter j = cmd.getParameters().begin(); j != cmd.getParameters().end(); ++j) {
-		if(j->compare(0, 2, "I4") == 0) {
-			dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
-			if(j->size() == 2) {
-				// Clearing is ok
-			} else if(Util::isPrivateIp(c.getIp())) {
-				dcdebug("Skipping local ip %s\n",c.getIp().c_str());
-				c.setFlag(Client::FLAG_OK_IP);
-			} else if(j->compare(2, j->size() - 2, "0.0.0.0") == 0) {
-				c.setField("I4", c.getIp());
-				*j = "I4" + c.getIp();
-				cmd.resetBuffer();
-			} else if(j->size() - 2 != c.getIp().size() || j->compare(2, j->size() - 2, c.getIp()) != 0) {
-				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam(
-					"IP", c.getIp()));
-				c.disconnect(Util::REASON_INVALID_IP);
-				return false;
-			}
-		}
+	dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
+
+	std::string ip;
+	if(cmd.getParam("I4", 1, ip)) {
+		if(ip.empty() || ip == "0.0.0.0")
+			cmd.delParam("I4", 1);
+		else if(ip != c.getIp() && !Util::isPrivateIp(c.getIp())) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam(
+				"IP", c.getIp()));
+			c.disconnect(Util::REASON_INVALID_IP);
+			return false;
+		} else
+			return true;
 	}
+
+	c.setField("I4", c.getIp());
+	cmd.addParam("I4", c.getIp());
+	cmd.resetBuffer();
+
 	return true;
 }
 
