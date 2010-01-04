@@ -57,9 +57,6 @@ public:
 
 	template<typename X, typename Y>
 	SocketStream(X& x, Y& y) : sock(x, y) {
-		// By default, we linger for 30 seconds (this will happen when the stream
-		// is deallocated without calling close first)
-		sock.lowest_layer().set_option(socket_base::linger(true, 30));
 	}
 
 	virtual void read(const BufferPtr& buf, const Handler& handler) {
@@ -143,6 +140,9 @@ public:
 	void prepareHandshake(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			boost::intrusive_ptr<TLSSocketStream> tls = boost::static_pointer_cast<TLSSocketStream>(socket->sock);
+			// By default, we linger for 30 seconds (this will happen when the stream
+			// is deallocated without calling close first)
+			tls->sock.lowest_layer().set_option(socket_base::linger(true, 30));
 			try {
 				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }
@@ -156,6 +156,9 @@ public:
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			boost::intrusive_ptr<SimpleSocketStream> s = boost::static_pointer_cast<SimpleSocketStream>(socket->sock);
+			// By default, we linger for 30 seconds (this will happen when the stream
+			// is deallocated without calling close first)
+			s->sock.lowest_layer().set_option(socket_base::linger(true, 30));
 			try {
 				socket->setIp(s->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }

@@ -13,3 +13,4 @@ openssl/
 *.pdb
 *.gch
 *.pot
+.csettings
