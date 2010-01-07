@@ -115,7 +115,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 		prepareWrite();
 	} else {
-		failSocket(ec);
+		sock->close();
 	}
 }
 

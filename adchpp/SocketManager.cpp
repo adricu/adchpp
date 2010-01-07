@@ -79,8 +79,10 @@ public:
 
 	virtual void close() {
 		// Abortive close, just go away...
-		sock.lowest_layer().set_option(socket_base::linger(false, 0));
-		sock.lowest_layer().close();
+		if(sock.lowest_layer().is_open()) {
+			sock.lowest_layer().set_option(socket_base::linger(false, 0));
+			sock.lowest_layer().close();
+		}
 	}
 
 	T sock;
