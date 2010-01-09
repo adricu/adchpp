@@ -12,10 +12,10 @@ namespace adchpp {
  */
 class Buffer : public intrusive_ptr_base<Buffer>, public FastAlloc<Buffer> {
 public:
-	Buffer(const std::string& str) : bufp(free) { append((uint8_t*)str.data(), (uint8_t*)str.data() + str.size()); }
-	Buffer(const void* ptr, const size_t size) : bufp(free) { append((uint8_t*) ptr, ((uint8_t*)ptr)+size); }
-	Buffer(const size_t size) : bufp(free) { resize(size); }
-	~Buffer() { free = bufp; }
+	Buffer(const std::string& str) : bufp(pool.get()) { append((uint8_t*)str.data(), (uint8_t*)str.data() + str.size()); }
+	Buffer(const void* ptr, const size_t size) : bufp(pool.get()) { append((uint8_t*) ptr, ((uint8_t*)ptr)+size); }
+	Buffer(const size_t size) : bufp(pool.get()) { resize(size); }
+	~Buffer() { pool.put(bufp); }
 
 	operator const ByteVector&() const { return buf(); }
 	operator ByteVector&() { return buf(); }
@@ -47,7 +47,7 @@ private:
 		ADCHPP_DLL void operator()(ByteVector& x);
 	};
 
-	ADCHPP_DLL static Pool<ByteVector, Clear> free;
+	ADCHPP_DLL static SimplePool<ByteVector, Clear> pool;
 };
 
 typedef boost::intrusive_ptr<Buffer> BufferPtr;

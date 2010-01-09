@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "Mutex.h"
 
 namespace adchpp {
-	
+
 template<class T>
 struct PoolDummy {
 	void operator()(T&) { }
@@ -31,11 +31,8 @@ struct PoolDummy {
 template<typename T, class Clear = PoolDummy<T> >
 class SimplePool {
 public:
-	SimplePool() : busy() { }
+	SimplePool() : busy(0) { }
 	~SimplePool() { dcdebug("Busy pool objects: %d\n", busy); }
-	
-	operator T*() { return get(); }
-	void operator =(T* rhs) { put(rhs); }
 
 	T* get() {
 		busy++;
@@ -74,8 +71,6 @@ class Pool {
 public:
 	Pool() { }
 	~Pool() { }
-	operator T*() { return get(); }
-	void operator =(T* rhs) { put(rhs); }
 
 	T* get() {
 		FastMutex::Lock l(mtx);
@@ -85,12 +80,12 @@ public:
 		FastMutex::Lock l(mtx);
 		pool.put(obj);
 	}
-	
+
 private:
 	Pool(const Pool&);
 	Pool& operator=(const Pool&);
 	FastMutex mtx;
-	
+
 	SimplePool<T, Clear> pool;
 };
 
