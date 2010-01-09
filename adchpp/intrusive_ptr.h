@@ -19,8 +19,6 @@
 #ifndef ADCHPP_INTRUSIVE_PTR_H
 #define ADCHPP_INTRUSIVE_PTR_H
 
-#include "Mutex.h"
-
 namespace std { namespace tr1 {
 
 template<typename T>
@@ -47,36 +45,16 @@ protected:
 
 private:
 	friend void intrusive_ptr_add_ref(intrusive_ptr_base* p) {
-#ifdef _WIN32
-		InterlockedIncrement(&p->refs);
-#else
-		FastMutex::Lock l(mtx);
 		p->refs++;
-#endif
 	}
 
 	friend void intrusive_ptr_release(intrusive_ptr_base* p) {
-#ifdef _WIN32
-		if(!InterlockedDecrement(&p->refs))
-			delete static_cast<T*>(p);
-#else
-		FastMutex::Lock l(intrusive_ptr_base::mtx);
 		if(!--p->refs)
 			delete static_cast<T*>(p);
-#endif
 	}
 
-#ifndef _WIN32
-	ADCHPP_DLL static FastMutex mtx;
-#endif
-
-	volatile long refs;
+	size_t refs;
 };
-
-#ifndef _WIN32
-template<typename T>
-FastMutex intrusive_ptr_base<T>::mtx;
-#endif
 
 }
 

@@ -81,9 +81,6 @@ private:
 
 	void failSocket(const boost::system::error_code& error) throw();
 
-	void shutdown() { /*sock.shutdown();*/ }
-	void close() { /*sock.disconnect();*/ }
-
 	// Functions processing events
 	void processData(const BufferPtr& buf) throw();
 
