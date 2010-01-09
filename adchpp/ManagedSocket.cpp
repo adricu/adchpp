@@ -75,15 +75,17 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 }
 
 // Simplified handler to avoid bind complexity
+namespace {
+template<void (ManagedSocket::*F)(const boost::system::error_code&, size_t)>
 struct Handler {
-	Handler(const ManagedSocketPtr& ms_, void (ManagedSocket::*f_)(const boost::system::error_code&, size_t)) : ms(ms_), f(f_) { }
+	Handler(const ManagedSocketPtr& ms_) : ms(ms_) { }
 	ManagedSocketPtr ms;
-	void (ManagedSocket::*f)(const boost::system::error_code&, size_t);
 
 	void operator()(const boost::system::error_code& ec, size_t bytes) {
-		(ms.get()->*f)(ec, bytes);
+		(ms.get()->*F)(ec, bytes);
 	}
 };
+}
 
 void ManagedSocket::prepareWrite() throw() {
 	if(disc > 0) {
@@ -95,7 +97,7 @@ void ManagedSocket::prepareWrite() throw() {
 
 	if(!outBuf.empty() && !writing) {
 		writing = true;
-		sock->write(outBuf, Handler(from_this(), &ManagedSocket::completeWrite));
+		sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(from_this()));
 	}
 }
 
@@ -132,7 +134,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 void ManagedSocket::prepareRead() throw() {
 	if(!readBuf) {
 		readBuf = BufferPtr(new Buffer(Buffer::getDefaultBufferSize()));
-		sock->read(readBuf, Handler(from_this(), &ManagedSocket::completeRead));
+		sock->read(readBuf, Handler<&ManagedSocket::completeRead>(from_this()));
 	}
 }
 

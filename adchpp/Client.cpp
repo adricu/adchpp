@@ -46,31 +46,27 @@ Client::~Client() {
 
 namespace {
 	// Lightweight call forwarders, instead of tr1::bind
-	struct Handler {
-		Handler(void (Client::*f)(), Client* c_) : c(c_), f0(f) { }
-		Handler(void (Client::*f)(const BufferPtr&), Client* c_) : c(c_), f1(f) { }
-
-		void operator()() throw() {
-			(c->*f0)();
-		}
-		void operator()(const BufferPtr& bv) throw() {
-			(c->*f1)(bv);
-		}
-
+	template<void (Client::*F)()>
+	struct Handler0 {
+		Handler0(Client* c_) : c(c_) { }
+		void operator()() { (c->*F)(); }
 		Client* c;
-		union {
-			void (Client::*f0)();
-			void (Client::*f1)(const BufferPtr&);
-		};
+	};
+
+	template<void (Client::*F)(const BufferPtr&)>
+	struct Handler1 {
+		Handler1(Client* c_) : c(c_) { }
+		void operator()(const BufferPtr& bv) { (c->*F)(bv); }
+		Client* c;
 	};
 }
 
 void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 	dcassert(!socket);
 	socket = aSocket;
-	socket->setConnectedHandler(Handler(&Client::onConnected, this));
-	socket->setDataHandler(Handler(&Client::onData, this));
-	socket->setFailedHandler(Handler(&Client::onFailed, this));
+	socket->setConnectedHandler(Handler0<&Client::onConnected>(this));
+	socket->setDataHandler(Handler1<&Client::onData>(this));
+	socket->setFailedHandler(Handler0<&Client::onFailed>(this));
 }
 
 void Client::onConnected() throw() {
