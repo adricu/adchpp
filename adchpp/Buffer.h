@@ -15,7 +15,6 @@ public:
 	Buffer(const std::string& str) : bufp(pool.get()) { append((uint8_t*)str.data(), (uint8_t*)str.data() + str.size()); }
 	Buffer(const void* ptr, const size_t size) : bufp(pool.get()) { append((uint8_t*) ptr, ((uint8_t*)ptr)+size); }
 	Buffer(const size_t size) : bufp(pool.get()) { resize(size); }
-	~Buffer() { pool.put(bufp); }
 
 	operator const ByteVector&() const { return buf(); }
 	operator ByteVector&() { return buf(); }
@@ -35,6 +34,8 @@ public:
 	static size_t getDefaultBufferSize() { return defaultBufferSize; }
 
 private:
+	friend void intrusive_ptr_release(Buffer* p);
+	~Buffer() { pool.put(bufp); }
 
 	static size_t defaultBufferSize;
 

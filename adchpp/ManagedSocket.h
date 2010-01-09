@@ -70,7 +70,7 @@ private:
 
 	friend class SocketManager;
 	friend class SocketFactory;
-	friend void intrusive_ptr_release(intrusive_ptr_base<ManagedSocket>*);
+	friend void intrusive_ptr_release(ManagedSocket*);
 	~ManagedSocket() throw();
 
 	void completeAccept(const boost::system::error_code&) throw();

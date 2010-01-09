@@ -39,18 +39,18 @@ public:
 	}
 
 	boost::intrusive_ptr<T> from_this() { return boost::intrusive_ptr<T>(static_cast<T*>(this)); }
-
 protected:
 	intrusive_ptr_base() throw() : refs(0) { }
+	~intrusive_ptr_base() { }
 
 private:
-	friend void intrusive_ptr_add_ref(intrusive_ptr_base* p) {
+	friend void intrusive_ptr_add_ref(T* p) {
 		p->refs++;
 	}
 
-	friend void intrusive_ptr_release(intrusive_ptr_base* p) {
+	friend void intrusive_ptr_release(T* p) {
 		if(!--p->refs)
-			delete static_cast<T*>(p);
+			delete p;
 	}
 
 	size_t refs;
