@@ -81,9 +81,6 @@ private:
 
 	void failSocket(const boost::system::error_code& error) throw();
 
-	// Functions processing events
-	void processData(const BufferPtr& buf) throw();
-
 	AsyncStreamPtr sock;
 
 	/** Output buffer, for storing data that's waiting to be transmitted */

@@ -27,7 +27,6 @@ namespace adchpp {
 
 using namespace std;
 using namespace std::tr1;
-using namespace std::tr1::placeholders;
 
 using namespace boost::asio;
 
@@ -75,6 +74,17 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 	prepareWrite();
 }
 
+// Simplified handler to avoid bind complexity
+struct Handler {
+	Handler(const ManagedSocketPtr& ms_, void (ManagedSocket::*f_)(const boost::system::error_code&, size_t)) : ms(ms_), f(f_) { }
+	ManagedSocketPtr ms;
+	void (ManagedSocket::*f)(const boost::system::error_code&, size_t);
+
+	void operator()(const boost::system::error_code& ec, size_t bytes) {
+		(ms.get()->*f)(ec, bytes);
+	}
+};
+
 void ManagedSocket::prepareWrite() throw() {
 	if(disc > 0) {
 		if(outBuf.empty() || GET_TICK() >= disc) {
@@ -85,7 +95,7 @@ void ManagedSocket::prepareWrite() throw() {
 
 	if(!outBuf.empty() && !writing) {
 		writing = true;
-		sock->write(outBuf, bind(&ManagedSocket::completeWrite, from_this(), _1, _2));
+		sock->write(outBuf, Handler(from_this(), &ManagedSocket::completeWrite));
 	}
 }
 
@@ -96,7 +106,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 		Stats::sendCalls++;
 
 		while(bytes > 0) {
-			BufferPtr p = *outBuf.begin();
+			BufferPtr& p = *outBuf.begin();
 			if(p->size() <= bytes) {
 				bytes -= p->size();
 				outBuf.erase(outBuf.begin());
@@ -122,7 +132,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 void ManagedSocket::prepareRead() throw() {
 	if(!readBuf) {
 		readBuf = BufferPtr(new Buffer(Buffer::getDefaultBufferSize()));
-		sock->read(readBuf, bind(&ManagedSocket::completeRead, from_this(), _1, _2));
+		sock->read(readBuf, Handler(from_this(), &ManagedSocket::completeRead));
 	}
 }
 
