@@ -32,7 +32,9 @@ Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(
 }
 
 void Bot::disconnect(Util::Reason reason) throw() {
-	// @todo
+	//@todo, maby improve?
+	ClientManager::getInstance()->removeEntity(*this);
+	delete this;
 }
 
 void Bot::inject(AdcCommand& cmd) {

@@ -561,6 +561,7 @@ public:
 	virtual void send(const BufferPtr& cmd);
 	
 	void inject(AdcCommand& cmd);
+	virtual void disconnect(Util::Reason reason);
 private:
 	SendHandler handler;
 };
