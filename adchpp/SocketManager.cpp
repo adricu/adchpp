@@ -67,9 +67,10 @@ public:
 		if(bufs.size() == 1) {
 			sock.async_write_some(boost::asio::buffer(bufs[0]->data(), bufs[0]->size()), handler);
 		} else {
-			std::vector<boost::asio::const_buffer> buffers(std::min(bufs.size(), static_cast<size_t>(64)));
+			size_t n = std::min(bufs.size(), static_cast<size_t>(64));
+			std::vector<boost::asio::const_buffer> buffers(n);
 
-			for(size_t i = 0; i < buffers.size(); ++i) {
+			for(size_t i = 0; i < n; ++i) {
 				buffers[i] = boost::asio::const_buffer(bufs[i]->data(), bufs[i]->size());
 			}
 
