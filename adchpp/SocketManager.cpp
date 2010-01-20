@@ -64,7 +64,7 @@ public:
 	}
 
 	virtual void write(const BufferList& bufs, const Handler& handler) {
-		if(bufs.size() == 1) {
+		if(true || bufs.size() == 1) {
 			sock.async_write_some(boost::asio::buffer(bufs[0]->data(), bufs[0]->size()), handler);
 		} else {
 			size_t n = std::min(bufs.size(), static_cast<size_t>(64));
