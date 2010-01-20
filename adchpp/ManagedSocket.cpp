@@ -113,7 +113,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 				bytes -= p->size();
 				outBuf.erase(outBuf.begin());
 			} else {
-				outBuf[0] = BufferPtr(new Buffer(p->data(), p->size() - bytes));
+				p.reset(new Buffer(p->data(), p->size() - bytes));
 				bytes = 0;
 			}
 		}
