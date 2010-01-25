@@ -121,6 +121,7 @@ public:
 
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) = 0;
 
+	ADCHPP_DLL virtual size_t getQueuedBytes();
 protected:
 	virtual ~Entity();
 

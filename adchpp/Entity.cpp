@@ -201,5 +201,9 @@ void Entity::unsetFlag(size_t flag) {
 	}
 }
 
+size_t Entity::getQueuedBytes() {
+	return 0;
+}
+
 
 }

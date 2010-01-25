@@ -106,7 +106,7 @@ size_t ClientManager::getQueuedBytes() throw() {
 	size_t total = 0;
 
 	for(EntityIter i = entities.begin(); i != entities.end(); ++i) {
-		//total += i->second->getQueuedBytes();
+		total += i->second->getQueuedBytes();
 	}
 
 	return total;

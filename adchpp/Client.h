@@ -40,8 +40,6 @@ public:
 
 	virtual void send(const BufferPtr& command) throw() { socket->write(command); }
 
-	size_t getQueuedBytes() throw() { return socket->getQueuedBytes(); }
-
 	/** @param reason The statistic to update */
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
 	const std::string& getIp() const throw() { dcassert(socket != NULL); return socket->getIp(); }
@@ -63,6 +61,8 @@ public:
 
 	void setMaxCommandSize(size_t newSize) { maxCommandSize = newSize; }
 	size_t getMaxCommandSize() { return maxCommandSize; }
+
+	virtual size_t getQueuedBytes() { return socket->getQueuedBytes(); }
 private:
 	static size_t defaultMaxCommandSize;
 
