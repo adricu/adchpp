@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "common.h"
 
 namespace adchpp {
-	
+
 using namespace std;
 
 #define PASSES 3
@@ -117,7 +117,7 @@ void TigerHash::tigerCompress(const uint64_t *str, uint64_t state[3]) {
 }
 
 void TigerHash::update(const void* data, size_t length) {
-	size_t tmppos = (uint32_t)(pos & BLOCK_SIZE-1);
+	size_t tmppos = (uint32_t)(pos & (BLOCK_SIZE-1));
 	const uint8_t* str = (const uint8_t*)data;
 	// First empty tmp buffer if possible
 	if(tmppos > 0) {
@@ -150,7 +150,7 @@ void TigerHash::update(const void* data, size_t length) {
 }
 
 uint8_t* TigerHash::finalize() {
-	size_t tmppos = (size_t)(pos & BLOCK_SIZE-1);
+	size_t tmppos = (size_t)(pos & (BLOCK_SIZE-1));
 	// Tmp buffer always has at least one pos, otherwise it would have
 	// been processed in update()
 
