@@ -95,14 +95,17 @@ void ManagedSocket::prepareWrite() throw() {
 		}
 	}
 
-	if(!outBuf.empty() && !writing) {
-		writing = true;
+	if(lastWrite != 0 && TimerManager::getTime() > lastWrite + 60) {
+		sock->close();
+	} else if(!outBuf.empty() && lastWrite == 0) {
+		lastWrite = TimerManager::getTime();
 		sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(from_this()));
 	}
 }
 
 void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t bytes) throw() {
-	writing = false;
+	lastWrite = 0;
+
 	if(!ec) {
 		Stats::sendBytes += bytes;
 		Stats::sendCalls++;
@@ -127,7 +130,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 		prepareWrite();
 	} else {
-		sock->close();
+		failSocket(ec);
 	}
 }
 

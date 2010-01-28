@@ -6,6 +6,7 @@
 * Add an icon and version info to the Windows daemon
 * Allow local IPs
 * Bloom plugin: filter more TTH searches
+* [L#427706] Fix some crashes
 
 -- 2.4 2008-10-02 --
 * Improve Lua scripts

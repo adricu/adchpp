@@ -35,7 +35,7 @@ namespace adchpp {
  */
 class ManagedSocket : public intrusive_ptr_base<ManagedSocket>, boost::noncopyable {
 public:
-	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overFlow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), writing(false) { }
+	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overFlow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
 
 	/** Asynchronous write */
 	ADCHPP_DLL void write(const BufferPtr& buf, bool lowPrio = false) throw();
@@ -58,6 +58,8 @@ public:
 
 	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
 	size_t getMaxBufferSize() { return maxBufferSize; }
+
+	time_t getLastWrite() { return lastWrite; }
 
 	static void setDefaultMaxBufferSize(size_t newSize) { defaultMaxBufferSize = newSize; }
 	static size_t getDefaultMaxBufferSize() { return defaultMaxBufferSize; }
@@ -96,7 +98,8 @@ private:
 	/** Max allowed write buffer size for this socket */
 	size_t maxBufferSize;
 
-	bool writing;
+	/** Last time that a write started, 0 if no active write */
+	time_t lastWrite;
 
 	std::string ip;
 

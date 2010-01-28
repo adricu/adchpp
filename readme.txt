@@ -15,15 +15,15 @@ the application. A side effect of the license is that any plugins you write
 must be released under a license compatible with the GPL.
 
 == Download
-The latest version of ADCH++ can be downloaded from
+The latest released version of ADCH++ can be downloaded from
 http://sourceforge.net/projects/adchpp/[SourceForge]. The source code resides
-in http://sourceforge.net/svn/?group_id=172105[SVN].
+in http://code.launchpad.net/adchpp/[SVN].
 
 == Requirements
 To run ADCH++ you will need the following:
 
 * A computer with a network card
-* Linux with a 2.6-based kernel or Windows 2000/XP
+* Linux with a 2.6-based kernel or Windows 2000/XP/newer
 * A brain (to understand the readme and do the setup)
 * Optional: An administrator account (to install as service / run on port < 1024 on
   unix)
