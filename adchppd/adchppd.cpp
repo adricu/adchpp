@@ -69,10 +69,10 @@ void loadXML(const string& aFileName)
 					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
 
 					if(xml.getBoolChildAttrib("TLS")) {
-						server->TLSParams.cert = xml.getChildAttrib("Certificate");
-						server->TLSParams.pkey = xml.getChildAttrib("PrivateKey");
-						server->TLSParams.trustedPath = xml.getChildAttrib("TrustedPath");
-						server->TLSParams.dh = xml.getChildAttrib("DHParams");
+						server->TLSParams.cert = File::makeAbsolutePath(xml.getChildAttrib("Certificate"));
+						server->TLSParams.pkey = File::makeAbsolutePath(xml.getChildAttrib("PrivateKey"));
+						server->TLSParams.trustedPath = File::makeAbsolutePath(xml.getChildAttrib("TrustedPath"));
+						server->TLSParams.dh = File::makeAbsolutePath(xml.getChildAttrib("DHParams"));
 					}
 
 #ifndef HAVE_OPENSSL

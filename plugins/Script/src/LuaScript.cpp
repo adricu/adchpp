@@ -21,6 +21,7 @@
 
 #include "LuaEngine.h"
 
+#include <adchpp/File.h>
 #include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
 
@@ -54,7 +55,7 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 	char old_dir[MAX_PATH];
 	getcwd(old_dir, MAX_PATH);
 
-	chdir(path.c_str());
+	chdir(File::makeAbsolutePath(path).c_str());
 
 	int error = luaL_loadfile(getEngine()->l, filename.c_str()) || lua_pcall(getEngine()->l, 0, 0, 0);
 

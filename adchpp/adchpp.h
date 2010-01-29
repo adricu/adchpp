@@ -59,6 +59,14 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #ifdef _WIN32
+#define PATH_SEPARATOR '\\'
+#define PATH_SEPARATOR_STR "\\"
+#else
+#define PATH_SEPARATOR '/'
+#define PATH_SEPARATOR_STR "/"
+#endif
+
+#ifdef _WIN32
 
 # ifndef _WIN32_WINNT
 #  define _WIN32_WINNT 0x0500

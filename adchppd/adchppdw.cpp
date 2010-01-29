@@ -33,8 +33,7 @@ using namespace std;
 static const string modName = "adchpp";
 
 #define LOGERROR(func) LOG(modName, func " failed: " + Util::translateError(GetLastError()))
-#define PRINTERROR(func) fprintf(stderr, func " failed: 0x%x, %s", GetLastError(), Util::translateError(GetLastError()).c_str())
-
+#define PRINTERROR(func) fprintf(stderr, func " failed: code %lu: %s\n", GetLastError(), Util::translateError(GetLastError()).c_str())
 
 #ifdef __MINGW32__
 struct ExceptionHandler
@@ -58,8 +57,8 @@ static void installService(const TCHAR* name, const std::string& configPath) {
 		return;
 	}
 
-	string cmdLine = ('"' + Util::getAppName() + "\" -c \"" + Util::getCfgPath() + "\\\" -d " + string(name));
-	SC_HANDLE service = CreateService(scm, name, name, 0, SERVICE_WIN32_OWN_PROCESS,
+	string cmdLine = '"' + Util::getAppName() + "\" -c \"" + Util::getCfgPath() + "\\\" -d \"" + string(name) + "\"";
+	SC_HANDLE service = CreateService(scm, name, name, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
 		SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, cmdLine.c_str(),
 		NULL, NULL, NULL, NULL, NULL);
 
@@ -69,7 +68,10 @@ static void installService(const TCHAR* name, const std::string& configPath) {
 		return;
 	}
 
-	fprintf(stdout, "ADCH++ service \"%s\" successfully installed\n", cmdLine.c_str());
+	SERVICE_DESCRIPTION description = { const_cast<LPTSTR>(appName.c_str()) };
+	ChangeServiceConfig2(service, SERVICE_CONFIG_DESCRIPTION, &description);
+
+	fprintf(stdout, "ADCH++ service \"%s\" successfully installed; command line:\n%s\n", name, cmdLine.c_str());
 
 	CloseServiceHandle(service);
 	CloseServiceHandle(scm);
@@ -82,7 +84,7 @@ static void removeService(const TCHAR* name) {
 		return;
 	}
 
-	SC_HANDLE service = OpenService(scm, name == NULL ? serviceName : name, DELETE);
+	SC_HANDLE service = OpenService(scm, name, DELETE);
 
 	if(service == NULL) {
 		PRINTERROR("OpenService");
@@ -96,7 +98,7 @@ static void removeService(const TCHAR* name) {
 		CloseServiceHandle(scm);
 	}
 
-	fprintf(stdout, "ADCH++ service \"%s\" successfully removed\n", name == NULL ? serviceName : name);
+	fprintf(stdout, "ADCH++ service \"%s\" successfully removed\n", name);
 
 	CloseServiceHandle(service);
 	CloseServiceHandle(scm);
@@ -182,6 +184,8 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 
 		ss.dwCurrentState = SERVICE_STOPPED;
 		SetServiceStatus(ssh, &ss);
+
+		return;
 	}
 
 	ss.dwCurrentState = SERVICE_RUNNING;
@@ -273,20 +277,12 @@ int CDECL main(int argc, char* argv[]) {
 			}
 			configPath = cfg;
 		} else if(_tcscmp(argv[i], _T("-i")) == 0) {
-			if(i + 1 == argc) {
-				printf("You must specify a service name\n");
-				return 4;
-			}
 			i++;
-			name = argv[i];
+			name = (i >= argc) ? serviceName : argv[i];
 			task = 2;
 		} else if(_tcscmp(argv[i], _T("-u")) == 0) {
-			if(i + 1 == argc) {
-				printf("You must specify a service name\n");
-				return 4;
-			}
 			i++;
-			name = argv[i];
+			name = (i >= argc) ? serviceName : argv[i];
 			task = 3;
 		} else if(_tcscmp(argv[i], _T("-v")) == 0) {
 			printf("%s compiled on " __DATE__ " " __TIME__ "\n", versionString.c_str());

@@ -7,6 +7,8 @@
 * Allow local IPs
 * Bloom plugin: filter more TTH searches
 * [L#427706] Fix some crashes
+* [L#502280] Fix Windows service
+* Accept relative paths in config files
 
 -- 2.4 2008-10-02 --
 * Improve Lua scripts

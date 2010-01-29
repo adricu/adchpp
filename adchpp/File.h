@@ -57,10 +57,9 @@ public:
 	/** Returns the filename part of the full path */
 	ADCHPP_DLL static std::string getFileName(const std::string& name) throw();
 	ADCHPP_DLL static bool isAbsolutePath(const std::string& name) throw();
-	
-	static std::string makeAbsolutePath(const std::string& path, const std::string& filename) {
-		return isAbsolutePath(filename) ? filename : path + filename;
-	}
+
+	ADCHPP_DLL static std::string makeAbsolutePath(const std::string& filename);
+	ADCHPP_DLL static std::string makeAbsolutePath(const std::string& path, const std::string& filename);
 
 	ADCHPP_DLL static void ensureDirectory(const std::string& aFile) throw();
 	

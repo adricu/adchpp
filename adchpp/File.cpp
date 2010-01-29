@@ -104,6 +104,14 @@ bool File::isAbsolutePath(const string& path) throw() {
 		(path.length() >= 1 && (path[0] == '\\' || path[0] == '/'));
 }
 
+std::string File::makeAbsolutePath(const std::string& filename) {
+	return makeAbsolutePath(Util::getAppPath() + PATH_SEPARATOR, filename);
+}
+
+std::string File::makeAbsolutePath(const std::string& path, const std::string& filename) {
+	return isAbsolutePath(filename) ? filename : path + filename;
+}
+
 void File::ensureDirectory(const string& aFile) throw() {
 	string::size_type start = 0;
 	
