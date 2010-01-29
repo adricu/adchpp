@@ -66,13 +66,16 @@ def buildPyModule():
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-modern', '-features', 'autodoc=1'])
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
-		
+
 	if (env['tools'] == 'mingw' and env['mode'] == 'debug') or env['arch'] != 'x86':
-		print 'Skipping python module'
+		print 'Skipping Python module'
 		return
 
-	import distutils.sysconfig
-	
+	version = sys.version[0] + sys.version[2]
+	if not(version == '26' or version == '25'):
+		print 'Invalid Python version: ' + version + ' - skipping Python module'
+		return
+
 	env.Append(CPPPATH=['#'])
 	if '_DEBUG' in env['CPPDEFINES']:
 		env['CPPDEFINES'].remove('_DEBUG')
@@ -80,27 +83,25 @@ def buildPyModule():
 		env['CCFLAGS'].remove('/MDd')
 		env['CCFLAGS'].append('/MD')
 
-	import os,distutils,sys
 	if dev.is_win32(): 
+		import os
 		pyprefix = env['python']
 		incpath = os.path.join(pyprefix, "include")
 		libpath = os.path.join(pyprefix, "libs")
-		version = sys.version[0]+sys.version[2]
-		if not(version == '26' or version == '25'):
-			print 'Invalid Python version:', version
-			return
 
 		env.Append(LIBPATH=[libpath])
 		env.Append(LIBS=["python"+version])
 		env.Append(CPPPATH=[incpath])
+
 	else:
+		import distutils
 		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
 		env.Append(LIBS=['python' + sys.version[0:3]])
 	env.Append(LIBS=['adchpp'])
 
 	if sys.platform == 'win32':
 		env['SHLIBSUFFIX'] ='.pyd'
-		
+
 	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(pyd)
 
