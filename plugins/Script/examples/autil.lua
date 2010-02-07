@@ -28,7 +28,7 @@ settings = {}
 --                 ** user_params: list of arguments to be passed to this command for user menus.
 commands = {}
 
-ucmd_sep = "\\" -- TODO should be '/' per the spec but DC++ uses '\'...
+ucmd_sep = "/"
 
 function ucmd_line(str)
 	return "%[line:" .. str .. "]"
