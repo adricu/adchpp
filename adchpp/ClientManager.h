@@ -133,6 +133,11 @@ public:
 	 */
 	ADCHPP_DLL bool verifyCID(Entity& c, AdcCommand& cmd) throw();
 
+	/**
+	 * Verify that there aren't too many sockets overflowing (indicates lack of bandwidth)
+	 */
+	ADCHPP_DLL bool verifyOverflow(Entity& c);
+
 	/** Update the state of c (this fires signalState as well) */
 	ADCHPP_DLL void setState(Entity& c, Entity::State newState) throw();
 

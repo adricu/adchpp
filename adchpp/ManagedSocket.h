@@ -35,7 +35,7 @@ namespace adchpp {
  */
 class ManagedSocket : public intrusive_ptr_base<ManagedSocket>, boost::noncopyable {
 public:
-	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overFlow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
+	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overflow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
 
 	/** Asynchronous write */
 	ADCHPP_DLL void write(const BufferPtr& buf, bool lowPrio = false) throw();
@@ -59,16 +59,18 @@ public:
 	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
 	size_t getMaxBufferSize() { return maxBufferSize; }
 
+	time_t getOverflow() { return overflow; }
+
 	time_t getLastWrite() { return lastWrite; }
 
 	static void setDefaultMaxBufferSize(size_t newSize) { defaultMaxBufferSize = newSize; }
 	static size_t getDefaultMaxBufferSize() { return defaultMaxBufferSize; }
 
-	static size_t getOverflowTimeout() { return overflowTimeout; }
+	static time_t getOverflowTimeout() { return overflowTimeout; }
 
 private:
 	static size_t defaultMaxBufferSize;
-	static size_t overflowTimeout;
+	static time_t overflowTimeout;
 
 	friend class SocketManager;
 	friend class SocketFactory;
@@ -90,8 +92,8 @@ private:
 	/** Input buffer */
 	BufferPtr readBuf;
 
-	/** Overflow timer, the buffer is allowed to overflow for 1 minute, then disconnect */
-	uint32_t overFlow;
+	/** Overflow timer, the time when the socket started to overflow */
+	time_t overflow;
 	/** Disconnection scheduled for this socket */
 	uint32_t disc;
 

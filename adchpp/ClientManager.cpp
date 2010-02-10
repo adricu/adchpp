@@ -282,6 +282,23 @@ bool ClientManager::verifyPassword(Entity& c, const string& password, const Byte
 	return false;
 }
 
+bool ClientManager::verifyOverflow(Entity& c) {
+	size_t overflowing = 0;
+	for(EntityIter i = entities.begin(), iend = entities.end(); i != iend; ++i) {
+		if(i->second->getOverflow()) {
+			overflowing++;
+		}
+	}
+
+	if(overflowing > 3 && overflowing > (entities.size() / 4)) {
+		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_HUB_FULL, "Not enough bandwidth available, please try again later"));
+		c.disconnect(Util::REASON_NO_BANDWIDTH);
+		return false;
+	}
+
+	return true;
+}
+
 bool ClientManager::handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw() {
 	if(c.getState() != Client::STATE_IDENTIFY && c.getState() != Client::STATE_NORMAL) {
 		badState(c, cmd);
@@ -292,6 +309,10 @@ bool ClientManager::handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw() 
 		return false;
 
 	if(c.getState() == Client::STATE_IDENTIFY) {
+		if(!verifyOverflow(c)) {
+			return false;
+		}
+
 		enterNormal(c, true, true);
 		return false;
 	}

@@ -208,6 +208,7 @@ public:
 		REASON_PID_WITHOUT_CID,
 		REASON_PLUGIN,
 		REASON_WRITE_OVERFLOW,
+		REASON_NO_BANDWIDTH,
 		REASON_LAST,
 	};
 
@@ -369,8 +370,9 @@ public:
 #undef C
 
 	static const uint32_t HUB_SID = 0xffffffff;
-
+	
 	AdcCommand();
+	
 	explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType);
 	explicit AdcCommand(uint32_t cmd, char aType, uint32_t aFrom);
 	explicit AdcCommand(const std::string& aLine) throw(ParseException);
@@ -467,19 +469,18 @@ public:
 		FLAG_HUB = 0x20,
 		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
 		FLAG_PASSWORD = 0x100,
-		FLAG_HIDDEN = 0x101,
+		FLAG_HIDDEN = 0x200,
 		/** Extended away, no need to send msg */
-		FLAG_EXT_AWAY = 0x102,
+		FLAG_EXT_AWAY = 0x400,
 		/** Plugins can use these flags to disable various checks */
 		/** Bypass ip check */
-		FLAG_OK_IP = 0x104
+		FLAG_OK_IP = 0x800
 	};
 
 
 	Entity(uint32_t sid_) : sid(sid_) {
 
 	}
-
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
 
@@ -655,12 +656,13 @@ public:
 
 	ByteVector enterVerify(Entity& c, bool sendData) throw();
 	bool enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw();
-	bool verifySUP(Client& c, AdcCommand& cmd) throw();
-	bool verifyINF(Client& c, AdcCommand& cmd) throw();
-	bool verifyNick(Client& c, const AdcCommand& cmd) throw();
-	bool verifyPassword(Client& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
+	bool verifySUP(Entity& c, AdcCommand& cmd) throw();
+	bool verifyINF(Entity& c, AdcCommand& cmd) throw();
+	bool verifyNick(Entity& c, const AdcCommand& cmd) throw();
+	bool verifyPassword(Entity& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
-	bool verifyCID(Client& c, AdcCommand& cmd) throw();
+	bool verifyCID(Entity& c, AdcCommand& cmd) throw();
+	bool verifyOverflow(Entity& c);
 	void setState(Entity& c, Client::State newState) throw();
 	size_t getQueuedBytes() throw();
 

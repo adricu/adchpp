@@ -31,7 +31,7 @@ using namespace std::tr1;
 using namespace boost::asio;
 
 size_t ManagedSocket::defaultMaxBufferSize = 16 * 1024;
-size_t ManagedSocket::overflowTimeout = 60 * 1000;
+time_t ManagedSocket::overflowTimeout = 60;
 
 ManagedSocket::~ManagedSocket() throw() {
 	dcdebug("ManagedSocket deleted\n");
@@ -58,11 +58,11 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 	if(getMaxBufferSize() > 0 && queued + buf->size() > getMaxBufferSize()) {
 		if(lowPrio) {
 			return;
-		} else if(overFlow > 0 && overFlow + getOverflowTimeout() < GET_TICK()) {
+		} else if(overflow > 0 && overflow + getOverflowTimeout() < GET_TIME()) {
 			disconnect(0, Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
-			overFlow = GET_TICK();
+			overflow = GET_TIME();
 		}
 	}
 
@@ -121,10 +121,10 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 			}
 		}
 
-		if(overFlow > 0) {
+		if(overflow > 0) {
 			size_t left = getQueuedBytes();
 			if(left < getMaxBufferSize()) {
-				overFlow = 0;
+				overflow = 0;
 			}
 		}
 

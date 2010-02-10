@@ -797,6 +797,10 @@ local function onPAS(c, cmd)
 		autil.dump(c, adchpp.AdcCommand_ERROR_BAD_PASSWORD, "Invalid password")
 		return false
 	end
+	
+	if not cm:verifyOverflow(c) then
+		return false
+	end
 
 	local updateOk, message = update_user(user, cid:toBase32(), nick)
 	if not updateOk then

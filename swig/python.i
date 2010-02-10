@@ -176,7 +176,9 @@ struct PyHandle {
 
 	void operator()() {
 		PyGIL gil;
-		PyHandle ret(PyObject_Call(obj, PyTuple_New(0), 0), true);
+		PyHandle empty(PyTuple_New(0), true);
+		
+		PyHandle ret(PyObject_Call(obj, empty, 0), true);
 
 		if(!ret.valid()) {
 			PyErr_Print();
@@ -210,7 +212,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Entity& c) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(1));
+		PyHandle args(PyTuple_New(1), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
@@ -223,7 +225,7 @@ private:
 	
 	void PyHandle::operator()(const std::string& str) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(1));
+		PyHandle args(PyTuple_New(1), true);
 
 		PyTuple_SetItem(args,0, PyString_FromString(str.c_str()));
 
@@ -237,7 +239,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Entity& c, const std::string& str) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(2));
+		PyHandle args(PyTuple_New(2), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, PyString_FromString(str.c_str()));
@@ -252,7 +254,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Entity& c, int i) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(2));
+		PyHandle args(PyTuple_New(2), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, PyInt_FromLong(i));
@@ -267,7 +269,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(2));
+		PyHandle args(PyTuple_New(2), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
@@ -282,7 +284,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Entity& c, adchpp::AdcCommand& cmd, bool& i) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(3));
+		PyHandle args(PyTuple_New(3), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
@@ -302,7 +304,7 @@ private:
 	
 	void PyHandle::operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(3));
+		PyHandle args(PyTuple_New(3), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_adchpp__AdcCommand, 0 |  0 ));
@@ -323,7 +325,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(3));
+		PyHandle args(PyTuple_New(3), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&cmd), SWIGTYPE_p_std__vectorT_std__string_std__allocatorT_std__string_t_t, 0 |  0 ));
@@ -338,7 +340,7 @@ private:
 
 	void PyHandle::operator()(adchpp::Bot& c, const adchpp::BufferPtr& ptr) {
 		PyGIL gil;
-		PyObject* args(PyTuple_New(2));
+		PyHandle args(PyTuple_New(2), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Bot, 0 |  0 ));
 		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&ptr), SWIGTYPE_p_adchpp__BufferPtr, 0 |  0 ));

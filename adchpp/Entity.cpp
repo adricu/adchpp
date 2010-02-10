@@ -201,9 +201,12 @@ void Entity::unsetFlag(size_t flag) {
 	}
 }
 
-size_t Entity::getQueuedBytes() {
+size_t Entity::getQueuedBytes() const {
 	return 0;
 }
 
+time_t Entity::getOverflow() const {
+	return 0;
+}
 
 }

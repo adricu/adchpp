@@ -62,7 +62,8 @@ public:
 	void setMaxCommandSize(size_t newSize) { maxCommandSize = newSize; }
 	size_t getMaxCommandSize() { return maxCommandSize; }
 
-	virtual size_t getQueuedBytes() { return socket->getQueuedBytes(); }
+	virtual size_t getQueuedBytes() const { return socket->getQueuedBytes(); }
+	virtual time_t getOverflow() const { return socket->getOverflow(); }
 private:
 	static size_t defaultMaxCommandSize;
 
