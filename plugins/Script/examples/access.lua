@@ -207,7 +207,7 @@ autil.settings.owner = {
 }
 
 autil.settings.passinlist = {
-	help = "show passwords in +listregs, 1 = show, 0 = don't show",
+	help = "show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show",
 
 	value = 1
 }
@@ -1185,22 +1185,21 @@ autil.commands.listregs = {
 			return
 		end
 
-		local parse_pass = function(user)
-			if autil.settings.passinlist.value ~=0 and user.password then
-				return "\tPass: " .. user.password
-			end
-			return ""
-		end
 		local list = {}
-		for k, v in base.pairs(users.nicks) do
+		local parse_user = function(k, v, prefix)
 			if v.level <= user.level then
-				table.insert(list, "Nick: " .. k .. parse_pass(v))
+				local s = prefix .. ": " .. k
+				if autil.settings.passinlist.value ~=0 and v.level < user.level and v.password then
+					s = s .. "\tPass: " .. v.password
+				end
+				table.insert(list, s)
 			end
+		end
+		for k, v in base.pairs(users.nicks) do
+			parse_user(k, v, "Nick")
 		end
 		for k, v in base.pairs(users.cids) do
-			if v.level <= user.level then
-				table.insert(list, "CID: " .. k .. parse_pass(v))
-			end
+			parse_user(k, v, "CID")
 		end
 		table.sort(list)
 
