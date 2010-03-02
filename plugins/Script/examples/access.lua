@@ -891,7 +891,7 @@ autil.commands.cfg = {
 	helplong = function()
 		local list = {}
 		for k, v in base.pairs(autil.settings) do
-			local str = k .. " - current value: " .. v.value
+			local str = k .. " - current value: " .. base.tostring(v.value)
 			if v.help then
 				str = str .. " - " .. v.help
 			end
