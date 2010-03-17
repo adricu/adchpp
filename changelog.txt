@@ -11,7 +11,8 @@
 * [L#502280] Fix Windows service
 * Accept relative paths in config files
 * [L#518972] Fix python memory leak
-
+* [L#537905] Add redhat init scripts (thanks E_zombie)
+ 
 -- 2.4 2008-10-02 --
 * Improve Lua scripts
 

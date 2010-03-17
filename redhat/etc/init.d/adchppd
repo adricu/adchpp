@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# chkconfig: - 91 35
+# description: Starts and stops the ADCH++ ( https://launchpad.net/adchpp ) daemons on RHEL\CentOS \
+#	       used to provide p2p network services.
+#
+# pidfile: /var/run/adchpp.pid
+# config:  /etc/adchpp/adchpp.xml
+
+
+
+# Source function library.
+if [ -f /etc/init.d/functions ] ; then
+  . /etc/init.d/functions
+elif [ -f /etc/rc.d/init.d/functions ] ; then
+  . /etc/rc.d/init.d/functions
+else
+  exit 1
+fi
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+if [ -f /etc/sysconfig/adchpp ]; then
+   . /etc/sysconfig/adchpp
+fi
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 1
+
+# Check that uhub.conf exists.
+[ -f /etc/adchpp/adchpp.xml ] || exit 6
+
+RETVAL=0
+
+
+start() {
+        KIND="ADCH++"
+	echo -n $"Starting $KIND services: "
+	daemon adchppd $ADCHPPOPTIONS
+	RETVAL=$?
+        echo "" 
+	return $RETVAL
+}	
+
+stop() {
+        KIND="ADCH++"
+	echo -n $"Shutting down $KIND services: "
+	killproc adchppd
+	RETVAL=$?
+	echo ""
+	return $RETVAL
+}	
+
+restart() {
+	stop
+	start
+}	
+
+
+rhstatus() {
+	status adchpp                                                                                                                                               
+        RETVAL=$?                                                                                                                                                     
+        if [ $RETVAL -ne 0 ] ; then                                                                                                                                   
+                return $RETVAL                                                                                                                                        
+        fi                                                                                                                                                            
+}                 
+
+
+
+
+# Allow status as non-root.
+if [ "$1" = status ]; then
+       rhstatus
+       exit $?
+fi
+
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart)
+  	restart
+	;;
+  status)
+  	rhstatus
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|status}"
+	exit 2
+esac
+
+exit $?

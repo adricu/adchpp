@@ -1,0 +1,7 @@
+# Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
+# -c <configdir> 	
+# -v			show version and exit
+# -d			run in daemon mode
+# -h			show help
+
+ADCHPPOPTIONS="-d -c /etc/adchpp"
