@@ -228,6 +228,26 @@ autil.settings.website = {
 	value = ""
 }
 
+local function registered_users()
+	local ret = {}
+	local nicksdone = {}
+
+	for _, user in base.pairs(users.cids) do
+		table.insert(ret, user)
+		if user.nick then
+			nicksdone[user] = 1
+		end
+	end
+
+	for _, user in base.pairs(users.nicks) do
+		if not nicksdone[user] then
+			table.insert(ret, user)
+		end
+	end
+
+	return ret
+end
+
 local function load_users()
 	users.cids = {}
 	users.nicks = {}
@@ -268,26 +288,7 @@ local function save_users()
 		return
 	end
 
-	local userlist = {}
-	local nicksdone = {}
-
-	local i = 1
-	for _, user in base.pairs(users.cids) do
-		userlist[i] = user
-		if user.nick then
-			nicksdone[user] = 1
-		end
-		i = i + 1
-	end
-
-	for _, user in base.pairs(users.nicks) do
-		if not nicksdone[user] then
-			userlist[i] = user
-			i = i + 1
-		end
-	end
-
-	file:write(json.encode(userlist))
+	file:write(json.encode(registered_users()))
 	file:close()
 end
 
@@ -1186,20 +1187,20 @@ autil.commands.listregs = {
 		end
 
 		local list = {}
-		local parse_user = function(k, v, prefix)
+		for _, v in base.ipairs(registered_users()) do
 			if v.level <= user.level then
-				local s = prefix .. ": " .. k
-				if autil.settings.passinlist.value ~=0 and v.level < user.level and v.password then
-					s = s .. "\tPass: " .. v.password
+				local fields = {}
+				if v.nick then
+					table.insert(fields, "Nick: " .. v.nick)
 				end
-				table.insert(list, s)
+				if v.cid then
+					table.insert(fields, "CID: " .. v.cid)
+				end
+				if autil.settings.passinlist.value ~=0 and v.level < user.level and v.password then
+					table.insert(fields, "Pass: " .. v.password)
+				end
+				table.insert(list, table.concat(fields, "\t"))
 			end
-		end
-		for k, v in base.pairs(users.nicks) do
-			parse_user(k, v, "Nick")
-		end
-		for k, v in base.pairs(users.cids) do
-			parse_user(k, v, "CID")
 		end
 		table.sort(list)
 
@@ -1500,13 +1501,19 @@ autil.commands.regnick = {
 
 		if #password == 0 then
 			-- un-reg
-			if cid then
-				users.cids[cid] = nil
+			if not other_user then
+				autil.reply(c, "\"" .. nick .. "\" is not registered")
+				return
 			end
-			users.nicks[nick] = nil
+			if other_user.nick then
+				users.nicks[other_user.nick] = nil
+			end
+			if other_user.cid then
+				users.cids[other_user.cid] = nil
+			end
 			base.pcall(save_users)
 
-			autil.reply(c, "\"" .. nick .. "\" un-registered")
+			autil.reply(c, "\"" .. nick .. "\" has been un-registered")
 
 			if other then
 				autil.reply(other, "You've been un-registered")
