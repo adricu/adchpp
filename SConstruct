@@ -104,7 +104,7 @@ TARGET_ARCH = defEnv['arch']
 if TARGET_ARCH == 'x64':
 	TARGET_ARCH = 'amd64'
 
-env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, TARGET_ARCH = TARGET_ARCH, MSVS_ARCH = MSVS_ARCH)
+env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, TARGET_ARCH = TARGET_ARCH, MSVS_ARCH = TARGET_ARCH)
 
 mode = env['mode']
 if mode not in gcc_flags:
