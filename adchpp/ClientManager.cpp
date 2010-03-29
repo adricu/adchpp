@@ -485,10 +485,10 @@ bool ClientManager::enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw
 	}
 
 	removeLogins(c);
-	setState(c, Entity::STATE_NORMAL);
 
 	entities.insert(make_pair(c.getSID(), &c));
 
+	setState(c, Entity::STATE_NORMAL);
 	return true;
 }
 
