@@ -34,6 +34,14 @@ class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
 	typedef std::tr1::function<void()> Callback;
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
+	/** execute a function after the specified amount of time
+	* @param usec microseconds
+	*/
+	ADCHPP_DLL void addJob(const long usec, const Callback& callback);
+	/** execute a function after the specified amount of time
+	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
+	*/
+	ADCHPP_DLL void addJob(const std::string& time, const Callback& callback);
 
 	void startup() throw(ThreadException);
 	void shutdown();
@@ -44,6 +52,7 @@ public:
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 
 	std::map<std::string, int> errors;
+
 private:
 	friend class ManagedSocket;
 	friend class SocketFactory;
@@ -64,6 +73,10 @@ private:
 
 	friend class Singleton<SocketManager>;
 	ADCHPP_DLL static SocketManager* instance;
+
+	typedef std::tr1::shared_ptr<boost::asio::deadline_timer> timer_ptr;
+	void addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
+	void handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback);
 
 	void onLoad(const SimpleXML& xml) throw();
 

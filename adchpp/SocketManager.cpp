@@ -29,6 +29,7 @@
 #ifdef HAVE_OPENSSL
 #include <boost/asio/ssl.hpp>
 #endif
+#include <boost/date_time/posix_time/time_parsers.hpp>
 
 namespace adchpp {
 
@@ -225,6 +226,28 @@ void SocketManager::closeFactories() {
 
 void SocketManager::addJob(const Callback& callback) throw() {
 	io.post(callback);
+}
+
+void SocketManager::addJob(const long usec, const Callback& callback) {
+	addJob(boost::posix_time::microseconds(usec), callback);
+}
+
+void SocketManager::addJob(const std::string& time, const Callback& callback) {
+	addJob(boost::posix_time::duration_from_string(time), callback);
+}
+
+void SocketManager::addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback) {
+	timer_ptr timer(new timer_ptr::element_type(io, duration));
+	timer->async_wait(std::tr1::bind(&SocketManager::handleWait, this, timer, std::tr1::placeholders::_1,
+		new Callback(callback))); // create a separate callback on the heap to avoid shutdown crashes
+}
+
+void SocketManager::handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback) {
+	timer.reset();
+	if(!error) {
+		(*callback)();
+	}
+	delete callback;
 }
 
 void SocketManager::startup() throw(ThreadException) {
