@@ -148,8 +148,8 @@ public:
 		- SWIG fails to convert a script function to const Callback&.
 		- SWIG has trouble choosing the overload of addJob to use.
 		*/
-		void addJob(const long usec, Callback callback) {
-			self->addJob(usec, callback);
+		void addJob(const long msec, Callback callback) {
+			self->addJob(msec, callback);
 		}
 		void addJob_str(const std::string& time, Callback callback) {
 			self->addJob(time, callback);

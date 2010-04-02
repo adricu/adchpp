@@ -228,8 +228,8 @@ void SocketManager::addJob(const Callback& callback) throw() {
 	io.post(callback);
 }
 
-void SocketManager::addJob(const long usec, const Callback& callback) {
-	addJob(boost::posix_time::microseconds(usec), callback);
+void SocketManager::addJob(const long msec, const Callback& callback) {
+	addJob(boost::posix_time::milliseconds(msec), callback);
 }
 
 void SocketManager::addJob(const std::string& time, const Callback& callback) {

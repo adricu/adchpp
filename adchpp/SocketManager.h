@@ -35,9 +35,9 @@ public:
 	typedef std::tr1::function<void()> Callback;
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
 	/** execute a function after the specified amount of time
-	* @param usec microseconds
+	* @param msec milliseconds
 	*/
-	ADCHPP_DLL void addJob(const long usec, const Callback& callback);
+	ADCHPP_DLL void addJob(const long msec, const Callback& callback);
 	/** execute a function after the specified amount of time
 	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
 	*/
