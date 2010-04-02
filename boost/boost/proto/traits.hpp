@@ -12,7 +12,6 @@
     #ifndef BOOST_PROTO_ARG_TRAITS_HPP_EAN_04_01_2005
     #define BOOST_PROTO_ARG_TRAITS_HPP_EAN_04_01_2005
 
-    #include <boost/proto/detail/prefix.hpp>
     #include <boost/config.hpp>
     #include <boost/detail/workaround.hpp>
     #include <boost/preprocessor/iteration/iterate.hpp>
@@ -44,7 +43,6 @@
     #include <boost/proto/args.hpp>
     #include <boost/proto/tags.hpp>
     #include <boost/proto/transform/pass_through.hpp>
-    #include <boost/proto/detail/suffix.hpp>
 
     #if BOOST_WORKAROUND( BOOST_MSVC, >= 1400 )
         #pragma warning(push)
@@ -155,7 +153,7 @@
         {};
 
         /// TODO document me!
-        template<typename T, typename Void BOOST_PROTO_WHEN_BUILDING_DOCS(= void)>
+        template<typename T, typename Void /* = void*/>
         struct is_transform
           : mpl::false_
         {};
@@ -176,7 +174,7 @@
             /// from <tt>proto::extends\<\></tt> or that uses the
             /// <tt>BOOST_PROTO_BASIC_EXTENDS()</tt> macro.) Otherwise,
             /// <tt>is_expr\<T\>::::value</tt> is \c false.
-            template<typename T, typename Void  BOOST_PROTO_WHEN_BUILDING_DOCS(= void)>
+            template<typename T, typename Void /* = void*/>
             struct is_expr
               : mpl::false_
             {};
@@ -242,10 +240,10 @@
             /// <tt>boost::result_of\<Domain(expr\< tag::terminal, term\<A\> \>)\>::::type</tt>.
             template<
                 typename T
-              , typename Domain BOOST_PROTO_WHEN_BUILDING_DOCS(= default_domain)
-              , typename Void   BOOST_PROTO_WHEN_BUILDING_DOCS(= void)
+              , typename Domain // = default_domain
+              , typename Void   // = void
               #ifdef BOOST_PROTO_BROKEN_PTS
-              , typename Void2  BOOST_PROTO_WHEN_BUILDING_DOCS(= void)
+              , typename Void2  // = void
               #endif
             >
             struct as_expr
@@ -337,10 +335,10 @@
             /// <tt>boost::result_of\<Domain(expr\< tag::terminal, term\<T &\> \>)\>::::type</tt>.
             template<
                 typename T
-              , typename Domain BOOST_PROTO_WHEN_BUILDING_DOCS(= default_domain)
-              , typename Void   BOOST_PROTO_WHEN_BUILDING_DOCS(= void)
+              , typename Domain // = default_domain
+              , typename Void   // = void
               #ifdef BOOST_PROTO_BROKEN_PTS
-              , typename Void2  BOOST_PROTO_WHEN_BUILDING_DOCS(= void)
+              , typename Void2  // = void
               #endif
             >
             struct as_child
@@ -432,7 +430,7 @@
             ///
             /// <tt>result_of::child\<Expr, N\></tt> is equivalent to
             /// <tt>result_of::child_c\<Expr, N::value\></tt>.
-            template<typename Expr, typename N  BOOST_PROTO_WHEN_BUILDING_DOCS(= mpl::long_<0>) >
+            template<typename Expr, typename N /* = mpl::long_<0>*/>
             struct child
               : child_c<Expr, N::value>
             {};
@@ -730,6 +728,7 @@
             BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(negate)
             BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(dereference)
             BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(complement)
+            BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(address_of)
             BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(logical_not)
             BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(pre_inc)
             BOOST_PROTO_DEFINE_UNARY_METAFUNCTION(pre_dec)
@@ -790,7 +789,7 @@
         {
             /// \brief A callable PolymorphicFunctionObject that is
             /// equivalent to the \c as_expr() function.
-            template<typename Domain    BOOST_PROTO_WHEN_BUILDING_DOCS(= default_domain)>
+            template<typename Domain   /* = default_domain*/>
             struct as_expr
             {
                 BOOST_PROTO_CALLABLE()
@@ -844,7 +843,7 @@
 
             /// \brief A callable PolymorphicFunctionObject that is
             /// equivalent to the \c as_child() function.
-            template<typename Domain    BOOST_PROTO_WHEN_BUILDING_DOCS(= default_domain)>
+            template<typename Domain   /* = default_domain*/>
             struct as_child
             {
                 BOOST_PROTO_CALLABLE()
@@ -904,18 +903,18 @@
                 /// \throw nothrow
                 template<typename Expr>
                 typename result_of::child_c<Expr &, N>::type
-                operator ()(Expr &expr) const
+                operator ()(Expr &e) const
                 {
-                    return result_of::child_c<Expr &, N>::call(expr);
+                    return result_of::child_c<Expr &, N>::call(e);
                 }
 
                 /// \overload
                 ///
                 template<typename Expr>
                 typename result_of::child_c<Expr const &, N>::type
-                operator ()(Expr const &expr) const
+                operator ()(Expr const &e) const
                 {
-                    return result_of::child_c<Expr const &, N>::call(expr);
+                    return result_of::child_c<Expr const &, N>::call(e);
                 }
             };
 
@@ -925,7 +924,7 @@
             /// A callable PolymorphicFunctionObject that is
             /// equivalent to the \c child() function. \c N is required
             /// to be an MPL Integral Constant.
-            template<typename N BOOST_PROTO_WHEN_BUILDING_DOCS(= mpl::long_<0>) >
+            template<typename N /* = mpl::long_<0>*/>
             struct child
             {
                 BOOST_PROTO_CALLABLE()
@@ -947,18 +946,18 @@
                 /// \throw nothrow
                 template<typename Expr>
                 typename result_of::child<Expr &, N>::type
-                operator ()(Expr &expr) const
+                operator ()(Expr &e) const
                 {
-                    return result_of::child<Expr &, N>::call(expr);
+                    return result_of::child<Expr &, N>::call(e);
                 }
 
                 /// \overload
                 ///
                 template<typename Expr>
                 typename result_of::child<Expr const &, N>::type
-                operator ()(Expr const &expr) const
+                operator ()(Expr const &e) const
                 {
-                    return result_of::child<Expr const &, N>::call(expr);
+                    return result_of::child<Expr const &, N>::call(e);
                 }
             };
 
@@ -985,18 +984,18 @@
                 /// \throw nothrow
                 template<typename Expr>
                 typename result_of::value<Expr &>::type
-                operator ()(Expr &expr) const
+                operator ()(Expr &e) const
                 {
-                    return expr.proto_base().child0;
+                    return e.proto_base().child0;
                 }
 
                 /// \overload
                 ///
                 template<typename Expr>
                 typename result_of::value<Expr const &>::type
-                operator ()(Expr const &expr) const
+                operator ()(Expr const &e) const
                 {
-                    return expr.proto_base().child0;
+                    return e.proto_base().child0;
                 }
             };
 
@@ -1023,18 +1022,18 @@
                 /// \throw nothrow
                 template<typename Expr>
                 typename result_of::left<Expr &>::type
-                operator ()(Expr &expr) const
+                operator ()(Expr &e) const
                 {
-                    return expr.proto_base().child0;
+                    return e.proto_base().child0;
                 }
 
                 /// \overload
                 ///
                 template<typename Expr>
                 typename result_of::left<Expr const &>::type
-                operator ()(Expr const &expr) const
+                operator ()(Expr const &e) const
                 {
-                    return expr.proto_base().child0;
+                    return e.proto_base().child0;
                 }
             };
 
@@ -1061,16 +1060,16 @@
                 /// \throw nothrow
                 template<typename Expr>
                 typename result_of::right<Expr &>::type
-                operator ()(Expr &expr) const
+                operator ()(Expr &e) const
                 {
-                    return expr.proto_base().child1;
+                    return e.proto_base().child1;
                 }
 
                 template<typename Expr>
                 typename result_of::right<Expr const &>::type
-                operator ()(Expr const &expr) const
+                operator ()(Expr const &e) const
                 {
-                    return expr.proto_base().child1;
+                    return e.proto_base().child1;
                 }
             };
 
@@ -1199,18 +1198,18 @@
         /// \return A reference to the Nth child
         template<typename N, typename Expr>
         typename result_of::child<Expr &, N>::type
-        child(Expr &expr BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
+        child(Expr &e BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
         {
-            return result_of::child<Expr &, N>::call(expr);
+            return result_of::child<Expr &, N>::call(e);
         }
 
         /// \overload
         ///
         template<typename N, typename Expr>
         typename result_of::child<Expr const &, N>::type
-        child(Expr const &expr)
+        child(Expr const &e)
         {
-            return result_of::child<Expr const &, N>::call(expr);
+            return result_of::child<Expr const &, N>::call(e);
         }
 
         /// \overload
@@ -1243,18 +1242,18 @@
         /// \return A reference to the Nth child
         template<long N, typename Expr>
         typename result_of::child_c<Expr &, N>::type
-        child_c(Expr &expr BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
+        child_c(Expr &e BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
         {
-            return result_of::child_c<Expr &, N>::call(expr);
+            return result_of::child_c<Expr &, N>::call(e);
         }
 
         /// \overload
         ///
         template<long N, typename Expr>
         typename result_of::child_c<Expr const &, N>::type
-        child_c(Expr const &expr)
+        child_c(Expr const &e)
         {
-            return result_of::child_c<Expr const &, N>::call(expr);
+            return result_of::child_c<Expr const &, N>::call(e);
         }
 
         /// \brief Return the value stored within the specified Proto
@@ -1270,18 +1269,18 @@
         /// \return A reference to the terminal's value
         template<typename Expr>
         typename result_of::value<Expr &>::type
-        value(Expr &expr BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
+        value(Expr &e BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
         {
-            return expr.proto_base().child0;
+            return e.proto_base().child0;
         }
 
         /// \overload
         ///
         template<typename Expr>
         typename result_of::value<Expr const &>::type
-        value(Expr const &expr)
+        value(Expr const &e)
         {
-            return expr.proto_base().child0;
+            return e.proto_base().child0;
         }
 
         /// \brief Return the left child of the specified binary Proto
@@ -1297,18 +1296,18 @@
         /// \return A reference to the left child
         template<typename Expr>
         typename result_of::left<Expr &>::type
-        left(Expr &expr BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
+        left(Expr &e BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
         {
-            return expr.proto_base().child0;
+            return e.proto_base().child0;
         }
 
         /// \overload
         ///
         template<typename Expr>
         typename result_of::left<Expr const &>::type
-        left(Expr const &expr)
+        left(Expr const &e)
         {
-            return expr.proto_base().child0;
+            return e.proto_base().child0;
         }
 
         /// \brief Return the right child of the specified binary Proto
@@ -1324,18 +1323,18 @@
         /// \return A reference to the right child
         template<typename Expr>
         typename result_of::right<Expr &>::type
-        right(Expr &expr BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
+        right(Expr &e BOOST_PROTO_DISABLE_IF_IS_CONST(Expr))
         {
-            return expr.proto_base().child1;
+            return e.proto_base().child1;
         }
 
         /// \overload
         ///
         template<typename Expr>
         typename result_of::right<Expr const &>::type
-        right(Expr const &expr)
+        right(Expr const &e)
         {
-            return expr.proto_base().child1;
+            return e.proto_base().child1;
         }
 
         /// INTERNAL ONLY
@@ -1518,9 +1517,9 @@
 
                 /// INTERNAL ONLY
                 ///
-                static type call(Expr &expr)
+                static type call(Expr &e)
                 {
-                    return expr.proto_base().BOOST_PP_CAT(child, N);
+                    return e.proto_base().BOOST_PP_CAT(child, N);
                 }
             };
 
@@ -1540,9 +1539,9 @@
 
                 /// INTERNAL ONLY
                 ///
-                static type call(Expr const &expr)
+                static type call(Expr const &e)
                 {
-                    return expr.proto_base().BOOST_PP_CAT(child, N);
+                    return e.proto_base().BOOST_PP_CAT(child, N);
                 }
             };
         }

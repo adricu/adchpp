@@ -5,7 +5,7 @@
     
     http://www.boost.org/
 
-    Copyright (c) 2001-2009 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2010 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -193,8 +193,8 @@
 #if BOOST_WORKAROUND(BOOST_MSVC, <= 1300) || \
     BOOST_WORKAROUND(__MWERKS__, < 0x3200) || \
     (defined(__DECCXX) && defined(__alpha)) || \
-    defined(BOOST_WAVE_STRINGTYPE_USE_STDSTRING)
-    
+    defined(BOOST_WAVE_STRINGTYPE_USE_STDSTRING) 
+
 #define BOOST_WAVE_STRINGTYPE std::string
 
 #if !defined(BOOST_WAVE_STRINGTYPE_USE_STDSTRING)

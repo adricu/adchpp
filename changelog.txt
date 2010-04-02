@@ -1,7 +1,7 @@
 * Improve Lua scripts: various bug fixes, support PING
 * Clients are disconnected with the DI flag of QUI
 * Update to Lua 5.1.4
-* Update to boost 1.40
+* Update to boost 1.42
 * Better support of Python extensions
 * Add an icon and version info to the Windows daemon
 * Allow local IPs

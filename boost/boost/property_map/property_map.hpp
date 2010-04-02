@@ -302,7 +302,8 @@ namespace boost {
     }
   };
 
-  struct identity_property_map;
+  template <typename T>
+  struct typed_identity_property_map;
 
   // A helper class for constructing a property map
   // from a class that implements operator[]
@@ -539,18 +540,22 @@ namespace boost {
   };
 
   //=========================================================================
-  // A property map that applies the identity function to integers
-  struct identity_property_map
-    : public boost::put_get_helper<std::size_t, 
-        identity_property_map>
+  // A generalized identity property map
+  template <typename T>
+  struct typed_identity_property_map
+    : public boost::put_get_helper<T, typed_identity_property_map<T> >
   {
-    typedef std::size_t key_type;
-    typedef std::size_t value_type;
-    typedef std::size_t reference;
+    typedef T key_type;
+    typedef T value_type;
+    typedef T reference;
     typedef boost::readable_property_map_tag category;
 
     inline value_type operator[](const key_type& v) const { return v; }
   };
+
+//=========================================================================
+  // A property map that applies the identity function to integers
+  typedef typed_identity_property_map<std::size_t> identity_property_map;
 
   //=========================================================================
   // A property map that does not do anything, for
@@ -581,6 +586,22 @@ namespace boost {
     value_type c;
   };
 
+  // Convert a Readable property map into a function object
+  template <typename PropMap>
+  class property_map_function {
+    PropMap pm;
+    typedef typename property_traits<PropMap>::key_type param_type;
+    public:
+    explicit property_map_function(const PropMap& pm): pm(pm) {}
+    typedef typename property_traits<PropMap>::value_type result_type;
+    result_type operator()(const param_type& k) const {return get(pm, k);}
+  };
+
+  template <typename PropMap>
+  property_map_function<PropMap>
+  make_property_map_function(const PropMap& pm) {
+    return property_map_function<PropMap>(pm);
+  }
 
 } // namespace boost
 

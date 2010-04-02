@@ -14,6 +14,12 @@
 
 #define BOOST_MSVC _MSC_VER
 
+#if _MSC_FULL_VER > 100000000
+#  define BOOST_MSVC_FULL_VER _MSC_FULL_VER
+#else
+#  define BOOST_MSVC_FULL_VER (_MSC_FULL_VER * 10)
+#endif
+
 // turn off the warnings before we #include anything
 #pragma warning( disable : 4503 ) // warning: decorated name length exceeded
 
@@ -119,7 +125,7 @@
 #if (_MSC_VER >= 1200)
 #   define BOOST_HAS_MS_INT64
 #endif
-#if (_MSC_VER >= 1310) && defined(_MSC_EXTENSIONS)
+#if (_MSC_VER >= 1310) && (defined(_MSC_EXTENSIONS) || (_MSC_VER >= 1500))
 #   define BOOST_HAS_LONG_LONG
 #else
 #   define BOOST_NO_LONG_LONG
@@ -168,10 +174,12 @@
 #define BOOST_NO_DELETED_FUNCTIONS
 #define BOOST_NO_EXPLICIT_CONVERSION_OPERATORS
 #define BOOST_NO_EXTERN_TEMPLATE
+#define BOOST_NO_FUNCTION_TEMPLATE_DEFAULT_ARGS
 #define BOOST_NO_INITIALIZER_LISTS
 #define BOOST_NO_NULLPTR
 #define BOOST_NO_RAW_LITERALS
 #define BOOST_NO_SCOPED_ENUMS
+#define BOOST_NO_SFINAE_EXPR
 #define BOOST_NO_TEMPLATE_ALIASES
 #define BOOST_NO_UNICODE_LITERALS
 #define BOOST_NO_VARIADIC_TEMPLATES
