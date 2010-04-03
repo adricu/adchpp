@@ -173,6 +173,19 @@ autil.settings.botdescription = {
 	value = ""
 }
 
+autil.settings.botemail = {
+	alias = { botmail = true, botem = true },
+
+	change = function()
+		autil.bot:setField("EM", autil.settings.botemail.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("EM", autil.settings.botemail.value):getBuffer())
+	end,
+
+	help = "e-mail of the hub bot",
+
+	value = ""
+}
+
 autil.settings.description = {
 	alias = { hubdescription = true },
 
@@ -2123,9 +2136,10 @@ base.pcall(load_settings)
 base.pcall(load_bans)
 
 autil.bot = cm:createBot(function() end)
-autil.bot:setField("ID", base.tostring(adchpp.CID_generate()))
+autil.bot:setField("ID", "HRBY566LKM4KXYRS3NEVFFS7ZXIBFDEAUF36U2Y")
 autil.bot:setField("NI", autil.settings.botname.value)
 autil.bot:setField("DE", autil.settings.botdescription.value)
+autil.bot:setField("EM", autil.settings.botemail.value)
 cm:enterNormal(autil.bot, false, false)
 
 table.foreach(extensions, function(_, extension)
