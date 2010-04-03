@@ -114,8 +114,6 @@ local cm = adchpp.getCM()
 local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
-local bot -- forward declaration
-
 local saltsHandle = pm:registerByteVectorData()
 
 local function description_change()
@@ -152,6 +150,11 @@ autil.settings.allowreg = {
 autil.settings.botname = {
 	alias = { botnick = true, botni = true },
 
+	change = function()
+		autil.bot:setField("NI", autil.settings.botname.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("NI", autil.settings.botname.value):getBuffer())
+	end,
+
 	help = "name of the hub bot",
 
 	value = "Bot"
@@ -159,6 +162,11 @@ autil.settings.botname = {
 
 autil.settings.botdescription = {
 	alias = { botdescr = true, botde = true },
+
+	change = function()
+		autil.bot:setField("DE", autil.settings.botdescription.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("DE", autil.settings.botdescription.value):getBuffer())
+	end,
 
 	help = "description of the hub bot",
 
@@ -1252,7 +1260,7 @@ autil.commands.mass = {
 			return
 		end
 
-		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, bot:getSID())
+		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, autil.bot:getSID())
 		mass_cmd:addParam(message)
 		mass_cmd:addParam("PM", adchpp.AdcCommand_fromSID(mass_cmd:getFrom()))
 
@@ -2114,11 +2122,11 @@ base.pcall(load_users)
 base.pcall(load_settings)
 base.pcall(load_bans)
 
-bot = cm:createBot(function() end)
-bot:setField("ID", base.tostring(adchpp.CID_generate()))
-bot:setField("NI", autil.settings.botname.value)
-bot:setField("DE", autil.settings.botdescription.value)
-cm:enterNormal(bot, false, false)
+autil.bot = cm:createBot(function() end)
+autil.bot:setField("ID", base.tostring(adchpp.CID_generate()))
+autil.bot:setField("NI", autil.settings.botname.value)
+autil.bot:setField("DE", autil.settings.botdescription.value)
+cm:enterNormal(autil.bot, false, false)
 
 table.foreach(extensions, function(_, extension)
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))
