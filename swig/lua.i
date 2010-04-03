@@ -125,6 +125,14 @@ public:
 		lua_pop(L, 1);
 	}
 
+	void operator()(adchpp::Bot& bot, const adchpp::BufferPtr& buf) {
+		pushFunction();
+
+		SWIG_NewPointerObj(L, &bot, SWIGTYPE_p_adchpp__Bot, 0);
+		SWIG_NewPointerObj(L, &buf, SWIGTYPE_p_adchpp__BufferPtr, 0);
+
+		docall(2, 0);
+	}
 
 private:
 	void pushFunction() { registryItem->push(); }
@@ -201,6 +209,10 @@ uint32_t, const uint32_t&
 }
 
 %typemap(in) std::tr1::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::tr1::function<void (adchpp::Bot&, const adchpp::BufferPtr&) > {
 	$1 = LuaFunction(L);
 }
 

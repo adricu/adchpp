@@ -572,13 +572,13 @@ public:
 
 class Bot : public Entity {
 public:
+	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
+
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
 	
 	void inject(AdcCommand& cmd);
 	virtual void disconnect(Util::Reason reason);
-private:
-	SendHandler handler;
 };
 
 class Hub : public Entity {
@@ -637,10 +637,12 @@ public:
 	uint32_t getSID(const CID& cid) const throw();
 
 	Entity* getEntity(uint32_t aSid) throw();
-	
-	// EntityMap& getEntities() throw() { return entities; }
 
 	%extend{
+
+	Bot* createBot(Bot::SendHandler handler) {
+		return self->createBot(handler);
+	}
 
 	EntityList getEntities() throw() {
 		EntityList ret;

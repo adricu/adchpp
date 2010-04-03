@@ -2127,3 +2127,10 @@ access_3 = pm:getCommandSignal("reload"):connect(function(entity, list, ok)
 	end
 	return is_op(entity)
 end)
+
+local bot = cm:createBot(function(bot, cmd)
+	base.print(adchpp.AdcCommand(cmd):toString())
+end)
+bot:setField("ID", base.tostring(adchpp.CID_generate()))
+bot:setField("NI", "testbot")
+cm:enterNormal(bot, false, false)
