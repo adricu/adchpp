@@ -114,6 +114,8 @@ local cm = adchpp.getCM()
 local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
+local bot -- forward declaration
+
 local saltsHandle = pm:registerByteVectorData()
 
 local function description_change()
@@ -145,6 +147,22 @@ autil.settings.allowreg = {
 	help = "authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow",
 
 	value = 1
+}
+
+autil.settings.botname = {
+	alias = { botnick = true, botni = true },
+
+	help = "name of the hub bot",
+
+	value = "Bot"
+}
+
+autil.settings.botdescription = {
+	alias = { botdescr = true, botde = true },
+
+	help = "description of the hub bot",
+
+	value = ""
 }
 
 autil.settings.description = {
@@ -1234,9 +1252,7 @@ autil.commands.mass = {
 			return
 		end
 
-		-- TODO we send PMs from the originator of the mass message; eventually, we should send these from a bot.
-		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, adchpp.AdcCommand_HUB_SID)
-		mass_cmd:setFrom(c:getSID())
+		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, bot:getSID())
 		mass_cmd:addParam(message)
 		mass_cmd:addParam("PM", adchpp.AdcCommand_fromSID(mass_cmd:getFrom()))
 
@@ -2098,6 +2114,12 @@ base.pcall(load_users)
 base.pcall(load_settings)
 base.pcall(load_bans)
 
+bot = cm:createBot(function() end)
+bot:setField("ID", base.tostring(adchpp.CID_generate()))
+bot:setField("NI", autil.settings.botname.value)
+bot:setField("DE", autil.settings.botdescription.value)
+cm:enterNormal(bot, false, false)
+
 table.foreach(extensions, function(_, extension)
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))
 end)
@@ -2127,10 +2149,3 @@ access_3 = pm:getCommandSignal("reload"):connect(function(entity, list, ok)
 	end
 	return is_op(entity)
 end)
-
-local bot = cm:createBot(function(bot, cmd)
-	base.print(adchpp.AdcCommand(cmd):toString())
-end)
-bot:setField("ID", base.tostring(adchpp.CID_generate()))
-bot:setField("NI", "testbot")
-cm:enterNormal(bot, false, false)
