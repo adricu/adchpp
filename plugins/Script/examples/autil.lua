@@ -39,8 +39,23 @@ function info(m)
 	:addParam(m)
 end
 
+-- "from" and "to" are SIDs (numbers).
+function pm(m, from, to)
+	local command = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_DIRECT, from)
+	:addParam(m)
+	:addParam("PM", adchpp.AdcCommand_fromSID(from))
+	command:setTo(to)
+	return command
+end
+
 function reply(c, m)
-	c:send(info(m))
+	local command
+	if reply_from then
+		command = pm(m, reply_from:getSID(), c:getSID())
+	else
+		command = info(m)
+	end
+	c:send(command)
 end
 
 -- params: either a message string or a function(AdcCommand QUI_command).

@@ -1273,9 +1273,7 @@ autil.commands.mass = {
 			return
 		end
 
-		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, autil.bot:getSID())
-		mass_cmd:addParam(message)
-		mass_cmd:addParam("PM", adchpp.AdcCommand_fromSID(mass_cmd:getFrom()))
+		local mass_cmd = autil.pm(message, autil.bot:getSID(), 0)
 
 		local count = 0
 		for i = 0, size - 1 do
@@ -1968,7 +1966,7 @@ autil.commands.loadbans = {
 	user_command = { name = "Hub management" .. autil.ucmd_sep .. "Reload bans" }
 }
 
-local function onMainChatMSG(c, cmd)
+local function onMSG(c, cmd)
 	clear_expired_bans()
 	local muted = bans.muted[c:getCID():toBase32()]
 	if muted then
@@ -1978,27 +1976,33 @@ local function onMainChatMSG(c, cmd)
 
 	local msg = cmd:getParam(0)
 
-	local command, parameters = msg:match("^%+(%a+) ?(.*)")
-	if command then
-		for k, v in base.pairs(autil.commands) do
-			if k == command or (v.alias and v.alias[command]) then
-				add_stats('+' .. command)
-				v.command(c, parameters)
-				return false
+	local bot = autil.reply_from and autil.reply_from:getSID() == autil.bot:getSID()
+	if not autil.reply_from or bot then
+		local command, parameters = msg:match("^%+(%a+) ?(.*)")
+		if command then
+			for k, v in base.pairs(autil.commands) do
+				if k == command or (v.alias and v.alias[command]) then
+					add_stats('+' .. command)
+					v.command(c, parameters)
+					return false
+				end
 			end
 		end
+		if bot then
+			autil.reply(c, 'Invalid command, send "+help" for a list of available commands')
+			return false
+		end
+	end
 
-	else
-		local level = get_level(c)
-		clear_expired_bans()
-		for re, reban in base.pairs(bans.msgsre) do
-			if reban.level >= level and msg:match(re) then
-				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
-				bans.cids[c:getCID():toBase32()] = ban
-				base.pcall(save_bans)
-				dump_banned(c, ban)
-				return false
-			end
+	local level = get_level(c)
+	clear_expired_bans()
+	for re, reban in base.pairs(bans.msgsre) do
+		if reban.level >= level and msg:match(re) then
+			local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
+			bans.cids[c:getCID():toBase32()] = ban
+			base.pcall(save_bans)
+			dump_banned(c, ban)
+			return false
 		end
 	end
 
@@ -2050,10 +2054,11 @@ local function onReceive(entity, cmd, ok)
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
 		return onPAS(c, cmd)
 	end
-	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and (
-		cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST or cmd:getType() == adchpp.AdcCommand_TYPE_HUB
-		) then
-		return onMainChatMSG(c, cmd)
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
+		autil.reply_from = cm:getEntity(cmd:getTo())
+		local ret = onMSG(c, cmd)
+		autil.reply_from = nil
+		return ret
 	end
 
 	return true
