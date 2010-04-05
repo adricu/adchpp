@@ -125,6 +125,22 @@ local function description_change()
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
 end
 
+local function validate_ni(new)
+	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+		if char <= 32 then
+			return "the name can't contain any space nor new line"
+		end
+	end
+end
+
+local function validate_de(new)
+	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+		if char < 32 then
+			return "the description can't contain any new line nor tabulation"
+		end
+	end
+end
+
 autil.settings.address = {
 	alias = { host = true, dns = true },
 
@@ -147,6 +163,20 @@ autil.settings.allowreg = {
 	value = 1
 }
 
+autil.settings.botcid = {
+	alias = { botid = true },
+
+	help = "CID of the bot, restart the hub after the change",
+
+	value = adchpp.CID_generate():toBase32(),
+
+	validate = function(new)
+		if adchpp.CID(new):isZero() then
+			return "the CID must be a valid 39-byte base32 representation"
+		end
+	end
+}
+
 autil.settings.botname = {
 	alias = { botnick = true, botni = true },
 
@@ -157,7 +187,9 @@ autil.settings.botname = {
 
 	help = "name of the hub bot",
 
-	value = "Bot"
+	value = "Bot",
+
+	validate = validate_ni
 }
 
 autil.settings.botdescription = {
@@ -170,7 +202,9 @@ autil.settings.botdescription = {
 
 	help = "description of the hub bot",
 
-	value = ""
+	value = "",
+
+	validate = validate_de
 }
 
 autil.settings.botemail = {
@@ -193,7 +227,9 @@ autil.settings.description = {
 
 	help = "hub description",
 
-	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE")
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE"),
+
+	validate = validate_de
 }
 
 autil.settings.maxmsglength = {
@@ -230,7 +266,9 @@ autil.settings.name = {
 
 	help = "hub name",
 
-	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI"),
+
+	validate = validate_ni
 }
 
 autil.settings.network = {
@@ -258,7 +296,9 @@ autil.settings.topic = {
 
 	help = "hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists",
 
-	value = ""
+	value = "",
+
+	validate = validate_de
 }
 
 autil.settings.website = {
@@ -916,6 +956,14 @@ autil.commands.cfg = {
 		if value == old then
 			autil.reply(c, "The value is the same as before, no change done")
 			return
+		end
+
+		if setting.validate then
+			local err = setting.validate(value)
+			if err then
+				autil.reply(c, "The new value \"" .. value .. "\" is invalid, no change done (" .. err .. ")")
+				return
+			end
 		end
 
 		setting.value = value
@@ -2141,7 +2189,7 @@ base.pcall(load_settings)
 base.pcall(load_bans)
 
 autil.bot = cm:createBot(function() end)
-autil.bot:setField("ID", "HRBY566LKM4KXYRS3NEVFFS7ZXIBFDEAUF36U2Y")
+autil.bot:setField("ID", autil.settings.botcid.value)
 autil.bot:setField("NI", autil.settings.botname.value)
 autil.bot:setField("DE", autil.settings.botdescription.value)
 autil.bot:setField("EM", autil.settings.botemail.value)
