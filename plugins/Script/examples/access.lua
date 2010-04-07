@@ -116,6 +116,9 @@ local sm = adchpp.getSM()
 
 local saltsHandle = pm:registerByteVectorData()
 
+-- forward declarations.
+local verify_info
+
 local function description_change()
 	local description = autil.settings.topic.value
 	if #autil.settings.topic.value == 0 then
@@ -238,6 +241,25 @@ autil.settings.maxmsglength = {
 	help = "maximum number of characters allowed per chat message, 0 = no limit",
 
 	value = 0
+}
+
+autil.settings.maxnicklength = {
+	change = function()
+		local entities = cm:getEntities()
+		local size = entities:size()
+		if size > 0 then
+			for i = 0, size - 1 do
+				local c = entities[i]:asClient()
+				if c then
+					verify_info(c)
+				end
+			end
+		end
+	end,
+
+	help = "maximum number of characters allowed per nick, 0 = no limit",
+
+	value = 50
 }
 
 autil.settings.maxusers = {
@@ -675,7 +697,13 @@ local function dump_banned(c, ban)
 	end)
 end
 
-local function verify_info(c, cid, nick)
+verify_info = function(c, cid, nick)
+	if not cid then
+		cid = c:getCID():toBase32()
+	end
+	if not nick then
+		nick = c:getField("NI")
+	end
 	if #nick == 0 or #cid == 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return false
@@ -705,6 +733,11 @@ local function verify_info(c, cid, nick)
 	end
 	if ban and ban.level > level then
 		dump_banned(c, ban)
+		return false
+	end
+
+	if autil.settings.maxnicklength.value > 0 and #nick > autil.settings.maxnicklength.value then
+		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your nick (" .. nick .. ") is too long, it must contain " .. base.tostring(autil.settings.maxnicklength.value) .. " characters max")
 		return false
 	end
 
@@ -808,7 +841,7 @@ local function onINF(c, cmd)
 	end
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		return verify_info(c, c:getCID():toBase32(), c:getField("NI"))
+		return verify_info(c)
 	end
 
 	local nick = cmd:getParam("NI", 0)
