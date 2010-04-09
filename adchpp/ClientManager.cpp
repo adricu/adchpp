@@ -49,8 +49,14 @@ ClientManager::~ClientManager() throw() {
 
 Bot* ClientManager::createBot(const Bot::SendHandler& handler) {
 	Bot* ret = new Bot(makeSID(), handler);
-	//enterIdentify(*ret, false);
 	return ret;
+}
+
+void ClientManager::regBot(Bot& bot) {
+	enterIdentify(bot, false);
+	enterNormal(bot, false, false);
+	cids.insert(make_pair(bot.getCID(), &bot));
+	nicks.insert(make_pair(bot.getField("NI"), &bot));
 }
 
 void ClientManager::send(const AdcCommand& cmd) throw() {

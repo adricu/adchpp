@@ -49,8 +49,9 @@ public:
 	/** @return The entity associated with a certain SID, NULL if not found */
 	ADCHPP_DLL Entity* getEntity(uint32_t aSid) throw();
 
-	/** @return A new Bot instance in STATE_IDENTIFY, set nick etc and call enterNormal to make it appear */
+	/** @return A new Bot instance in STATE_IDENTIFY; set CID, nick etc and call regBot */
 	ADCHPP_DLL Bot* createBot(const Bot::SendHandler& handler);
+	ADCHPP_DLL void regBot(Bot& bot);
 
 	/**
 	 * Get a list of all currently connected clients. (Don't change it, it's non-const

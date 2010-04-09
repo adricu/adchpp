@@ -237,9 +237,10 @@ env.Append(LIBPATH = env.Dir(dev.get_build_root() + 'bin/').abspath)
 if not dev.is_win32():
 	dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
 
+dev.boost_date_time = dev.build('boost/libs/date_time/src/')
 dev.boost_system = dev.build('boost/libs/system/src/')
 
-env.Append(LIBS = ['aboost_system'])
+env.Append(LIBS = ['aboost_system', 'aboost_date_time'])
 
 dev.adchpp = dev.build('adchpp/')
 

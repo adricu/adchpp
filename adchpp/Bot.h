@@ -32,7 +32,7 @@ public:
 
 	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
 
-	virtual void send(const BufferPtr& cmd) { handler(*this, cmd); }
+	virtual void send(const BufferPtr& cmd) { if(handler) handler(*this, cmd); }
 
 	ADCHPP_DLL void inject(AdcCommand& cmd);
 

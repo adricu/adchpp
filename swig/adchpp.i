@@ -69,6 +69,7 @@ void shutdown() {
 %nodefaultdtor PluginManager;
 
 namespace adchpp {
+	class Bot;
 	class Client;
 	class Entity;
 	typedef std::vector<std::string> StringList;
@@ -633,16 +634,19 @@ public:
 class ClientManager
 {
 public:
-	uint32_t getSID(const std::string& nick) const throw();
-	uint32_t getSID(const CID& cid) const throw();
-
 	Entity* getEntity(uint32_t aSid) throw();
 
 	%extend{
-
 	Bot* createBot(Bot::SendHandler handler) {
 		return self->createBot(handler);
 	}
+	Bot* createSimpleBot() {
+		return self->createBot(Bot::SendHandler());
+	}
+	}
+	void regBot(Bot& bot);
+
+	%extend{
 
 	EntityList getEntities() throw() {
 		EntityList ret;
@@ -652,14 +656,22 @@ public:
 		return ret;
 	}
 
-	Entity* findByNick(const std::string& nick) {
-		uint32_t sid = $self->getSID(nick);
+	Entity* findByCID(const CID& cid) {
+		uint32_t sid = self->getSID(cid);
 		if(sid != 0) {
 			return self->getEntity(sid);
 		}
-
 		return 0;
 	}
+
+	Entity* findByNick(const std::string& nick) {
+		uint32_t sid = self->getSID(nick);
+		if(sid != 0) {
+			return self->getEntity(sid);
+		}
+		return 0;
+	}
+
 	}
 
 	void send(const AdcCommand& cmd) throw();

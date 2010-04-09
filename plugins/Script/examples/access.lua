@@ -184,8 +184,10 @@ autil.settings.botname = {
 	alias = { botnick = true, botni = true },
 
 	change = function()
-		autil.bot:setField("NI", autil.settings.botname.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("NI", autil.settings.botname.value):getBuffer())
+		if autil.bot then
+			autil.bot:setField("NI", autil.settings.botname.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("NI", autil.settings.botname.value):getBuffer())
+		end
 	end,
 
 	help = "name of the hub bot",
@@ -199,8 +201,10 @@ autil.settings.botdescription = {
 	alias = { botdescr = true, botde = true },
 
 	change = function()
-		autil.bot:setField("DE", autil.settings.botdescription.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("DE", autil.settings.botdescription.value):getBuffer())
+		if autil.bot then
+			autil.bot:setField("DE", autil.settings.botdescription.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("DE", autil.settings.botdescription.value):getBuffer())
+		end
 	end,
 
 	help = "description of the hub bot",
@@ -214,8 +218,10 @@ autil.settings.botemail = {
 	alias = { botmail = true, botem = true },
 
 	change = function()
-		autil.bot:setField("EM", autil.settings.botemail.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("EM", autil.settings.botemail.value):getBuffer())
+		if autil.bot then
+			autil.bot:setField("EM", autil.settings.botemail.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("EM", autil.settings.botemail.value):getBuffer())
+		end
 	end,
 
 	help = "e-mail of the hub bot",
@@ -397,20 +403,20 @@ local function load_settings()
 	local file = io.open(settings_file, "r")
 	if not file then
 		base.print("Unable to open " .. settings_file .. ", settings not loaded")
-		return
+		return false
 	end
 
 	local str = file:read("*a")
 	file:close()
 
 	if #str == 0 then
-		return
+		return false
 	end
 
 	local ok, list = base.pcall(json.decode, str)
 	if not ok then
 		base.print("Unable to decode settings file: " .. list)
-		return
+		return false
 	end
 
 	for k, v in base.pairs(list) do
@@ -422,6 +428,8 @@ local function load_settings()
 			end
 		end
 	end
+
+	return true
 end
 
 local function save_settings()
@@ -2218,15 +2226,24 @@ local function send_user_commands(c)
 end
 
 base.pcall(load_users)
-base.pcall(load_settings)
+if not base.pcall(load_settings) then
+	base.pcall(save_settings) -- save initial settings
+end
 base.pcall(load_bans)
 
-autil.bot = cm:createBot(function() end)
-autil.bot:setField("ID", autil.settings.botcid.value)
-autil.bot:setField("NI", autil.settings.botname.value)
-autil.bot:setField("DE", autil.settings.botdescription.value)
-autil.bot:setField("EM", autil.settings.botemail.value)
-cm:enterNormal(autil.bot, false, false)
+-- see if our bot is already regged (eg after +reload)
+autil.bot = cm:findByCID(adchpp.CID(autil.settings.botcid.value))
+if autil.bot then
+	autil.bot = autil.bot:asBot()
+else
+	autil.bot = cm:createSimpleBot()
+	autil.bot:setCID(adchpp.CID(autil.settings.botcid.value))
+	autil.bot:setField("ID", autil.settings.botcid.value)
+	autil.bot:setField("NI", autil.settings.botname.value)
+	autil.bot:setField("DE", autil.settings.botdescription.value)
+	autil.bot:setField("EM", autil.settings.botemail.value)
+	cm:regBot(autil.bot)
+end
 
 table.foreach(extensions, function(_, extension)
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))
