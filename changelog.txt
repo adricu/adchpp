@@ -13,6 +13,7 @@
 * [L#518972] Fix python memory leak
 * Plugins can use timers (see SocketManager::addJob)
 * [L#491951] Give unsent messages 10 seconds before disconnecting
+* Send IPs of passive users
 
 -- 2.4 2008-10-02 --
 * Improve Lua scripts
