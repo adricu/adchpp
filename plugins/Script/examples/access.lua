@@ -1123,9 +1123,9 @@ autil.commands.info = {
 		local str
 
 		if #parameters > 0 then
-			local user = cm:getEntity(cm:getSID(parameters)) -- by nick
+			local user = cm:findByNick(parameters) -- by nick
 			if not user then
-				user = cm:getEntity(cm:getSID(adchpp.CID(parameters))) -- by CID
+				user = cm:findByCID(adchpp.CID(parameters)) -- by CID
 			end
 
 			if user then
@@ -1260,7 +1260,7 @@ autil.commands.kick = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1421,7 +1421,7 @@ autil.commands.mute = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1525,7 +1525,7 @@ autil.commands.redirect = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1722,7 +1722,7 @@ autil.commands.ban = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
