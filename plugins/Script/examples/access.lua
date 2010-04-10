@@ -2242,6 +2242,9 @@ else
 	autil.bot:setField("NI", autil.settings.botname.value)
 	autil.bot:setField("DE", autil.settings.botdescription.value)
 	autil.bot:setField("EM", autil.settings.botemail.value)
+	autil.bot:setFlag(adchpp.Entity_FLAG_OP)
+	autil.bot:setFlag(adchpp.Entity_FLAG_SU)
+	autil.bot:setFlag(adchpp.Entity_FLAG_OWNER)
 	cm:regBot(autil.bot)
 end
 
