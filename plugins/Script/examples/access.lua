@@ -117,12 +117,34 @@ local sm = adchpp.getSM()
 local saltsHandle = pm:registerByteVectorData()
 
 -- forward declarations.
-local verify_info
+local format_seconds, verify_info
+
+-- Settings loaded and saved by the main script. Possible fields each setting can contain:
+-- * alias: other names that can also be used to reach this setting.
+-- * change: function called when the value has changed.
+-- * help: information about this setting, displayed in +help cfg.
+-- * value: the value of this setting, either a number or a string. [compulsory]
+-- * validate: function(string) called before changing the value; may return an error string.
+settings = {}
+
+-- List of +commands handled by the main script. Possible fields each command can contain:
+-- * alias: other names that can also trigger this command.
+-- * command: function(Client c, string parameters). [compulsory]
+-- * help: information about this command, displayed in +help.
+-- * helplong: detailed information about this command, displayed in +help command-name.
+-- * protected: function(Client c) returning whether the command is to be shown in +help.
+-- * user_command: table containing information about the user command which will refer to this
+--                 command. Possible fields each user_command table can contain:
+--                 ** hub_params: list of arguments to be passed to this command for hub menus.
+--                 ** name: name of the user command (defaults to capitalized command name).
+--                 ** params: list of arguments to be passed to this command for all menus.
+--                 ** user_params: list of arguments to be passed to this command for user menus.
+commands = {}
 
 local function description_change()
-	local description = autil.settings.topic.value
-	if #autil.settings.topic.value == 0 then
-		description = autil.settings.description.value
+	local description = settings.topic.value
+	if #settings.topic.value == 0 then
+		description = settings.description.value
 	end
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", description)
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
@@ -144,7 +166,7 @@ local function validate_de(new)
 	end
 end
 
-autil.settings.address = {
+settings.address = {
 	alias = { host = true, dns = true },
 
 	help = "host address (DNS or IP)",
@@ -152,13 +174,13 @@ autil.settings.address = {
 	value = adchpp.Util_getLocalIp()
 }
 
-autil.settings.allownickchange = {
+settings.allownickchange = {
 	help = "authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow",
 
 	value = 1
 }
 
-autil.settings.allowreg = {
+settings.allowreg = {
 	alias = { allowregistration = true },
 
 	help = "authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow",
@@ -166,7 +188,7 @@ autil.settings.allowreg = {
 	value = 1
 }
 
-autil.settings.botcid = {
+settings.botcid = {
 	alias = { botid = true },
 
 	help = "CID of the bot, restart the hub after the change",
@@ -180,13 +202,13 @@ autil.settings.botcid = {
 	end
 }
 
-autil.settings.botname = {
+settings.botname = {
 	alias = { botnick = true, botni = true },
 
 	change = function()
-		if autil.bot then
-			autil.bot:setField("NI", autil.settings.botname.value)
-			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("NI", autil.settings.botname.value):getBuffer())
+		if bot then
+			bot:setField("NI", settings.botname.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("NI", settings.botname.value):getBuffer())
 		end
 	end,
 
@@ -197,13 +219,13 @@ autil.settings.botname = {
 	validate = validate_ni
 }
 
-autil.settings.botdescription = {
+settings.botdescription = {
 	alias = { botdescr = true, botde = true },
 
 	change = function()
-		if autil.bot then
-			autil.bot:setField("DE", autil.settings.botdescription.value)
-			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("DE", autil.settings.botdescription.value):getBuffer())
+		if bot then
+			bot:setField("DE", settings.botdescription.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("DE", settings.botdescription.value):getBuffer())
 		end
 	end,
 
@@ -214,13 +236,13 @@ autil.settings.botdescription = {
 	validate = validate_de
 }
 
-autil.settings.botemail = {
+settings.botemail = {
 	alias = { botmail = true, botem = true },
 
 	change = function()
-		if autil.bot then
-			autil.bot:setField("EM", autil.settings.botemail.value)
-			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, autil.bot:getSID()):addParam("EM", autil.settings.botemail.value):getBuffer())
+		if bot then
+			bot:setField("EM", settings.botemail.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("EM", settings.botemail.value):getBuffer())
 		end
 	end,
 
@@ -229,7 +251,7 @@ autil.settings.botemail = {
 	value = ""
 }
 
-autil.settings.description = {
+settings.description = {
 	alias = { hubdescription = true },
 
 	change = description_change,
@@ -241,7 +263,7 @@ autil.settings.description = {
 	validate = validate_de
 }
 
-autil.settings.maxmsglength = {
+settings.maxmsglength = {
 	alias = { maxmessagelength = true },
 
 	help = "maximum number of characters allowed per chat message, 0 = no limit",
@@ -249,7 +271,7 @@ autil.settings.maxmsglength = {
 	value = 0
 }
 
-autil.settings.maxnicklength = {
+settings.maxnicklength = {
 	change = function()
 		local entities = cm:getEntities()
 		local size = entities:size()
@@ -268,7 +290,7 @@ autil.settings.maxnicklength = {
 	value = 50
 }
 
-autil.settings.maxusers = {
+settings.maxusers = {
 	alias = { max_users = true, user_max = true, users_max = true, usermax = true, usersmax = true },
 
 	help = "maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed",
@@ -276,7 +298,7 @@ autil.settings.maxusers = {
 	value = -1
 }
 
-autil.settings.menuname = {
+settings.menuname = {
 	alias = { ucmdname = true },
 
 	help = "title of the main user command menu sent to clients",
@@ -284,12 +306,12 @@ autil.settings.menuname = {
 	value = "ADCH++"
 }
 
-autil.settings.name = {
+settings.name = {
 	alias = { hubname = true },
 
 	change = function()
-		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", autil.settings.name.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", autil.settings.name.value):getBuffer())
+		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", settings.name.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", settings.name.value):getBuffer())
 	end,
 
 	help = "hub name",
@@ -299,11 +321,11 @@ autil.settings.name = {
 	validate = validate_ni
 }
 
-autil.settings.network = {
+settings.network = {
 	value = ""
 }
 
-autil.settings.owner = {
+settings.owner = {
 	alias = { ownername = true },
 
 	help = "owner name",
@@ -311,13 +333,13 @@ autil.settings.owner = {
 	value = ""
 }
 
-autil.settings.passinlist = {
+settings.passinlist = {
 	help = "show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show",
 
 	value = 1
 }
 
-autil.settings.topic = {
+settings.topic = {
 	alias = { hubtopic = true },
 
 	change = description_change,
@@ -329,7 +351,7 @@ autil.settings.topic = {
 	validate = validate_de
 }
 
-autil.settings.website = {
+settings.website = {
 	alias = { url = true },
 
 	value = ""
@@ -420,11 +442,11 @@ local function load_settings()
 	end
 
 	for k, v in base.pairs(list) do
-		if autil.settings[k] then
-			local change = autil.settings[k].value ~= v
-			autil.settings[k].value = v
-			if change and autil.settings[k].change then
-				autil.settings[k].change()
+		if settings[k] then
+			local change = settings[k].value ~= v
+			settings[k].value = v
+			if change and settings[k].change then
+				settings[k].change()
 			end
 		end
 	end
@@ -440,7 +462,7 @@ local function save_settings()
 	end
 
 	local list = {}
-	for k, v in base.pairs(autil.settings) do
+	for k, v in base.pairs(settings) do
 		list[k] = v.value
 	end
 	file:write(json.encode(list))
@@ -523,16 +545,16 @@ local function make_user(cid, nick, password, level)
 end
 
 local function check_max_users()
-	if autil.settings.maxusers.value == -1 then
+	if settings.maxusers.value == -1 then
 		return
 	end
 
-	if autil.settings.maxusers.value == 0 then
+	if settings.maxusers.value == 0 then
 		return adchpp.AdcCommand_ERROR_REGGED_ONLY, "Only registered users are allowed in here"
 	end
 
 	local count = cm:getEntities():size()
-	if count >= autil.settings.maxusers.value then
+	if count >= settings.maxusers.value then
 		return adchpp.AdcCommand_ERROR_HUB_FULL, "Hub full, please try again later"
 	end
 	return
@@ -556,7 +578,7 @@ local function get_user_c(c)
 	return get_user(c:getCID():toBase32(), c:getField("NI"))
 end
 
-local function get_level(c)
+function get_level(c)
 	local user = get_user_c(c)
 	if not user then
 		return 0
@@ -565,11 +587,11 @@ local function get_level(c)
 	return user.level
 end
 
-local function has_level(c, level)
+function has_level(c, level)
 	return get_level(c) >= level
 end
 
-local function is_op(c)
+function is_op(c)
 	return has_level(c, level_op)
 end
 
@@ -577,7 +599,7 @@ local function update_user(user, cid, nick)
 	-- only one of nick and cid may be updated...
 
 	if user.nick ~= nick then
-		if autil.settings.allownickchange.value == 0 then
+		if settings.allownickchange.value == 0 then
 			return false, "This hub doesn't allow registered users to change their nick; ask an operator to delete your current registration data if you really want a new nick. Please connect again with your current registered nick: " .. user.nick
 		end
 
@@ -663,7 +685,7 @@ local function ban_expiration_string(ban)
 	if ban.expires then
 		local diff = ban_expiration_diff(ban)
 		if diff > 0 then
-			return "in " .. formatSeconds(diff)
+			return "in " .. format_seconds(diff)
 		else
 			return "expired"
 		end
@@ -744,8 +766,8 @@ verify_info = function(c, cid, nick)
 		return false
 	end
 
-	if autil.settings.maxnicklength.value > 0 and #nick > autil.settings.maxnicklength.value then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your nick (" .. nick .. ") is too long, it must contain " .. base.tostring(autil.settings.maxnicklength.value) .. " characters max")
+	if settings.maxnicklength.value > 0 and #nick > settings.maxnicklength.value then
+		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your nick (" .. nick .. ") is too long, it must contain " .. base.tostring(settings.maxnicklength.value) .. " characters max")
 		return false
 	end
 
@@ -789,18 +811,18 @@ local function onSUP(c, cmd)
 	local inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	hub:getAllFields(inf)
 	inf:delParam("DE", 0)
-	inf:addParam("DE", autil.settings.description.value)
+	inf:addParam("DE", settings.description.value)
 	-- add PING-specific information
-	:addParam("HH" .. autil.settings.address.value)
-	:addParam("WS" .. autil.settings.website.value)
-	:addParam("NE" .. autil.settings.network.value)
-	:addParam("OW" .. autil.settings.owner.value)
+	:addParam("HH" .. settings.address.value)
+	:addParam("WS" .. settings.website.value)
+	:addParam("NE" .. settings.network.value)
+	:addParam("OW" .. settings.owner.value)
 	:addParam("UC" .. base.tostring(uc))
 	:addParam("SS" .. base.tostring(ss))
 	:addParam("SF" .. base.tostring(sf))
 	:addParam("UP" .. base.tostring(os.difftime(os.time(), adchpp.Stats_startTime)))
-	if autil.settings.maxusers.value > 0 then
-		inf:addParam("MC" .. base.tostring(autil.settings.maxusers.value))
+	if settings.maxusers.value > 0 then
+		inf:addParam("MC" .. base.tostring(settings.maxusers.value))
 	end
 	c:send(inf)
 
@@ -938,7 +960,7 @@ local function onPAS(c, cmd)
 	return false
 end
 
-function formatSeconds(t)
+format_seconds = function(t)
 	local t_d = math.floor(t / (60*60*24))
 	local t_h = math.floor(t / (60*60)) % 24
 	local t_m = math.floor(t / 60) % 60
@@ -947,11 +969,11 @@ function formatSeconds(t)
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
 end
 
-autil.commands.cfg = {
+commands.cfg = {
 	alias = { changecfg = true, changeconfig = true, config = true, var = true, changevar = true, setvar = true, setcfg = true, setconfig = true },
 
 	command = function(c, parameters)
-		if not autil.commands.cfg.protected(c) then
+		if not commands.cfg.protected(c) then
 			return
 		end
 
@@ -962,7 +984,7 @@ autil.commands.cfg = {
 		end
 
 		local setting = nil
-		for k, v in base.pairs(autil.settings) do
+		for k, v in base.pairs(settings) do
 			if k == name or (v.alias and v.alias[name]) then
 				setting = v
 				break
@@ -1019,7 +1041,7 @@ autil.commands.cfg = {
 
 	helplong = function()
 		local list = {}
-		for k, v in base.pairs(autil.settings) do
+		for k, v in base.pairs(settings) do
 			local str = k .. " - current value: " .. base.tostring(v.value)
 			if v.help then
 				str = str .. " - " .. v.help
@@ -1049,7 +1071,7 @@ autil.commands.cfg = {
 	}
 }
 
-autil.commands.help = {
+commands.help = {
 	command = function(c, parameters)
 		local command_help = function(k, v)
 			local str = "+" .. k
@@ -1069,7 +1091,7 @@ autil.commands.help = {
 
 		if #parameters > 0 then
 			local command = nil
-			for k, v in base.pairs(autil.commands) do
+			for k, v in base.pairs(commands) do
 				if k == parameters or (v.alias and v.alias[parameters]) then
 					command = { k = k, v = v }
 					break
@@ -1099,7 +1121,7 @@ autil.commands.help = {
 
 		else
 			local list = {}
-			for k, v in base.pairs(autil.commands) do
+			for k, v in base.pairs(commands) do
 				if (not v.protected) or (v.protected and v.protected(c)) then
 					table.insert(list, command_help(k, v))
 				end
@@ -1116,7 +1138,7 @@ autil.commands.help = {
 	} }
 }
 
-autil.commands.info = {
+commands.info = {
 	alias = { hubinfo = true, stats = true, userinfo = true },
 
 	command = function(c, parameters)
@@ -1193,8 +1215,8 @@ autil.commands.info = {
 			local hubtime = os.difftime(now, adchpp.Stats_startTime)
 
 			str = "\n"
-			str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
-			str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
+			str = str .. "Hub uptime: " .. format_seconds(hubtime) .. "\n"
+			str = str .. "Script uptime: " .. format_seconds(scripttime) .. "\n"
 
 			str = str .. "\nADC and script commands: \n"
 			for k, v in base.pairs(stats) do
@@ -1245,7 +1267,7 @@ autil.commands.info = {
 	user_command = { user_params = { "%[userNI]" } }
 }
 
-autil.commands.kick = {
+commands.kick = {
 	alias = { drop = true, dropuser = true, kickuser = true },
 
 	command = function(c, parameters)
@@ -1304,7 +1326,7 @@ autil.commands.kick = {
 	}
 }
 
-autil.commands.listregs = {
+commands.listregs = {
 	alias = { listreg = true, listregged = true, reggedusers = true, showreg = true, showregs = true, showregged = true },
 
 	command = function(c, parameters)
@@ -1324,7 +1346,7 @@ autil.commands.listregs = {
 				if v.cid then
 					table.insert(fields, "CID: " .. v.cid)
 				end
-				if autil.settings.passinlist.value ~=0 and v.level < user.level and v.password then
+				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
 					table.insert(fields, "Pass: " .. v.password)
 				end
 				table.insert(list, table.concat(fields, "\t"))
@@ -1338,11 +1360,11 @@ autil.commands.listregs = {
 	protected = function(c) return get_user_c(c) end
 }
 
-autil.commands.mass = {
+commands.mass = {
 	alias = { massmessage = true },
 
 	command = function(c, parameters)
-		if not autil.commands.mass.protected(c) then
+		if not commands.mass.protected(c) then
 			return
 		end
 
@@ -1362,7 +1384,7 @@ autil.commands.mass = {
 			return
 		end
 
-		local mass_cmd = autil.pm(message, autil.bot:getSID(), 0)
+		local mass_cmd = autil.pm(message, bot:getSID(), 0)
 
 		local count = 0
 		for i = 0, size - 1 do
@@ -1398,7 +1420,7 @@ autil.commands.mass = {
 	}
 }
 
-autil.commands.mute = {
+commands.mute = {
 	alias = { stfu = true },
 
 	command = function(c, parameters)
@@ -1463,7 +1485,7 @@ autil.commands.mute = {
 	}
 }
 
-autil.commands.myip = {
+commands.myip = {
 	alias = { getip = true, getmyip = true, ip = true, showip = true, showmyip = true },
 
 	command = function(c)
@@ -1473,7 +1495,7 @@ autil.commands.myip = {
 	user_command = { name = "My IP" }
 }
 
-autil.commands.mypass = {
+commands.mypass = {
 	alias = { regme = true, changepass = true, mypassword = true, changepassword = true, setpass = true, setpassword = true },
 
 	command = function(c, parameters)
@@ -1488,7 +1510,7 @@ autil.commands.mypass = {
 			user.password = parameters
 			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 
-		elseif autil.settings.allowreg.value ~= 0 then
+		elseif settings.allowreg.value ~= 0 then
 			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 			autil.reply(c, "You're now registered with the password \"" .. parameters .. "\"")
 
@@ -1502,7 +1524,7 @@ autil.commands.mypass = {
 
 	help = "new_pass - change your password, make sure you change it in your client options too",
 
-	protected = function(c) return autil.settings.allowreg.value ~=0 or has_level(c, 2) end,
+	protected = function(c) return settings.allowreg.value ~=0 or has_level(c, 2) end,
 
 	user_command = {
 		name = "My pass",
@@ -1510,7 +1532,7 @@ autil.commands.mypass = {
 	}
 }
 
-autil.commands.redirect = {
+commands.redirect = {
 	alias = { forward = true },
 
 	command = function(c, parameters)
@@ -1562,7 +1584,7 @@ autil.commands.redirect = {
 	}
 }
 
-autil.commands.reload = {
+commands.reload = {
 	command = function() end, -- empty on purpose, this is handled via PluginManager::handleCommand
 
 	help = "- reload scripts",
@@ -1572,7 +1594,7 @@ autil.commands.reload = {
 	user_command = { name = "Hub management" .. autil.ucmd_sep .. "Reload scripts" }
 }
 
-autil.commands.regnick = {
+commands.regnick = {
 	alias = { reguser = true },
 
 	command = function(c, parameters)
@@ -1673,7 +1695,7 @@ autil.commands.regnick = {
 	}
 }
 
-autil.commands.test = {
+commands.test = {
 	command = function(c)
 		autil.reply(c, "Test ok")
 	end,
@@ -1682,16 +1704,16 @@ autil.commands.test = {
 }
 
 -- simply map to +cfg topic
-autil.commands.topic = {
+commands.topic = {
 	alias = { changetopic = true, settopic = true, changehubtopic = true, sethubtopic = true },
 
 	command = function(c, parameters)
-		autil.commands.cfg.command(c, "topic " .. parameters)
+		commands.cfg.command(c, "topic " .. parameters)
 	end,
 
 	help = "topic - change the hub topic (shortcut to +cfg topic)",
 
-	protected = autil.commands.cfg.protected,
+	protected = commands.cfg.protected,
 
 	user_command = {
 		name = "Hub management" .. autil.ucmd_sep .. "Change the topic",
@@ -1699,7 +1721,7 @@ autil.commands.topic = {
 	}
 }
 
-autil.commands.ban = {
+commands.ban = {
 	alias = { banuser = true },
 
 	command = function(c, parameters)
@@ -1765,7 +1787,7 @@ autil.commands.ban = {
 	}
 }
 
-autil.commands.bancid = {
+commands.bancid = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1811,7 +1833,7 @@ autil.commands.bancid = {
 	}
 }
 
-autil.commands.banip = {
+commands.banip = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1857,7 +1879,7 @@ autil.commands.banip = {
 	}
 }
 
-autil.commands.bannick = {
+commands.bannick = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1903,7 +1925,7 @@ autil.commands.bannick = {
 	}
 }
 
-autil.commands.bannickre = {
+commands.bannickre = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1944,7 +1966,7 @@ autil.commands.bannickre = {
 	}
 }
 
-autil.commands.banmsgre = {
+commands.banmsgre = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1985,7 +2007,7 @@ autil.commands.banmsgre = {
 	}
 }
 
-autil.commands.listbans = {
+commands.listbans = {
 	alias = { listban = true, listbanned = true, showban = true, showbans = true, showbanned = true },
 
 	command = function(c)
@@ -2034,7 +2056,7 @@ autil.commands.listbans = {
 	user_command = { name = "Hub management" .. autil.ucmd_sep .. "List bans" }
 }
 
-autil.commands.loadbans = {
+commands.loadbans = {
 	alias = { reloadbans = true },
 
 	command = function(c)
@@ -2065,11 +2087,11 @@ local function onMSG(c, cmd)
 
 	local msg = cmd:getParam(0)
 
-	local bot = autil.reply_from and autil.reply_from:getSID() == autil.bot:getSID()
+	local bot = autil.reply_from and autil.reply_from:getSID() == bot:getSID()
 	if not autil.reply_from or bot then
 		local command, parameters = msg:match("^%+(%a+) ?(.*)")
 		if command then
-			for k, v in base.pairs(autil.commands) do
+			for k, v in base.pairs(commands) do
 				if k == command or (v.alias and v.alias[command]) then
 					add_stats('+' .. command)
 					v.command(c, parameters)
@@ -2095,8 +2117,8 @@ local function onMSG(c, cmd)
 		end
 	end
 
-	if autil.settings.maxmsglength.value > 0 and string.len(msg) > autil.settings.maxmsglength.value then
-		autil.reply(c, "Your message contained too many characters, max allowed is " .. autil.settings.maxmsglength.value)
+	if settings.maxmsglength.value > 0 and string.len(msg) > settings.maxmsglength.value then
+		autil.reply(c, "Your message contained too many characters, max allowed is " .. settings.maxmsglength.value)
 		return false
 	end
 
@@ -2156,7 +2178,7 @@ end
 local function send_user_commands(c)
 	local names = {}
 	local list = {}
-	for k, v in base.pairs(autil.commands) do
+	for k, v in base.pairs(commands) do
 		if (not v.protected) or (v.protected and v.protected(c)) then
 			local name
 			if v.user_command and v.user_command.name then
@@ -2172,7 +2194,7 @@ local function send_user_commands(c)
 
 	local send_ucmd = function(c, name, internal_name, command, context)
 		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-		ucmd:addParam(autil.settings.menuname.value .. autil.ucmd_sep .. name)
+		ucmd:addParam(settings.menuname.value .. autil.ucmd_sep .. name)
 
 		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
 		local str = "+" .. internal_name
@@ -2201,7 +2223,7 @@ local function send_user_commands(c)
 
 	for _, name in base.ipairs(list) do
 		local internal_name = names[name]
-		local command = autil.commands[internal_name]
+		local command = commands[internal_name]
 
 		local hub_sent = false
 		if command.user_command and command.user_command.hub_params then
@@ -2232,20 +2254,20 @@ end
 base.pcall(load_bans)
 
 -- see if our bot is already regged (eg after +reload)
-autil.bot = cm:findByCID(adchpp.CID(autil.settings.botcid.value))
-if autil.bot then
-	autil.bot = autil.bot:asBot()
+bot = cm:findByCID(adchpp.CID(settings.botcid.value))
+if bot then
+	bot = bot:asBot()
 else
-	autil.bot = cm:createSimpleBot()
-	autil.bot:setCID(adchpp.CID(autil.settings.botcid.value))
-	autil.bot:setField("ID", autil.settings.botcid.value)
-	autil.bot:setField("NI", autil.settings.botname.value)
-	autil.bot:setField("DE", autil.settings.botdescription.value)
-	autil.bot:setField("EM", autil.settings.botemail.value)
-	autil.bot:setFlag(adchpp.Entity_FLAG_OP)
-	autil.bot:setFlag(adchpp.Entity_FLAG_SU)
-	autil.bot:setFlag(adchpp.Entity_FLAG_OWNER)
-	cm:regBot(autil.bot)
+	bot = cm:createSimpleBot()
+	bot:setCID(adchpp.CID(settings.botcid.value))
+	bot:setField("ID", settings.botcid.value)
+	bot:setField("NI", settings.botname.value)
+	bot:setField("DE", settings.botdescription.value)
+	bot:setField("EM", settings.botemail.value)
+	bot:setFlag(adchpp.Entity_FLAG_OP)
+	bot:setFlag(adchpp.Entity_FLAG_SU)
+	bot:setFlag(adchpp.Entity_FLAG_OWNER)
+	cm:regBot(bot)
 end
 
 table.foreach(extensions, function(_, extension)

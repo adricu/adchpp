@@ -7,28 +7,6 @@ module("autil")
 base.require('luadchpp')
 local adchpp = base.luadchpp
 
--- Settings loaded and saved by the main script. Possible fields each setting can contain:
--- * alias: other names that can also be used to reach this setting.
--- * change: function called when the value has changed.
--- * help: information about this setting, displayed in +help cfg.
--- * value: the value of this setting, either a number or a string. [compulsory]
--- * validate: function(string) called before changing the value; may return an error string.
-settings = {}
-
--- List of +commands handled by the main script. Possible fields each command can contain:
--- * alias: other names that can also trigger this command.
--- * command: function(Client c, string parameters). [compulsory]
--- * help: information about this command, displayed in +help.
--- * helplong: detailed information about this command, displayed in +help command-name.
--- * protected: function(Client c) returning whether the command is to be shown in +help.
--- * user_command: table containing information about the user command which will refer to this
---                 command. Possible fields each user_command table can contain:
---                 ** hub_params: list of arguments to be passed to this command for hub menus.
---                 ** name: name of the user command (defaults to capitalized command name).
---                 ** params: list of arguments to be passed to this command for all menus.
---                 ** user_params: list of arguments to be passed to this command for user menus.
-commands = {}
-
 ucmd_sep = "/"
 
 function ucmd_line(str)
