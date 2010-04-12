@@ -564,9 +564,6 @@ public:
 	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
-	bool isUdpActive() const;
-	bool isTcpActive() const;
-
 	bool isFlooding(time_t addSeconds);
 
 };

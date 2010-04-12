@@ -51,9 +51,6 @@ public:
 	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
-	bool isUdpActive() const { return hasField("U4"); }
-	bool isTcpActive() const { return hasField("I4"); }
-
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 
 	void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
