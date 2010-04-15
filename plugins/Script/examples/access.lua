@@ -893,13 +893,11 @@ local function onINF(c, cmd)
 		return true
 	end
 
-	if user and user.level >= level_op then
-		cmd:addParam("CT4")
-		cmd:addParam("OP1") -- old name
-	else
-		cmd:addParam("CT2")
-		cmd:addParam("RG1") -- old name
+	c:setFlag(adchpp.Entity_FLAG_REGISTERED)
+	if user.level >= level_op then
+		c:setFlag(adchpp.Entity_FLAG_OP)
 	end
+	cmd:addParam("CT", c:getField("CT"))
 
 	if not cm:verifyINF(c, cmd) then
 		return false
