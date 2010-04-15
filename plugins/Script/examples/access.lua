@@ -357,7 +357,7 @@ settings.website = {
 	value = ""
 }
 
-local function registered_users()
+function registered_users()
 	local ret = {}
 	local nicksdone = {}
 
