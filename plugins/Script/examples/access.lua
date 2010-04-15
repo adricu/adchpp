@@ -25,7 +25,7 @@ local command_min_levels = {
 }
 
 -- Users with a level equal to or above the one specified here are operators
-local level_op = 2
+level_op = 2
 
 -- ADC extensions this script adds support for
 local extensions = { "PING" }
