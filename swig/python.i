@@ -119,8 +119,6 @@
 
 %extend adchpp::Client {
 	%property(ip, getIp)
-	%property(udpActive, isUdpActive)
-	%property(tcpActive, isTcpActive)
 }
 
 %extend adchpp::LogManager {
