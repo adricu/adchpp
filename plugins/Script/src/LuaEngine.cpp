@@ -53,12 +53,20 @@ namespace {
 		// Pop table
 		lua_pop(L, 2);
 	}
+
+	void setScriptPath(lua_State* L, const string& path) {
+		lua_pushstring(L, path.c_str());
+		lua_setglobal(L, "scriptPath");
+	}
 }
 
 LuaEngine::LuaEngine() {
 	l = lua_open();
 	luaL_openlibs(l);
+
 	prepare_cpath(l, PluginManager::getInstance()->getPluginPath());
+
+	setScriptPath(l, Util::emptyString);
 }
 
 LuaEngine::~LuaEngine() {
@@ -69,8 +77,9 @@ LuaEngine::~LuaEngine() {
 }
 
 Script* LuaEngine::loadScript(const string& path, const string& filename, const ParameterMap&) {
+	setScriptPath(l, path);
+
 	LuaScript* script = new LuaScript(this);
-	
 	script->loadFile(path, filename);
 	scripts.push_back(script);
 	return script;
