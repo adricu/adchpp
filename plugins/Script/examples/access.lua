@@ -803,8 +803,8 @@ local function onSUP(c, cmd)
 	if uc > 0 then
 		for i = 0, uc - 1 do
 			local entity = entities[i]
-			ss = ss + base.tonumber(entity:getField("SS"))
-			sf = sf + base.tonumber(entity:getField("SF"))
+			ss = ss + base.tonumber(entity:getField("SS") or 0)
+			sf = sf + base.tonumber(entity:getField("SF") or 0)
 		end
 	end
 
