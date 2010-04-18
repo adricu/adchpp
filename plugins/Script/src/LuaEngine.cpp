@@ -21,8 +21,9 @@
 
 #include "LuaScript.h"
 
-#include <adchpp/Util.h>
 #include <adchpp/PluginManager.h>
+#include <adchpp/File.h>
+#include <adchpp/Util.h>
 
 extern "C" {
 #include <lua.h>
@@ -77,7 +78,7 @@ LuaEngine::~LuaEngine() {
 }
 
 Script* LuaEngine::loadScript(const string& path, const string& filename, const ParameterMap&) {
-	setScriptPath(l, path);
+	setScriptPath(l, File::makeAbsolutePath(path));
 
 	LuaScript* script = new LuaScript(this);
 	script->loadFile(path, filename);
