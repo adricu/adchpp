@@ -153,6 +153,10 @@ else:
 	env.Append(CPPDEFINES = ['BOOST_HAS_TR1'])
 
 if 'gcc' in env['TOOLS']:
+
+	if dev.is_win32():
+		env.Append(LINKFLAGS = ['-Wl,--enable-auto-import'])
+
 	if env['savetemps']:
 		env.Append(CCFLAGS = ['-save-temps', '-fverbose-asm'])
 	else:
