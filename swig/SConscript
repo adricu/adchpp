@@ -67,7 +67,7 @@ def buildPyModule():
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-modern', '-features', 'autodoc=1'])
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
 
-	if (env['tools'] == 'mingw' and env['mode'] == 'debug') or env['arch'] != 'x86':
+	if env['arch'] != 'x86':
 		print 'Skipping Python module'
 		return
 
