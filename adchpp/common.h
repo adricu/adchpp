@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +20,18 @@
  * @mainpage
  *
  * ADCH++ is a server application meant to be used in the Direct Connect network,
- * released under a yet to be decided licence. If you're reading this it means one
- * of two things, you got it from me (Jacek Sieka) directly, or you're not allowed
- * to use it.
+ * released under the GPL-2 license.
  *
  * There's a plugin API about which you can find some general
  * information on the @ref PluginAPI page.
  *
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Please see the readme or contact me for full details regarding
- * licensing.
+ * Please see License.txt for full details regarding licensing.
  */
 
 #ifndef ADCHPP_COMMON_H
