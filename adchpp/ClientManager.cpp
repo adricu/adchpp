@@ -269,7 +269,14 @@ bool ClientManager::verifyINF(Entity& c, AdcCommand& cmd) throw() {
 
 	if(!verifyNick(c, cmd))
 		return false;
-
+	
+	if(cmd.getParam("DE", 0, strtmp)) {
+		if (!Util::validateCharset(strtmp, 32)){
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid character in description"));
+			c.disconnect(Util::REASON_INVALID_DESCRIPTION);
+			return false;
+		}
+	}
 	c.updateFields(cmd);
 	return true;
 }
@@ -413,15 +420,16 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
+
 bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	if(cmd.getParam("NI", 0, strtmp)) {
 		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
-		for(string::size_type i = 0; i < strtmp.length(); ++i) {
-			if((uint8_t) strtmp[i] < 33) {
+
+		
+		if (!Util::validateCharset(strtmp, 33)){
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, "Invalid character in nick"));
 				c.disconnect(Util::REASON_NICK_INVALID);
 				return false;
-			}
 		}
 
 		const string& oldNick = c.getField("NI");

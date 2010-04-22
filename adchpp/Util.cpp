@@ -522,5 +522,21 @@ bool Util::isPrivateIp(std::string const& ip) {
 	}
 	return false;
 }
+bool Util::validateCharset(std::string const& field, int p) {
+	for(string::size_type i = 0; i < field.length(); ++i) {
+		if((uint8_t) field[i] < p) {
+			return false;
+		}
+	}
+	return true;
+}
+bool Util::validateCharset(std::string const& field, int p) {
+	for(string::size_type i = 0; i < field.length(); ++i) {
+		if((uint8_t) field[i] < p) {
+			return false;
+		}
+	}
+	return true;
+}
  
 }

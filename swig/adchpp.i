@@ -224,6 +224,7 @@ public:
 		REASON_PLUGIN,
 		REASON_WRITE_OVERFLOW,
 		REASON_NO_BANDWIDTH,
+		REASON_INVALID_DESCRIPTION,
 		REASON_LAST,
 	};
 
@@ -269,6 +270,9 @@ public:
 	static uint32_t rand(uint32_t high);
 	static uint32_t rand(uint32_t low, uint32_t high);
 	static double randd();
+	
+	static bool isPrivateIp(std::string const& ip);
+	static bool validateCharset(std::string const& field, int p);
 
 };
 

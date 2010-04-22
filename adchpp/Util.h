@@ -109,6 +109,7 @@ public:
 		REASON_PLUGIN,
 		REASON_WRITE_OVERFLOW,
 		REASON_NO_BANDWIDTH,
+		REASON_INVALID_DESCRIPTION,
 		REASON_LAST,
 	};
 
@@ -250,7 +251,8 @@ public:
 	static uint32_t rand(uint32_t low, uint32_t high) { return rand(high-low) + low; }
 	static double randd() { return ((double)rand()) / ((double)0xffffffff); }
 
-	static bool isPrivateIp(std::string const& ip);
+	ADCHPP_DLL static bool isPrivateIp(std::string const& ip);
+	ADCHPP_DLL static bool validateCharset(std::string const& field, int p);
 private:
 	ADCHPP_DLL static std::string cfgPath;
 };
