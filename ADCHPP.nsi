@@ -2,12 +2,22 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "ADCH++"
-!define PRODUCT_VERSION "2.4"
 !define PRODUCT_PUBLISHER "Jacek Sieka"
 !define PRODUCT_WEB_SITE "http://adchpp.sourceforge.net"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\adchppd.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
+
+Function GetAdchppdVersion
+	Exch $0
+	GetDllVersion "$INSTDIR\$0" $R0 $R1
+	IntOp $R2 $R0 / 0x00010000
+	IntOp $R3 $R0 & 0x0000FFFF
+	IntOp $R4 $R1 / 0x00010000
+	IntOp $R5 $R1 & 0x0000FFFF
+	StrCpy $1 "$R3.$R4"
+	Exch $1
+FunctionEnd
 
 SetCompressor lzma
 
@@ -43,7 +53,7 @@ SetCompressor lzma
 
 ; MUI end ------
 
-Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+Name "${PRODUCT_NAME}"
 OutFile "ADCH++.xxx.exe"
 InstallDir "$PROGRAMFILES\ADCH++"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
@@ -63,6 +73,8 @@ Section "MainSection" SEC01
   File "luadchpp.dll"
   File "Script.dll"
   File "readme.txt"
+  File "libgcc.dll"
+  File "libstdc++.dll"
   CreateShortCut "$DESKTOP\ADCH++.lnk" "$INSTDIR\adchppd.exe"
   CreateDirectory "$SMPROGRAMS\ADCH++"
   CreateShortCut "$SMPROGRAMS\ADCH++\ADCH++ Help.lnk" "$INSTDIR\readme.txt"
@@ -101,11 +113,17 @@ SectionEnd
 
 Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
+  
+  ; Get adchppd version we just installed and store in $1
+  Push "adchppd.exe"
+  Call "GetAdchppdVersion"
+  Pop $1
+  
   WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\adchppd.exe"
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name) $1"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\adchppd.exe"
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "$1"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 SectionEnd
