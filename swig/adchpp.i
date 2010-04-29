@@ -14,6 +14,7 @@
 #include <adchpp/SocketManager.h>
 #include <adchpp/Hub.h>
 #include <adchpp/Bot.h>
+#include <adchpp/Text.h>
 
 using namespace adchpp;
 
@@ -65,6 +66,7 @@ void shutdown() {
 %nodefaultdtor ClientManager;
 %nodefaultdtor SocketManager;
 %nodefaultdtor LogManager;
+%nodefaultdtor Text;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
 
@@ -199,6 +201,17 @@ struct Stats {
 	static time_t startTime;
 };
 
+class Text {
+public:
+	static std::string acpToUtf8(const std::string& str) throw();
+	static std::wstring acpToWide(const std::string& str) throw();
+	static std::string utf8ToAcp(const std::string& str) throw();
+	static std::wstring utf8ToWide(const std::string& str) throw();
+	static std::string wideToAcp(const std::wstring& str) throw();
+	static std::string wideToUtf8(const std::wstring& str) throw();
+	static bool validateUtf8(const std::string& str) throw();
+};
+
 class Util
 {
 public:
@@ -244,12 +257,6 @@ public:
 	static std::string getAppName();
 
 	static std::string translateError(int aError);
-
-	static std::string toAcp(const std::wstring& wString);
-	static const std::string& toAcp(const std::string& wString);
-
-	static std::wstring toUnicode(const std::string& aString);
-	static const std::wstring& toUnicode(const std::wstring& aString);
 
 	static std::string formatBytes(const std::string& aString);
 

@@ -20,6 +20,8 @@
 
 #include "AdcCommand.h"
 
+#include "Text.h"
+
 namespace adchpp {
 
 #ifdef __GNUC__ /// @todo go figure why some GCCs need these...
@@ -124,7 +126,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
                     features = cur;
 					featureSet = true;
 				} else {
-					if(!Util::validateUtf8(cur)) {
+					if(!Text::validateUtf8(cur)) {
 						throw ParseException("Invalid UTF-8 sequence");
 					}
 					parameters.push_back(cur);
@@ -158,7 +160,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
             features = cur;
 			featureSet = true;
 		} else {
-			if(!Util::validateUtf8(cur)) {
+			if(!Text::validateUtf8(cur)) {
 				throw ParseException("Invalid UTF-8 sequence");
 			}
 			parameters.push_back(cur);

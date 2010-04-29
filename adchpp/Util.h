@@ -116,6 +116,7 @@ public:
 	ADCHPP_DLL static size_t reasons[REASON_LAST];
 
 	ADCHPP_DLL static std::string emptyString;
+	static std::wstring emptyStringW;
 
 	ADCHPP_DLL static void initialize(const std::string& configPath);
 	ADCHPP_DLL static std::string getOsVersion();
@@ -136,16 +137,6 @@ public:
 #endif
 
 	ADCHPP_DLL static std::string translateError(int aError);
-
-	ADCHPP_DLL static std::string toAcp(const std::wstring& wString);
-	static const std::string& toAcp(const std::string& wString) { return wString; }
-	static std::string& toAcp(std::string& wString) { return wString; }
-
-	ADCHPP_DLL static std::wstring toUnicode(const std::string& aString);
-	static const std::wstring& toUnicode(const std::wstring& aString) { return aString; }
-	static std::wstring& toUnicode(std::wstring& aString) { return aString; }
-
-	ADCHPP_DLL static bool validateUtf8(const std::string& str) throw();
 
 	static std::string formatBytes(const std::string& aString) { return formatBytes(toInt64(aString)); }
 
