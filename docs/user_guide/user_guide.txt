@@ -1,6 +1,6 @@
 = Getting started with ADCH++ 
 Author: Toast <swe_toast@users.sourceforge.com> 
-Document Version 0.2
+Document Version 0.2.2
 ////
 0.1 
 * Inital Documentation
@@ -12,11 +12,14 @@ Document Version 0.2
 *Removed Logo
 *Removed some unnessary pictures of the installer
 *Rewrote luascript and installation part
+0.2.2
+*Added more documentation over new features
+*Added more detailed information about how to add it as a Windows service
 ////
 
 == Installation
 
-First off you have to choose whether to run a debug or a release build of adchpp, the difference between a debug and release build is the following a debug build shows the protocol at work like session id etc.
+First off you have to choose whether to run a debug or a release build of adchpp.  The difference between a debug and release build is the following:  A debug build shows the protocol at work like session id, etc.
 
 _This is how a debug build looks_
 
@@ -119,7 +122,7 @@ All the user accounts are stored in users.txt. This guide will explain how to cr
 
 example:
 
-	[09-10-02][21:37:19] *** Connecting to adc://localhost:411
+	[09-10-02][21:37:19] *** Connecting to adc://somehub.com:411
 	[09-10-02][21:37:19] *** Connected
 	[09-10-02][21:37:19] <ADCH++> MOTD content goes here
 	[09-10-02][21:37:56] <Testuser> +regme test
@@ -136,6 +139,13 @@ Change this to:
 reconnect to the hub again and now you will have access to administrator commands so you can reg new admins inside the hub with the command:
 
 	+regnick <nick> <password> <level>
+	
+Profiles Range from 1-10
+
+* 1 registered at the hub
+* 2 registered as a vip
+* 4 registered as a op
+* 10  registered as a administrator
 
 == Scripts
 
@@ -247,6 +257,70 @@ end)
 ----
 NOTE: Additional documentation can be found at (http://adchpp.sourceforge.net/doc) for anyone that wishes to contribute scripts for ADCH\++ submit new scripts either at (https://bugs.launchpad.net/adchpp) or (http://www.adcportal.com) ADCH++ supports LUA 5.1.4 (http://www.lua.org/docs.html).
 
+=== Importing Ptokax Scripts
+
+Its also possible to import Ptokax LUA Scripts to your hub via ADCH++ Ptokax Bridge at (https://launchpad.net/adchpp-ptokax) for those that alreadly know how to script for Ptokax. This is still under development and the whole Ptokax LUA API isn't imported yet so all scripts may not work yet make sure to have your Ptokax Bridge at lastest revision to get the most usage out of it.
+
+A sample of how it can look on a px bridge installation the folder structure.
+--------------------------------------
+
+ Directory of C:\Users\Toast\Desktop\a hub\Scripts
+
+2010-04-29  10:48    <DIR>          .
+2010-04-29  10:48    <DIR>          ..
+2010-04-29  10:48    <DIR>          px
+2010-04-20  18:16            58 389 access.lua
+2010-04-18  22:11             1 439 autil.lua
+2010-04-18  22:11             3 699 example.lua
+2010-04-18  22:11             3 003 history.lua
+2010-04-18  22:11            15 808 json.lua
+2010-04-18  22:11               727 motd.lua
+2010-04-18  20:53            22 337 ptokax.lua
+2010-04-27  17:53               267 ptokax.txt
+               8 File(s)        105 669 bytes
+
+ Directory of C:\Users\Toast\Desktop\a hub\Scripts\px
+
+2010-04-29  10:48    <DIR>          .
+2010-04-29  10:48    <DIR>          ..
+2010-04-27  16:00             3 695 px_badsearch.lua
+2010-04-27  14:00             3 886 px_banner.lua
+2010-04-27  14:12             4 396 px_change.lua
+2010-04-27  16:00             7 259 px_clock.lua
+2010-04-27  14:06             2 723 px_iprange.lua
+2010-04-27  14:30             6 016 px_lastip.lua
+2010-04-27  14:53            11 899 px_minchecker.lua
+2010-04-27  16:00            10 615 px_pmblock.lua
+2010-04-27  15:07             3 333 px_pmfilter.lua
+2010-04-27  16:00             4 504 px_profiles.lua
+2010-04-27  14:17            10 916 px_request.lua
+2010-04-27  14:47            32 745 px_rlsbot.lua
+2010-04-27  14:20            10 743 px_rotating.lua
+2010-04-27  16:00                53 px_test.lua
+2010-04-27  14:59            14 276 px_userdb.lua
+              15 File(s)        127 059 bytes
+--------------------------------------
+
+This is how you load the multiple scripts file in ptokax.txt configuration file. (just a sample your structure may differ)
+
+--------------------------------------
+px\px_banner.lua
+px\px_iprange.lua
+px\px_change.lua
+px\px_request.lua
+px\px_rotating.lua
+px\px_lastip.lua
+px\px_rlsbot.lua
+px\px_minchecker.lua
+px\px_userdb.lua
+px\px_pmfilter.lua
+px\px_test.lua
+px\px_profiles.lua
+px\px_pmblock.lua
+px\px_clock.lua
+px\px_badsearch.lua
+--------------------------------------
+
 == Working with hub commands
 
 A simple way to find out how stuff works is by typing +help as we promised the guide will show additional configuration you should type
@@ -259,15 +333,28 @@ example:
 
 List of all settings variables:
 
+	address - current value: somehub.com:411 - host address (DNS or IP) (aliases: dns, host)
+	allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow
+	allowreg - current value: 1 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
+	botcid - current value: ATITJHKGRUVK52LFUZFH7Z2ML5SP4FU6PUBGRZQ - CID of the bot, restart the hub after the change (aliases: botid)
+	botdescription - current value: I am a bot - description of the hub bot (aliases: botde, botdescr)
+	botemail - current value:  - e-mail of the hub bot (aliases: botem, botmail)
+	botname - current value: Hubbot - name of the hub bot (aliases: botni, botnick)
+	description - just a hub - hub description (aliases: hubdescription)
 	history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
 	history_max - current value: 500 - number of messages to keep for +history
-	history_prefix - current value: [%Y-%m-%d %H:%M:%S] - prefix to put before each message in +history
-	hubname - current value: DCDev Public - hub name (aliases: changehubname, sethubname)
-	maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
-	maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, usermax, user_max, usersmax, users_max)
-	topic - current value: get your build today at http://builds.adcportal.com - hub topic (aliases: changetopic, hubdescription, hubtopic, settopic)
+	history_prefix - current value: [%Y-%m-%d %H:%M:%S]  - prefix to put before each message in +history
+	axmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
+	maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
+	maxusers - current value: 0 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
+	name - current value: A Hub - hub name (aliases: hubname)
+	network - current value: N/A
+	owner - current value: Someone - owner name (aliases: ownername)
+	passinlist - current value: 0 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
+	topic - current value: A Topic - hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists (aliases: hubtopic)
+	website - current value:  N/A (aliases: url)
 
-These are all settings stored in settings.txt.
+These are all settings stored in settings.txt thats in the config dir in your adchpp installation.
 
 === Setting the hub to private
 
@@ -306,11 +393,6 @@ RCM = reverse ctm
 SCH = search
 MSG = message
 
-Profiles levels range from 1-10
-
-1 being registered on server
-10 being hub administrator
-
 === Working with banmsgre
 
 This is a very powerful system for getting rid of unwanted spam, it uses regular expressions for detecting unwanted content in your hub it requires knowledge of how to write a regular expression string so it might not be for the beginners.
@@ -343,6 +425,33 @@ http://www.regular-expressions.info/
 	adchppd -d
 	(Windows)
 	adchppd.exe -i adchpp
+
+Installing ADCH++ as a service requires it to be run in an elevated state as UAC will interfere in the process if its not executed as an administrator if its a Windows 7 or Vista machine its running on this is how you elevate adchpp.exe in Windows 7/Vista
+
+
+How it would look if it fails
+
+image:images/img_adch_elevated_fail.png[]
+
+* Right click on the application
+* Choose properties
+* Go to compatibility tab
+
+image:images/img_adch_elevated_howto.png[]
+
+* Now execute the command adchpp - i <servicename> (example: adchpp.exe -i myserver) in your adchpp folder
+* Grant the application access if you have UAC enabled
+
+
+Now to verify that the installation of the service was a success we can check what services is installed via the control panel via (Control Panel\System and Security\Administrative Tools).
+
+image:images/img_adch_service_location.png[]
+
+To check if its there or not start the "services" application in administrative tools 
+
+image:images/img_adch_service_verify.png[]
+
+So whats the difference between running as a program and as a service will basically if you wanna see the dos window or not so if you annoy yourself over a dos window run as a service instead.
 	
 == Issues and problems
 Not every software is perfect they all got flaws and can preform wierd or unwanted features and its very important that the developer is aware of such features, 
@@ -414,7 +523,7 @@ https://answers.launchpad.net/adchpp you could additionally use ADCPortal also f
 
 *ADCS* - ADCS is an extension that has the goal of adding the TLS/SSL layer just over the TCP layer and beneath the application layer (where ADC runs). This way, the ADC protocol remains unchanged while the connections are encrypted.
 
-NOTE: _All of these extensions are early implementations not final since they are in draft mode (2009-10-15)_
+NOTE: _Some of these extensions are early implementations not final since they are in draft mode (2009-10-15)_
 
 == Compiling and testing
 
@@ -447,7 +556,7 @@ IMPORTANT: ADCH\++ requires Microsoft Visual C++ 9.0 (2008) SP1 Hotfix to compil
 We have an open bzr repository that we use for publishing the source to ADCH++ its located at launchpad https://code.launchpad.net/adchpp
 
 It requires that you the user have bzr tools installed
-http://bazaar-vcs.org/en/
+http://bazaar-vcs.org/
 
 we also have a build archive for windows users that don't want to install a lot of compile tools themselves its located at
 http://builds.adcportal.com/
