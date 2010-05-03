@@ -36,6 +36,7 @@ public:
 	static const std::string className;
 
 private:
+	friend class LuaEngine;
 	LuaEngine* getEngine() const;
 	std::string filename;
 };

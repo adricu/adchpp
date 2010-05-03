@@ -54,7 +54,7 @@ Bot* ClientManager::createBot(const Bot::SendHandler& handler) {
 
 void ClientManager::regBot(Bot& bot) {
 	enterIdentify(bot, false);
-	enterNormal(bot, false, false);
+	enterNormal(bot, false, true);
 	cids.insert(make_pair(bot.getCID(), &bot));
 	nicks.insert(make_pair(bot.getField("NI"), &bot));
 }
@@ -494,9 +494,11 @@ bool ClientManager::enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw
 		for(EntityIter i = entities.begin(); i != entities.end(); ++i) {
 			c.send(i->second->getINF());
 		}
+	}
 
-		if(sendOwnInf) {
-			sendToAll(c.getINF());
+	if(sendOwnInf) {
+		sendToAll(c.getINF());
+		if(sendData) {
 			c.send(c.getINF());
 		}
 	}

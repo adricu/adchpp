@@ -28,14 +28,16 @@ class LuaEngine : public Engine {
 public:
 	LuaEngine();
 	virtual ~LuaEngine();
-	
+
 	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters);
 	virtual void unloadScript(Script* script);
-	
+
 	virtual void getStats(std::string& str) const;
 
 private:
 	friend class LuaScript;
+
+	bool call(const std::string& f, const std::string& arg);
 
 	lua_State* l;
 

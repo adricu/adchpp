@@ -48,6 +48,7 @@ LuaScript::LuaScript(Engine* engine) : Script(engine) {
 }
 
 LuaScript::~LuaScript() {
+	getEngine()->call("unloaded", filename);
 }
 
 void LuaScript::loadFile(const string& path, const string& filename_) {
@@ -65,6 +66,8 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 		LOG(className, "Loaded " + filename);
 	}
 	chdir(old_dir);
+
+	getEngine()->call("loaded", filename);
 }
 
 void LuaScript::getStats(string& str) const {

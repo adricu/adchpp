@@ -1,5 +1,14 @@
 %module luadchpp
 
+/*
+in addition to the elements defined here and in adchpp.i, the Lua interface also includes:
+- scriptPath: absolute path to the script directory (not necessarily the current dir).
+- loaded(filename), unloaded(filename): functions called (if they exist in the global environment)
+after a script has been loaded or unloaded.
+- loading(filename), unloading(filename): functions called (if they exist in the global environment)
+before a script is being loaded or unloaded. return true to discard further processing.
+*/
+
 typedef unsigned int size_t;
 
 %wrapper %{
@@ -168,6 +177,14 @@ private:
 	std::tr1::shared_ptr<RegistryItem> registryItem;
 };
 
+static int exec(lua_State* L) {
+	void* p;
+	if(SWIG_IsOK(SWIG_ConvertPtr(L, lua_upvalueindex(1), &p, SWIGTYPE_p_std__tr1__functionT_void_fF_t, 0))) {
+		(*reinterpret_cast<std::tr1::function<void ()>*>(p))();
+	}
+	return 0;
+}
+
 %}
 
 %typemap(in, checkfn="lua_isnumber") int64_t,uint64_t,const int64_t&, const uint64_t&,
@@ -182,6 +199,12 @@ uint32_t, const uint32_t&
 
 %typemap(in) std::tr1::function<void () > {
 	$1 = LuaFunction(L);
+}
+
+%typemap(out) std::tr1::function<void ()> {
+	SWIG_NewPointerObj(L, new std::tr1::function<void ()>($1), SWIGTYPE_p_std__tr1__functionT_void_fF_t, 1);
+	lua_pushcclosure(L, exec, 1);
+	SWIG_arg++;
 }
 
 %typemap(in) std::tr1::function<void (adchpp::Entity &) > {

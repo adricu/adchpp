@@ -15,6 +15,7 @@
 #include <adchpp/Hub.h>
 #include <adchpp/Bot.h>
 #include <adchpp/Text.h>
+#include <adchpp/version.h>
 
 using namespace adchpp;
 
@@ -114,6 +115,10 @@ typedef ServerInfo::TLSInfo TLSInfo;
 
 namespace adchpp {
 
+extern std::string appName;
+extern std::string versionString;
+extern float versionFloat;
+
 class BufferPtr;
 
 void initialize(const std::string& configPath);
@@ -151,11 +156,11 @@ public:
 		- SWIG fails to convert a script function to const Callback&.
 		- SWIG has trouble choosing the overload of addJob to use.
 		*/
-		void addJob(const long msec, Callback callback) {
-			self->addJob(msec, callback);
+		Callback addJob(const long msec, Callback callback) {
+			return self->addJob(msec, callback);
 		}
-		void addJob_str(const std::string& time, Callback callback) {
-			self->addJob(time, callback);
+		Callback addJob_str(const std::string& time, Callback callback) {
+			return self->addJob(time, callback);
 		}
 	}
 

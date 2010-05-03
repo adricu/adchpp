@@ -228,18 +228,19 @@ void SocketManager::addJob(const Callback& callback) throw() {
 	io.post(callback);
 }
 
-void SocketManager::addJob(const long msec, const Callback& callback) {
-	addJob(boost::posix_time::milliseconds(msec), callback);
+SocketManager::Callback SocketManager::addJob(const long msec, const Callback& callback) {
+	return addJob(boost::posix_time::milliseconds(msec), callback);
 }
 
-void SocketManager::addJob(const std::string& time, const Callback& callback) {
-	addJob(boost::posix_time::duration_from_string(time), callback);
+SocketManager::Callback SocketManager::addJob(const std::string& time, const Callback& callback) {
+	return addJob(boost::posix_time::duration_from_string(time), callback);
 }
 
-void SocketManager::addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback) {
+SocketManager::Callback SocketManager::addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback) {
 	timer_ptr timer(new timer_ptr::element_type(io, duration));
 	timer->async_wait(std::tr1::bind(&SocketManager::handleWait, this, timer, std::tr1::placeholders::_1,
 		new Callback(callback))); // create a separate callback on the heap to avoid shutdown crashes
+	return std::tr1::bind(&SocketManager::cancelTimer, this, timer);
 }
 
 void SocketManager::handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback) {
@@ -248,6 +249,13 @@ void SocketManager::handleWait(timer_ptr timer, const boost::system::error_code&
 		(*callback)();
 	}
 	delete callback;
+}
+
+void SocketManager::cancelTimer(timer_ptr timer) {
+	if(timer.get()) {
+		boost::system::error_code ec;
+		timer->cancel(ec);
+	}
 }
 
 void SocketManager::startup() throw(ThreadException) {

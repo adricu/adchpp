@@ -96,7 +96,7 @@ local math = base.require('math')
 
 local start_time = os.time()
 
-local users = {}
+users = {}
 users.nicks = {}
 users.cids = {}
 
@@ -111,6 +111,7 @@ bans.muted = {}
 local stats = {}
 
 local cm = adchpp.getCM()
+local lm = adchpp.getLM()
 local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
@@ -140,6 +141,10 @@ settings = {}
 --                 ** params: list of arguments to be passed to this command for all menus.
 --                 ** user_params: list of arguments to be passed to this command for user menus.
 commands = {}
+
+local function log(message)
+	lm:log(_NAME, message)
+end
 
 local function description_change()
 	local description = settings.topic.value
@@ -383,7 +388,7 @@ local function load_users()
 
 	local file = io.open(users_file, "r")
 	if not file then
-		base.print("Unable to open " .. users_file .. ", users not loaded")
+		log("Unable to open " .. users_file .. ", users not loaded")
 		return
 	end
 
@@ -396,7 +401,7 @@ local function load_users()
 
 	local userok, userlist = base.pcall(json.decode, str)
 	if not userok then
-		base.print("Unable to decode users file: " .. userlist)
+		log("Unable to decode users file: " .. userlist)
 		return
 	end
 
@@ -413,7 +418,7 @@ end
 local function save_users()
 	local file = io.open(users_file, "w")
 	if not file then
-		base.print("Unable to open " .. users_file .. ", users not saved")
+		log("Unable to open " .. users_file .. ", users not saved")
 		return
 	end
 
@@ -424,7 +429,7 @@ end
 local function load_settings()
 	local file = io.open(settings_file, "r")
 	if not file then
-		base.print("Unable to open " .. settings_file .. ", settings not loaded")
+		log("Unable to open " .. settings_file .. ", settings not loaded")
 		return false
 	end
 
@@ -437,7 +442,7 @@ local function load_settings()
 
 	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		base.print("Unable to decode settings file: " .. list)
+		log("Unable to decode settings file: " .. list)
 		return false
 	end
 
@@ -457,7 +462,7 @@ end
 local function save_settings()
 	local file = io.open(settings_file, "w")
 	if not file then
-		base.print("Unable to open " .. settings_file .. ", settings not saved")
+		log("Unable to open " .. settings_file .. ", settings not saved")
 		return
 	end
 
@@ -480,7 +485,7 @@ local function load_bans()
 
 	local file = io.open(bans_file, "r")
 	if not file then
-		base.print("Unable to open " .. bans_file .. ", bans not loaded")
+		log("Unable to open " .. bans_file .. ", bans not loaded")
 		return
 	end
 
@@ -493,7 +498,7 @@ local function load_bans()
 
 	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		base.print("Unable to decode bans file: " .. list)
+		log("Unable to decode bans file: " .. list)
 		return
 	end
 
@@ -523,7 +528,7 @@ end
 local function save_bans()
 	local file = io.open(bans_file, "w")
 	if not file then
-		base.print("Unable to open " .. bans_file .. ", bans not saved")
+		log("Unable to open " .. bans_file .. ", bans not saved")
 		return
 	end
 
@@ -637,7 +642,7 @@ local function update_user(user, cid, nick)
 	return true
 end
 
-local function register_user(cid, nick, password, level)
+function register_user(cid, nick, password, level)
 	local user = make_user(cid, nick, password, level)
 	if nick then
 		users.nicks[nick] = user
@@ -788,7 +793,9 @@ local function onSUP(c, cmd)
 
 	-- imitate ClientManager::enterIdentify
 
-	base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. " entering IDENTIFY (supports 'PING')")
+	if string.match(adchpp.versionString, 'Debug$') then
+		base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. " entering IDENTIFY (supports 'PING')")
+	end
 
 	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
 
@@ -1512,6 +1519,7 @@ commands.mypass = {
 		if user then
 			-- already regged
 			user.password = parameters
+			base.pcall(save_users)
 			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 
 		elseif settings.allowreg.value ~= 0 then
@@ -1522,8 +1530,6 @@ commands.mypass = {
 			autil.reply(c, "You are not allowed to register by yourself; ask an operator to do it for you")
 			return
 		end
-
-		base.pcall(save_users)
 	end,
 
 	help = "new_pass - change your password, make sure you change it in your client options too",
@@ -2257,22 +2263,20 @@ if not base.pcall(load_settings) then
 end
 base.pcall(load_bans)
 
--- see if our bot is already regged (eg after +reload)
-bot = cm:findByCID(adchpp.CID(settings.botcid.value))
-if bot then
-	bot = bot:asBot()
-else
-	bot = cm:createSimpleBot()
-	bot:setCID(adchpp.CID(settings.botcid.value))
-	bot:setField("ID", settings.botcid.value)
-	bot:setField("NI", settings.botname.value)
-	bot:setField("DE", settings.botdescription.value)
-	bot:setField("EM", settings.botemail.value)
-	bot:setFlag(adchpp.Entity_FLAG_OP)
-	bot:setFlag(adchpp.Entity_FLAG_SU)
-	bot:setFlag(adchpp.Entity_FLAG_OWNER)
-	cm:regBot(bot)
-end
+bot = cm:createSimpleBot()
+bot:setCID(adchpp.CID(settings.botcid.value))
+bot:setField("ID", settings.botcid.value)
+bot:setField("NI", settings.botname.value)
+bot:setField("DE", settings.botdescription.value)
+bot:setField("EM", settings.botemail.value)
+bot:setFlag(adchpp.Entity_FLAG_OP)
+bot:setFlag(adchpp.Entity_FLAG_SU)
+bot:setFlag(adchpp.Entity_FLAG_OWNER)
+cm:regBot(bot)
+
+autil.on_unloaded(_NAME, function()
+	bot:disconnect(adchpp.Util_REASON_PLUGIN)
+end)
 
 table.foreach(extensions, function(_, extension)
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))

@@ -6,6 +6,8 @@ module("autil")
 
 base.require('luadchpp')
 local adchpp = base.luadchpp
+local string = base.require('string')
+local table = base.require('table')
 
 ucmd_sep = "/"
 
@@ -56,4 +58,64 @@ function dump(c, code, params)
 
 	c:send(cmd)
 	c:disconnect(adchpp.Util_REASON_PLUGIN)
+end
+
+local function file_of_name(file, name)
+	return string.sub(file, -4 - #name) == name .. '.lua'
+end
+
+local loading = {}
+function on_loading(name, f)
+	table.insert(loading, { name = name, f = f })
+end
+base.loading = function(file)
+	local ret = false
+	for _, v in base.pairs(loading) do
+		if file_of_name(file, v.name) then
+			if v.f() then
+				ret = true
+			end
+		end
+	end
+	return ret
+end
+
+local loaded = {}
+function on_loaded(name, f)
+	table.insert(loaded, { name = name, f = f })
+end
+base.loaded = function(file)
+	for _, v in base.pairs(loaded) do
+		if file_of_name(file, v.name) then
+			v.f()
+		end
+	end
+end
+
+local unloading = {}
+function on_unloading(name, f)
+	table.insert(unloading, { name = name, f = f })
+end
+base.unloading = function(file)
+	local ret = false
+	for _, v in base.pairs(unloading) do
+		if file_of_name(file, v.name) then
+			if v.f() then
+				ret = true
+			end
+		end
+	end
+	return ret
+end
+
+local unloaded = {}
+function on_unloaded(name, f)
+	table.insert(unloaded, { name = name, f = f })
+end
+base.unloaded = function(file)
+	for _, v in base.pairs(unloaded) do
+		if file_of_name(file, v.name) then
+			v.f()
+		end
+	end
 end

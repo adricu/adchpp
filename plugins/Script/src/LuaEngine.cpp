@@ -80,6 +80,9 @@ LuaEngine::~LuaEngine() {
 Script* LuaEngine::loadScript(const string& path, const string& filename, const ParameterMap&) {
 	setScriptPath(l, File::makeAbsolutePath(path));
 
+	if(call("loading", filename))
+		return 0;
+
 	LuaScript* script = new LuaScript(this);
 	script->loadFile(path, filename);
 	scripts.push_back(script);
@@ -87,6 +90,9 @@ Script* LuaEngine::loadScript(const string& path, const string& filename, const 
 }
 
 void LuaEngine::unloadScript(Script* s) {
+	if(call("unloading", dynamic_cast<LuaScript*>(s)->filename))
+		return;
+
 	scripts.erase(remove(scripts.begin(), scripts.end(), s), scripts.end());
 	delete s;
 }
@@ -96,4 +102,20 @@ void LuaEngine::getStats(string& str) const {
 	for(vector<LuaScript*>::const_iterator i = scripts.begin(); i != scripts.end(); ++i) {
 		(*i)->getStats(str);
 	}
+}
+
+bool LuaEngine::call(const string& f, const string& arg) {
+	lua_getfield(l, LUA_GLOBALSINDEX, f.c_str());
+	if(!lua_isfunction(l, -1)) {
+		lua_pop(l, 1);
+		return false;
+	}
+
+	lua_pushstring(l, arg.c_str());
+
+	lua_call(l, 1, 1);
+
+	bool ret = lua_toboolean(l, -1);
+	lua_pop(l, 1);
+	return ret;
 }
