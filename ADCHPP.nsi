@@ -11,11 +11,12 @@
 Function GetAdchppdVersion
 	Exch $0
 	GetDllVersion "$INSTDIR\$0" $R0 $R1
-	IntOp $R2 $R0 / 0x00010000
+	IntOp $R2 $R0 >> 16
+	IntOp $R2 $R2 & 0x0000FFFF
 	IntOp $R3 $R0 & 0x0000FFFF
-	IntOp $R4 $R1 / 0x00010000
-	IntOp $R5 $R1 & 0x0000FFFF
-	StrCpy $1 "$R3.$R4"
+	IntOp $R4 $R1 >> 16
+	IntOp $R4 $R4 & 0x0000FFFF
+	StrCpy $1 "$R2.$R3.$R4"
 	Exch $1
 FunctionEnd
 
@@ -54,7 +55,7 @@ SetCompressor lzma
 ; MUI end ------
 
 Name "${PRODUCT_NAME}"
-OutFile "ADCH++.xxx.exe"
+OutFile "ADCHPP-xxx.exe"
 InstallDir "$PROGRAMFILES\ADCH++"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
@@ -63,38 +64,36 @@ ShowUnInstDetails show
 Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite ifnewer
-  File "adchppd.exe"
-  File "adchpp.dll"
+  File "aboost_date_time.dll"
   File "aboost_system.dll"
-  File "Bloom.dll"
+  File "adchpp.dll"
+  File "adchppd.exe"
   File "alua.dll"
+  File "Bloom.dll"
   File "changelog.txt"
+  File "libgcc_s_dw2-1.dll"
+  File "libstdc++-6.dll"
   File "License.txt"
   File "luadchpp.dll"
+  File "pyadchpp.py"
   File "Script.dll"
   File "readme.txt"
-  File "libgcc.dll"
-  File "libstdc++.dll"
   CreateShortCut "$DESKTOP\ADCH++.lnk" "$INSTDIR\adchppd.exe"
   CreateDirectory "$SMPROGRAMS\ADCH++"
   CreateShortCut "$SMPROGRAMS\ADCH++\ADCH++ Help.lnk" "$INSTDIR\readme.txt"
   CreateShortCut "$SMPROGRAMS\ADCH++\Install ADCH++ as windows service.lnk" "$INSTDIR\adchppd.exe" "-i adchppd"
   CreateShortCut "$SMPROGRAMS\ADCH++\Remove ADCH++ windows service.lnk" "$INSTDIR\adchppd.exe" "-u adchppd"
   SetOutPath "$INSTDIR\Scripts"
-  File "scripts\access.lua"
-  File "scripts\json.lua"
-  File "scripts\autil.lua"
-  File "scripts\history.lua"
-  File "scripts\motd.lua"
+  File "Scripts\access.lua"
+  File "Scripts\autil.lua"
+  File "Scripts\example.lua"
+  File "Scripts\history.lua"
+  File "Scripts\json.lua"
+  File "Scripts\motd.lua"
   SetOverwrite off
   SetOutPath "$INSTDIR\config"
   File "config\adchpp.xml"
   File "config\Script.xml"
-  File "config\users.txt"
-  File "config\bans.txt"
-  File "config\history.txt"
-  File "config\motd.txt"
-  File "config\settings.txt"
 SectionEnd
 
 Section -AdditionalIcons
@@ -106,7 +105,7 @@ Section -AdditionalIcons
 SectionEnd
 
 Section -Service
-  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to install ADCH++ as service ?" IDYES Service IDNO End
+  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to install ADCH++ as a service?" IDYES Service IDNO End
   Service: Exec '"$INSTDIR\adchppd.exe" -i adchppd'
   End:
 SectionEnd
@@ -145,7 +144,7 @@ Section -un.Service
 SectionEnd
 
 Section -un.remSettings
-  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to remove all ADCH++ configuration and accounts ?" IDYES Remove IDNO NoRemove
+  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to remove all ADCH++ configuration and accounts?" IDYES Remove IDNO NoRemove
   Remove: Delete "$INSTDIR\config\users.txt"
   Delete "$INSTDIR\config\history.txt"
   Delete "$INSTDIR\config\settings.txt"
@@ -158,22 +157,27 @@ SectionEnd
 
 Section Uninstall
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
-  Delete "$INSTDIR\uninst.exe"
-  Delete "$INSTDIR\Scripts\json.lua"
-  Delete "$INSTDIR\Scripts\access.lua"
-  Delete "$INSTDIR\Scripts\autil.lua"
-  Delete "$INSTDIR\Scripts\history.lua"
-  Delete "$INSTDIR\Scripts\motd.lua"
-  Delete "$INSTDIR\Script.dll"
-  Delete "$INSTDIR\readme.txt"
-  Delete "$INSTDIR\luadchpp.dll"
-  Delete "$INSTDIR\License.txt"
-  Delete "$INSTDIR\changelog.txt"
-  Delete "$INSTDIR\Bloom.dll"
-  Delete "$INSTDIR\alua.dll"
+  Delete "$INSTDIR\aboost_date_time.dll"
   Delete "$INSTDIR\aboost_system.dll"
   Delete "$INSTDIR\adchpp.dll"
   Delete "$INSTDIR\adchppd.exe"
+  Delete "$INSTDIR\alua.dll"
+  Delete "$INSTDIR\Bloom.dll"
+  Delete "$INSTDIR\changelog.txt"
+  Delete "$INSTDIR\libgcc_s_dw2-1.dll"
+  Delete "$INSTDIR\libstdc++-6.dll"
+  Delete "$INSTDIR\License.txt"
+  Delete "$INSTDIR\luadchpp.dll"
+  Delete "$INSTDIR\pyadchpp.py"
+  Delete "$INSTDIR\Script.dll"
+  Delete "$INSTDIR\readme.txt"
+  Delete "$INSTDIR\Scripts\access.lua"
+  Delete "$INSTDIR\Scripts\autil.lua"
+  Delete "$INSTDIR\Scripts\example.lua"
+  Delete "$INSTDIR\Scripts\history.lua"
+  Delete "$INSTDIR\Scripts\json.lua"
+  Delete "$INSTDIR\Scripts\motd.lua"
+  Delete "$INSTDIR\uninst.exe"
 
   Delete "$SMPROGRAMS\ADCH++\Uninstall.lnk"
   Delete "$SMPROGRAMS\ADCH++\ADCH++.lnk"

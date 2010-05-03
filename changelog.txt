@@ -1,3 +1,4 @@
+-- 2.5.0 2010-05-03 --
 * Improve Lua scripts: various bug fixes, support PING
 * Clients are disconnected with the DI flag of QUI
 * Update to Lua 5.1.4

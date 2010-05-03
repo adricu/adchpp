@@ -2,8 +2,8 @@
 
 #define VS_VERSION_INFO 1
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2,5,0
- PRODUCTVERSION 0,2,5,0
+ FILEVERSION 2,5,0,0
+ PRODUCTVERSION 2,5,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -20,12 +20,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "http://adchpp.sourceforge.net"
             VALUE "FileDescription", "ADCH++"
-            VALUE "FileVersion", "0, 2, 5, 0"
+            VALUE "FileVersion", "2, 5, 0, 0"
             VALUE "InternalName", "ADCH++"
             VALUE "LegalCopyright", "Copyright 2006-2010 Jacek Sieka"
             VALUE "OriginalFilename", "adchppd.exe"
             VALUE "ProductName", "ADCH++"
-            VALUE "ProductVersion", "0, 2, 5, 0"
+            VALUE "ProductVersion", "2, 5, 0, 0"
         END
     END
     BLOCK "VarFileInfo"
