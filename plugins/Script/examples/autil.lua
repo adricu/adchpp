@@ -15,6 +15,10 @@ function ucmd_line(str)
 	return "%[line:" .. str .. "]"
 end
 
+function ucmd_list(title, options, selected)
+	return ucmd_line(title .. "/" .. base.tostring(selected or 0) .. "/" .. table.concat(options, "/"))
+end
+
 function info(m)
 	return adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	:addParam(m)

@@ -112,7 +112,9 @@ local sm = adchpp.getSM()
 local saltsHandle = pm:registerByteVectorData()
 
 -- forward declarations.
-local format_seconds, verify_info
+local format_seconds, cut_str,
+send_user_commands, remove_user_commands, regen_cfg_list,
+verify_info
 
 -- Settings loaded and saved by the main script. Possible fields each setting can contain:
 -- * alias: other names that can also be used to reach this setting.
@@ -484,6 +486,8 @@ local function load_settings()
 		end
 	end
 
+	regen_cfg_list()
+
 	return true
 end
 
@@ -760,6 +764,97 @@ local function dump_banned(c, ban)
 	end)
 end
 
+local function get_ucmd_name(k, v)
+	if v.user_command and v.user_command.name then
+		return v.user_command.name
+	else
+		return string.upper(string.sub(k, 1, 1)) .. string.sub(k, 2)
+	end
+end
+
+send_user_commands = function(c)
+	local names = {}
+	local list = {}
+	for k, v in base.pairs(commands) do
+		if (not v.protected) or (v.protected and v.protected(c)) then
+			local name = get_ucmd_name(k, v)
+			table.insert(list, name)
+			names[name] = k
+		end
+	end
+	table.sort(list)
+
+	local function send_ucmd(name, internal_name, command, context)
+		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+		ucmd:addParam(settings.menuname.value .. autil.ucmd_sep .. name)
+
+		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
+		local str = "+" .. internal_name
+
+		local params = nil
+		if context == 1 and command.user_command and command.user_command.hub_params then
+			params = command.user_command.hub_params
+		elseif context == 2 and command.user_command and command.user_command.user_params then
+			params = command.user_command.user_params
+		elseif command.user_command and command.user_command.params then
+			params = command.user_command.params
+		end
+		if params then
+			for _, param in base.ipairs(params) do
+				str = str .. " " .. param
+			end
+		end
+
+		back_cmd:addParam(str)
+		ucmd:addParam("TT", back_cmd:toString())
+
+		ucmd:addParam("CT", base.tostring(context))
+
+		c:send(ucmd)
+	end
+
+	for _, name in base.ipairs(list) do
+		local internal_name = names[name]
+		local command = commands[internal_name]
+
+		local hub_sent = false
+		if command.user_command and command.user_command.hub_params then
+			send_ucmd(name, internal_name, command, 1)
+			hub_sent = true
+		end
+
+		local user_sent = false
+		if command.user_command and command.user_command.user_params then
+			send_ucmd(name, internal_name, command, 2)
+			user_sent = true
+		end
+
+		if (not hub_sent) and (not user_sent) then
+			send_ucmd(name, internal_name, command, 3)
+		elseif not hub_sent then
+			send_ucmd(name, internal_name, command, 1)
+		elseif not user_sent then
+			send_ucmd(name, internal_name, command, 2)
+		end
+	end
+end
+
+remove_user_commands = function(c)
+	local function send_ucmd(name, context)
+		c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+		:addParam(settings.menuname.value .. autil.ucmd_sep .. name)
+		:addParam("RM", "1")
+		:addParam("CT", base.tostring(context)))
+	end
+
+	for k, v in base.pairs(commands) do
+		local name = get_ucmd_name(k, v)
+		send_ucmd(name, 1)
+		send_ucmd(name, 2)
+		send_ucmd(name, 3)
+	end
+end
+
 verify_info = function(c, cid, nick)
 	if not cid or #cid == 0 then
 		cid = c:getCID():toBase32()
@@ -982,6 +1077,47 @@ format_seconds = function(t)
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
 end
 
+cut_str = function(str, max)
+	if #str > max - 3 then
+		return string.sub(str, 1, max - 3) .. "..."
+	end
+	return str
+end
+
+local function gen_cfg_list()
+	local list = {}
+	for k, v in base.pairs(settings) do
+		local help = v.help
+		if not help then
+			help = "no information"
+		end
+		local value = cut_str(base.tostring(v.value), 10)
+		value = string.gsub(value, "[\n\r\t <>]+", " ")
+		table.insert(list, k .. ": " .. cut_str(help, 20) .. " <" .. value .. ">")
+	end
+	table.sort(list)
+	commands.cfg.user_command.params[1] = autil.ucmd_list("Name of the setting to change", list)
+end
+
+regen_cfg_list = function()
+	gen_cfg_list()
+
+	-- remove the previous user command from currently connected users and add the new one
+	local entities = cm:getEntities()
+	local size = entities:size()
+	if size > 0 then
+		for i = 0, size - 1 do
+			local c = entities[i]:asClient()
+			if c and (
+				c:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or c:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
+				) then
+				remove_user_commands(c)
+				send_user_commands(c)
+			end
+		end
+	end
+end
+
 commands.cfg = {
 	alias = { changecfg = true, changeconfig = true, config = true, var = true, changevar = true, setvar = true, setcfg = true, setconfig = true },
 
@@ -994,6 +1130,17 @@ commands.cfg = {
 		if not name then
 			autil.reply(c, "You need to supply a variable name")
 			return
+		end
+
+		if string.sub(name, #name) == ":" then
+			-- get rid of additional info for the UCMD list
+			local found, _, params = string.find(parameters, "^[^>]+> (.+)")
+			if not found then
+				autil.reply(c, "Invalid parameters")
+				return
+			end
+			name = string.sub(name, 1, #name - 1)
+			value = params
 		end
 
 		local setting = nil
@@ -1047,6 +1194,7 @@ commands.cfg = {
 			setting.change()
 		end
 		base.pcall(save_settings)
+		regen_cfg_list()
 		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
 	end,
 
@@ -1078,11 +1226,13 @@ commands.cfg = {
 	user_command = {
 		name = "Hub management" .. autil.ucmd_sep .. "Change a setting",
 		params = {
-			autil.ucmd_line("Name of the setting to change"),
+			'', -- will be set by gen_cfg_list
 			autil.ucmd_line("New value for the setting")
 		}
 	}
 }
+
+gen_cfg_list()
 
 commands.help = {
 	command = function(c, parameters)
@@ -2187,78 +2337,6 @@ local function onReceive(entity, cmd, ok)
 	end
 
 	return true
-end
-
-local function send_user_commands(c)
-	local names = {}
-	local list = {}
-	for k, v in base.pairs(commands) do
-		if (not v.protected) or (v.protected and v.protected(c)) then
-			local name
-			if v.user_command and v.user_command.name then
-				name = v.user_command.name
-			else
-				name = string.upper(string.sub(k, 1, 1)) .. string.sub(k, 2)
-			end
-			table.insert(list, name)
-			names[name] = k
-		end
-	end
-	table.sort(list)
-
-	local send_ucmd = function(c, name, internal_name, command, context)
-		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-		ucmd:addParam(settings.menuname.value .. autil.ucmd_sep .. name)
-
-		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
-		local str = "+" .. internal_name
-
-		local params = nil
-		if context == 1 and command.user_command and command.user_command.hub_params then
-			params = command.user_command.hub_params
-		elseif context == 2 and command.user_command and command.user_command.user_params then
-			params = command.user_command.user_params
-		elseif command.user_command and command.user_command.params then
-			params = command.user_command.params
-		end
-		if params then
-			for _, param in base.ipairs(params) do
-				str = str .. " " .. param
-			end
-		end
-
-		back_cmd:addParam(str)
-		ucmd:addParam("TT", back_cmd:toString())
-
-		ucmd:addParam("CT", base.tostring(context))
-
-		c:send(ucmd)
-	end
-
-	for _, name in base.ipairs(list) do
-		local internal_name = names[name]
-		local command = commands[internal_name]
-
-		local hub_sent = false
-		if command.user_command and command.user_command.hub_params then
-			send_ucmd(c, name, internal_name, command, 1)
-			hub_sent = true
-		end
-
-		local user_sent = false
-		if command.user_command and command.user_command.user_params then
-			send_ucmd(c, name, internal_name, command, 2)
-			user_sent = true
-		end
-
-		if (not hub_sent) and (not user_sent) then
-			send_ucmd(c, name, internal_name, command, 3)
-		elseif not hub_sent then
-			send_ucmd(c, name, internal_name, command, 1)
-		elseif not user_sent then
-			send_ucmd(c, name, internal_name, command, 2)
-		end
-	end
 end
 
 base.pcall(load_users)
