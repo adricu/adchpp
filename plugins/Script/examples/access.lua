@@ -19,11 +19,6 @@ local settings_file = adchpp.Util_getCfgPath() .. "settings.txt"
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
 
--- Users with level lower than the specified will not be allowed to run command at all
-local command_min_levels = {
---	[adchpp.AdcCommand_CMD_MSG] = 2
-}
-
 -- Users with a level equal to or above the one specified here are operators
 level_op = 2
 
@@ -35,7 +30,6 @@ local cid_regex = "^" .. string.rep("[A-Z2-7]", 39) .. "$" -- No way of expressi
 local pid_regex = cid_regex
 local sid_regex = "^" .. string.rep("[A-Z2-7]", 4) .. "$"
 local integer_regex = "^%d+$"
-local bool_regex = "^[1]?$"
 
 local inf_fields = {
 	["ID"] = cid_regex,
@@ -55,11 +49,8 @@ local inf_fields = {
 	["HN"] = integer_regex,
 	["HR"] = integer_regex,
 	["HO"] = integer_regex,
-	["OP"] = bool_regex,
+	["CT"] = integer_regex,
 	["AW"] = "^[12]$",
-	["BO"] = bool_regex,
-	["HI"] = bool_regex,
-	["HU"] = bool_regex,
 	["SU"] = "[A-Z,]+"
 }
 
@@ -109,6 +100,9 @@ bans.msgsre = {}
 bans.muted = {}
 
 local stats = {}
+
+-- cache for +cfg min*level
+local restricted_commands = {}
 
 local cm = adchpp.getCM()
 local lm = adchpp.getLM()
@@ -309,6 +303,40 @@ settings.menuname = {
 	help = "title of the main user command menu sent to clients",
 
 	value = "ADCH++"
+}
+
+settings.minchatlevel = {
+	change = function()
+		restricted_commands[adchpp.AdcCommand_CMD_MSG] = { level = settings.minchatlevel.value, str = "chat" }
+	end,
+
+	help = "minimum level to chat - hub restart recommended",
+
+	value = 0
+}
+
+settings.mindownloadlevel = {
+	alias = { mindllevel = true, mintransferlevel = true },
+
+	change = function()
+		restricted_commands[adchpp.AdcCommand_CMD_CTM] = { level = settings.mindownloadlevel.value, str = "download" }
+		restricted_commands[adchpp.AdcCommand_CMD_RCM] = { level = settings.mindownloadlevel.value, str = "download" }
+	end,
+
+	help = "minimum level to download - hub restart recommended",
+
+	value = 0
+}
+
+settings.minsearchlevel = {
+	change = function()
+		restricted_commands[adchpp.AdcCommand_CMD_SCH] = { level = settings.minsearchlevel.value, str = "search" }
+		restricted_commands[adchpp.AdcCommand_CMD_RES] = { level = settings.minsearchlevel.value, str = "send search results" }
+	end,
+
+	help = "minimum level to search - hub restart recommended",
+
+	value = 0
 }
 
 settings.name = {
@@ -847,15 +875,10 @@ end
 local function onINF(c, cmd)
 	for field, regex in base.pairs(inf_fields) do
 		val = cmd:getParam(field, 0)
-		if #val > 0 and hasVal and not val:match(regex) then
-			autil.reply(c, "Field " .. field .. " has an invalid value, removed")
+		if #val > 0 and not val:match(regex) then
+			autil.reply(c, "INF parsing: field " .. field .. " has an invalid value, removed")
 			cmd:delParam(field, 0)
 		end
-	end
-
-	if #cmd:getParam("HI", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Don't hide")
-		return false
 	end
 
 	if #cmd:getParam("CT", 0) > 0 then
@@ -863,32 +886,14 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	if #cmd:getParam("OP", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's an OP")
-		return false
-	end
-
-	if #cmd:getParam("RG", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's registered")
-		return false
-	end
-
-	if #cmd:getParam("HU", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I'm the hub, not you")
-		return false
-	end
-
-	if #cmd:getParam("BO", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You're not a bot")
-		return false
-	end
+	local nick = cmd:getParam("NI", 0)
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		return verify_info(c)
+		return verify_info(c, nil, nick)
 	end
 
-	local nick = cmd:getParam("NI", 0)
 	local cid = cmd:getParam("ID", 0)
+
 	if not verify_info(c, cid, nick) then
 		return false
 	end
@@ -1368,7 +1373,9 @@ commands.listregs = {
 		autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level):\n" .. table.concat(list, "\n"))
 	end,
 
-	protected = function(c) return get_user_c(c) end
+	protected = function(c) return get_user_c(c) end,
+
+	user_command = { name = "List regs" }
 }
 
 commands.mass = {
@@ -2156,12 +2163,12 @@ local function onReceive(entity, cmd, ok)
 	end
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		local min_level = command_min_levels[cmd:getCommand()]
-		if min_level and get_level(c) < min_level then
-			local fourCC = cmd:getFourCC()
+		local restricted = restricted_commands[cmd:getCommand()]
+		if restricted and get_level(c) < restricted.level then
 			c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 			:addParam(adchpp.AdcCommand_SEV_RECOVERABLE .. adchpp.AdcCommand_ERROR_COMMAND_ACCESS)
-			:addParam("You don't have access to the " .. fourCC .. " command"):addParam("FC" .. fourCC))
+			:addParam("You are not allowed to " .. restricted.str .. " in this hub")
+			:addParam("FC" .. cmd:getFourCC()))
 			return false
 		end
 	end
