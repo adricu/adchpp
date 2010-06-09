@@ -761,10 +761,10 @@ local function dump_banned(c, ban)
 end
 
 verify_info = function(c, cid, nick)
-	if not cid then
+	if not cid or #cid == 0 then
 		cid = c:getCID():toBase32()
 	end
-	if not nick then
+	if not nick or #nick == 0 then
 		nick = c:getField("NI")
 	end
 	if #nick == 0 or #cid == 0 then
@@ -886,14 +886,11 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	local nick = cmd:getParam("NI", 0)
-
-	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		return verify_info(c, nil, nick)
-	end
-
 	local cid = cmd:getParam("ID", 0)
-
+	local nick = cmd:getParam("NI", 0)
+	if c:getState() == adchpp.Entity_STATE_NORMAL then
+		return verify_info(c, cid, nick)
+	end
 	if not verify_info(c, cid, nick) then
 		return false
 	end
