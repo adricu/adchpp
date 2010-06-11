@@ -113,7 +113,7 @@ local saltsHandle = pm:registerByteVectorData()
 
 -- forward declarations.
 local format_seconds, cut_str,
-send_user_commands, remove_user_commands, regen_cfg_list,
+send_user_commands, remove_user_commands,
 verify_info
 
 -- Settings loaded and saved by the main script. Possible fields each setting can contain:
@@ -485,8 +485,6 @@ local function load_settings()
 			end
 		end
 	end
-
-	regen_cfg_list()
 
 	return true
 end
@@ -1084,38 +1082,18 @@ cut_str = function(str, max)
 	return str
 end
 
+local cfg_list_done = false
 local function gen_cfg_list()
+	if cfg_list_done then
+		return
+	end
 	local list = {}
 	for k, v in base.pairs(settings) do
-		local help = v.help
-		if not help then
-			help = "no information"
-		end
-		local value = cut_str(base.tostring(v.value), 10)
-		value = string.gsub(value, "[\n\r\t <>]+", " ")
-		table.insert(list, k .. ": " .. cut_str(help, 20) .. " <" .. value .. ">")
+		table.insert(list, k .. ": <" .. cut_str(v.help or "no information", 30) .. ">")
 	end
 	table.sort(list)
 	commands.cfg.user_command.params[1] = autil.ucmd_list("Name of the setting to change", list)
-end
-
-regen_cfg_list = function()
-	gen_cfg_list()
-
-	-- remove the previous user command from currently connected users and add the new one
-	local entities = cm:getEntities()
-	local size = entities:size()
-	if size > 0 then
-		for i = 0, size - 1 do
-			local c = entities[i]:asClient()
-			if c and (
-				c:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or c:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
-				) then
-				remove_user_commands(c)
-				send_user_commands(c)
-			end
-		end
-	end
+	cfg_list_done = true
 end
 
 commands.cfg = {
@@ -1194,7 +1172,6 @@ commands.cfg = {
 			setting.change()
 		end
 		base.pcall(save_settings)
-		regen_cfg_list()
 		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
 	end,
 
@@ -1231,8 +1208,6 @@ commands.cfg = {
 		}
 	}
 }
-
-gen_cfg_list()
 
 commands.help = {
 	command = function(c, parameters)
@@ -2378,6 +2353,7 @@ access_2 = cm:signalState():connect(function(entity)
 		if c and (
 			entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
 			) then
+			gen_cfg_list()
 			send_user_commands(c)
 		end
 	end
