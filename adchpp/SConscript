@@ -19,9 +19,9 @@ def getRevision(env):
 				return int(line[:pos])
 		except:
 			pass
-		finally:
-			if f:
-				f.close()
+		if f:
+			f.close()
+
 	return 0
 
  
