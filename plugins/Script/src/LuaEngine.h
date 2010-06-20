@@ -30,7 +30,7 @@ public:
 	virtual ~LuaEngine();
 
 	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters);
-	virtual void unloadScript(Script* script);
+	virtual void unloadScript(Script* script, bool force = false);
 
 	virtual void getStats(std::string& str) const;
 

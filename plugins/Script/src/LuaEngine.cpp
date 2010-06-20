@@ -71,7 +71,9 @@ LuaEngine::LuaEngine() {
 }
 
 LuaEngine::~LuaEngine() {
-	for_each(scripts.begin(), scripts.end(), DeleteFunction());
+	std::vector<LuaScript*>::reverse_iterator it;
+	while((it = scripts.rbegin()) != scripts.rend())
+		unloadScript(*it, true);
 
 	if(l)
 		lua_close(l);
@@ -89,8 +91,8 @@ Script* LuaEngine::loadScript(const string& path, const string& filename, const 
 	return script;
 }
 
-void LuaEngine::unloadScript(Script* s) {
-	if(call("unloading", dynamic_cast<LuaScript*>(s)->filename))
+void LuaEngine::unloadScript(Script* s, bool force) {
+	if(call("unloading", dynamic_cast<LuaScript*>(s)->filename) && !force)
 		return;
 
 	scripts.erase(remove(scripts.begin(), scripts.end(), s), scripts.end());

@@ -1,3 +1,9 @@
+-- 2.5.1 2010-06-20 --
+* [L#591701] Fix compiling out of the bzr repo
+* Fix the "unloading" event which was never being called
+* Unload scripts in the reverse order of addition
+* Improve Lua scripts
+
 -- 2.5.0 2010-05-03 --
 * Improve Lua scripts: various bug fixes, support PING
 * Clients are disconnected with the DI flag of QUI

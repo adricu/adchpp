@@ -28,7 +28,7 @@ public:
 	virtual ~Engine() { }
 	
 	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters) = 0;
-	virtual void unloadScript(Script* script) = 0;
+	virtual void unloadScript(Script* script, bool force = false) = 0;
 
 	virtual void getStats(std::string& str) const = 0;
 private:
