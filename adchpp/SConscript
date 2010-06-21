@@ -12,7 +12,7 @@ def getRevision(env):
 	except:
 		f = None
 		try:
-			f = open(env.File('#/.bzr/branch/last-revision'), 'r')
+			f = open(env.Dir("#").abspath+"/.bzr/branch/last-revision",'r')
 			line = f.read()
 			pos = line.find(' ')
 			if pos > 0:
