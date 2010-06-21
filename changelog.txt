@@ -3,6 +3,7 @@
 * Fix the "unloading" event which was never being called
 * Unload scripts in the reverse order of addition
 * Improve Lua scripts
+* [L#596669] Disconnect ghosts
 
 -- 2.5.0 2010-05-03 --
 * Improve Lua scripts: various bug fixes, support PING

@@ -396,14 +396,11 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 			return false;
 		}
 
-		CIDMap::iterator i = cids.find(cid);
-		if(i != cids.end()) {
-			// Send a newline to see if the other client is still alive
-			i->second->send(BufferPtr(new Buffer("\n", 1)));
-
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken, please try again later"));
-			c.disconnect(Util::REASON_CID_TAKEN);
-			return false;
+		Entity* other = getEntity(getSID(cid));
+		if(other) {
+			// disconnect the ghost
+			other->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
+			other->disconnect(Util::REASON_CID_TAKEN);
 		}
 
 		c.setCID(cid);
