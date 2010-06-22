@@ -399,9 +399,10 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 		Entity* other = getEntity(getSID(cid));
 		if(other) {
 			// disconnect the ghost
+			removeEntity(*other);
+			other->setFlag(Entity::FLAG_GHOST);
 			other->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
 			other->disconnect(Util::REASON_CID_TAKEN);
-			removeEntity(*other);
 		}
 
 		c.setCID(cid);
@@ -523,11 +524,8 @@ void ClientManager::removeLogins(Entity& e) throw() {
 }
 
 void ClientManager::removeEntity(Entity& c) throw() {
-	CIDMap::iterator cid = cids.find(c.getCID());
-	if(cid == cids.end())
+	if(c.isSet(Entity::FLAG_GHOST))
 		return;
-	if(cid->second->getSID() != c.getSID())
-		return; // must be a ghost that has been disconnected
 
 	signalDisconnected_(c);
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
