@@ -20,12 +20,18 @@
 
 #include "Entity.h"
 
+#include "ClientManager.h"
+
 namespace adchpp {
 
 Entity::~Entity() {
 	for(PluginDataMap::iterator i = pluginData.begin(), iend = pluginData.end(); i != iend; ++i) {
 		(*i->first)(i->second);
 	}
+}
+
+void Entity::inject(AdcCommand& cmd) {
+	ClientManager::getInstance()->onReceive(*this, cmd);
 }
 
 const std::string& Entity::getField(const char* name) const {

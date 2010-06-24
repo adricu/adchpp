@@ -100,8 +100,11 @@ void LuaEngine::unloadScript(Script* s, bool force) {
 }
 
 void LuaEngine::getStats(string& str) const {
-	str += "The following LUA scripts are loaded:\n";
+	str += "Lua engine\n";
+	str += "\tUsed memory: " + Util::toString(lua_gc(l, LUA_GCCOUNT, 0)) + " KiB\n";
+	str += "The following Lua scripts are loaded:\n";
 	for(vector<LuaScript*>::const_iterator i = scripts.begin(); i != scripts.end(); ++i) {
+		str += "\t";
 		(*i)->getStats(str);
 	}
 }

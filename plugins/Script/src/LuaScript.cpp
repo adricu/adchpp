@@ -72,7 +72,6 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 
 void LuaScript::getStats(string& str) const {
 	str += filename + "\n";
-	str += "\tUsed Memory: " + Util::toString(lua_gc(getEngine()->l, LUA_GCCOUNT, 0)) + " KiB\n";
 }
 
 LuaEngine* LuaScript::getEngine() const {

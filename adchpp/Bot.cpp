@@ -19,7 +19,7 @@
 #include "adchpp.h"
 
 #include "Bot.h"
-#include "AdcCommand.h"
+
 #include "ClientManager.h"
 
 namespace adchpp {
@@ -35,11 +35,6 @@ void Bot::disconnect(Util::Reason reason) throw() {
 	//@todo, maby improve?
 	ClientManager::getInstance()->removeEntity(*this);
 	delete this;
-}
-
-void Bot::inject(AdcCommand& cmd) {
-	// @todo maybe make async?
-	ClientManager::getInstance()->onReceive(*this, cmd);
 }
 
 }

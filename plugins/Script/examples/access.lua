@@ -100,6 +100,7 @@ bans.msgsre = {}
 bans.muted = {}
 
 local stats = {}
+local dispatch_stats = false
 
 -- cache for +cfg min*level
 local restricted_commands = {}
@@ -1280,6 +1281,10 @@ commands.info = {
 	alias = { hubinfo = true, stats = true, userinfo = true },
 
 	command = function(c, parameters)
+		if dispatch_stats then
+			return
+		end
+
 		local str
 
 		if #parameters > 0 then
@@ -1348,6 +1353,11 @@ commands.info = {
 			end
 
 		else
+			dispatch_stats = true
+			c:inject(adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
+			:addParam('+stats'))
+			dispatch_stats = false
+
 			local now = os.time()
 			local scripttime = os.difftime(now, start_time)
 			local hubtime = os.difftime(now, adchpp.Stats_startTime)
@@ -2360,8 +2370,9 @@ access_2 = cm:signalState():connect(function(entity)
 end)
 
 access_3 = pm:getCommandSignal("reload"):connect(function(entity, list, ok)
-	if not ok then
-		return ok
-	end
-	return is_op(entity)
+	return commands.reload.protected(entity)
+end)
+
+access_4 = pm:getCommandSignal("stats"):connect(function()
+	return dispatch_stats
 end)

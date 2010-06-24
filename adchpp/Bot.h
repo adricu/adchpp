@@ -34,8 +34,6 @@ public:
 
 	virtual void send(const BufferPtr& cmd) { if(handler) handler(*this, cmd); }
 
-	ADCHPP_DLL void inject(AdcCommand& cmd);
-
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
 
 	using Entity::send;

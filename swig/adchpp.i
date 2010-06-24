@@ -519,6 +519,8 @@ public:
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
 
+	virtual void inject(AdcCommand& cmd);
+
 	const std::string& getField(const char* name) const;
 	bool hasField(const char* name) const;
 	void setField(const char* name, const std::string& value);
@@ -595,7 +597,6 @@ public:
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
 	
-	void inject(AdcCommand& cmd);
 	virtual void disconnect(Util::Reason reason);
 };
 

@@ -70,6 +70,8 @@ public:
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
 
+	ADCHPP_DLL virtual void inject(AdcCommand& cmd);
+
 	ADCHPP_DLL const std::string& getField(const char* name) const;
 	ADCHPP_DLL bool hasField(const char* name) const;
 	ADCHPP_DLL void setField(const char* name, const std::string& value);
