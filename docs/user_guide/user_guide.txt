@@ -1,6 +1,6 @@
 = Getting started with ADCH++ 
 Author: Toast <swe_toast@users.sourceforge.com> 
-Document Version 0.2.2
+Document Version 0.2.3
 ////
 0.1 
 * Inital Documentation
@@ -15,6 +15,7 @@ Document Version 0.2.2
 0.2.2
 *Added more documentation over new features
 *Added more detailed information about how to add it as a Windows service
+0.2.3
 ////
 
 == Installation
@@ -140,12 +141,10 @@ reconnect to the hub again and now you will have access to administrator command
 
 	+regnick <nick> <password> <level>
 	
-Profiles Range from 1-10
+Profiles Range from 1-infinite
 
 * 1 registered at the hub
-* 2 registered as a vip
-* 4 registered as a op
-* 10  registered as a administrator
+* 2 registered as a op
 
 == Scripts
 
@@ -329,30 +328,34 @@ A simple way to find out how stuff works is by typing +help as we promised the g
 
 example:
 
-	+cfg name value - change hub configuration, use "+help cfg" to list all variables (aliases: +changecfg, +changeconfig, +changevar, +config, +setcfg, +setconfig, +setvar, +var)
+
+  +cfg name value - change hub configuration, use "+help cfg" to list all variables (aliases: +changecfg, +changeconfig, +changevar, +config, +setcfg, +setconfig, +setvar, +var)
 
 List of all settings variables:
-
-	address - current value: somehub.com:411 - host address (DNS or IP) (aliases: dns, host)
-	allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow
-	allowreg - current value: 1 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
-	botcid - current value: ATITJHKGRUVK52LFUZFH7Z2ML5SP4FU6PUBGRZQ - CID of the bot, restart the hub after the change (aliases: botid)
-	botdescription - current value: I am a bot - description of the hub bot (aliases: botde, botdescr)
-	botemail - current value:  - e-mail of the hub bot (aliases: botem, botmail)
-	botname - current value: Hubbot - name of the hub bot (aliases: botni, botnick)
-	description - just a hub - hub description (aliases: hubdescription)
-	history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
-	history_max - current value: 500 - number of messages to keep for +history
-	history_prefix - current value: [%Y-%m-%d %H:%M:%S]  - prefix to put before each message in +history
-	axmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
-	maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
-	maxusers - current value: 0 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
-	name - current value: A Hub - hub name (aliases: hubname)
-	network - current value: N/A
-	owner - current value: Someone - owner name (aliases: ownername)
-	passinlist - current value: 0 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
-	topic - current value: A Topic - hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists (aliases: hubtopic)
-	website - current value:  N/A (aliases: url)
+  address - current value: 192.168.0.10 - host address (DNS or IP) (aliases: dns, host)
+  allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow
+  allowreg - current value: 1 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
+  botcid - current value: DCL4JDMGMJIC6H3OM3B36XXJHEFWVLU6XF5D37Y - CID of the bot, restart the hub after the change (aliases: botid)
+  botdescription - current value: just a bot - description of the hub bot (aliases: botde, botdescr)
+  botemail - current value: bot@nospam.org - e-mail of the hub bot (aliases: botem, botmail)
+  botname - current value: -bot- - name of the hub bot (aliases: botni, botnick)
+  description - current value: just a description - hub description (aliases: hubdescription)
+  history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
+  history_max - current value: 500 - number of messages to keep for +history
+  history_prefix - current value: [%Y-%m-%d %H:%M:%S]  - prefix to put before each message in +history
+  maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
+  maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
+  maxusers - current value: 0 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
+  menuname - current value: ADCH++ - title of the main user command menu sent to clients (aliases: ucmdname)
+  minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
+  mindownloadlevel - current value: 0 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+  minsearchlevel - current value: 0 - minimum level to search - hub restart recommended
+  name - current value: Just a hub - hub name (aliases: hubname)
+  network - current value: Just a network
+  owner - current value: Just an owner - owner name (aliases: ownername)
+  passinlist - current value: 1 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
+  topic - current value: Just a topic - hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists (aliases: hubtopic)
+  website - current value:  (aliases: url)
 
 These are all settings stored in settings.txt thats in the config dir in your adchpp installation.
 
@@ -376,22 +379,15 @@ So what does reg to download mean well its pretty simple if user is a guest and 
 
 	+regme <password>
 
-locate your access.lua in the script folder and edit the following line:
+With the 2\.5\.1 release setting download/chat/search requierments is pretty easy its just a simple command to execute and use.	
 
-	local command_min_levels = {
-	-- [adchpp.AdcCommand_CMD_MSG] = 2
+	+cfg minchatlevel <value>
+	+cfg mindownloadlevel <value>
+	+cfg minsearchlevel <value>
 
-change this line to:
-
-	local command_min_levels = {
-	[adchpp.AdcCommand_CMD_CTM] = 1,
-	[adchpp.AdcCommand_CMD_RCM] = 1,
-	[adchpp.AdcCommand_CMD_SCH] = 1
-
-CTM = connect to me
-RCM = reverse ctm
-SCH = search
-MSG = message
+  minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
+  mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+  minsearchlevel - current value: 1 - minimum level to search - hub restart recommended
 
 === Working with banmsgre
 
