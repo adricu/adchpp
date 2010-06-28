@@ -1,6 +1,6 @@
 = Getting started with ADCH++ 
-Author: Toast <swe_toast@users.sourceforge.com> 
-Document Version 0.2.3
+Author: Toast <toast@adcportal.com> 
+Document Version 0.2.5
 ////
 0.1 
 * Inital Documentation
@@ -10,12 +10,19 @@ Document Version 0.2.3
 0.2.1
 *Removed manual TOC for generated TOC along with icon fixes (asciidoc -a data-uri -a icons -a toc -a max-width=55em user_guide.txt)
 *Removed Logo
-*Removed some unnessary pictures of the installer
-*Rewrote luascript and installation part
+*Removed some unnecessary pictures of the installer
+*Rewrote lua script and installation part
 0.2.2
 *Added more documentation over new features
 *Added more detailed information about how to add it as a Windows service
 0.2.3
+*Updated corresponding to 2.5.1
+0.2.4
+*Added icons for specific OS parts
+*Fixed a miss for ptokax api
+*Various updates to sections thats outdated or needs a touch up
+0.2.5
+*Spellcheck FTW
 ////
 
 == Installation
@@ -41,7 +48,10 @@ On that page there are links to the ADCH++ distribution.
 
 === Installation on Windows
 
-If you are using the zip file then go head and skip this part but if your using the installer for the program and feel uncertain here is a little help secrtion.
+image::images/microsoft_logo.png["Microsoft Logo",height=32,align="left"]
+This is a Windows Specific Part
+
+If you are using the zip file then go head and skip this part but if your using the installer for the program and feel uncertain here is a little help section.
 
 The installation consists of three main screens.
 
@@ -52,6 +62,9 @@ The installation consists of three main screens.
 CAUTION: Windows Vista and Windows 7 should not install to program files directory if they don't know how to workaround UAC and store configuration files with http://vistaonwindows.com/environment_variables.html[windows environment variables] if you feel that its too hard just install it to another folder where UAC doesn't apply a good alternative path is: _c:\Users\<Your Account>\_
 
 === Installing on Linux
+
+image::images/linux_logo.png["Linux Logo",height=32,align="left"]
+This is a Linux Specific Part
 
 Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions.
 
@@ -137,7 +150,7 @@ Change this to:
 	
 	[{"password":"test","nick":"Testuser","level":10,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
 
-reconnect to the hub again and now you will have access to administrator commands so you can reg new admins inside the hub with the command:
+reconnect to the hub again and now you will have access to administrator commands so you can reg new administrators inside the hub with the command:
 
 	+regnick <nick> <password> <level>
 	
@@ -145,6 +158,8 @@ Profiles Range from 1-infinite
 
 * 1 registered at the hub
 * 2 registered as a op
+
+yupp (VIP is the same as reg) ^^
 
 == Scripts
 
@@ -263,44 +278,35 @@ Its also possible to import Ptokax LUA Scripts to your hub via ADCH++ Ptokax Bri
 A sample of how it can look on a px bridge installation the folder structure.
 --------------------------------------
 
- Directory of C:\Users\Toast\Desktop\a hub\Scripts
+Directory of c:\users\username\adchpp\Scripts
 
-2010-04-29  10:48    <DIR>          .
-2010-04-29  10:48    <DIR>          ..
-2010-04-29  10:48    <DIR>          px
-2010-04-20  18:16            58 389 access.lua
-2010-04-18  22:11             1 439 autil.lua
-2010-04-18  22:11             3 699 example.lua
-2010-04-18  22:11             3 003 history.lua
-2010-04-18  22:11            15 808 json.lua
-2010-04-18  22:11               727 motd.lua
-2010-04-18  20:53            22 337 ptokax.lua
-2010-04-27  17:53               267 ptokax.txt
-               8 File(s)        105 669 bytes
+2010-05-27  18:01    <DIR>          .
+2010-05-27  18:01    <DIR>          ..
+2010-05-03  22:58            58 383 access.lua
+2010-05-26  17:26            33 141 adchpp-ptokax.lua
+2010-05-26  19:18               115 adchpp-ptokax.txt
+2010-05-03  22:58             2 653 autil.lua
+2010-05-03  22:58             3 699 example.lua
+2010-05-03  22:58             3 003 history.lua
+2010-05-03  22:58            15 808 json.lua
+2010-05-03  22:58               742 motd.lua
+2010-05-27  18:01    <DIR>          px
+               8 File(s)        117 544 bytes
 
- Directory of C:\Users\Toast\Desktop\a hub\Scripts\px
+ Directory of c:\users\username\adchpp\Scripts\px
 
-2010-04-29  10:48    <DIR>          .
-2010-04-29  10:48    <DIR>          ..
-2010-04-27  16:00             3 695 px_badsearch.lua
-2010-04-27  14:00             3 886 px_banner.lua
-2010-04-27  14:12             4 396 px_change.lua
-2010-04-27  16:00             7 259 px_clock.lua
-2010-04-27  14:06             2 723 px_iprange.lua
-2010-04-27  14:30             6 016 px_lastip.lua
-2010-04-27  14:53            11 899 px_minchecker.lua
-2010-04-27  16:00            10 615 px_pmblock.lua
-2010-04-27  15:07             3 333 px_pmfilter.lua
-2010-04-27  16:00             4 504 px_profiles.lua
-2010-04-27  14:17            10 916 px_request.lua
-2010-04-27  14:47            32 745 px_rlsbot.lua
-2010-04-27  14:20            10 743 px_rotating.lua
-2010-04-27  16:00                53 px_test.lua
-2010-04-27  14:59            14 276 px_userdb.lua
-              15 File(s)        127 059 bytes
+2010-05-27  18:01    <DIR>          .
+2010-05-27  18:01    <DIR>          ..
+2010-05-26  19:14             4 652 px_lastip.lua
+2010-05-26  18:06            15 158 px_record.lua
+2010-05-26  18:02             3 935 px_tagcheck.lua
+2007-12-23  12:51            13 312 px_tophubbers.lua
+2010-05-26  17:50             5 918 px_topshare.lua
+               5 File(s)         62 491 bytes
 --------------------------------------
 
-This is how you load the multiple scripts file in ptokax.txt configuration file. (just a sample your structure may differ)
+You can load scripts inside the hub via UCMD (via right-click) just specify where to load from default location is script folder so check your path to your script folder and if you have the scripts in a sub directory like the example then simply load em by typing (px/example_script.lua) and then hitting enter.
+This is how you load the multiple scripts file in adchpp-ptokax.txt configuration file. (just a sample your structure may differ)
 
 --------------------------------------
 px\px_banner.lua
@@ -318,6 +324,84 @@ px\px_profiles.lua
 px\px_pmblock.lua
 px\px_clock.lua
 px\px_badsearch.lua
+--------------------------------------
+
+Now incase the lua script requiers luafilesystem or socket like the lua script FreshStuff or Feedwatch here is how you go about it. Now move the lua5.1.dll and lua5.1.dll.manifest to bin folder, the lfs.dll and lfs.dll.manifest to the lib folder where the script looks for it lets take freshstuff as an example the just add the script as normal in your adchpp-ptokax.txt and the rest of the content in the dir.
+
+--------------------------------------
+Directory of c:\users\username\adchpp\Scripts\px
+
+2010-05-27  18:08    <DIR>          .
+2010-05-27  18:08    <DIR>          ..
+2010-05-26  18:31    <DIR>          freshstuff
+2010-05-26  18:14             1 815 freshstuff.lua
+2010-05-26  19:16            19 516 px_feedwatch.lua
+2010-05-26  19:14             4 652 px_lastip.lua
+2010-05-26  18:06            15 158 px_record.lua
+2010-05-26  18:02             3 935 px_tagcheck.lua
+2007-12-23  12:51            13 312 px_tophubbers.lua
+2010-05-26  17:50             5 918 px_topshare.lua
+               7 File(s)         64 306 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff
+
+2010-05-26  18:31    <DIR>          .
+2010-05-26  18:31    <DIR>          ..
+2010-05-26  18:14    <DIR>          components
+2010-05-26  18:14    <DIR>          config
+2010-05-26  18:15    <DIR>          data
+2010-05-26  18:14    <DIR>          docs
+2010-05-26  18:14            24 155 kernel.lua
+2010-05-26  18:42    <DIR>          lib
+2010-05-26  18:14            12 010 ptokax.lua
+2010-05-26  18:14             5 775 tables.lua
+               3 File(s)         41 940 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\components
+
+2010-05-26  18:14    <DIR>          .
+2010-05-26  18:14    <DIR>          ..
+2010-05-26  18:14             3 503 extras.lua
+2010-05-26  18:14            14 072 requester.lua
+               2 File(s)         17 575 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\config
+
+2010-05-26  18:14    <DIR>          .
+2010-05-26  18:14    <DIR>          ..
+2010-05-26  18:14               987 extras.lua
+2010-05-26  18:14             3 182 main.lua
+2010-05-26  18:14               374 requester.lua
+               3 File(s)          4 543 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\data
+
+2010-05-26  18:15    <DIR>          .
+2010-05-26  18:15    <DIR>          ..
+2010-05-26  18:15               125 categories.dat
+               1 File(s)            125 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\docs
+
+2010-05-26  18:14    <DIR>          .
+2010-05-26  18:14    <DIR>          ..
+2010-05-26  18:14             1 471 customprofile.txt
+2010-05-26  18:14             4 350 development.txt
+2010-05-26  18:14               201 INSTALL.txt
+2010-05-26  18:14            16 755 license.txt
+2010-05-26  18:14               735 README.txt
+2010-05-26  18:14               644 TODO.txt
+               6 File(s)         24 156 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\lib
+
+2010-05-26  18:42    <DIR>          .
+2010-05-26  18:42    <DIR>          ..
+2010-05-13  16:14            13 824 lfs.dll
+2010-05-13  16:14               616 lfs.dll.manifest
+2010-05-26  18:14           138 240 PXLFS.dll
+2010-05-26  18:14           262 144 PXLFS.tds
+               4 File(s)        414 824 bytes
 --------------------------------------
 
 == Working with hub commands
@@ -519,19 +603,19 @@ https://answers.launchpad.net/adchpp you could additionally use ADCPortal also f
 
 *ADCS* - ADCS is an extension that has the goal of adding the TLS/SSL layer just over the TCP layer and beneath the application layer (where ADC runs). This way, the ADC protocol remains unchanged while the connections are encrypted.
 
-NOTE: _Some of these extensions are early implementations not final since they are in draft mode (2009-10-15)_
+NOTE: _ADCS is still in drafting mode so any implementation is still an early draft version not final (28/06/2010)_
 
 == Compiling and testing
 
 This part is not recommended for the newbie user this is for the novice or expert user this part will tell you how to compile
 
-A C\++ compiler, such as:
+Here is a list of minimum versions of recommended tools:
     
 	* GCC 4.4+ Linux or http://www.mingw.org or Microsoft Visual C++ 9.0 (2008) with at least Service Pack 1 (see notes)
-    * SCons 0.98.5 http://www.scons.org
+    * SCons 1.0.0 http://www.scons.org
     * SWIG 1.3.39 http://www.swig.org
-    * Python 2.5 (Windows) or 2.4+ (Linux) http://www.python.org
-    * Optional: OpenSSL 1.0.0-beta3 http://www.openssl.org
+    * Python 2.4.x http://www.python.org
+    * Optional for x64 builds : OpenSSL 1.0.0-beta3 http://www.openssl.org
 
 MinGW Builds
 
