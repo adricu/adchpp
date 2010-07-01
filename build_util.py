@@ -129,6 +129,21 @@ class Dev:
 #			installenv.Alias('install', installenv.InstallAs (os.path.join (modir, moname), lang + '.mo'))
 		return ret
 
+	# support installs that only have an asciidoc.py file but no executable
+	def get_asciidoc(self):
+		if 'PATHEXT' in self.env['ENV']:
+			pathext = self.env['ENV']['PATHEXT'] + ';.py'
+		else:
+			pathext = ''
+		asciidoc = self.env.WhereIs('asciidoc', pathext = pathext)
+		if asciidoc is None:
+			return None
+		if asciidoc[-3:] == '.py':
+			if self.env.WhereIs('python') is None:
+				return None
+			asciidoc = 'python ' + asciidoc
+		return asciidoc
+
 def CheckPKGConfig(context, version):
 	context.Message( 'Checking for pkg-config... ' )
 	ret = context.TryAction('pkg-config --atleast-pkgconfig-version=%s' % version)[0]

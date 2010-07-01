@@ -261,12 +261,14 @@ for plugin in env['plugins']:
 	dev.build('plugins/' + plugin + '/')
 
 if env['docs']:
-	if env.WhereIs('asciidoc') is None:
+	asciidoc_cmd = dev.get_asciidoc()
+	if asciidoc_cmd is None:
 		print 'asciidoc not found, docs won\'t be built'
 
 	else:
+		env['asciidoc_cmd'] = asciidoc_cmd
 		def asciidoc(target, source, env):
-			env.Execute('asciidoc -o"' + str(target[0]) + '" "' + str(source[0]) + '"')
+			env.Execute(env['asciidoc_cmd'] + ' -o"' + str(target[0]) + '" "' + str(source[0]) + '"')
 
 		doc_path = '#/build/docs/'
 
