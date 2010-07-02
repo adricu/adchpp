@@ -48,9 +48,6 @@ On that page there are links to the ADCH++ distribution.
 
 === Installation on Windows
 
-image::images/microsoft_logo.png["Microsoft Logo",height=32,align="left"]
-This is a Windows Specific Part
-
 If you are using the zip file then go head and skip this part but if your using the installer for the program and feel uncertain here is a little help section.
 
 The installation consists of three main screens.
@@ -61,26 +58,26 @@ The installation consists of three main screens.
 
 CAUTION: Windows Vista and Windows 7 should not install to program files directory if they don't know how to workaround UAC and store configuration files with http://vistaonwindows.com/environment_variables.html[windows environment variables] if you feel that its too hard just install it to another folder where UAC doesn't apply a good alternative path is: _c:\Users\<Your Account>\_
 
-=== Installing on Linux
+=== Installing on Linux 
 
-image::images/linux_logo.png["Linux Logo",height=32,align="left"]
-This is a Linux Specific Part
-
-Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions.
+Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions. 
 
 	wget https://sourceforge.net/projects/adchpp/files/ADCH%2B%2B%20Unstable/ADCH%2B%2B%202.4/ADCH%2B%2B.2.4-noarch-src.zip
+
+Recommended Tools for compile
 	
 	Debian: sudo apt-get install python scons swig gcc-c++ openssl-dev readline-dev
-	
 	Redhat: yum install gcc-c++ python scons swig openssl-devel readline-devel
 	
-	cd adchpp
-	scons mode=release
-	cd build/release-default/bin/
-	mkdir config
-	mkdir scripts
-	cp -rf plugins/Script/examples build/release-default/bin/scripts
-	cp -rf etc/ build/release-default/bin/config
+--------------------------------------
+cd adchpp
+scons
+cd build/release-default/bin/
+mkdir config
+mkdir scripts
+cp -rf plugins/Script/examples build/release-default/bin/scripts
+cp -rf etc/ build/release-default/bin/config
+--------------------------------------	
 			
 == Basic configuration
 
