@@ -1,0 +1,681 @@
+= ADCH++ LUA API
+Author: Thor
+Document Version 0.2
+
+NOTE: This is an inital release of the LUA API for ADCH++ the information here is not completly done so check the source for inital API calls.
+
+== API Calls
+
+[width="100%"]
+|==========================
+|AdcCommand AdcCommand()|Creates an ADC command.
+|AdcCommand AdcCommand(number Severity, number Error, string desc, string Type)|Creates an ADC command.
+|AdcCommand AdcCommand(number Command, string Type, number From = HUB_SID)|Creates an ADC command.
+|AdcCommand AdcCommand(string aLine)|Parses
+|AdcCommand AdcCommand(BufferPtr buffer)|Parses
+|==========================
+
+[width="100%"]
+|==========================
+|void AdcCommand_escape(string s, string out)|Escapes every charater which needs it (space, newline, \\), result is in out.
+|void AdcCommand_appendSID(string str, number SID)|Appends the SID to the end of the source string
+|string AdcCommand_fromSID(number aSID)|Converts the given SID to string
+|number AdcCommand_toSID(string aSID)|Converts the given SID to number
+|string AdcCommand_fromField(number aField)|Converts the given field as a two-letter string
+|number AdcCommand_toField(string x)|Converts the given two-letter field to number
+|string AdcCommand_fromFourCC(number x)|Converts the given ADC command to string
+|number AdcCommand_toFourCC(string x)|Converts the given ADC command to number
+|number AdcCommand_toCMD(number a, number b, number c)|Converts the given command to a CMD number
+|number AdcCommand_toCMD(string cmd)|Converts the given command to a CMD number
+|==========================
+
+[width="100%"]
+|==========================
+|CID CID()|Creates a new empty CID
+|CID CID(number data)|Creates a new CID from the given data
+|CID CID(string base32)|Creates a new CID from the given data
+|CID CID_generate()|Generates a new CID
+|==========================
+
+[width="100%"]
+|==========================
+|void initialize(string configPath)|Initialize configuration.
+|void cleanup()|Release any resources held by adchpp. Before using any library routines again, you must call initalize.
+|void shutdown()|Shuts down the connections(?)
+|void startup()|Starts the connections(?)
+|==========================
+
+[width="100%"]
+|==========================
+|string Encoder_fromBase32(string src)|Converts back the given string from BASE32
+|string Encoder_toBase32(string src)|Converts the given string to BASE32
+|==========================
+
+[width="100%"]
+|==========================
+|Exception Exception(string aError = "")|Creates an exception
+|Exception ParseException(string message = "")|Parses an exception
+|==========================
+
+[width="100%"]
+|==========================
+|ClientManager getCM()|Returns a ClientManager instance
+|LogManager getLM()|Returns a LogManager instance
+|PluginManager getPM()|Returns a PluginManager instance
+|SocketManager getSM()|Returns a SocketManager instance
+|==========================
+
+[width="100%"]
+|==========================
+|Hub Hub()|Returns with the hub itself as a Hub type
+|==========================
+
+[width="100%"]
+|==========================
+|size_t new_size_t(number size)|
+|void delete_size_t(size_t)|
+|number size_t_getitem(size_t size_t, number index)|
+|void size_t_setitem(size_t size_t, number index, number value)|
+|==========================
+
+[width="100%"]
+|==========================
+|ServerInfo ServerInfo_create()|Creates a new ServerInfo object
+|==========================
+
+[width="100%"]
+|==========================
+|SimpleXML SimpleXML(number numAttribs)|Creates a new SimpleXML object
+|void SimpleXML_escape(string aString, boolean aAttrib, boolean aLoading = false)|Escapes the given string
+|boolean SimpleXML_needsEscape(string aString, boolean aAttrib, boolean aLoading = false)|Returns true if the given string needs escape
+|==========================
+
+[width="100%"]
+|==========================        
+|wstring string(string data)|Creates a new string object
+|==========================
+
+[width="100%"]
+|==========================
+|TByteVector TByteVector()|Creates a new TByteVector object
+|TByteVector TByteVector(number size)|Creates a new TByteVector object
+|TByteVector TByteVector(number size, number front)|Creates a new TByteVector object
+|==========================
+
+[width="100%"]
+|==========================
+|TEntityList TEntityList()|Creates a new TEntityList object
+TEntityList TEntityList(number size)|Creates a new TEntityList object
+TEntityList TEntityList(number size, Entity Entity)|Creates a new TEntityList object
+|==========================
+
+[width="100%"]
+|==========================
+|TigerHash TigerHash()|Creates a new TigerHash object
+|==========================
+
+[width="100%"]
+|==========================
+|TServerInfoList TServerInfoList()|Creates a new TServerInfoList object
+|TServerInfoList TServerInfoList(number size)|Creates a new TServerInfoList object
+|TServerInfoList TServerInfoList(ServerInfo ServerInfo)|Creates a new TServerInfoList object
+|TServerInfoList TServerInfoList(number size, ServerInfo ServerInfo)|Creates a new TServerInfoList object
+|==========================
+
+[width="100%"]
+|==========================
+|TStringList TStringList()|Creates a new TStringList object
+|TStringList TStringList(number size)|Creates a new TStringList object
+|TStringList TStringList(number size, string front)|Creates a new TStringList object
+|==========================
+
+[width="100%"]
+|==========================
+|void Util_decodeUrl(string aUrl, string aServer, number aPort, string aFile)|
+|string Util_emptyString|Returns with an empty string
+|string Util_formatBytes(string aString / number aBytes)|Formats the bytes to a reasonable form
+|string Util_formatSeconds(number aSec)|Formats the seconds to DD:HH:MM:SS form _(days, hours, minutes, seconds)_
+|string Util_formatTime(string msg, number t = os.time())|Formats the given time to the given form
+|string Util_getAppName()|Return with the full path of the executable _(eg. C:\adch++\adchppd.exe)_
+|string Util_getAppPath()|Returns with the current path _(main folder)_
+|string Util_getCfgPath()|Returns with the full path of the config folder _(eg. C:\adch++\config\)_
+|string Util_getLocalIp()|Returns with the IP address of the server
+|string Util_getOsVersion()|Returns with a short description of the system operating system
+|string Util_getShortTimeString()|Returns with the time in HH:MM format|
+|string Util_getTimeString()|Returns with the time in HH:MM:SS format
+|void Util_initialize(string configPath)|Initializes the settings from the given path
+|number Util_rand()|Generates a random number in 0 - 4294967295 (2^32-1) range
+|number Util_rand(number max)|Generates a random number in 0 - (max-1) range
+|number Util_rand(number min, number max)|Generates a random number in (min+1) - (max-1) range
+|number Util_randd()|Generates a random number in 0 - 1 range
+|size_t Util_reasons|Value is a vector, use size_t_getitem to get it's values (see this). Index is error code, value are the disconnects count
+|void Util_setCfgPath(string path)|Sets the config path to the given value
+|string Util_toAcp(string wString)|Converts the given string to ACP
+|void Util_tokenize(TStringList lst, string str, string sep)|Tokenizes the given string, and pushes the result into lst
+|wstring Util_toUnicode(string aString)|Converts the given string to Unicode
+|string Util_translateError(number aError)|Translates the given error code to string in locale-dependent language
+|number queueCalls|Calls
+|number queueBytes|Bytes in the queue
+|number sendCalls|How many times sending called
+|number sendBytes|Bytes sent
+|number recvCalls|How many times receiving called
+|number recvBytes|Bytes received
+|number startTime|Startup time (seconds from epoch)
+|==========================
+
+== Enumerations
+
+.Reasons
+--------------------------------------
+Util_REASON_BAD_STATE = 0,
+Util_REASON_CID_CHANGE = 1,
+Util_REASON_CID_TAKEN = 2,
+Util_REASON_FLOODING = 3,
+Util_REASON_HUB_FULL = 4,
+Util_REASON_INVALID_COMMAND_TYPE = 5,
+Util_REASON_INVALID_IP = 6,
+Util_REASON_INVALID_SID = 7,
+Util_REASON_LOGIN_TIMEOUT = 8,
+Util_REASON_MAX_COMMAND_SIZE = 9,
+Util_REASON_NICK_INVALID = 10,
+Util_REASON_NICK_TAKEN = 11,
+Util_REASON_NO_BASE_SUPPORT = 12,
+Util_REASON_NO_TIGR_SUPPORT = 13,
+Util_REASON_PID_MISSING = 14,
+Util_REASON_PID_CID_LENGTH = 15,
+Util_REASON_PID_CID_MISMATCH = 16,
+Util_REASON_PID_WITHOUT_CID = 17,
+Util_REASON_PLUGIN = 18,
+Util_REASON_WRITE_OVERFLOW = 19,
+Util_REASON_LAST = 20,
+--------------------------------------
+
+.Error
+--------------------------------------
+AdcCommand_ERROR_GENERIC = 0,
+AdcCommand_ERROR_HUB_GENERIC = 10,
+AdcCommand_ERROR_HUB_FULL = 11,
+AdcCommand_ERROR_HUB_DISABLED = 12,
+AdcCommand_ERROR_LOGIN_GENERIC = 20,
+AdcCommand_ERROR_NICK_INVALID = 21,
+AdcCommand_ERROR_NICK_TAKEN = 22,
+AdcCommand_ERROR_BAD_PASSWORD = 23,
+AdcCommand_ERROR_CID_TAKEN = 24,
+AdcCommand_ERROR_COMMAND_ACCESS = 25,
+AdcCommand_ERROR_REGGED_ONLY = 26,
+AdcCommand_ERROR_INVALID_PID = 27,
+AdcCommand_ERROR_BANNED_GENERIC = 30,
+AdcCommand_ERROR_PERM_BANNED = 31,
+AdcCommand_ERROR_TEMP_BANNED = 32,
+AdcCommand_ERROR_PROTOCOL_GENERIC = 40,
+AdcCommand_ERROR_PROTOCOL_UNSUPPORTED = 41,
+AdcCommand_ERROR_INF_MISSING = 43,
+AdcCommand_ERROR_BAD_STATE = 44,
+AdcCommand_ERROR_FEATURE_MISSING = 45,
+AdcCommand_ERROR_BAD_IP = 46,
+AdcCommand_ERROR_TRANSFER_GENERIC = 50,
+AdcCommand_ERROR_FILE_NOT_AVAILABLE = 51,
+AdcCommand_ERROR_FILE_PART_NOT_AVAILABLE = 52,
+AdcCommand_ERROR_SLOTS_FULL = 53,
+--------------------------------------
+
+.Priority
+--------------------------------------
+AdcCommand_PRIORITY_NORMAL = 0,
+AdcCommand_PRIORITY_LOW = 1,
+AdcCommand_PRIORITY_IGNORE = 2,
+--------------------------------------
+
+.Severity
+--------------------------------------
+AdcCommand_SEV_SUCCESS = 0,
+AdcCommand_SEV_RECOVERABLE = 1,
+AdcCommand_SEV_FATAL = 2,
+--------------------------------------
+
+.Flag
+--------------------------------------
+Entity_FLAG_BOT = 1,
+Entity_FLAG_REGISTERED = 2,
+Entity_FLAG_OP = 4,
+Entity_FLAG_SU = 8,
+Entity_FLAG_OWNER = 16,
+Entity_FLAG_HUB = 32,
+Entity_FLAG_PASSWORD = 256,
+Entity_FLAG_HIDDEN = 257,
+Entity_FLAG_EXT_AWAY = 258,
+Entity_FLAG_OK_IP = 260,
+--------------------------------------
+
+.State
+--------------------------------------
+Entity_STATE_PROTOCOL = 0,
+Entity_STATE_IDENTIFY = 1,
+Entity_STATE_VERIFY = 2,
+Entity_STATE_NORMAL = 3,
+Entity_STATE_DATA = 4,
+--------------------------------------
+
+== Constants
+
+.Command
+--------------------------------------
+AdcCommand_CMD_CMD = 4476227,
+AdcCommand_CMD_CTM = 5067843,
+AdcCommand_CMD_GET = 5522759,
+AdcCommand_CMD_GFI = 4802119,
+AdcCommand_CMD_GPA = 4280391,
+AdcCommand_CMD_INF = 4607561,
+AdcCommand_CMD_MSG = 4674381,
+AdcCommand_CMD_PAS = 5456208,
+AdcCommand_CMD_QUI = 4805969,
+AdcCommand_CMD_RCM = 5063506,
+AdcCommand_CMD_RES = 5457234,
+AdcCommand_CMD_SCH = 4735827,
+AdcCommand_CMD_SID = 4475219,
+AdcCommand_CMD_SND = 4476499,
+AdcCommand_CMD_STA = 4281427,
+AdcCommand_CMD_SUP = 5264723,
+--------------------------------------
+
+.HUB_SID
+--------------------------------------
+AdcCommand_HUB_SID = -1,
+--------------------------------------
+
+.Type
+--------------------------------------
+AdcCommand_TYPE_BROADCAST = "B",
+AdcCommand_TYPE_CLIENT = "C",
+AdcCommand_TYPE_DIRECT = "D",
+AdcCommand_TYPE_ECHO = "E",
+AdcCommand_TYPE_FEATURE = "F",
+AdcCommand_TYPE_HUB = "H",
+AdcCommand_TYPE_INFO = "I",
+AdcCommand_TYPE_UDP = "U",
+--------------------------------------
+
+.CID
+--------------------------------------
+CID_BASE32_SIZE = 39,
+CID_SIZE = 24,
+--------------------------------------
+
+.CTMask
+--------------------------------------
+Entity_MASK_CLIENT_TYPE = 63,
+--------------------------------------
+
+.TH
+--------------------------------------
+TigerHash_BITS = 192,
+TigerHash_BYTES = 24,
+--------------------------------------
+
+== Types
+[width="100%"]
+|==========================
+|AdcCommand|
+|AdcCommand addParam(string name, string value)|Add the given param + value
+|AdcCommand addParam(string str)|Adds the given param, value is emtpy string
+|boolean delParam(string name, number start)|Deletes the given param (just one, of there is more), starting from the given value
+|BufferPtr getBuffer()|Returns with the command's buffer
+|number getCommand()|Returns with the associated command as number (see this)
+|string getCommandString()|Returns with the associated command as string
+|string getFeatures()|Returns with the features as string
+|number getFrom()|Returns with the SID of the user who sent the command (2^32-1 == hub)
+|string getParam(number n)|Returns with the given param wihich is at the given position
+|string getParam(string name, number start)|Return a named parameter where the name is a two-letter code
+|TStringList getParameters()|Returns with all of the parameters as a TStringList object
+|Priority getPriority()|Returns with the command's priority
+|number getTo()|Returns the target SID of the command as number
+|string getType()|Returns with the given command's type (see this)
+|boolean hasFlag(string name, number start)|Returns true if the command has a parameter with the given conditions
+|void parse(string str)|The hub parses the given command
+|void resetBuffer()|Resets the command's buffer
+|void setFrom(number aFrom)|Sets the commands sender
+|void setPriority(Priority priority_)|Sets the commands priority
+|void setTo(number aTo)|Sets the commands target
+|string toString()|Returns with the whole command as string
+|==========================
+
+.Defined operators:
+--------------------------------------
+== - Returns true, if the two AdcCommand object is the same
+--------------------------------------
+
+.Bot
+[width="100%"]
+|==========================
+|boolean addSupports(string supports)|Adds the given supports to the user's supports list, if it hasn't been added before.
+|Bot asBot()|Returns with the bot as Bot (dummy)
+|Client asClient()|Returns with the bot as Client
+|Hub asHub()|Returns with the bot as Hub
+|boolean getAllFields(AdcCommand cmd)|Adds any flags that has been updated to the given AdcCommand (type etc is not set)
+|CID getCID()|Returns with the bot's CID
+|string getField(string name)|Returns with the given fields value
+|BufferPtr getINF()|Returns with the bot's INF buffer
+|number getSID()|Returns with the bot's SID
+|State getState()|Returns with the bot's state
+|BufferPtr getSUP()|Returns with the bot's SUP buffer
+|TStringList getSupportList()|Returns with the bot's supports from SUP command.
+|boolean hasField(string name)|Returns true if the bot has the given field in it's INF
+|boolean hasSupport(number feature)|Returns true if the bot supports the given feature
+|boolean isAnySet(number aFlag)|Returns true if the given flag is set
+|boolean isFiltered(string features)|Returns true if the given features are in the filter list (for F messages)
+|boolean isSet(number aFlag)|Returns true if the given flag is set
+|boolean removeSupports(number feature)|Removes the given feature
+|void send(AdcCommand cmd)|Sends the given command to the bot
+|void setCID(CID cid_)|Sets the bot's CID
+|void setField(string name, string value)|Sets the bot's field to the given value
+|void setFlag(number aFlag)|Sets the given flag
+|void setState(State state_)|Sets the bot's state
+|void unsetFlag(number aFlag)|Unsets the given flag
+|void updateFields(AdcCommand cmd)|Updates the fields from the given command
+|void updateSupports(AdcCommand cmd)|Updates the supports from the given command
+|==========================
+
+.CID
+[width="100%"]
+|==========================
+|string data()|Returns with the CID's data
+|boolean isZero()|Returns true if the CID is zero
+|string toBase32()|Returns with the BASE32 encoded format of the CID
+|number toHash()|Converts the given CID to number
+|==========================
+
+.Defined operators:
+--------------------------------------
+== - Returns true, if the two AdcCommand object is the same
+<,>,<=,>= - Standard comparsion operators for CID's
+--------------------------------------
+ 
+.Client
+[width="100%"]
+|==========================
+|boolean addSupports(string supports)|Adds the given supports to the user's supports list, if it hasn't been added before.
+|Bot asBot()|Returns with the client as Bot
+|Client asClient()|Returns with the client as Client (dummy)
+|Hub asHub()|Returns with the bot as Hub
+|void disconnect(Reason reason)|Disconnects the client with the given reason
+|boolean getAllFields(AdcCommand cmd)|Adds any flags that has been updated to the given AdcCommand (type etc is not set)
+|CID getCID()|Returns with the client's CID
+|string getField(string name)|Returns with the given fields value
+|BufferPtr getINF()|Returns with the client's INF buffer
+|string getIp()|Returns with the client's IP address
+|number getQueuedBytes()|Returns with the queued bytes
+|number getSID() - Returns with the client's SID
+|ManagedSocketPtr getSocket()|Returns with the socket of the client
+|State getState()|Returns with the client's state
+|BufferPtr getSUP()|Returns with the client's SUP buffer
+|TStringList getSupportList()|Returns with the client's supports from SUP command.
+|boolean hasField(string name)|Returns true if the client has the given field in it's INF
+|boolean hasSupport(number feature)|Returns true if the client supports the given feature
+|boolean isAnySet(number aFlag)|Returns true if the given flag is set
+|boolean isFiltered(string features)|Returns true if the given features are in the filter list (for F messages)
+|boolean isFlooding(number addSeconds)|Returns true if the client flood the hub with commands
+|boolean isSet(number aFlag)|Returns true if the given flag is set
+|boolean isTcpActive()|Returns true if the client has I4 field
+|boolean isUdpActive()|Returns true if the client has U4 field
+|boolean removeSupports(number feature)|Removes the given feature
+|void send(AdcCommand cmd)|Sends the given command to the client
+|void setCID(CID cid_)|Sets the client's CID
+|void setDataMode(DataFunction handler, number aBytes)|Sets data mode for aBytes bytes
+|void setField(string name, string value)|Sets the client's field to the given value
+|void setFlag(number aFlag)|Sets the given flag
+|void setState(State state_)|Sets the client's state
+|void unsetFlag(number aFlag)|Unsets the given flag
+|void updateFields(AdcCommand cmd)|Updates the fields from the given command
+|void updateSupports(AdcCommand cmd)|Updates the supports from the given command
+|==========================
+
+.ClientManager
+[width="100%"]
+|==========================
+|boolean checkFlooding(Client c, AdcCommand cmd)|Returns true, if the peer floods the hub with the given command
+|Bot createBot(function dummy)|Creates a new bot, parameter is an empty function
+|void enterIdentify(Entity c, boolean sendData)|Enter IDENTIFY state. Call this if you stop the SUP command when in PROTOCOL state.
+|boolean enterNormal(Entity c, boolean sendData, boolean sendOwnInf)|Enter NORMAL state. Call this if you stop an INF of a password-less client in IDENTIFY state or a PAS in VERIFY state. Returns true if login was successful.
+|TByteVector enterVerify(Entity c, boolean sendData)|Enter VERIFY state. Call this if you stop an INF in the IDENTIFY state and want to check a password. Returns with a ByteVector which value is the CID's data
+|Entity findByNick(string nick)|Returns the entity which has the given nickname
+|TEntityList getEntities()|Returns with all avaible entities
+|Entity getEntity(number aSid)|Returns with the entity associated with a certain SID, nil if not found
+|number getQueuedBytes()|Returns with the queued bytes of all clients
+|number getSID(string nick / CID cid)|Returns with the SID of entity or 0 if not found
+|void send(AdcCommand cmd)|Sends the command according to its type
+|void sendTo(BufferPtr buffer, number to)|Sends the buffer to a single client regardless of type
+|void sendToAll(BufferPtr buffer)|Sends the buffer to all connected entities
+|void setState(Entity c, State newState)|Update the state of c (this fires signalState as well)
+|userdata signalBadLine(Entity c, string command)|Returns with an userdata with connect field, which parameter is a Lua function. It will be called every time a bad command is received.
+|userdata signalConnected(Entity c)|Returns with an userdata with connect field, which parameter is a Lua function. It will be called every time a user connected to the hub.
+|userdata signalDisconnected(Entity c, string command)|Returns with an userdata with connect field, which parameter is a Lua function. It will be called every time a user is disconnected from the hub.
+|userdata signalReceive(Entity c, AdcCommand command,boolean ok)|Returns with an userdata with connect field, which parameter is a Lua function. It will be called every time a command is received.
+|userdata signalSend(Entity c, string command)|Returns with an userdata with connect field, which parameter is a Lua function. It will be called every time a command is sent to a user.
+|userdata signalState(Entity c, number oldState)|Returns with an userdata with connect field, which parameter is a Lua function. It will be called every time a user steps into a new state.
+|boolean verifyCID(Client c, AdcCommand cmd)|Verifies the given AdcCommand's CID (it's not used by other user, has PID & CID and they match).
+|boolean verifyINF(Client c, AdcCommand cmd)|Verifies the IP, CID and nick fields of the command.
+|boolean verifyIp(Client c, AdcCommand cmd)|Verifies the given user's IP (IP is the user's IP, or if 0.0.0.0, then replaces it with it).
+|boolean verifyNick(Client c, AdcCommand cmd)|Verifies the given user's nickname (Contains valid characters, new nick isn't taken and not empty).
+|boolean verifyPassword(Client c, string password, TByteVector salt)|Verifies that the password is valid.
+|boolean verifySUP(Client c, AdcCommand cmd)|Verifies the given user's supports (has BASE and TIGR fields).
+|==========================
+
+.Entity
+[width="100%"]
+|==========================
+|boolean addSupports(string supports)|Adds the given supports to the user's supports list, if it hasn't been added before.
+|Bot asBot()|Returns with the client as Bot.
+|Client asClient()|Returns with the client as Client.
+|Hub asHub()|Returns with the bot as Hub.
+|boolean getAllFields(AdcCommand cmd)|Adds any flags that has been updated to the given AdcCommand (type etc is not set).
+|CID getCID()|Returns with the client's CID.
+|string getField(string name)|Returns with the given fields value.
+|BufferPtr getINF()|Returns with the client's INF buffer.
+|number getSID()|Returns with the client's SID.
+|State getState()|Returns with the client's state.
+|BufferPtr getSUP()|Returns with the client's SUP buffer.
+|TStringList getSupportList()|Returns with the client's supports from SUP command.
+|boolean hasField(string name)|Returns true if the client has the given field in it's INF.
+|boolean hasSupport(number feature)|Returns true if the client supports the given feature.
+|boolean isAnySet(number aFlag)|Returns true if the given flag is set.
+|boolean isFiltered(string features)|Returns true if the given features are in the filter list (for F messages).
+|boolean isSet(number aFlag)|Returns true if the given flag is set.
+|boolean removeSupports(number feature)|Removes the given feature.
+|void send(AdcCommand cmd)|Sends the given command to the client.
+|void setCID(CID cid_)|Sets the client's CID.
+|void setField(string name, string value)|Sets the client's field to the given value.
+|void setFlag(number aFlag)|Sets the given flag.
+|void setState(State state_)|Sets the client's state.
+|void unsetFlag(number aFlag)|Unsets the given flag.
+|void updateFields(AdcCommand cmd)|Updates the fields from the given command.
+|void updateSupports(AdcCommand cmd)|Updates the supports from the given command.
+|==========================
+
+.Exception
+[width="100%"]
+|==========================
+|string getError()|Returns with the errormessage
+|string what()|Returns with the errormessage
+|==========================
+
+.Hub
+[width="100%"]
+|==========================
+|boolean addSupports(string supports)|Adds the given supports to the user's supports list, if it hasn't been added before.
+|Bot asBot()|Returns with the client as Bot.
+|Client asClient()|Returns with the client as Client.
+|Hub asHub()|Returns with the bot as Hub (dummy).
+|boolean getAllFields(AdcCommand cmd)|Adds any flags that has been updated to the given AdcCommand (type etc is not set).
+|CID getCID()|Returns with the client's CID.
+|string getField(string name)|Returns with the given fields value.
+|BufferPtr getINF()|Returns with the client's INF buffer.
+|number getSID()|Returns with the client's SID.
+|State getState()|Returns with the client's state.
+|BufferPtr getSUP()|Returns with the client's SUP buffer.
+|TStringList getSupportList()|Returns with the client's supports from SUP command.
+|boolean hasField(string name)|Returns true if the client has the given field in it's INF.
+|boolean hasSupport(number feature)|Returns true if the client supports the given feature.
+|boolean isAnySet(number aFlag)|Returns true if the given flag is set.
+|boolean isFiltered(string features)|Returns true if the given features are in the filter list (for F messages).
+|boolean isSet(number aFlag)|Returns true if the given flag is set.
+|boolean removeSupports(number feature)|Removes the given feature.
+|void send(AdcCommand cmd)|Sends the given command to the client.
+|void setCID(CID cid_)|Sets the client's CID.
+|void setField(string name, string value)|Sets the client's field to the given value.
+|void setFlag(number aFlag)|Sets the given flag.
+|void setState(State state_)|Sets the client's state.
+|void unsetFlag(number aFlag)|Unsets the given flag.
+|void updateFields(AdcCommand cmd)|Updates the fields from the given command.
+|void updateSupports(AdcCommand cmd)|Updates the supports from the given command.
+|==========================
+
+.LogManager
+--------------------------------------
+getEnabled = function: 00C09FC0,
+getLogFile = function: 00C09F30,
+log = function: 00C09EA0,
+setEnabled = function: 00C09F78,
+setLogFile = function: 00C09F10,
+--------------------------------------
+
+.ManagedConnection
+--------------------------------------
+disconnect = function: 00C0C278,
+release = function: 00C0C2E0,
+--------------------------------------
+
+.ParseException
+--------------------------------------
+getError = function: 00C0C570,
+what = function: 00C0C5B8,
+--------------------------------------
+
+.PluginManager
+--------------------------------------
+attention = function: 00C0C720,
+getPluginList = function: 00C176B8,
+getPluginPath = function: 00C176D8,
+onCommand = function: 00C17720,
+--------------------------------------
+
+.ServerInfo
+--------------------------------------
+boolean secure
+string ip
+number port
+TLSInfo TLSParams
+--------------------------------------
+
+.ServerInfoPtr
+--------------------------------------
+__deref__ = function: 00C277B8,
+create = function: 00C277F8,
+secure = function: 00C277D8,
+string ip
+number port
+TLSInfo TLSParams
+--------------------------------------
+
+.SimpleXML
+--------------------------------------
+addAttrib = function: 00C25C50,
+addChildAttrib = function: 00C25C70,
+addTag = function: 00C25BE0,
+findChild = function: 00C25ED0,
+fromXML = function: 00C26090,
+getBoolChildAttrib = function: 00C26050,
+getChildAttrib = function: 00C25F60,
+getChildData = function: 00C25F18,
+getData = function: 00C25CB0,
+getIntChildAttrib = function: 00C25FB0,
+getLongLongChildAttrib = function: 00C26000,
+resetCurrentChild = function: 00C25E88,
+stepIn = function: 00C25CF0,
+stepOut = function: 00C25E38,
+toXML = function: 00C260D0,
+--------------------------------------
+
+.SocketManager
+--------------------------------------
+setServers = function: 00C26240,
+--------------------------------------
+
+.string
+--------------------------------------
+assign = function: 00C27C68,
+c_str = function: 00C27C08,
+data = function: 00C27C28,
+empty = function: 00C27BC8,
+length = function: 00C27B88,
+size = function: 00C27B20,
+--------------------------------------
+
+.TByteVector
+--------------------------------------
+__getitem = function: 00C18CB8,
+__setitem = function: 00C18EE0,
+back = function: 00C18C98,
+clear = function: 00C18C18,
+empty = function: 00C18BF8,
+front = function: 00C18C78,
+max_size = function: 00C129E8,
+pop_back = function: 00C18C58,
+push_back = function: 00C18C38,
+size = function: 00C129A0,
+--------------------------------------
+
+.TEntityList
+--------------------------------------
+__getitem = function: 00C07480,
+__setitem = function: 00C074C8,
+back = function: 00C07438,
+clear = function: 00C07248,
+empty = function: 00C07208,
+front = function: 00C073F8,
+max_size = function: 00C071E8,
+pop_back = function: 00C073B8,
+push_back = function: 00C07268,
+size = function: 00C07178,
+--------------------------------------
+
+.TigerHash
+--------------------------------------
+finalize = function: 00C26CA0,
+update = function: 00C26C30,
+--------------------------------------
+
+.TLSInfo get/set
+--------------------------------------
+string cert
+string dh
+string pkey
+string trustedPath
+--------------------------------------
+
+.TServerInfoList
+--------------------------------------
+__getitem = function: 00C2E4E8,
+__setitem = function: 00C2E710,
+back = function: 00C2E4C8,
+clear = function: 00C2E448,
+empty = function: 00C2E428,
+front = function: 00C2E4A8,
+max_size = function: 00C2E408,
+pop_back = function: 00C2E488,
+push_back = function: 00C2E468,
+size = function: 00C07670,
+--------------------------------------
+
+.TStringList
+--------------------------------------
+__getitem = function: 00C123F0,
+__setitem = function: 00C12618,
+back = function: 00C123D0,
+clear = function: 00C12350,
+empty = function: 00C12330,
+front = function: 00C123B0,
+max_size = function: 00C12310,
+pop_back = function: 00C12390,
+push_back = function: 00C12370,
+size = function: 00C122C8, 
+--------------------------------------
