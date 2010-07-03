@@ -60,25 +60,41 @@ CAUTION: Windows Vista and Windows 7 should not install to program files directo
 
 === Installing on Linux 
 
-Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions. 
+Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions.
 
-	wget https://sourceforge.net/projects/adchpp/files/ADCH%2B%2B%20Unstable/ADCH%2B%2B%202.4/ADCH%2B%2B.2.4-noarch-src.zip
+.Step 1
 
-Recommended Tools for compile
-	
-	Debian: sudo apt-get install python scons swig gcc-c++ openssl-dev readline-dev
-	Redhat: yum install gcc-c++ python scons swig openssl-devel readline-devel
-	
---------------------------------------
-cd adchpp
-scons
-cd build/release-default/bin/
-mkdir config
-mkdir scripts
-cp -rf plugins/Script/examples build/release-default/bin/scripts
-cp -rf etc/ build/release-default/bin/config
---------------------------------------	
-			
+Get the source via wget in console issue the following command in console
+
+ wget https://sourceforge.net/projects/adchpp/files/Releases/ADCH%2B%2B%202.5/2.5.1/adchpp_2.5.1_source.tar.gz/download 
+
+.Step 2
+Then you need to install these tools in order to compile debian based systems uses `apt-get` and redhat systems uses `yum`
+
+[width="100%"]
+|==========================	
+|*Debian*|python|scons|swig|gcc-c++|openssl-dev|readline-dev
+|*Redhat*|python|scons|swig|gcc-c++|openssl-devel|readline-devel
+|==========================
+
+.Step 3
+-----------------------------------------------------
+<1> cd adchpp
+<2> scons
+<3> cd build/release-default/bin/
+<3> mkdir config
+<3> mkdir scripts
+<4> cp -rf plugins/Script/examples build/release-default/bin/scripts
+<4> cp -rf etc/ build/release-default/bin/config
+<5> /.adchppd
+-----------------------------------------------------
+ 
+. Enter the ADCH++ directory.
+. Start the compile of ADCH++.
+. Enter the bin dir and make two folders.
+. Copy files to bin folder.
+. Start ADCH++.
+ 
 == Basic configuration
 
 All the settings for ADCH\++ is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as Notepad) and start changing values to your wishes.
@@ -100,9 +116,11 @@ insert this to adchpp.xml on the server line:
 
 Simple OpenSSL commands to generate files used for secure connections:
 
-	openssl genrsa -out privkey.pem 2048
-	openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
-	openssl dhparam -outform PEM -out dhparam.pem 1024
+--------------------------------------
+openssl genrsa -out privkey.pem 2048
+openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
+openssl dhparam -outform PEM -out dhparam.pem 1024
+--------------------------------------
 
 Alternatively, you can use the cert generator contributed on:
 
@@ -114,10 +132,13 @@ Windows:
 http://www.slproweb.com/products/Win32OpenSSL.html
 
 Linux Debian/Ubuntu:
-	sudo install apt-get openssl
-
+--------------------------------------
+sudo install apt-get openssl
+--------------------------------------
 Linux Redhat:
-	yum install openssl
+--------------------------------------
+yum install openssl
+--------------------------------------
 
 TIP: Remember that if you have specified TLS=1 in the config that you need to connect with the prefix adcs://
 	
@@ -131,32 +152,34 @@ All the user accounts are stored in users.txt. This guide will explain how to cr
 
 	+regme <your desired password>
 
-example:
+.Example: Register
+--------------------------------------
+[09-10-02][21:37:19] *** Connecting to adc://somehub.com:411
+[09-10-02][21:37:19] *** Connected
+[09-10-02][21:37:19] <ADCH++> MOTD content goes here
+[09-10-02][21:37:56] <Testuser> +regme test
+[09-10-02][21:37:26] <ADCH++> You're now registered
+--------------------------------------
 
-	[09-10-02][21:37:19] *** Connecting to adc://somehub.com:411
-	[09-10-02][21:37:19] *** Connected
-	[09-10-02][21:37:19] <ADCH++> MOTD content goes here
-	[09-10-02][21:37:56] <Testuser> +regme test
-	[09-10-02][21:37:26] <ADCH++> You're now registered
+.Example: users.txt
+--------------------------------------
+[{"password":"test","nick":"Testuser","level":1,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
+--------------------------------------
 
-example users.txt
-
-	[{"password":"test","nick":"Testuser","level":1,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
-
-Change this to:
-	
-	[{"password":"test","nick":"Testuser","level":10,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
+.Change this to:
+--------------------------------------	
+[{"password":"test","nick":"Testuser","level":10,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
+--------------------------------------
 
 reconnect to the hub again and now you will have access to administrator commands so you can reg new administrators inside the hub with the command:
+--------------------------------------
++regnick <nick> <password> <level>
+--------------------------------------	
 
-	+regnick <nick> <password> <level>
-	
 Profiles Range from 1-infinite
 
-* 1 registered at the hub
-* 2 registered as a op
-
-yupp (VIP is the same as reg) ^^
+. registered at the hub
+. registered as a op
 
 == Scripts
 
@@ -164,13 +187,15 @@ Things like scripts can be enabled from scripts.xml stored in the config folder 
 
 How to turn off scripts in scripts.xml:
 
-example:
-	
-	<Script>motd.lua</Script>
+.Example: scripts.xml
+--------------------------------------
+<Script>motd.lua</Script>
+--------------------------------------
 
 Change to:
-
-	<!--Script>motd.lua</Script-->
+--------------------------------------
+<!--Script>motd.lua</Script-->
+--------------------------------------
 
 or delete the line
 
@@ -179,7 +204,7 @@ IMPORTANT: Linux Users make your your path to the scripts folder is an absolute 
 === Making new scripts
 In order to help scripters get a clue of how ADCH++ interacts with lua we made an example file thats included in this document.
 
-----
+--------------------------------------
 -- This is an example script that scripters might want to use as a basis for their work. It
 -- documents the bare minimum needed to make an Lua script interface with ADCH++.
 
@@ -265,8 +290,9 @@ example_5 = pm:getCommandSignal("blah"):connect(function(entity, list, ok)
 	-- Process getCommandSignal here.
 	-- Return true to let the command be executed, false to block it.
 end)
-----
-NOTE: Additional documentation can be found at (http://adchpp.sourceforge.net/doc) for anyone that wishes to contribute scripts for ADCH\++ submit new scripts either at (https://bugs.launchpad.net/adchpp) or (http://www.adcportal.com) ADCH++ supports LUA 5.1.4 (http://www.lua.org/docs.html).
+--------------------------------------
+
+NOTE: Additional documentation can be found at (http://adchpp.sourceforge.net/) for anyone that wishes to contribute scripts for ADCH\++ submit new scripts either at (https://bugs.launchpad.net/adchpp) or (http://www.adcportal.com) ADCH++ supports LUA 5.1.4 (http://www.lua.org/docs.html).
 
 === Importing Ptokax Scripts
 
@@ -405,38 +431,42 @@ Directory of c:\users\username\adchpp\Scripts\px
 
 A simple way to find out how stuff works is by typing +help as we promised the guide will show additional configuration you should type
 
-	+help cfg
+.Example: Help Meny
+--------------------------------------
++help cfg
+--------------------------------------
 
-example:
-
-
-  +cfg name value - change hub configuration, use "+help cfg" to list all variables (aliases: +changecfg, +changeconfig, +changevar, +config, +setcfg, +setconfig, +setvar, +var)
+.Example: Configuration Variables
+--------------------------------------
++cfg name value - change hub configuration, use "+help cfg" to list all variables
+--------------------------------------
 
 List of all settings variables:
-  address - current value: 192.168.0.10 - host address (DNS or IP) (aliases: dns, host)
-  allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow
-  allowreg - current value: 1 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
-  botcid - current value: DCL4JDMGMJIC6H3OM3B36XXJHEFWVLU6XF5D37Y - CID of the bot, restart the hub after the change (aliases: botid)
-  botdescription - current value: just a bot - description of the hub bot (aliases: botde, botdescr)
-  botemail - current value: bot@nospam.org - e-mail of the hub bot (aliases: botem, botmail)
-  botname - current value: -bot- - name of the hub bot (aliases: botni, botnick)
-  description - current value: just a description - hub description (aliases: hubdescription)
-  history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
-  history_max - current value: 500 - number of messages to keep for +history
-  history_prefix - current value: [%Y-%m-%d %H:%M:%S]  - prefix to put before each message in +history
-  maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
-  maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
-  maxusers - current value: 0 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
-  menuname - current value: ADCH++ - title of the main user command menu sent to clients (aliases: ucmdname)
-  minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
-  mindownloadlevel - current value: 0 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
-  minsearchlevel - current value: 0 - minimum level to search - hub restart recommended
-  name - current value: Just a hub - hub name (aliases: hubname)
-  network - current value: Just a network
-  owner - current value: Just an owner - owner name (aliases: ownername)
-  passinlist - current value: 1 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
-  topic - current value: Just a topic - hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists (aliases: hubtopic)
-  website - current value:  (aliases: url)
+
+	address - current value: 192.168.0.10 - host address (DNS or IP) (aliases: dns, host)
+	allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow
+	allowreg - current value: 1 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
+	botcid - current value: DCL4JDMGMJIC6H3OM3B36XXJHEFWVLU6XF5D37Y - CID of the bot, restart the hub after the change (aliases: botid)
+	botdescription - current value: just a bot - description of the hub bot (aliases: botde, botdescr)
+	botemail - current value: bot@nospam.org - e-mail of the hub bot (aliases: botem, botmail)
+	botname - current value: -bot- - name of the hub bot (aliases: botni, botnick)
+	description - current value: just a description - hub description (aliases: hubdescription)
+	history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
+	history_max - current value: 500 - number of messages to keep for +history
+	history_prefix - current value: [%Y-%m-%d %H:%M:%S]- prefix to put before each message in +history
+	maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
+	maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
+	maxusers - current value: 0 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
+	menuname - current value: ADCH++ - title of the main user command menu sent to clients (aliases: ucmdname)
+	minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
+	mindownloadlevel - current value: 0 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+	minsearchlevel - current value: 0 - minimum level to search - hub restart recommended
+	name - current value: Just a hub - hub name (aliases: hubname)
+	network - current value: Just a network
+	owner - current value: Just an owner - owner name (aliases: ownername)
+	passinlist - current value: 1 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
+	topic - current value: Just a topic - hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists (aliases: hubtopic)
+	website - current value: www.somesite.net(aliases: url)
 
 These are all settings stored in settings.txt thats in the config dir in your adchpp installation.
 
@@ -444,69 +474,84 @@ These are all settings stored in settings.txt thats in the config dir in your ad
 
 Here is how you set your hub to private so that registered users only can access
 
-	+cfg maxusers 0
+.Example: Configuration Example
+--------------------------------------
++cfg maxusers 0
+--------------------------------------
 
 The variable "maxusers" has the following description:
 
-	maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, usermax, user_max, usersmax, users_max)
+  maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed
 
-now if anyone is trying to access the hub without an account they will receive this message
+When the hub is set to registred users only the unregistered users will recive this message.
 
-	[09-10-02][22:07:09] <ADCH++> Only registered users are allowed in here
+.Example: Connection Attempt (if not registred at the hub)
+--------------------------------------
+[09-10-02][22:07:09] <ADCH++> Only registered users are allowed in here
+--------------------------------------
 
 === Setting the hub to register to download
 
 So what does reg to download mean well its pretty simple if user is a guest and the reg to download lines are inserted they need to get an account on the server to be able to download anything from others by using the following command
 
-	+regme <password>
+.Example: Register
+--------------------------------------
++regme <password>
+--------------------------------------
 
-With the 2\.5\.1 release setting download/chat/search requierments is pretty easy its just a simple command to execute and use.	
+With the 2.5.1 release setting download/chat/search requierments is pretty easy its just a simple command to execute and use.	
 
-	+cfg minchatlevel <value>
-	+cfg mindownloadlevel <value>
-	+cfg minsearchlevel <value>
+.Example: Configuration Example
+--------------------------------------
++cfg minchatlevel <value>
++cfg mindownloadlevel <value>
++cfg minsearchlevel <value>
+--------------------------------------
 
-  minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
-  mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
-  minsearchlevel - current value: 1 - minimum level to search - hub restart recommended
+* minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
+* mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+* minsearchlevel - current value: 1 - minimum level to search - hub restart recommended
 
 === Working with banmsgre
 
 This is a very powerful system for getting rid of unwanted spam, it uses regular expressions for detecting unwanted content in your hub it requires knowledge of how to write a regular expression string so it might not be for the beginners.
 
-	+banmsgre <regexp> <reason> <time>
-	
-Example:
-
-	+banmsgre <http://www\.spam\.com> unwanted spam 99
+  +banmsgre <regexp> <reason> <time>
+ 
+.Example: Command Example
+--------------------------------------
++banmsgre <http://www\.spam\.com> unwanted spam 99
+--------------------------------------
 
 For more information about regular expression go to this site:
 http://www.regular-expressions.info/
 
 == Running ADCH++ with paramters
 
-	Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
+Gonna run thru how to install ADCH++ as a service instead of a application
+
+.Example: Command usage
+--------------------------------------	
+Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
+--------------------------------------	
 	
 * -c specifies a path to configuration directory
 * -d deamon service _(Linux only)_
 * -i service mode _(Windows only)_
 * -v version number
 * -h help message
-	
-	examples:
-	(Linux)
-	adchppd -c /home/test/adchpp/bin/config/
-	(Windows)
-	adchppd.exe -c c:/users/test/adchpp/bin/config/
-	(Linux)
-	adchppd -d
-	(Windows)
-	adchppd.exe -i adchpp
+
+.Example: Varible Example
+--------------------------------------	
+(Linux)		adchppd -c /home/test/adchpp/bin/config/
+(Linux)		adchppd -d
+(Windows)	adchppd.exe -c c:/users/test/adchpp/bin/config/
+(Windows)	adchppd.exe -i adchpp
+--------------------------------------	
 
 Installing ADCH++ as a service requires it to be run in an elevated state as UAC will interfere in the process if its not executed as an administrator if its a Windows 7 or Vista machine its running on this is how you elevate adchpp.exe in Windows 7/Vista
 
-
-How it would look if it fails
+.How it would look if it fails
 
 image:images/img_adch_elevated_fail.png[]
 
@@ -537,8 +582,6 @@ so how do you (the user) fit into this well in the event that you find a bug try
 === Hub crash (core dumps)
 
 In the event of a total crash the hubsoft generates file called adchppd.RPT in folder where the binary is located, here is how an adchppd.RPT may look like:
-
-	-------------------
 
 	Error occured on Sunday, September 27, 2009 at 11:08:23.
 
