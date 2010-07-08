@@ -1,3 +1,5 @@
+* Improve Lua scripts
+
 -- 2.5.1 2010-06-20 --
 * [L#591701] Fix compiling out of the bzr repo
 * Fix the "unloading" event which was never being called

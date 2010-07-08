@@ -55,6 +55,9 @@ access.commands.history = {
 			if not items then
 				return
 			end
+			if items > access.settings.history_max.value then
+				items = access.settings.history_max.value
+			end
 		end
 
 		local s = 0
@@ -64,7 +67,7 @@ access.commands.history = {
 		end
 
 		local e = pos
-		local msg = "Displaying last " .. (e - s) .. " messages"
+		local msg = "Displaying the last " .. (e - s) .. " messages"
 
 		while s ~= e and messages[idx(s)] do
 			msg = msg .. "\r\n" .. messages[idx(s)]
