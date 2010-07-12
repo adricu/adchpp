@@ -41,49 +41,23 @@ public:
 	typedef F FunctionType;
 
 	template<typename T0>
-	void operator()(T0& t0) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0);
-		}
-	}
-	template<typename T0>
-	void operator()(const T0& t0) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0);
+	void operator()(T0&& t0) {
+		for(auto i = slots.begin(), iend = slots.end(); i != iend;) {
+			(*i++)(std::forward<T0>(t0));
 		}
 	}
 
 	template<typename T0, typename T1>
-	void operator()(T0& t0, T1& t1) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1);
+	void operator()(T0&& t0, T1&& t1) {
+		for(auto i = slots.begin(), iend = slots.end(); i != iend;) {
+			(*i++)(std::forward<T0>(t0), std::forward<T1>(t1));
 		}
 	}
 
 	template<typename T0, typename T1, typename T2>
-	void operator()(const T0& t0, const T1& t1, const T2& t2) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1, t2);
-		}
-	}
-
-	template<typename T0, typename T1, typename T2>
-	void operator()(const T0& t0, T1& t1, T2& t2) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1, t2);
-		}
-	}
-
-	template<typename T0, typename T1, typename T2>
-	void operator()(T0& t0, T1& t1, T2& t2) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1, t2);
+	void operator()(T0&& t0, T1&& t1, T2&& t2) {
+		for(auto i = slots.begin(), iend = slots.end(); i != iend;) {
+			(*i++)(std::forward<T0>(t0), std::forward<T1>(t1), std::forward<T2>(t2));
 		}
 	}
 
