@@ -48,7 +48,7 @@ public:
 	 * Set data mode for aBytes bytes.
 	 * May only be called from on(ClientListener::Command...).
 	 */
-	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
+	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);

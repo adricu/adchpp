@@ -34,8 +34,7 @@
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1;
-using namespace std::tr1::placeholders;
+using namespace std::placeholders;
 using namespace boost::asio;
 using namespace boost::system;
 
@@ -135,12 +134,12 @@ public:
 		if(serverInfo->secure()) {
 			TLSSocketStream* s = new TLSSocketStream(io, *context);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::prepareHandshake, from_this(), std::tr1::placeholders::_1, socket));
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
 			SimpleSocketStream* s = new SimpleSocketStream(io);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::handleAccept, from_this(), std::tr1::placeholders::_1, socket));
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
 #endif
@@ -156,7 +155,7 @@ public:
 			try {
 				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }
-			tls->sock.async_handshake(ssl::stream_base::server, std::tr1::bind(&SocketFactory::completeAccept, from_this(), std::tr1::placeholders::_1, socket));
+			tls->sock.async_handshake(ssl::stream_base::server, std::bind(&SocketFactory::completeAccept, from_this(), std::placeholders::_1, socket));
 		}
 
 		prepareAccept();
@@ -192,7 +191,7 @@ public:
 	SocketManager::IncomingHandler handler;
 
 #ifdef HAVE_OPENSSL
-	std::tr1::shared_ptr<boost::asio::ssl::context> context;
+	std::shared_ptr<boost::asio::ssl::context> context;
 #endif
 
 };
@@ -238,9 +237,9 @@ SocketManager::Callback SocketManager::addJob(const std::string& time, const Cal
 
 SocketManager::Callback SocketManager::addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback) {
 	timer_ptr timer(new timer_ptr::element_type(io, duration));
-	timer->async_wait(std::tr1::bind(&SocketManager::handleWait, this, timer, std::tr1::placeholders::_1,
+	timer->async_wait(std::bind(&SocketManager::handleWait, this, timer, std::placeholders::_1,
 		new Callback(callback))); // create a separate callback on the heap to avoid shutdown crashes
-	return std::tr1::bind(&SocketManager::cancelTimer, this, timer);
+	return std::bind(&SocketManager::cancelTimer, this, timer);
 }
 
 void SocketManager::handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback) {
@@ -265,7 +264,7 @@ void SocketManager::startup() throw(ThreadException) {
 
 void SocketManager::shutdown() {
 	work.reset();
-	addJob(std::tr1::bind(&SocketManager::closeFactories, this));
+	addJob(std::bind(&SocketManager::closeFactories, this));
 	io.stop();
 	join();
 }

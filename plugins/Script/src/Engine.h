@@ -21,7 +21,7 @@
 
 class Script;
 
-typedef std::tr1::unordered_set<std::string, std::string> ParameterMap;
+typedef std::unordered_set<std::string, std::string> ParameterMap;
 
 class Engine {
 public:

@@ -52,8 +52,7 @@
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1;
-using std::tr1::placeholders::_1;
+using std::placeholders::_1;
 
 PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";

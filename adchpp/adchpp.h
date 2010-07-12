@@ -26,22 +26,10 @@
 #endif
 
 #ifdef _MSC_VER
-
 //disable the deprecated warnings for the CRT functions.
 # define _CRT_SECURE_NO_DEPRECATE 1
 # define _ATL_SECURE_NO_DEPRECATE 1
 # define _CRT_NON_CONFORMING_SWPRINTFS 1
-
-typedef signed __int8 int8_t;
-typedef signed __int16 int16_t;
-typedef signed __int32 int32_t;
-typedef signed __int64 int64_t;
-
-typedef unsigned __int8 uint8_t;
-typedef unsigned __int16 uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
-
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -69,10 +57,13 @@ typedef unsigned __int64 uint64_t;
 #ifdef _WIN32
 
 # ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x0500
+#  define _WIN32_WINNT 0x0501
+# endif
+# ifndef _WIN32_IE
+#  define _WIN32_IE 0x0501
 # endif
 # ifndef WINVER
-#  define WINVER 0x0500
+#  define WINVER 0x0501
 # endif
 # ifndef STRICT
 #  define STRICT 1
@@ -100,17 +91,15 @@ typedef unsigned __int64 uint64_t;
 
 #endif
 
-#ifndef _MSC_VER
-#include <sys/time.h>
-#include <inttypes.h> /// @todo when c++0x, use <cinttypes>
-#endif
-
 #include <cerrno>
+#include <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+
+#include <sys/time.h>
 
 #include <string>
 #include <vector>

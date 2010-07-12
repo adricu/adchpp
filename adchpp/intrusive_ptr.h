@@ -19,14 +19,14 @@
 #ifndef ADCHPP_INTRUSIVE_PTR_H
 #define ADCHPP_INTRUSIVE_PTR_H
 
-namespace std { namespace tr1 {
+namespace std {
 
 template<typename T>
 struct hash<boost::intrusive_ptr<T> > {
 	size_t operator()(const boost::intrusive_ptr<T>& t) const { return hash<T*>()(t.get()); }
 };
 
-} }
+}
 
 namespace adchpp {
 

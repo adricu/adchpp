@@ -26,7 +26,6 @@
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1;
 
 using namespace boost::asio;
 

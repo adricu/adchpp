@@ -58,14 +58,13 @@ private:
 
 }
 
-namespace std { namespace tr1 {
+namespace std {
 template<>
 struct hash<adchpp::CID> {
 	size_t operator()(const adchpp::CID& rhs) const {
 		return *reinterpret_cast<const size_t*>(rhs.data());
 	}
 };
-}
 }
 
 #endif

@@ -31,12 +31,12 @@ public:
 	virtual void disconnect() = 0;
 };
 
-typedef std::auto_ptr<Connection> ConnectionPtr;
+typedef std::unique_ptr<Connection> ConnectionPtr;
 
 template<typename F>
 class Signal {
 public:
-	typedef std::tr1::function<F> Slot;
+	typedef std::function<F> Slot;
 	typedef std::list<Slot> SlotList;
 	typedef F FunctionType;
 
@@ -108,7 +108,7 @@ private:
 };
 
 struct ManagedConnection : public intrusive_ptr_base<ManagedConnection>, private boost::noncopyable {
-	ManagedConnection(ConnectionPtr conn_) : conn(conn_) {
+	ManagedConnection(ConnectionPtr&& conn_) : conn(move(conn_)) {
 	}
 
 	void disconnect() {

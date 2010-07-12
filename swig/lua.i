@@ -174,13 +174,13 @@ private:
 	}
 
 	lua_State* L;
-	std::tr1::shared_ptr<RegistryItem> registryItem;
+	std::shared_ptr<RegistryItem> registryItem;
 };
 
 static int exec(lua_State* L) {
 	void* p;
-	if(SWIG_IsOK(SWIG_ConvertPtr(L, lua_upvalueindex(1), &p, SWIGTYPE_p_std__tr1__functionT_void_fF_t, 0))) {
-		(*reinterpret_cast<std::tr1::function<void ()>*>(p))();
+	if(SWIG_IsOK(SWIG_ConvertPtr(L, lua_upvalueindex(1), &p, SWIGTYPE_p_std__functionT_void_fF_t, 0))) {
+		(*reinterpret_cast<std::function<void ()>*>(p))();
 	}
 	return 0;
 }
@@ -197,45 +197,45 @@ uint32_t, const uint32_t&
    lua_pushnumber(L, (lua_Number)$1); SWIG_arg++;
 }
 
-%typemap(in) std::tr1::function<void () > {
+%typemap(in) std::function<void () > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(out) std::tr1::function<void ()> {
-	SWIG_NewPointerObj(L, new std::tr1::function<void ()>($1), SWIGTYPE_p_std__tr1__functionT_void_fF_t, 1);
+%typemap(out) std::function<void ()> {
+	SWIG_NewPointerObj(L, new std::function<void ()>($1), SWIGTYPE_p_std__functionT_void_fF_t, 1);
 	lua_pushcclosure(L, exec, 1);
 	SWIG_arg++;
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &) > {
+%typemap(in) std::function<void (adchpp::Entity &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, adchpp::AdcCommand &) > {
+%typemap(in) std::function<void (adchpp::Entity &, adchpp::AdcCommand &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, adchpp::AdcCommand &, bool&) > {
+%typemap(in) std::function<void (adchpp::Entity &, adchpp::AdcCommand &, bool&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, int) > {
+%typemap(in) std::function<void (adchpp::Entity &, int) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, const std::string&) > {
+%typemap(in) std::function<void (adchpp::Entity &, const std::string&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (const SimpleXML&) > {
+%typemap(in) std::function<void (const SimpleXML&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
+%typemap(in) std::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Bot&, const adchpp::BufferPtr&) > {
+%typemap(in) std::function<void (adchpp::Bot&, const adchpp::BufferPtr&) > {
 	$1 = LuaFunction(L);
 }
 

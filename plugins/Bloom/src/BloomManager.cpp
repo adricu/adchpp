@@ -26,8 +26,7 @@
 #include <adchpp/PluginManager.h>
 
 using namespace std;
-using namespace std::tr1;
-using namespace std::tr1::placeholders;
+using namespace std::placeholders;
 using namespace adchpp;
 
 BloomManager* BloomManager::instance = 0;
@@ -46,15 +45,15 @@ struct PendingItem {
 BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
 	LOG(className, "Starting");
 	ClientManager* cm = ClientManager::getInstance();
-	receiveConn = manage(&cm->signalReceive(), std::tr1::bind(&BloomManager::onReceive, this, _1, _2, _3));
-	sendConn = manage(&cm->signalSend(), std::tr1::bind(&BloomManager::onSend, this, _1, _2, _3));
+	receiveConn = manage(&cm->signalReceive(), std::bind(&BloomManager::onReceive, this, _1, _2, _3));
+	sendConn = manage(&cm->signalSend(), std::bind(&BloomManager::onSend, this, _1, _2, _3));
 
 	PluginManager* pm = PluginManager::getInstance();
 	bloomHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<HashBloom>);
 	pendingHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<PendingItem>);
 
 	statsConn = ManagedConnectionPtr(new ManagedConnection(pm->onCommand("stats",
-		std::tr1::bind(&BloomManager::onStats, this, _1))));
+		std::bind(&BloomManager::onStats, this, _1))));
 }
 
 BloomManager::~BloomManager() {

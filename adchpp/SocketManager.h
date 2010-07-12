@@ -32,7 +32,7 @@ namespace adchpp {
 
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
-	typedef std::tr1::function<void()> Callback;
+	typedef std::function<void()> Callback;
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
 	/** execute a function after the specified amount of time
 	* @param msec milliseconds
@@ -50,7 +50,7 @@ public:
 
 	void setServers(const ServerInfoList& servers_) { servers = servers_; }
 
-	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
+	typedef std::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 
 	std::map<std::string, int> errors;
@@ -64,7 +64,7 @@ private:
 	void closeFactories();
 
 	boost::asio::io_service io;
-	std::auto_ptr<boost::asio::io_service::work> work;
+	std::unique_ptr<boost::asio::io_service::work> work;
 
 	ServerInfoList servers;
 	std::vector<SocketFactoryPtr> factories;
@@ -76,7 +76,7 @@ private:
 	friend class Singleton<SocketManager>;
 	ADCHPP_DLL static SocketManager* instance;
 
-	typedef std::tr1::shared_ptr<boost::asio::deadline_timer> timer_ptr;
+	typedef std::shared_ptr<boost::asio::deadline_timer> timer_ptr;
 	Callback addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
 	void handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback);
 	void cancelTimer(timer_ptr timer);

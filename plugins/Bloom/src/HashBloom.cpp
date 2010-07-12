@@ -20,7 +20,7 @@
 
 #include "HashBloom.h"
 
-#include <math.h>
+#include <cmath>
 
 size_t HashBloom::get_k(size_t n, size_t h) {
 	for(size_t k = TTHValue::BITS/h; k > 1; --k) {

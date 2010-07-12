@@ -12,9 +12,9 @@ gcc_flags = {
 }
 
 gcc_xxflags = {
-	'common' : [],
+	'common' : ['-std=gnu++0x'],
 	'debug' : [],
-	'release' : ['-fno-enforce-eh-specs']
+	'release' : []
 }
 
 msvc_flags = {
@@ -127,7 +127,7 @@ dev.prepare()
 
 env.SConsignFile()
 
-env.Append(CPPPATH = ["#/boost/boost/tr1/tr1/", "#/boost/"])
+env.Append(CPPPATH = ['#/boost/'])
 env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
 if env['CC'] == 'cl': # MSVC
 	env.Append(CPPDEFINES = ['BOOST_ALL_NO_LIB=1'])
@@ -136,11 +136,7 @@ if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
 	env.Append(CCFLAGS=['-fvisibility=hidden'])
 
-if env['nativestl']:
-	if 'gcc' in env['TOOLS']:
-		env.Append(CPPDEFINES = ['BOOST_HAS_GCC_TR1'])
-	# boost detects MSVC's tr1 automagically
-else:
+if not env['nativestl']:
 	env.Append(CPPPATH = ['#/stlport/stlport/'])
 	env.Append(LIBPATH = ['#/stlport/lib/'])
 	env.Append(CPPDEFINES = ['HAVE_STLPORT', '_STLP_USE_STATIC_LIB=1'])
@@ -148,9 +144,6 @@ else:
 		env.Append(LIBS = ['stlportg.5.1'])
 	else:
 		env.Append(LIBS = ['stlport.5.1'])
-
-	# assume STLPort has tr1 containers
-	env.Append(CPPDEFINES = ['BOOST_HAS_TR1'])
 
 if 'gcc' in env['TOOLS']:
 
@@ -181,6 +174,9 @@ env.Append(CPPDEFINES = defs['common'])
 
 env.Append(CCFLAGS = flags[mode])
 env.Append(CCFLAGS = flags['common'])
+
+env.Append(CXXFLAGS = xxflags[mode])
+env.Append(CXXFLAGS = xxflags['common'])
 
 env.Append(LINKFLAGS = link_flags[mode])
 env.Append(LINKFLAGS = link_flags['common'])

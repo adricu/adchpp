@@ -28,7 +28,7 @@ namespace adchpp {
 class ADCHPP_VISIBLE Bot : public Entity {
 public:
 
-	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
+	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
 	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
 

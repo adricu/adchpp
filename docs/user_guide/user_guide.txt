@@ -1,6 +1,6 @@
 = Getting started with ADCH++ 
 Author: Toast <toast@adcportal.com> 
-Document Version 0.2.5
+Document Version 0.2.6
 ////
 0.1 
 * Inital Documentation
@@ -23,6 +23,8 @@ Document Version 0.2.5
 *Various updates to sections thats outdated or needs a touch up
 0.2.5
 *Spellcheck FTW
+0.2.6
+*Updated compile requirements
 ////
 
 == Installation
@@ -651,11 +653,11 @@ This part is not recommended for the newbie user this is for the novice or exper
 
 Here is a list of minimum versions of recommended tools:
     
-	* GCC 4.4+ Linux or http://www.mingw.org or Microsoft Visual C++ 9.0 (2008) with at least Service Pack 1 (see notes)
-    * SCons 1.0.0 http://www.scons.org
-    * SWIG 1.3.39 http://www.swig.org
-    * Python 2.4.x http://www.python.org
-    * Optional for x64 builds : OpenSSL 1.0.0-beta3 http://www.openssl.org
+	* GCC 4.4 (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
+    * SCons 1.3 http://www.scons.org
+    * SWIG 1.3.40 http://www.swig.org
+    * Python 2.4 http://www.python.org
+    * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
 
 MinGW Builds
 
@@ -668,8 +670,6 @@ MSVC Builds
 	to build a x86 release version use: scons tools=default mode=release
 	to build a x64 debug version use: scons tools=default arch=x64
 	to build a x64 release version use: scons tools=default mode=release arch=x64
-	
-IMPORTANT: ADCH\++ requires Microsoft Visual C++ 9.0 (2008) SP1 Hotfix to compile, https://connect.microsoft.com/VisualStudio/Downloads/DownloadDetails.aspx?DownloadID=17034&amp;wa=wsignin1.0[click here] to get it
 
 === Right on the bleeding edge
 

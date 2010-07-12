@@ -42,12 +42,11 @@ struct HashValue {
 	uint8_t data[BYTES];
 };
 
-namespace std { namespace tr1 {
+namespace std {
 template<typename T>
 struct hash<HashValue<T> > {
 	size_t operator()(const HashValue<T>& rhs) const { return *(size_t*)rhs.data; }
 };
-}
 }
 
 typedef HashValue<TigerHash> TTHValue;

@@ -150,7 +150,7 @@ typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager {
 public:
-	typedef std::tr1::function<void()> Callback;
+	typedef std::function<void()> Callback;
 	%extend {
 		/* work around 2 problems:
 		- SWIG fails to convert a script function to const Callback&.
@@ -172,7 +172,7 @@ public:
 template<typename F>
 struct Signal {
 %extend {
-	ManagedConnectionPtr connect(std::tr1::function<F> f) {
+	ManagedConnectionPtr connect(std::function<F> f) {
 		return manage(self, f);
 	}
 }
@@ -583,7 +583,7 @@ public:
 	 * Set data mode for aBytes bytes.
 	 * May only be called from on(ClientListener::Command...).
 	 */
-	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
+	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
 	bool isFlooding(time_t addSeconds);
@@ -592,7 +592,7 @@ public:
 
 class Bot : public Entity {
 public:
-	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
+	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
@@ -808,7 +808,7 @@ public:
 class PluginManager
 {
 public:
-	void attention(const std::tr1::function<void()>& f);
+	void attention(const std::function<void()>& f);
 
 	//typedef HASH_MAP<std::string, Plugin*> Registry;
 	//typedef Registry::iterator RegistryIter;

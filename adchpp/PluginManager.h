@@ -122,7 +122,7 @@ typedef void (*PLUGIN_UNLOAD)();
 class PluginManager : public Singleton<PluginManager>
 {
 public:
-	typedef std::tr1::unordered_map<std::string, Plugin*> Registry;
+	typedef std::unordered_map<std::string, Plugin*> Registry;
 	typedef Registry::iterator RegistryIter;
 
 	/**
@@ -130,7 +130,7 @@ public:
 	 * in the main ADCH++ worker thread. Your job will be executed once, when
 	 * time permits.
 	 */
-	ADCHPP_DLL void attention(const std::tr1::function<void()>& f);
+	ADCHPP_DLL void attention(const std::function<void()>& f);
 
 	/**
 	 * Get a list of currently loaded plugins
@@ -247,7 +247,7 @@ private:
 
 	bool loadPlugin(const std::string& file);
 
-	typedef std::tr1::unordered_map<std::string, CommandSignal> CommandHandlers;
+	typedef std::unordered_map<std::string, CommandSignal> CommandHandlers;
 	CommandHandlers commandHandlers;
 	bool handleCommand(Entity& e, const StringList& l);
 };

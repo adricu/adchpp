@@ -36,7 +36,7 @@ public:
 	virtual int getVersion() = 0;
 };
 
-typedef std::tr1::function<void (void*)> PluginDataDeleter;
+typedef std::function<void (void*)> PluginDataDeleter;
 
 class PluginData {
 public:
@@ -53,7 +53,7 @@ private:
 	PluginDataDeleter deleter;
 };
 
-typedef std::tr1::shared_ptr<PluginData> PluginDataHandle;
+typedef std::shared_ptr<PluginData> PluginDataHandle;
 
 }
 

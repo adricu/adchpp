@@ -40,7 +40,7 @@ ClientManager::ClientManager() throw() : loginTimeout(30 * 1000) {
 	hub.addSupports(AdcCommand::toFourCC("BASE"));
 	hub.addSupports(AdcCommand::toFourCC("TIGR"));
 
-	SocketManager::getInstance()->setIncomingHandler(std::tr1::bind(&ClientManager::handleIncoming, this, std::tr1::placeholders::_1));
+	SocketManager::getInstance()->setIncomingHandler(std::bind(&ClientManager::handleIncoming, this, std::placeholders::_1));
 }
 
 ClientManager::~ClientManager() throw() {
