@@ -92,14 +92,12 @@
 #endif
 
 #include <cerrno>
-#include <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>
+#include <cstdint>
 #include <cstring>
 #include <ctime>
-
-#include <sys/time.h>
 
 #include <string>
 #include <vector>

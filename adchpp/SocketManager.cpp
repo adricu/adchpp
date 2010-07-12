@@ -36,7 +36,8 @@ namespace adchpp {
 using namespace std;
 using namespace std::placeholders;
 using namespace boost::asio;
-using namespace boost::system;
+using boost::system::error_code;
+using boost::system::system_error;
 
 SocketManager::SocketManager()  {
 
@@ -242,7 +243,7 @@ SocketManager::Callback SocketManager::addJob(const boost::asio::deadline_timer:
 	return std::bind(&SocketManager::cancelTimer, this, timer);
 }
 
-void SocketManager::handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback) {
+void SocketManager::handleWait(timer_ptr timer, const error_code& error, Callback* callback) {
 	timer.reset();
 	if(!error) {
 		(*callback)();
@@ -252,7 +253,7 @@ void SocketManager::handleWait(timer_ptr timer, const boost::system::error_code&
 
 void SocketManager::cancelTimer(timer_ptr timer) {
 	if(timer.get()) {
-		boost::system::error_code ec;
+		error_code ec;
 		timer->cancel(ec);
 	}
 }
