@@ -135,6 +135,7 @@ if env['CC'] == 'cl': # MSVC
 if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
 	env.Append(CCFLAGS=['-fvisibility=hidden'])
+	env.Append(LIBS = ['stdc++', 'm'])
 
 if not env['nativestl']:
 	env.Append(CPPPATH = ['#/stlport/stlport/'])

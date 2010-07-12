@@ -99,6 +99,10 @@
 #include <cstring>
 #include <ctime>
 
+#ifndef _WIN32
+#include <sys/time.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <deque>
