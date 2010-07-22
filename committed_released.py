@@ -7,7 +7,7 @@ parser = OptionParser(usage = '%prog version [bugs_to_exclude]')
 options, args = parser.parse_args()
 if len(args) < 1:
 	parser.error('No version defined')
-message = 'Fixed in version ' + args[0] + '.'
+message = 'Fixed in ADCH++ ' + args[0] + '.'
 exclude = list()
 if len(args) > 1:
 	exclude = [int(str) for str in args[1:]]

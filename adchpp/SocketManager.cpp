@@ -236,26 +236,33 @@ SocketManager::Callback SocketManager::addJob(const std::string& time, const Cal
 	return addJob(boost::posix_time::duration_from_string(time), callback);
 }
 
-SocketManager::Callback SocketManager::addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback) {
+SocketManager::Callback SocketManager::addJob(const deadline_timer::duration_type& duration, const Callback& callback) {
 	timer_ptr timer(new timer_ptr::element_type(io, duration));
-	timer->async_wait(std::bind(&SocketManager::handleWait, this, timer, std::placeholders::_1,
-		new Callback(callback))); // create a separate callback on the heap to avoid shutdown crashes
-	return std::bind(&SocketManager::cancelTimer, this, timer);
+	Callback* pCallback = new Callback(callback); // create a separate callback on the heap to avoid shutdown crashes
+	setTimer(timer, duration, pCallback);
+	return std::bind(&SocketManager::cancelTimer, this, timer, pCallback);
 }
 
-void SocketManager::handleWait(timer_ptr timer, const error_code& error, Callback* callback) {
-	timer.reset();
+void SocketManager::setTimer(timer_ptr timer, const deadline_timer::duration_type& duration, Callback* callback) {
+	timer->async_wait(std::bind(&SocketManager::handleWait, this, timer, duration, std::placeholders::_1, callback));
+}
+
+void SocketManager::handleWait(timer_ptr timer, const deadline_timer::duration_type& duration, const error_code& error, Callback* callback) {
 	if(!error) {
+		timer->expires_at(timer->expires_at() + duration);
+		setTimer(timer, duration, callback);
+
 		(*callback)();
 	}
-	delete callback;
 }
 
-void SocketManager::cancelTimer(timer_ptr timer) {
+void SocketManager::cancelTimer(timer_ptr timer, Callback* callback) {
 	if(timer.get()) {
 		error_code ec;
 		timer->cancel(ec);
 	}
+
+	delete callback;
 }
 
 void SocketManager::startup() throw(ThreadException) {

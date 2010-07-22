@@ -1,6 +1,8 @@
+-- 2.5.2 2010-07-23 --
 * Compiled with C++0x support
 * Update Boost to version 1.43
 * Improve Lua scripts
+* More performant and less crash-prone timers
 
 -- 2.5.1 2010-06-20 --
 * [L#591701] Fix compiling out of the bzr repo

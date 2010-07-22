@@ -78,8 +78,10 @@ private:
 
 	typedef std::shared_ptr<boost::asio::deadline_timer> timer_ptr;
 	Callback addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
-	void handleWait(timer_ptr timer, const boost::system::error_code& error, Callback* callback);
-	void cancelTimer(timer_ptr timer);
+	void setTimer(timer_ptr timer, const boost::asio::deadline_timer::duration_type& duration, Callback* callback);
+	void handleWait(timer_ptr timer, const boost::asio::deadline_timer::duration_type& duration, const boost::system::error_code& error,
+		Callback* callback);
+	void cancelTimer(timer_ptr timer, Callback* callback);
 
 	void onLoad(const SimpleXML& xml) throw();
 
