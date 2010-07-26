@@ -72,7 +72,8 @@ def buildPyModule():
 		return
 
 	version = sys.version[0] + sys.version[2]
-	if not(version == '26' or version == '25'):
+	
+	if version not in ('25','26','27'):
 		print 'Invalid Python version: ' + version + ' - skipping Python module'
 		return
 
