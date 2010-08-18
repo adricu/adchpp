@@ -1,3 +1,5 @@
+* Export PluginManager::attention to scripts
+
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support
 * Update Boost to version 1.43

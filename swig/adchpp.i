@@ -808,7 +808,11 @@ public:
 class PluginManager
 {
 public:
-	void attention(const std::function<void()>& f);
+	%extend {
+		void attention(std::function<void()> f) {
+			self->attention(f);
+		}
+	}
 
 	//typedef HASH_MAP<std::string, Plugin*> Registry;
 	//typedef Registry::iterator RegistryIter;
