@@ -163,6 +163,9 @@ env.Append(CPPDEFINES = defs['common'])
 env.Append(CCFLAGS = flags[mode])
 env.Append(CCFLAGS = flags['common'])
 
+env.Append(CXXFLAGS = xxflags[mode])
+env.Append(CXXFLAGS = xxflags['common'])
+
 env.Append(LINKFLAGS = link_flags[mode])
 env.Append(LINKFLAGS = link_flags['common'])
 
