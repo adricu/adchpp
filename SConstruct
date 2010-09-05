@@ -83,7 +83,6 @@ opts.AddVariables(
 	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default']),
 	EnumVariable('mode', 'Compile mode', 'debug', ['debug', 'release']),
 	ListVariable('plugins', 'The plugins to compile', 'all', plugins),
-	BoolVariable('nativestl', 'Use native STL instead of STLPort', 'yes'),
 	BoolVariable('gch', 'Use GCH when compiling GUI (disable if you have linking problems with mingw)', 'yes'),
 	BoolVariable('verbose', 'Show verbose command lines', 'no'),
 	BoolVariable('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
@@ -136,23 +135,9 @@ if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
 	env.Append(CCFLAGS=['-fvisibility=hidden'])
 
-if env['nativestl']:
-	if 'gcc' in env['TOOLS']:
-		env.Append(CPPDEFINES = ['BOOST_HAS_GCC_TR1'])
-	# boost detects MSVC's tr1 automagically
-else:
-	env.Append(CPPPATH = ['#/stlport/stlport/'])
-	env.Append(LIBPATH = ['#/stlport/lib/'])
-	env.Append(CPPDEFINES = ['HAVE_STLPORT', '_STLP_USE_STATIC_LIB=1'])
-	if mode == 'debug':
-		env.Append(LIBS = ['stlportg.5.1'])
-	else:
-		env.Append(LIBS = ['stlport.5.1'])
-
-	# assume STLPort has tr1 containers
-	env.Append(CPPDEFINES = ['BOOST_HAS_TR1'])
-
 if 'gcc' in env['TOOLS']:
+	env.Append(CPPDEFINES = ['BOOST_HAS_GCC_TR1'])
+
 	if env['savetemps']:
 		env.Append(CCFLAGS = ['-save-temps', '-fverbose-asm'])
 	else:
