@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1;
 
 using namespace boost::asio;
 
@@ -116,7 +115,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 				bytes -= p->size();
 				outBuf.erase(outBuf.begin());
 			} else {
-				p.reset(new Buffer(p->data(), p->size() - bytes));
+				p.reset(new Buffer(p->data() + bytes, p->size() - bytes));
 				bytes = 0;
 			}
 		}

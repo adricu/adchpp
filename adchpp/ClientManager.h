@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ class ManagedSocket;
 class ClientManager : public Singleton<ClientManager>, public CommandHandler<ClientManager>
 {
 public:
-	typedef std::tr1::unordered_map<uint32_t, Entity*> EntityMap;
+	typedef std::unordered_map<uint32_t, Entity*> EntityMap;
 	typedef EntityMap::iterator EntityIter;
 
 	/** @return SID of entity or 0 if not found */
@@ -49,8 +49,9 @@ public:
 	/** @return The entity associated with a certain SID, NULL if not found */
 	ADCHPP_DLL Entity* getEntity(uint32_t aSid) throw();
 
-	/** @return A new Bot instance in STATE_IDENTIFY, set nick etc and call enterNormal to make it appear */
+	/** @return A new Bot instance in STATE_IDENTIFY; set CID, nick etc and call regBot */
 	ADCHPP_DLL Bot* createBot(const Bot::SendHandler& handler);
+	ADCHPP_DLL void regBot(Bot& bot);
 
 	/**
 	 * Get a list of all currently connected clients. (Don't change it, it's non-const
@@ -168,9 +169,9 @@ private:
 	std::deque<std::pair<Client*, uint32_t> > logins;
 
 	EntityMap entities;
-	typedef std::tr1::unordered_map<std::string, Entity*> NickMap;
+	typedef std::unordered_map<std::string, Entity*> NickMap;
 	NickMap nicks;
-	typedef std::tr1::unordered_map<CID, Entity*> CIDMap;
+	typedef std::unordered_map<CID, Entity*> CIDMap;
 	CIDMap cids;
 
 	Hub hub;

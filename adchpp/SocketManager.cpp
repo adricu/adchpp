@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,14 +29,15 @@
 #ifdef HAVE_OPENSSL
 #include <boost/asio/ssl.hpp>
 #endif
+#include <boost/date_time/posix_time/time_parsers.hpp>
 
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1;
-using namespace std::tr1::placeholders;
+using namespace std::placeholders;
 using namespace boost::asio;
-using namespace boost::system;
+using boost::system::error_code;
+using boost::system::system_error;
 
 SocketManager::SocketManager()  {
 
@@ -87,7 +88,7 @@ public:
 	virtual void close() {
 		// Abortive close, just go away...
 		if(sock.lowest_layer().is_open()) {
-			sock.lowest_layer().set_option(socket_base::linger(false, 0));
+			sock.lowest_layer().set_option(socket_base::linger(true, 10));
 			sock.lowest_layer().close();
 		}
 	}
@@ -134,12 +135,12 @@ public:
 		if(serverInfo->secure()) {
 			TLSSocketStream* s = new TLSSocketStream(io, *context);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::prepareHandshake, from_this(), std::tr1::placeholders::_1, socket));
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
 			SimpleSocketStream* s = new SimpleSocketStream(io);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::tr1::bind(&SocketFactory::handleAccept, from_this(), std::tr1::placeholders::_1, socket));
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
 #endif
@@ -155,7 +156,7 @@ public:
 			try {
 				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }
-			tls->sock.async_handshake(ssl::stream_base::server, std::tr1::bind(&SocketFactory::completeAccept, from_this(), std::tr1::placeholders::_1, socket));
+			tls->sock.async_handshake(ssl::stream_base::server, std::bind(&SocketFactory::completeAccept, from_this(), std::placeholders::_1, socket));
 		}
 
 		prepareAccept();
@@ -191,7 +192,7 @@ public:
 	SocketManager::IncomingHandler handler;
 
 #ifdef HAVE_OPENSSL
-	std::tr1::shared_ptr<boost::asio::ssl::context> context;
+	std::shared_ptr<boost::asio::ssl::context> context;
 #endif
 
 };
@@ -227,6 +228,43 @@ void SocketManager::addJob(const Callback& callback) throw() {
 	io.post(callback);
 }
 
+SocketManager::Callback SocketManager::addJob(const long msec, const Callback& callback) {
+	return addJob(boost::posix_time::milliseconds(msec), callback);
+}
+
+SocketManager::Callback SocketManager::addJob(const std::string& time, const Callback& callback) {
+	return addJob(boost::posix_time::duration_from_string(time), callback);
+}
+
+SocketManager::Callback SocketManager::addJob(const deadline_timer::duration_type& duration, const Callback& callback) {
+	timer_ptr timer(new timer_ptr::element_type(io, duration));
+	Callback* pCallback = new Callback(callback); // create a separate callback on the heap to avoid shutdown crashes
+	setTimer(timer, duration, pCallback);
+	return std::bind(&SocketManager::cancelTimer, this, timer, pCallback);
+}
+
+void SocketManager::setTimer(timer_ptr timer, const deadline_timer::duration_type& duration, Callback* callback) {
+	timer->async_wait(std::bind(&SocketManager::handleWait, this, timer, duration, std::placeholders::_1, callback));
+}
+
+void SocketManager::handleWait(timer_ptr timer, const deadline_timer::duration_type& duration, const error_code& error, Callback* callback) {
+	if(!error) {
+		timer->expires_at(timer->expires_at() + duration);
+		setTimer(timer, duration, callback);
+
+		(*callback)();
+	}
+}
+
+void SocketManager::cancelTimer(timer_ptr timer, Callback* callback) {
+	if(timer.get()) {
+		error_code ec;
+		timer->cancel(ec);
+	}
+
+	delete callback;
+}
+
 void SocketManager::startup() throw(ThreadException) {
 	work.reset(new io_service::work(io));
 	start();
@@ -234,7 +272,7 @@ void SocketManager::startup() throw(ThreadException) {
 
 void SocketManager::shutdown() {
 	work.reset();
-	addJob(std::tr1::bind(&SocketManager::closeFactories, this));
+	addJob(std::bind(&SocketManager::closeFactories, this));
 	io.stop();
 	join();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,9 +54,9 @@ int64_t Stats::recvBytes = 0;
 time_t Stats::startTime = 0;
 
 string Util::emptyString;
+wstring Util::emptyStringW;
 string Util::cfgPath;
 size_t Util::reasons[REASON_LAST];
-
 
 static void sgenrand(unsigned long seed);
 
@@ -109,111 +109,6 @@ void Util::decodeUrl(const string& url, string& aServer, short& aPort, string& a
 	aServer = url.substr(i, k-i);
 }
 
-string Util::toAcp(const wstring& wString) {
-	if(wString.empty())
-		return emptyString;
-
-	string str;
-
-#ifdef _WIN32
-	str.resize(WideCharToMultiByte(CP_ACP, 0, wString.c_str(), (int)wString.length(), NULL, 0, NULL, NULL));
-	WideCharToMultiByte(CP_ACP, 0, wString.c_str(), (int)wString.length(), &str[0], (int)str.length(), NULL, NULL);
-#else
-	str.resize(wcstombs(NULL, wString.c_str(), 0)+ 1);
-	wcstombs(&str[0], wString.c_str(), str.size());
-#endif
-	while(!str.empty() && str[str.length() - 1] == 0)
-		str.erase(str.length()-1);
-	return str;
-}
-
-wstring Util::toUnicode(const string& aString) {
-	wstring tmp(aString.length(), L'\0');
-#ifdef _WIN32
-	tmp.resize(MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, aString.c_str(), (int)aString.length(), &tmp[0], (int)tmp.length()));
-#else
-	tmp.resize(mbstowcs(&tmp[0], aString.c_str(), tmp.length()));
-#endif
-	return tmp;
-}
-
-static int utf8ToWc(const char* str, wchar_t& c) {
-	uint8_t c0 = (uint8_t)str[0];
-	if(c0 & 0x80) {									// 1xxx xxxx
-		if(c0 & 0x40) {								// 11xx xxxx
-			if(c0 & 0x20) {							// 111x xxxx
-				if(c0 & 0x10) {						// 1111 xxxx
-					int n = -4;
-					if(c0 & 0x08) {					// 1111 1xxx
-						n = -5;
-						if(c0 & 0x04) {				// 1111 11xx
-							if(c0 & 0x02) {			// 1111 111x
-								return -1;
-							}
-							n = -6;
-						}
-					}
-					int i = -1;
-					while(i > n && (str[abs(i)] & 0x80) == 0x80)
-						--i;
-					return i;
-				} else {		// 1110xxxx
-					uint8_t c1 = (uint8_t)str[1];
-					if((c1 & (0x80 | 0x40)) != 0x80)
-						return -1;
-
-					uint8_t c2 = (uint8_t)str[2];
-					if((c2 & (0x80 | 0x40)) != 0x80)
-						return -2;
-
-					// Ugly utf-16 surrogate catch
-					if((c0 & 0x0f) == 0x0d && (c1 & 0x3c) >= (0x08 << 2))
-						return -3;
-
-					// Overlong encoding
-					if(c0 == (0x80 | 0x40 | 0x20) && (c1 & (0x80 | 0x40 | 0x20)) == 0x80)
-						return -3;
-
-					c = (((wchar_t)c0 & 0x0f) << 12) |
-						(((wchar_t)c1 & 0x3f) << 6) |
-						((wchar_t)c2 & 0x3f);
-
-					return 3;
-				}
-			} else {				// 110xxxxx
-				uint8_t c1 = (uint8_t)str[1];
-				if((c1 & (0x80 | 0x40)) != 0x80)
-					return -1;
-
-				// Overlong encoding
-				if((c0 & ~1) == (0x80 | 0x40))
-					return -2;
-
-				c = (((wchar_t)c0 & 0x1f) << 6) |
-					((wchar_t)c1 & 0x3f);
-				return 2;
-			}
-		} else {					// 10xxxxxx
-			return -1;
-		}
-	} else {						// 0xxxxxxx
-		c = (unsigned char)str[0];
-		return 1;
-	}
-	dcassert(0);
-}
-
-bool Util::validateUtf8(const string& str) throw() {
-	string::size_type i = 0;
-	while(i < str.length()) {
-		wchar_t dummy = 0;
-		int j = utf8ToWc(&str[i], dummy);
-		if(j < 0)
-			return false;
-		i += j;
-	}
-	return true;
-}
 
 void Util::tokenize(StringList& lst, const string& str, char sep, string::size_type j) {
 	string::size_type i = 0;
@@ -522,5 +417,14 @@ bool Util::isPrivateIp(std::string const& ip) {
 	}
 	return false;
 }
+bool Util::validateCharset(std::string const& field, int p) {
+	for(string::size_type i = 0; i < field.length(); ++i) {
+		if((uint8_t) field[i] < p) {
+			return false;
+		}
+	}
+	return true;
+}
+
  
 }

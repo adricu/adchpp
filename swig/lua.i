@@ -1,5 +1,14 @@
 %module luadchpp
 
+/*
+in addition to the elements defined here and in adchpp.i, the Lua interface also includes:
+- scriptPath: absolute path to the script directory (not necessarily the current dir).
+- loaded(filename), unloaded(filename): functions called (if they exist in the global environment)
+after a script has been loaded or unloaded.
+- loading(filename), unloading(filename): functions called (if they exist in the global environment)
+before a script is being loaded or unloaded. return true to discard further processing.
+*/
+
 typedef unsigned int size_t;
 
 %wrapper %{
@@ -125,6 +134,14 @@ public:
 		lua_pop(L, 1);
 	}
 
+	void operator()(adchpp::Bot& bot, const adchpp::BufferPtr& buf) {
+		pushFunction();
+
+		SWIG_NewPointerObj(L, &bot, SWIGTYPE_p_adchpp__Bot, 0);
+		SWIG_NewPointerObj(L, &buf, SWIGTYPE_p_adchpp__BufferPtr, 0);
+
+		docall(2, 0);
+	}
 
 private:
 	void pushFunction() { registryItem->push(); }
@@ -157,8 +174,16 @@ private:
 	}
 
 	lua_State* L;
-	std::tr1::shared_ptr<RegistryItem> registryItem;
+	std::shared_ptr<RegistryItem> registryItem;
 };
+
+static int exec(lua_State* L) {
+	void* p;
+	if(SWIG_IsOK(SWIG_ConvertPtr(L, lua_upvalueindex(1), &p, SWIGTYPE_p_std__functionT_void_fF_t, 0))) {
+		(*reinterpret_cast<std::function<void ()>*>(p))();
+	}
+	return 0;
+}
 
 %}
 
@@ -172,35 +197,45 @@ uint32_t, const uint32_t&
    lua_pushnumber(L, (lua_Number)$1); SWIG_arg++;
 }
 
-%typemap(in) std::tr1::function<void () > {
+%typemap(in) std::function<void () > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &) > {
+%typemap(out) std::function<void ()> {
+	SWIG_NewPointerObj(L, new std::function<void ()>($1), SWIGTYPE_p_std__functionT_void_fF_t, 1);
+	lua_pushcclosure(L, exec, 1);
+	SWIG_arg++;
+}
+
+%typemap(in) std::function<void (adchpp::Entity &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, adchpp::AdcCommand &) > {
+%typemap(in) std::function<void (adchpp::Entity &, adchpp::AdcCommand &) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, adchpp::AdcCommand &, bool&) > {
+%typemap(in) std::function<void (adchpp::Entity &, adchpp::AdcCommand &, bool&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, int) > {
+%typemap(in) std::function<void (adchpp::Entity &, int) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, const std::string&) > {
+%typemap(in) std::function<void (adchpp::Entity &, const std::string&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (const SimpleXML&) > {
+%typemap(in) std::function<void (const SimpleXML&) > {
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::tr1::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
+%typemap(in) std::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::function<void (adchpp::Bot&, const adchpp::BufferPtr&) > {
 	$1 = LuaFunction(L);
 }
 

@@ -395,9 +395,9 @@ namespace boost {
         typedef typename Graph::directed_selector DirectedS;
 
       public:
-        typedef typename ct_if<(is_same<DirectedS, bidirectionalS>::value),
-                               stored_in_edge<Edge>,
-                               Edge>::type argument_type;
+        typedef typename boost::mpl::if_<is_same<DirectedS, bidirectionalS>,
+                                         stored_in_edge<Edge>,
+                                         Edge>::type argument_type;
         typedef edge_descriptor<Edge> result_type;
 
         in_generator() : g(0) {}
@@ -580,10 +580,10 @@ namespace boost {
                        EdgeProperty> edge_property_with_id;
 
       /// For undirected graphs, introduce the locally-owned property for edges
-      typedef typename ct_if<(is_same<DirectedS, undirectedS>::value),
-                             property<edge_locally_owned_t, bool,
-                                      edge_property_with_id>,
-                             edge_property_with_id>::type
+      typedef typename boost::mpl::if_<is_same<DirectedS, undirectedS>,
+                                       property<edge_locally_owned_t, bool,
+                                                edge_property_with_id>,
+                                       edge_property_with_id>::type
         base_edge_property_type;
 
       /// The edge descriptor type for the local subgraph
@@ -602,10 +602,10 @@ namespace boost {
 
       // Bidirectional graphs have an extra vertex property to store
       // the incoming edges.
-      typedef typename ct_if<(is_same<DirectedS, bidirectionalS>::value),
-                             property<vertex_in_edges_t, in_edge_list_type,
-                                      VertexProperty>,
-                             VertexProperty>::type 
+      typedef typename boost::mpl::if_<is_same<DirectedS, bidirectionalS>,
+                                       property<vertex_in_edges_t, in_edge_list_type,
+                                                VertexProperty>,
+                                       VertexProperty>::type 
         base_vertex_property_type;
 
       // The type of the distributed adjacency list
@@ -989,7 +989,7 @@ namespace boost {
       }
 
       typename graph_traits<base_type>::out_edge_iterator ei, ei_end;
-      for (tie(ei, ei_end) = out_edges(v.local, bg); ei != ei_end; ++ei)
+      for (boost::tie(ei, ei_end) = out_edges(v.local, bg); ei != ei_end; ++ei)
       {
         if (target(*ei, g.base()) == u.local
             // TBD: deal with parallel edges properly && *ei == e
@@ -1097,9 +1097,9 @@ namespace boost {
     typedef typename base_type::vertex_descriptor local_vertex_descriptor;
     typedef typename base_type::edge_descriptor   local_edge_descriptor;
 
-    typedef typename boost::ct_if_t<typename DirectedS::is_bidir_t,
+    typedef typename boost::mpl::if_<typename DirectedS::is_bidir_t,
       bidirectional_tag,
-      typename boost::ct_if_t<typename DirectedS::is_directed_t,
+      typename boost::mpl::if_<typename DirectedS::is_directed_t,
         directed_tag, undirected_tag
       >::type
     >::type directed_category;
@@ -1355,12 +1355,12 @@ namespace boost {
      * are restricted; see the distributed adjacency_list
      * documentation.
      */
-    typedef typename ct_if<
-              (is_same<DirectedS, directedS>::value),
+    typedef typename boost::mpl::if_<
+              is_same<DirectedS, directedS>,
               directed_distributed_adj_list_tag,
-              typename ct_if<(is_same<DirectedS, bidirectionalS>::value),
-                             bidirectional_distributed_adj_list_tag,
-                             undirected_distributed_adj_list_tag>::type>
+              typename boost::mpl::if_<is_same<DirectedS, bidirectionalS>,
+                                       bidirectional_distributed_adj_list_tag,
+                                       undirected_distributed_adj_list_tag>::type>
       ::type traversal_category;
 
     typedef typename inherited::degree_size_type degree_size_type;
@@ -1376,9 +1376,9 @@ namespace boost {
       local_edge_list_type;
 
   private:
-    typedef typename ct_if<(is_same<DirectedS, bidirectionalS>::value),
-                           typename in_edge_list_type::const_iterator,
-                           typename inherited::out_edge_iterator>::type
+    typedef typename boost::mpl::if_<is_same<DirectedS, bidirectionalS>,
+                                     typename in_edge_list_type::const_iterator,
+                                     typename inherited::out_edge_iterator>::type
       base_in_edge_iterator;
 
     typedef typename inherited::out_edge_iterator base_out_edge_iterator;
@@ -1424,11 +1424,11 @@ namespace boost {
       adjacency_iterator;
 
     /// Iterator over the (local) edges in a graph
-    typedef typename ct_if<(is_same<DirectedS, undirectedS>::value),
-                           undirected_edge_iterator,
-                           transform_iterator<out_edge_generator,
-                                              base_edge_iterator>
-                           >::type 
+    typedef typename boost::mpl::if_<is_same<DirectedS, undirectedS>,
+                                     undirected_edge_iterator,
+                                     transform_iterator<out_edge_generator,
+                                                        base_edge_iterator>
+                                     >::type 
       edge_iterator;
 
   public:
@@ -2098,7 +2098,7 @@ namespace boost {
 
       if (src.owner == process_id(process_group_)) {
         base_out_edge_iterator ei, ei_end;
-        for (tie(ei, ei_end) = out_edges(src.local, base());
+        for (boost::tie(ei, ei_end) = out_edges(src.local, base());
              ei != ei_end; ++ei) {
           // TBD: can't check the descriptor here, because it could
           // have changed if we're allowing the removal of
@@ -2140,7 +2140,7 @@ namespace boost {
       // Remove the edge from the out-edge list, if it is there
       {
         base_out_edge_iterator ei, ei_end;
-        for (tie(ei, ei_end) = out_edges(local_vertex.local, base());
+        for (boost::tie(ei, ei_end) = out_edges(local_vertex.local, base());
              ei != ei_end; ++ei) {
           // TBD: can't check the descriptor here, because it could
           // have changed if we're allowing the removal of
@@ -2890,7 +2890,7 @@ namespace boost {
 
     typename PBGL_DISTRIB_ADJLIST_TYPE_CONFIG(directedS)
         ::out_edge_iterator ei, ei_end;
-    for (tie(ei, ei_end) = out_edges(u, g); ei != ei_end; ++ei) {
+    for (boost::tie(ei, ei_end) = out_edges(u, g); ei != ei_end; ++ei) {
       if (target(*ei, g) == v) return std::make_pair(*ei, true);
     }
     return std::make_pair(edge_descriptor(), false);
@@ -2912,13 +2912,13 @@ namespace boost {
     // must be local
     if (u.owner == process_id(g.process_group())) {
       typename PBGL_DISTRIB_ADJLIST_TYPE::out_edge_iterator ei, ei_end;
-      for (tie(ei, ei_end) = out_edges(u, g); ei != ei_end; ++ei) {
+      for (boost::tie(ei, ei_end) = out_edges(u, g); ei != ei_end; ++ei) {
         if (target(*ei, g) == v) return std::make_pair(*ei, true);
       }
       return std::make_pair(edge_descriptor(), false);
     } else if (v.owner == process_id(g.process_group())) {
       typename PBGL_DISTRIB_ADJLIST_TYPE::in_edge_iterator ei, ei_end;
-      for (tie(ei, ei_end) = in_edges(v, g); ei != ei_end; ++ei) {
+      for (boost::tie(ei, ei_end) = in_edges(v, g); ei != ei_end; ++ei) {
         if (source(*ei, g) == u) return std::make_pair(*ei, true);
       }
       return std::make_pair(edge_descriptor(), false);

@@ -19,13 +19,8 @@ local settings_file = adchpp.Util_getCfgPath() .. "settings.txt"
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
 
--- Users with level lower than the specified will not be allowed to run command at all
-local command_min_levels = {
---	[adchpp.AdcCommand_CMD_MSG] = 2
-}
-
 -- Users with a level equal to or above the one specified here are operators
-local level_op = 2
+level_op = 2
 
 -- ADC extensions this script adds support for
 local extensions = { "PING" }
@@ -35,7 +30,6 @@ local cid_regex = "^" .. string.rep("[A-Z2-7]", 39) .. "$" -- No way of expressi
 local pid_regex = cid_regex
 local sid_regex = "^" .. string.rep("[A-Z2-7]", 4) .. "$"
 local integer_regex = "^%d+$"
-local bool_regex = "^[1]?$"
 
 local inf_fields = {
 	["ID"] = cid_regex,
@@ -55,11 +49,8 @@ local inf_fields = {
 	["HN"] = integer_regex,
 	["HR"] = integer_regex,
 	["HO"] = integer_regex,
-	["OP"] = bool_regex,
+	["CT"] = integer_regex,
 	["AW"] = "^[12]$",
-	["BO"] = bool_regex,
-	["HI"] = bool_regex,
-	["HU"] = bool_regex,
 	["SU"] = "[A-Z,]+"
 }
 
@@ -96,7 +87,7 @@ local math = base.require('math')
 
 local start_time = os.time()
 
-local users = {}
+users = {}
 users.nicks = {}
 users.cids = {}
 
@@ -109,23 +100,75 @@ bans.msgsre = {}
 bans.muted = {}
 
 local stats = {}
+local dispatch_stats = false
+
+-- cache for +cfg min*level
+local restricted_commands = {}
 
 local cm = adchpp.getCM()
+local lm = adchpp.getLM()
 local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
 local saltsHandle = pm:registerByteVectorData()
 
+-- forward declarations.
+local format_seconds, cut_str,
+send_user_commands, remove_user_commands,
+verify_info
+
+-- Settings loaded and saved by the main script. Possible fields each setting can contain:
+-- * alias: other names that can also be used to reach this setting.
+-- * change: function called when the value has changed.
+-- * help: information about this setting, displayed in +help cfg.
+-- * value: the value of this setting, either a number or a string. [compulsory]
+-- * validate: function(string) called before changing the value; may return an error string.
+settings = {}
+
+-- List of +commands handled by the main script. Possible fields each command can contain:
+-- * alias: other names that can also trigger this command.
+-- * command: function(Client c, string parameters). [compulsory]
+-- * help: information about this command, displayed in +help.
+-- * helplong: detailed information about this command, displayed in +help command-name.
+-- * protected: function(Client c) returning whether the command is to be shown in +help.
+-- * user_command: table containing information about the user command which will refer to this
+--                 command. Possible fields each user_command table can contain:
+--                 ** hub_params: list of arguments to be passed to this command for hub menus.
+--                 ** name: name of the user command (defaults to capitalized command name).
+--                 ** params: list of arguments to be passed to this command for all menus.
+--                 ** user_params: list of arguments to be passed to this command for user menus.
+commands = {}
+
+local function log(message)
+	lm:log(_NAME, message)
+end
+
 local function description_change()
-	local description = autil.settings.topic.value
-	if #autil.settings.topic.value == 0 then
-		description = autil.settings.description.value
+	local description = settings.topic.value
+	if #settings.topic.value == 0 then
+		description = settings.description.value
 	end
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("DE", description)
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
 end
 
-autil.settings.address = {
+local function validate_ni(new)
+	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+		if char <= 32 then
+			return "the name can't contain any space nor new line"
+		end
+	end
+end
+
+local function validate_de(new)
+	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+		if char < 32 then
+			return "the description can't contain any new line nor tabulation"
+		end
+	end
+end
+
+settings.address = {
 	alias = { host = true, dns = true },
 
 	help = "host address (DNS or IP)",
@@ -133,13 +176,13 @@ autil.settings.address = {
 	value = adchpp.Util_getLocalIp()
 }
 
-autil.settings.allownickchange = {
+settings.allownickchange = {
 	help = "authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow",
 
 	value = 1
 }
 
-autil.settings.allowreg = {
+settings.allowreg = {
 	alias = { allowregistration = true },
 
 	help = "authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow",
@@ -147,17 +190,82 @@ autil.settings.allowreg = {
 	value = 1
 }
 
-autil.settings.description = {
+settings.botcid = {
+	alias = { botid = true },
+
+	help = "CID of the bot, restart the hub after the change",
+
+	value = adchpp.CID_generate():toBase32(),
+
+	validate = function(new)
+		if adchpp.CID(new):isZero() then
+			return "the CID must be a valid 39-byte base32 representation"
+		end
+	end
+}
+
+settings.botname = {
+	alias = { botnick = true, botni = true },
+
+	change = function()
+		if bot then
+			bot:setField("NI", settings.botname.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("NI", settings.botname.value):getBuffer())
+		end
+	end,
+
+	help = "name of the hub bot",
+
+	value = "Bot",
+
+	validate = validate_ni
+}
+
+settings.botdescription = {
+	alias = { botdescr = true, botde = true },
+
+	change = function()
+		if bot then
+			bot:setField("DE", settings.botdescription.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("DE", settings.botdescription.value):getBuffer())
+		end
+	end,
+
+	help = "description of the hub bot",
+
+	value = "",
+
+	validate = validate_de
+}
+
+settings.botemail = {
+	alias = { botmail = true, botem = true },
+
+	change = function()
+		if bot then
+			bot:setField("EM", settings.botemail.value)
+			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("EM", settings.botemail.value):getBuffer())
+		end
+	end,
+
+	help = "e-mail of the hub bot",
+
+	value = ""
+}
+
+settings.description = {
 	alias = { hubdescription = true },
 
 	change = description_change,
 
 	help = "hub description",
 
-	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE")
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE"),
+
+	validate = validate_de
 }
 
-autil.settings.maxmsglength = {
+settings.maxmsglength = {
 	alias = { maxmessagelength = true },
 
 	help = "maximum number of characters allowed per chat message, 0 = no limit",
@@ -165,7 +273,26 @@ autil.settings.maxmsglength = {
 	value = 0
 }
 
-autil.settings.maxusers = {
+settings.maxnicklength = {
+	change = function()
+		local entities = cm:getEntities()
+		local size = entities:size()
+		if size > 0 then
+			for i = 0, size - 1 do
+				local c = entities[i]:asClient()
+				if c then
+					verify_info(c)
+				end
+			end
+		end
+	end,
+
+	help = "maximum number of characters allowed per nick, 0 = no limit",
+
+	value = 50
+}
+
+settings.maxusers = {
 	alias = { max_users = true, user_max = true, users_max = true, usermax = true, usersmax = true },
 
 	help = "maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed",
@@ -173,7 +300,7 @@ autil.settings.maxusers = {
 	value = -1
 }
 
-autil.settings.menuname = {
+settings.menuname = {
 	alias = { ucmdname = true },
 
 	help = "title of the main user command menu sent to clients",
@@ -181,24 +308,60 @@ autil.settings.menuname = {
 	value = "ADCH++"
 }
 
-autil.settings.name = {
+settings.minchatlevel = {
+	change = function()
+		restricted_commands[adchpp.AdcCommand_CMD_MSG] = { level = settings.minchatlevel.value, str = "chat" }
+	end,
+
+	help = "minimum level to chat - hub restart recommended",
+
+	value = 0
+}
+
+settings.mindownloadlevel = {
+	alias = { mindllevel = true, mintransferlevel = true },
+
+	change = function()
+		restricted_commands[adchpp.AdcCommand_CMD_CTM] = { level = settings.mindownloadlevel.value, str = "download" }
+		restricted_commands[adchpp.AdcCommand_CMD_RCM] = { level = settings.mindownloadlevel.value, str = "download" }
+	end,
+
+	help = "minimum level to download - hub restart recommended",
+
+	value = 0
+}
+
+settings.minsearchlevel = {
+	change = function()
+		restricted_commands[adchpp.AdcCommand_CMD_SCH] = { level = settings.minsearchlevel.value, str = "search" }
+		restricted_commands[adchpp.AdcCommand_CMD_RES] = { level = settings.minsearchlevel.value, str = "send search results" }
+	end,
+
+	help = "minimum level to search - hub restart recommended",
+
+	value = 0
+}
+
+settings.name = {
 	alias = { hubname = true },
 
 	change = function()
-		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", autil.settings.name.value)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", autil.settings.name.value):getBuffer())
+		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("NI", settings.name.value)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("NI", settings.name.value):getBuffer())
 	end,
 
 	help = "hub name",
 
-	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI")
+	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI"),
+
+	validate = validate_ni
 }
 
-autil.settings.network = {
+settings.network = {
 	value = ""
 }
 
-autil.settings.owner = {
+settings.owner = {
 	alias = { ownername = true },
 
 	help = "owner name",
@@ -206,27 +369,49 @@ autil.settings.owner = {
 	value = ""
 }
 
-autil.settings.passinlist = {
+settings.passinlist = {
 	help = "show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show",
 
 	value = 1
 }
 
-autil.settings.topic = {
+settings.topic = {
 	alias = { hubtopic = true },
 
 	change = description_change,
 
 	help = "hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists",
 
-	value = ""
+	value = "",
+
+	validate = validate_de
 }
 
-autil.settings.website = {
+settings.website = {
 	alias = { url = true },
 
 	value = ""
 }
+
+function registered_users()
+	local ret = {}
+	local nicksdone = {}
+
+	for _, user in base.pairs(users.cids) do
+		table.insert(ret, user)
+		if user.nick then
+			nicksdone[user] = 1
+		end
+	end
+
+	for _, user in base.pairs(users.nicks) do
+		if not nicksdone[user] then
+			table.insert(ret, user)
+		end
+	end
+
+	return ret
+end
 
 local function load_users()
 	users.cids = {}
@@ -234,7 +419,7 @@ local function load_users()
 
 	local file = io.open(users_file, "r")
 	if not file then
-		base.print("Unable to open " .. users_file .. ", users not loaded")
+		log("Unable to open " .. users_file .. ", users not loaded")
 		return
 	end
 
@@ -247,7 +432,7 @@ local function load_users()
 
 	local userok, userlist = base.pcall(json.decode, str)
 	if not userok then
-		base.print("Unable to decode users file: " .. userlist)
+		log("Unable to decode users file: " .. userlist)
 		return
 	end
 
@@ -264,73 +449,56 @@ end
 local function save_users()
 	local file = io.open(users_file, "w")
 	if not file then
-		base.print("Unable to open " .. users_file .. ", users not saved")
+		log("Unable to open " .. users_file .. ", users not saved")
 		return
 	end
 
-	local userlist = {}
-	local nicksdone = {}
-
-	local i = 1
-	for _, user in base.pairs(users.cids) do
-		userlist[i] = user
-		if user.nick then
-			nicksdone[user] = 1
-		end
-		i = i + 1
-	end
-
-	for _, user in base.pairs(users.nicks) do
-		if not nicksdone[user] then
-			userlist[i] = user
-			i = i + 1
-		end
-	end
-
-	file:write(json.encode(userlist))
+	file:write(json.encode(registered_users()))
 	file:close()
 end
 
 local function load_settings()
 	local file = io.open(settings_file, "r")
 	if not file then
-		base.print("Unable to open " .. settings_file .. ", settings not loaded")
-		return
+		log("Unable to open " .. settings_file .. ", settings not loaded")
+		return false
 	end
 
 	local str = file:read("*a")
 	file:close()
 
 	if #str == 0 then
-		return
+		return false
 	end
 
 	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		base.print("Unable to decode settings file: " .. list)
-		return
+		log("Unable to decode settings file: " .. list)
+		return false
 	end
 
 	for k, v in base.pairs(list) do
-		if autil.settings[k] then
-			local change = autil.settings[k].value ~= v
-			autil.settings[k].value = v
-			if change and autil.settings[k].change then
-				autil.settings[k].change()
+		if settings[k] then
+			local change = settings[k].value ~= v
+			settings[k].value = v
+			if change and settings[k].change then
+				settings[k].change()
 			end
 		end
 	end
+
+	return true
 end
 
 local function save_settings()
 	local file = io.open(settings_file, "w")
 	if not file then
-		base.print("Unable to open " .. settings_file .. ", settings not saved")
+		log("Unable to open " .. settings_file .. ", settings not saved")
 		return
 	end
 
 	local list = {}
-	for k, v in base.pairs(autil.settings) do
+	for k, v in base.pairs(settings) do
 		list[k] = v.value
 	end
 	file:write(json.encode(list))
@@ -348,7 +516,7 @@ local function load_bans()
 
 	local file = io.open(bans_file, "r")
 	if not file then
-		base.print("Unable to open " .. bans_file .. ", bans not loaded")
+		log("Unable to open " .. bans_file .. ", bans not loaded")
 		return
 	end
 
@@ -361,7 +529,7 @@ local function load_bans()
 
 	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		base.print("Unable to decode bans file: " .. list)
+		log("Unable to decode bans file: " .. list)
 		return
 	end
 
@@ -391,7 +559,7 @@ end
 local function save_bans()
 	local file = io.open(bans_file, "w")
 	if not file then
-		base.print("Unable to open " .. bans_file .. ", bans not saved")
+		log("Unable to open " .. bans_file .. ", bans not saved")
 		return
 	end
 
@@ -413,16 +581,16 @@ local function make_user(cid, nick, password, level)
 end
 
 local function check_max_users()
-	if autil.settings.maxusers.value == -1 then
+	if settings.maxusers.value == -1 then
 		return
 	end
 
-	if autil.settings.maxusers.value == 0 then
+	if settings.maxusers.value == 0 then
 		return adchpp.AdcCommand_ERROR_REGGED_ONLY, "Only registered users are allowed in here"
 	end
 
 	local count = cm:getEntities():size()
-	if count >= autil.settings.maxusers.value then
+	if count >= settings.maxusers.value then
 		return adchpp.AdcCommand_ERROR_HUB_FULL, "Hub full, please try again later"
 	end
 	return
@@ -446,7 +614,7 @@ local function get_user_c(c)
 	return get_user(c:getCID():toBase32(), c:getField("NI"))
 end
 
-local function get_level(c)
+function get_level(c)
 	local user = get_user_c(c)
 	if not user then
 		return 0
@@ -455,11 +623,11 @@ local function get_level(c)
 	return user.level
 end
 
-local function has_level(c, level)
+function has_level(c, level)
 	return get_level(c) >= level
 end
 
-local function is_op(c)
+function is_op(c)
 	return has_level(c, level_op)
 end
 
@@ -467,7 +635,7 @@ local function update_user(user, cid, nick)
 	-- only one of nick and cid may be updated...
 
 	if user.nick ~= nick then
-		if autil.settings.allownickchange.value == 0 then
+		if settings.allownickchange.value == 0 then
 			return false, "This hub doesn't allow registered users to change their nick; ask an operator to delete your current registration data if you really want a new nick. Please connect again with your current registered nick: " .. user.nick
 		end
 
@@ -505,7 +673,7 @@ local function update_user(user, cid, nick)
 	return true
 end
 
-local function register_user(cid, nick, password, level)
+function register_user(cid, nick, password, level)
 	local user = make_user(cid, nick, password, level)
 	if nick then
 		users.nicks[nick] = user
@@ -553,7 +721,7 @@ local function ban_expiration_string(ban)
 	if ban.expires then
 		local diff = ban_expiration_diff(ban)
 		if diff > 0 then
-			return "in " .. formatSeconds(diff)
+			return "in " .. format_seconds(diff)
 		else
 			return "expired"
 		end
@@ -595,7 +763,104 @@ local function dump_banned(c, ban)
 	end)
 end
 
-local function verify_info(c, cid, nick)
+local function get_ucmd_name(k, v)
+	if v.user_command and v.user_command.name then
+		return v.user_command.name
+	else
+		return string.upper(string.sub(k, 1, 1)) .. string.sub(k, 2)
+	end
+end
+
+send_user_commands = function(c)
+	local names = {}
+	local list = {}
+	for k, v in base.pairs(commands) do
+		if (not v.protected) or (v.protected and v.protected(c)) then
+			local name = get_ucmd_name(k, v)
+			table.insert(list, name)
+			names[name] = k
+		end
+	end
+	table.sort(list)
+
+	local function send_ucmd(name, internal_name, command, context)
+		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+		ucmd:addParam(settings.menuname.value .. autil.ucmd_sep .. name)
+
+		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
+		local str = "+" .. internal_name
+
+		local params = nil
+		if context == 1 and command.user_command and command.user_command.hub_params then
+			params = command.user_command.hub_params
+		elseif context == 2 and command.user_command and command.user_command.user_params then
+			params = command.user_command.user_params
+		elseif command.user_command and command.user_command.params then
+			params = command.user_command.params
+		end
+		if params then
+			for _, param in base.ipairs(params) do
+				str = str .. " " .. param
+			end
+		end
+
+		back_cmd:addParam(str)
+		ucmd:addParam("TT", back_cmd:toString())
+
+		ucmd:addParam("CT", base.tostring(context))
+
+		c:send(ucmd)
+	end
+
+	for _, name in base.ipairs(list) do
+		local internal_name = names[name]
+		local command = commands[internal_name]
+
+		local hub_sent = false
+		if command.user_command and command.user_command.hub_params then
+			send_ucmd(name, internal_name, command, 1)
+			hub_sent = true
+		end
+
+		local user_sent = false
+		if command.user_command and command.user_command.user_params then
+			send_ucmd(name, internal_name, command, 2)
+			user_sent = true
+		end
+
+		if (not hub_sent) and (not user_sent) then
+			send_ucmd(name, internal_name, command, 3)
+		elseif not hub_sent then
+			send_ucmd(name, internal_name, command, 1)
+		elseif not user_sent then
+			send_ucmd(name, internal_name, command, 2)
+		end
+	end
+end
+
+remove_user_commands = function(c)
+	local function send_ucmd(name, context)
+		c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+		:addParam(settings.menuname.value .. autil.ucmd_sep .. name)
+		:addParam("RM", "1")
+		:addParam("CT", base.tostring(context)))
+	end
+
+	for k, v in base.pairs(commands) do
+		local name = get_ucmd_name(k, v)
+		send_ucmd(name, 1)
+		send_ucmd(name, 2)
+		send_ucmd(name, 3)
+	end
+end
+
+verify_info = function(c, cid, nick)
+	if not cid or #cid == 0 then
+		cid = c:getCID():toBase32()
+	end
+	if not nick or #nick == 0 then
+		nick = c:getField("NI")
+	end
 	if #nick == 0 or #cid == 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return false
@@ -628,6 +893,11 @@ local function verify_info(c, cid, nick)
 		return false
 	end
 
+	if settings.maxnicklength.value > 0 and #nick > settings.maxnicklength.value then
+		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your nick (" .. nick .. ") is too long, it must contain " .. base.tostring(settings.maxnicklength.value) .. " characters max")
+		return false
+	end
+
 	return true
 end
 
@@ -645,7 +915,9 @@ local function onSUP(c, cmd)
 
 	-- imitate ClientManager::enterIdentify
 
-	base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. " entering IDENTIFY (supports 'PING')")
+	if string.match(adchpp.versionString, 'Debug$') then
+		base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. " entering IDENTIFY (supports 'PING')")
+	end
 
 	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
 
@@ -660,26 +932,32 @@ local function onSUP(c, cmd)
 	if uc > 0 then
 		for i = 0, uc - 1 do
 			local entity = entities[i]
-			ss = ss + entity:getField("SS")
-			sf = sf + entity:getField("SF")
+			local ss_ = entity:getField("SS")
+			if #ss_ > 0 then
+				ss = ss + base.tonumber(ss_)
+			end
+			local sf_ = entity:getField("SF")
+			if #sf_ > 0 then
+				sf = sf + base.tonumber(sf_)
+			end
 		end
 	end
 
 	local inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 	hub:getAllFields(inf)
 	inf:delParam("DE", 0)
-	inf:addParam("DE", autil.settings.description.value)
+	inf:addParam("DE", settings.description.value)
 	-- add PING-specific information
-	:addParam("HH" .. autil.settings.address.value)
-	:addParam("WS" .. autil.settings.website.value)
-	:addParam("NE" .. autil.settings.network.value)
-	:addParam("OW" .. autil.settings.owner.value)
+	:addParam("HH" .. settings.address.value)
+	:addParam("WS" .. settings.website.value)
+	:addParam("NE" .. settings.network.value)
+	:addParam("OW" .. settings.owner.value)
 	:addParam("UC" .. base.tostring(uc))
 	:addParam("SS" .. base.tostring(ss))
 	:addParam("SF" .. base.tostring(sf))
 	:addParam("UP" .. base.tostring(os.difftime(os.time(), adchpp.Stats_startTime)))
-	if autil.settings.maxusers.value > 0 then
-		inf:addParam("MC" .. base.tostring(autil.settings.maxusers.value))
+	if settings.maxusers.value > 0 then
+		inf:addParam("MC" .. base.tostring(settings.maxusers.value))
 	end
 	c:send(inf)
 
@@ -691,15 +969,10 @@ end
 local function onINF(c, cmd)
 	for field, regex in base.pairs(inf_fields) do
 		val = cmd:getParam(field, 0)
-		if #val > 0 and hasVal and not val:match(regex) then
-			autil.reply(c, "Field " .. field .. " has an invalid value, removed")
+		if #val > 0 and not val:match(regex) then
+			autil.reply(c, "INF parsing: field " .. field .. " has an invalid value, removed")
 			cmd:delParam(field, 0)
 		end
-	end
-
-	if #cmd:getParam("HI", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Don't hide")
-		return false
 	end
 
 	if #cmd:getParam("CT", 0) > 0 then
@@ -707,32 +980,11 @@ local function onINF(c, cmd)
 		return false
 	end
 
-	if #cmd:getParam("OP", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's an OP")
-		return false
-	end
-
-	if #cmd:getParam("RG", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I decide who's registered")
-		return false
-	end
-
-	if #cmd:getParam("HU", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "I'm the hub, not you")
-		return false
-	end
-
-	if #cmd:getParam("BO", 0) > 0 then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You're not a bot")
-		return false
-	end
-
-	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		return verify_info(c, c:getCID():toBase32(), c:getField("NI"))
-	end
-
-	local nick = cmd:getParam("NI", 0)
 	local cid = cmd:getParam("ID", 0)
+	local nick = cmd:getParam("NI", 0)
+	if c:getState() == adchpp.Entity_STATE_NORMAL then
+		return verify_info(c, cid, nick)
+	end
 	if not verify_info(c, cid, nick) then
 		return false
 	end
@@ -750,13 +1002,11 @@ local function onINF(c, cmd)
 		return true
 	end
 
-	if user and user.level >= level_op then
-		cmd:addParam("CT4")
-		cmd:addParam("OP1") -- old name
-	else
-		cmd:addParam("CT2")
-		cmd:addParam("RG1") -- old name
+	c:setFlag(adchpp.Entity_FLAG_REGISTERED)
+	if user.level >= level_op then
+		c:setFlag(adchpp.Entity_FLAG_OP)
 	end
+	cmd:addParam("CT", c:getField("CT"))
 
 	if not cm:verifyINF(c, cmd) then
 		return false
@@ -817,7 +1067,7 @@ local function onPAS(c, cmd)
 	return false
 end
 
-function formatSeconds(t)
+format_seconds = function(t)
 	local t_d = math.floor(t / (60*60*24))
 	local t_h = math.floor(t / (60*60)) % 24
 	local t_m = math.floor(t / 60) % 60
@@ -826,11 +1076,32 @@ function formatSeconds(t)
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
 end
 
-autil.commands.cfg = {
+cut_str = function(str, max)
+	if #str > max - 3 then
+		return string.sub(str, 1, max - 3) .. "..."
+	end
+	return str
+end
+
+local cfg_list_done = false
+local function gen_cfg_list()
+	if cfg_list_done then
+		return
+	end
+	local list = {}
+	for k, v in base.pairs(settings) do
+		table.insert(list, k .. ": <" .. cut_str(v.help or "no information", 30) .. ">")
+	end
+	table.sort(list)
+	commands.cfg.user_command.params[1] = autil.ucmd_list("Name of the setting to change", list)
+	cfg_list_done = true
+end
+
+commands.cfg = {
 	alias = { changecfg = true, changeconfig = true, config = true, var = true, changevar = true, setvar = true, setcfg = true, setconfig = true },
 
 	command = function(c, parameters)
-		if not autil.commands.cfg.protected(c) then
+		if not commands.cfg.protected(c) then
 			return
 		end
 
@@ -840,8 +1111,19 @@ autil.commands.cfg = {
 			return
 		end
 
+		if string.sub(name, #name) == ":" then
+			-- get rid of additional info for the UCMD list
+			local found, _, params = string.find(parameters, "^[^>]+> (.+)")
+			if not found then
+				autil.reply(c, "Invalid parameters")
+				return
+			end
+			name = string.sub(name, 1, #name - 1)
+			value = params
+		end
+
 		local setting = nil
-		for k, v in base.pairs(autil.settings) do
+		for k, v in base.pairs(settings) do
 			if k == name or (v.alias and v.alias[name]) then
 				setting = v
 				break
@@ -878,6 +1160,14 @@ autil.commands.cfg = {
 			return
 		end
 
+		if setting.validate then
+			local err = setting.validate(value)
+			if err then
+				autil.reply(c, "The new value \"" .. value .. "\" is invalid, no change done (" .. err .. ")")
+				return
+			end
+		end
+
 		setting.value = value
 		if setting.change then
 			setting.change()
@@ -890,8 +1180,8 @@ autil.commands.cfg = {
 
 	helplong = function()
 		local list = {}
-		for k, v in base.pairs(autil.settings) do
-			local str = k .. " - current value: " .. v.value
+		for k, v in base.pairs(settings) do
+			local str = k .. " - current value: " .. base.tostring(v.value)
 			if v.help then
 				str = str .. " - " .. v.help
 			end
@@ -914,13 +1204,13 @@ autil.commands.cfg = {
 	user_command = {
 		name = "Hub management" .. autil.ucmd_sep .. "Change a setting",
 		params = {
-			autil.ucmd_line("Name of the setting to change"),
+			'', -- will be set by gen_cfg_list
 			autil.ucmd_line("New value for the setting")
 		}
 	}
 }
 
-autil.commands.help = {
+commands.help = {
 	command = function(c, parameters)
 		local command_help = function(k, v)
 			local str = "+" .. k
@@ -940,7 +1230,7 @@ autil.commands.help = {
 
 		if #parameters > 0 then
 			local command = nil
-			for k, v in base.pairs(autil.commands) do
+			for k, v in base.pairs(commands) do
 				if k == parameters or (v.alias and v.alias[parameters]) then
 					command = { k = k, v = v }
 					break
@@ -970,7 +1260,7 @@ autil.commands.help = {
 
 		else
 			local list = {}
-			for k, v in base.pairs(autil.commands) do
+			for k, v in base.pairs(commands) do
 				if (not v.protected) or (v.protected and v.protected(c)) then
 					table.insert(list, command_help(k, v))
 				end
@@ -987,16 +1277,20 @@ autil.commands.help = {
 	} }
 }
 
-autil.commands.info = {
+commands.info = {
 	alias = { hubinfo = true, stats = true, userinfo = true },
 
 	command = function(c, parameters)
+		if dispatch_stats then
+			return
+		end
+
 		local str
 
 		if #parameters > 0 then
-			local user = cm:getEntity(cm:getSID(parameters)) -- by nick
+			local user = cm:findByNick(parameters) -- by nick
 			if not user then
-				user = cm:getEntity(cm:getSID(adchpp.CID(parameters))) -- by CID
+				user = cm:findByCID(adchpp.CID(parameters)) -- by CID
 			end
 
 			if user then
@@ -1059,13 +1353,18 @@ autil.commands.info = {
 			end
 
 		else
+			dispatch_stats = true
+			c:inject(adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
+			:addParam('+stats'))
+			dispatch_stats = false
+
 			local now = os.time()
 			local scripttime = os.difftime(now, start_time)
 			local hubtime = os.difftime(now, adchpp.Stats_startTime)
 
 			str = "\n"
-			str = str .. "Hub uptime: " .. formatSeconds(hubtime) .. "\n"
-			str = str .. "Script uptime: " .. formatSeconds(scripttime) .. "\n"
+			str = str .. "Hub uptime: " .. format_seconds(hubtime) .. "\n"
+			str = str .. "Script uptime: " .. format_seconds(scripttime) .. "\n"
 
 			str = str .. "\nADC and script commands: \n"
 			for k, v in base.pairs(stats) do
@@ -1116,7 +1415,7 @@ autil.commands.info = {
 	user_command = { user_params = { "%[userNI]" } }
 }
 
-autil.commands.kick = {
+commands.kick = {
 	alias = { drop = true, dropuser = true, kickuser = true },
 
 	command = function(c, parameters)
@@ -1131,7 +1430,7 @@ autil.commands.kick = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1175,7 +1474,7 @@ autil.commands.kick = {
 	}
 }
 
-autil.commands.listregs = {
+commands.listregs = {
 	alias = { listreg = true, listregged = true, reggedusers = true, showreg = true, showregs = true, showregged = true },
 
 	command = function(c, parameters)
@@ -1186,34 +1485,36 @@ autil.commands.listregs = {
 		end
 
 		local list = {}
-		local parse_user = function(k, v, prefix)
+		for _, v in base.ipairs(registered_users()) do
 			if v.level <= user.level then
-				local s = prefix .. ": " .. k
-				if autil.settings.passinlist.value ~=0 and v.level < user.level and v.password then
-					s = s .. "\tPass: " .. v.password
+				local fields = {}
+				if v.nick then
+					table.insert(fields, "Nick: " .. v.nick)
 				end
-				table.insert(list, s)
+				if v.cid then
+					table.insert(fields, "CID: " .. v.cid)
+				end
+				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
+					table.insert(fields, "Pass: " .. v.password)
+				end
+				table.insert(list, table.concat(fields, "\t"))
 			end
-		end
-		for k, v in base.pairs(users.nicks) do
-			parse_user(k, v, "Nick")
-		end
-		for k, v in base.pairs(users.cids) do
-			parse_user(k, v, "CID")
 		end
 		table.sort(list)
 
 		autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level):\n" .. table.concat(list, "\n"))
 	end,
 
-	protected = function(c) return get_user_c(c) end
+	protected = function(c) return get_user_c(c) end,
+
+	user_command = { name = "List regs" }
 }
 
-autil.commands.mass = {
+commands.mass = {
 	alias = { massmessage = true },
 
 	command = function(c, parameters)
-		if not autil.commands.mass.protected(c) then
+		if not commands.mass.protected(c) then
 			return
 		end
 
@@ -1233,11 +1534,7 @@ autil.commands.mass = {
 			return
 		end
 
-		-- TODO we send PMs from the originator of the mass message; eventually, we should send these from a bot.
-		local mass_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_ECHO, adchpp.AdcCommand_HUB_SID)
-		mass_cmd:setFrom(c:getSID())
-		mass_cmd:addParam(message)
-		mass_cmd:addParam("PM", adchpp.AdcCommand_fromSID(mass_cmd:getFrom()))
+		local mass_cmd = autil.pm(message, bot:getSID(), 0)
 
 		local count = 0
 		for i = 0, size - 1 do
@@ -1273,7 +1570,7 @@ autil.commands.mass = {
 	}
 }
 
-autil.commands.mute = {
+commands.mute = {
 	alias = { stfu = true },
 
 	command = function(c, parameters)
@@ -1296,7 +1593,7 @@ autil.commands.mute = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1338,7 +1635,7 @@ autil.commands.mute = {
 	}
 }
 
-autil.commands.myip = {
+commands.myip = {
 	alias = { getip = true, getmyip = true, ip = true, showip = true, showmyip = true },
 
 	command = function(c)
@@ -1348,7 +1645,7 @@ autil.commands.myip = {
 	user_command = { name = "My IP" }
 }
 
-autil.commands.mypass = {
+commands.mypass = {
 	alias = { regme = true, changepass = true, mypassword = true, changepassword = true, setpass = true, setpassword = true },
 
 	command = function(c, parameters)
@@ -1361,9 +1658,10 @@ autil.commands.mypass = {
 		if user then
 			-- already regged
 			user.password = parameters
+			base.pcall(save_users)
 			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 
-		elseif autil.settings.allowreg.value ~= 0 then
+		elseif settings.allowreg.value ~= 0 then
 			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
 			autil.reply(c, "You're now registered with the password \"" .. parameters .. "\"")
 
@@ -1371,13 +1669,11 @@ autil.commands.mypass = {
 			autil.reply(c, "You are not allowed to register by yourself; ask an operator to do it for you")
 			return
 		end
-
-		base.pcall(save_users)
 	end,
 
 	help = "new_pass - change your password, make sure you change it in your client options too",
 
-	protected = function(c) return autil.settings.allowreg.value ~=0 or has_level(c, 2) end,
+	protected = function(c) return settings.allowreg.value ~=0 or has_level(c, 2) end,
 
 	user_command = {
 		name = "My pass",
@@ -1385,7 +1681,7 @@ autil.commands.mypass = {
 	}
 }
 
-autil.commands.redirect = {
+commands.redirect = {
 	alias = { forward = true },
 
 	command = function(c, parameters)
@@ -1400,7 +1696,7 @@ autil.commands.redirect = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1437,7 +1733,7 @@ autil.commands.redirect = {
 	}
 }
 
-autil.commands.reload = {
+commands.reload = {
 	command = function() end, -- empty on purpose, this is handled via PluginManager::handleCommand
 
 	help = "- reload scripts",
@@ -1447,7 +1743,7 @@ autil.commands.reload = {
 	user_command = { name = "Hub management" .. autil.ucmd_sep .. "Reload scripts" }
 }
 
-autil.commands.regnick = {
+commands.regnick = {
 	alias = { reguser = true },
 
 	command = function(c, parameters)
@@ -1500,13 +1796,19 @@ autil.commands.regnick = {
 
 		if #password == 0 then
 			-- un-reg
-			if cid then
-				users.cids[cid] = nil
+			if not other_user then
+				autil.reply(c, "\"" .. nick .. "\" is not registered")
+				return
 			end
-			users.nicks[nick] = nil
+			if other_user.nick then
+				users.nicks[other_user.nick] = nil
+			end
+			if other_user.cid then
+				users.cids[other_user.cid] = nil
+			end
 			base.pcall(save_users)
 
-			autil.reply(c, "\"" .. nick .. "\" un-registered")
+			autil.reply(c, "\"" .. nick .. "\" has been un-registered")
 
 			if other then
 				autil.reply(other, "You've been un-registered")
@@ -1542,7 +1844,7 @@ autil.commands.regnick = {
 	}
 }
 
-autil.commands.test = {
+commands.test = {
 	command = function(c)
 		autil.reply(c, "Test ok")
 	end,
@@ -1551,16 +1853,16 @@ autil.commands.test = {
 }
 
 -- simply map to +cfg topic
-autil.commands.topic = {
+commands.topic = {
 	alias = { changetopic = true, settopic = true, changehubtopic = true, sethubtopic = true },
 
 	command = function(c, parameters)
-		autil.commands.cfg.command(c, "topic " .. parameters)
+		commands.cfg.command(c, "topic " .. parameters)
 	end,
 
 	help = "topic - change the hub topic (shortcut to +cfg topic)",
 
-	protected = autil.commands.cfg.protected,
+	protected = commands.cfg.protected,
 
 	user_command = {
 		name = "Hub management" .. autil.ucmd_sep .. "Change the topic",
@@ -1568,7 +1870,7 @@ autil.commands.topic = {
 	}
 }
 
-autil.commands.ban = {
+commands.ban = {
 	alias = { banuser = true },
 
 	command = function(c, parameters)
@@ -1591,7 +1893,7 @@ autil.commands.ban = {
 			return
 		end
 
-		local victim = cm:getEntity(cm:getSID(nick))
+		local victim = cm:findByNick(nick)
 		if victim then
 			victim = victim:asClient()
 		end
@@ -1634,7 +1936,7 @@ autil.commands.ban = {
 	}
 }
 
-autil.commands.bancid = {
+commands.bancid = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1680,7 +1982,7 @@ autil.commands.bancid = {
 	}
 }
 
-autil.commands.banip = {
+commands.banip = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1726,7 +2028,7 @@ autil.commands.banip = {
 	}
 }
 
-autil.commands.bannick = {
+commands.bannick = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1772,7 +2074,7 @@ autil.commands.bannick = {
 	}
 }
 
-autil.commands.bannickre = {
+commands.bannickre = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1813,7 +2115,7 @@ autil.commands.bannickre = {
 	}
 }
 
-autil.commands.banmsgre = {
+commands.banmsgre = {
 	command = function(c, parameters)
 		local level = get_level(c)
 		if level < level_op then
@@ -1854,7 +2156,7 @@ autil.commands.banmsgre = {
 	}
 }
 
-autil.commands.listbans = {
+commands.listbans = {
 	alias = { listban = true, listbanned = true, showban = true, showbans = true, showbanned = true },
 
 	command = function(c)
@@ -1903,7 +2205,7 @@ autil.commands.listbans = {
 	user_command = { name = "Hub management" .. autil.ucmd_sep .. "List bans" }
 }
 
-autil.commands.loadbans = {
+commands.loadbans = {
 	alias = { reloadbans = true },
 
 	command = function(c)
@@ -1924,7 +2226,7 @@ autil.commands.loadbans = {
 	user_command = { name = "Hub management" .. autil.ucmd_sep .. "Reload bans" }
 }
 
-local function onMainChatMSG(c, cmd)
+local function onMSG(c, cmd)
 	clear_expired_bans()
 	local muted = bans.muted[c:getCID():toBase32()]
 	if muted then
@@ -1934,32 +2236,38 @@ local function onMainChatMSG(c, cmd)
 
 	local msg = cmd:getParam(0)
 
-	local command, parameters = msg:match("^%+(%a+) ?(.*)")
-	if command then
-		for k, v in base.pairs(autil.commands) do
-			if k == command or (v.alias and v.alias[command]) then
-				add_stats('+' .. command)
-				v.command(c, parameters)
-				return false
+	local bot = autil.reply_from and autil.reply_from:getSID() == bot:getSID()
+	if not autil.reply_from or bot then
+		local command, parameters = msg:match("^%+(%a+) ?(.*)")
+		if command then
+			for k, v in base.pairs(commands) do
+				if k == command or (v.alias and v.alias[command]) then
+					add_stats('+' .. command)
+					v.command(c, parameters)
+					return false
+				end
 			end
 		end
-
-	else
-		local level = get_level(c)
-		clear_expired_bans()
-		for re, reban in base.pairs(bans.msgsre) do
-			if reban.level >= level and msg:match(re) then
-				local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
-				bans.cids[c:getCID():toBase32()] = ban
-				base.pcall(save_bans)
-				dump_banned(c, ban)
-				return false
-			end
+		if bot then
+			autil.reply(c, 'Invalid command, send "+help" for a list of available commands')
+			return false
 		end
 	end
 
-	if autil.settings.maxmsglength.value > 0 and string.len(msg) > autil.settings.maxmsglength.value then
-		autil.reply(c, "Your message contained too many characters, max allowed is " .. autil.settings.maxmsglength.value)
+	local level = get_level(c)
+	clear_expired_bans()
+	for re, reban in base.pairs(bans.msgsre) do
+		if reban.level >= level and msg:match(re) then
+			local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
+			bans.cids[c:getCID():toBase32()] = ban
+			base.pcall(save_bans)
+			dump_banned(c, ban)
+			return false
+		end
+	end
+
+	if settings.maxmsglength.value > 0 and string.len(msg) > settings.maxmsglength.value then
+		autil.reply(c, "Your message contained too many characters, max allowed is " .. settings.maxmsglength.value)
 		return false
 	end
 
@@ -1987,12 +2295,12 @@ local function onReceive(entity, cmd, ok)
 	end
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		local min_level = command_min_levels[cmd:getCommand()]
-		if min_level and get_level(c) < min_level then
-			local fourCC = cmd:getFourCC()
+		local restricted = restricted_commands[cmd:getCommand()]
+		if restricted and get_level(c) < restricted.level then
 			c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 			:addParam(adchpp.AdcCommand_SEV_RECOVERABLE .. adchpp.AdcCommand_ERROR_COMMAND_ACCESS)
-			:addParam("You don't have access to the " .. fourCC .. " command"):addParam("FC" .. fourCC))
+			:addParam("You are not allowed to " .. restricted.str .. " in this hub")
+			:addParam("FC" .. cmd:getFourCC()))
 			return false
 		end
 	end
@@ -2006,90 +2314,36 @@ local function onReceive(entity, cmd, ok)
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_PAS then
 		return onPAS(c, cmd)
 	end
-	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and (
-		cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST or cmd:getType() == adchpp.AdcCommand_TYPE_HUB
-		) then
-		return onMainChatMSG(c, cmd)
+	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
+		autil.reply_from = cm:getEntity(cmd:getTo())
+		local ret = onMSG(c, cmd)
+		autil.reply_from = nil
+		return ret
 	end
 
 	return true
 end
 
-local function send_user_commands(c)
-	local names = {}
-	local list = {}
-	for k, v in base.pairs(autil.commands) do
-		if (not v.protected) or (v.protected and v.protected(c)) then
-			local name
-			if v.user_command and v.user_command.name then
-				name = v.user_command.name
-			else
-				name = string.upper(string.sub(k, 1, 1)) .. string.sub(k, 2)
-			end
-			table.insert(list, name)
-			names[name] = k
-		end
-	end
-	table.sort(list)
-
-	local send_ucmd = function(c, name, internal_name, command, context)
-		local ucmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_CMD, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-		ucmd:addParam(autil.settings.menuname.value .. autil.ucmd_sep .. name)
-
-		local back_cmd = adchpp.AdcCommand(adchpp.AdcCommand_CMD_MSG, adchpp.AdcCommand_TYPE_HUB, c:getSID())
-		local str = "+" .. internal_name
-
-		local params = nil
-		if context == 1 and command.user_command and command.user_command.hub_params then
-			params = command.user_command.hub_params
-		elseif context == 2 and command.user_command and command.user_command.user_params then
-			params = command.user_command.user_params
-		elseif command.user_command and command.user_command.params then
-			params = command.user_command.params
-		end
-		if params then
-			for _, param in base.ipairs(params) do
-				str = str .. " " .. param
-			end
-		end
-
-		back_cmd:addParam(str)
-		ucmd:addParam("TT", back_cmd:toString())
-
-		ucmd:addParam("CT", base.tostring(context))
-
-		c:send(ucmd)
-	end
-
-	for _, name in base.ipairs(list) do
-		local internal_name = names[name]
-		local command = autil.commands[internal_name]
-
-		local hub_sent = false
-		if command.user_command and command.user_command.hub_params then
-			send_ucmd(c, name, internal_name, command, 1)
-			hub_sent = true
-		end
-
-		local user_sent = false
-		if command.user_command and command.user_command.user_params then
-			send_ucmd(c, name, internal_name, command, 2)
-			user_sent = true
-		end
-
-		if (not hub_sent) and (not user_sent) then
-			send_ucmd(c, name, internal_name, command, 3)
-		elseif not hub_sent then
-			send_ucmd(c, name, internal_name, command, 1)
-		elseif not user_sent then
-			send_ucmd(c, name, internal_name, command, 2)
-		end
-	end
-end
-
 base.pcall(load_users)
-base.pcall(load_settings)
+if not base.pcall(load_settings) then
+	base.pcall(save_settings) -- save initial settings
+end
 base.pcall(load_bans)
+
+bot = cm:createSimpleBot()
+bot:setCID(adchpp.CID(settings.botcid.value))
+bot:setField("ID", settings.botcid.value)
+bot:setField("NI", settings.botname.value)
+bot:setField("DE", settings.botdescription.value)
+bot:setField("EM", settings.botemail.value)
+bot:setFlag(adchpp.Entity_FLAG_OP)
+bot:setFlag(adchpp.Entity_FLAG_SU)
+bot:setFlag(adchpp.Entity_FLAG_OWNER)
+cm:regBot(bot)
+
+autil.on_unloaded(_NAME, function()
+	bot:disconnect(adchpp.Util_REASON_PLUGIN)
+end)
 
 table.foreach(extensions, function(_, extension)
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))
@@ -2109,14 +2363,16 @@ access_2 = cm:signalState():connect(function(entity)
 		if c and (
 			entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
 			) then
+			gen_cfg_list()
 			send_user_commands(c)
 		end
 	end
 end)
 
 access_3 = pm:getCommandSignal("reload"):connect(function(entity, list, ok)
-	if not ok then
-		return ok
-	end
-	return is_op(entity)
+	return commands.reload.protected(entity)
+end)
+
+access_4 = pm:getCommandSignal("stats"):connect(function()
+	return dispatch_stats
 end)

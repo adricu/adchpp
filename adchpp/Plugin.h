@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ public:
 	virtual int getVersion() = 0;
 };
 
-typedef std::tr1::function<void (void*)> PluginDataDeleter;
+typedef std::function<void (void*)> PluginDataDeleter;
 
 class PluginData {
 public:
@@ -53,7 +53,7 @@ private:
 	PluginDataDeleter deleter;
 };
 
-typedef std::tr1::shared_ptr<PluginData> PluginDataHandle;
+typedef std::shared_ptr<PluginData> PluginDataHandle;
 
 }
 

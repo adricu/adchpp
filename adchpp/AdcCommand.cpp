@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 #include "adchpp.h"
 
 #include "AdcCommand.h"
+
+#include "Text.h"
 
 namespace adchpp {
 
@@ -124,7 +126,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
                     features = cur;
 					featureSet = true;
 				} else {
-					if(!Util::validateUtf8(cur)) {
+					if(!Text::validateUtf8(cur)) {
 						throw ParseException("Invalid UTF-8 sequence");
 					}
 					parameters.push_back(cur);
@@ -158,7 +160,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
             features = cur;
 			featureSet = true;
 		} else {
-			if(!Util::validateUtf8(cur)) {
+			if(!Text::validateUtf8(cur)) {
 				throw ParseException("Invalid UTF-8 sequence");
 			}
 			parameters.push_back(cur);

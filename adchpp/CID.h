@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,14 +58,13 @@ private:
 
 }
 
-namespace std { namespace tr1 {
+namespace std {
 template<>
 struct hash<adchpp::CID> {
 	size_t operator()(const adchpp::CID& rhs) const {
 		return *reinterpret_cast<const size_t*>(rhs.data());
 	}
 };
-}
 }
 
 #endif

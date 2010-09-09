@@ -12,9 +12,9 @@ gcc_flags = {
 }
 
 gcc_xxflags = {
-	'common' : [],
+	'common' : ['-std=gnu++0x'],
 	'debug' : [],
-	'release' : ['-fno-enforce-eh-specs']
+	'release' : []
 }
 
 msvc_flags = {
@@ -99,11 +99,11 @@ Help(opts.GenerateHelpText(defEnv))
 
 # workaround for SCons 1.2 which hard-codes possible archs (only allows 'x86' and 'amd64'...)
 # TODO remove when SCons knows about all available archs
-MSVS_ARCH = defEnv['arch']
-if MSVS_ARCH == 'x64':
-	MSVS_ARCH = 'amd64'
+TARGET_ARCH = defEnv['arch']
+if TARGET_ARCH == 'x64':
+	TARGET_ARCH = 'amd64'
 
-env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, MSVS_ARCH = MSVS_ARCH)
+env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, TARGET_ARCH = TARGET_ARCH, MSVS_ARCH = TARGET_ARCH)
 
 mode = env['mode']
 if mode not in gcc_flags:
@@ -126,7 +126,7 @@ dev.prepare()
 
 env.SConsignFile()
 
-env.Append(CPPPATH = ["#/boost/boost/tr1/tr1/", "#/boost/"])
+env.Append(CPPPATH = ['#/boost/'])
 env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
 if env['CC'] == 'cl': # MSVC
 	env.Append(CPPDEFINES = ['BOOST_ALL_NO_LIB=1'])
@@ -134,9 +134,11 @@ if env['CC'] == 'cl': # MSVC
 if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
 	env.Append(CCFLAGS=['-fvisibility=hidden'])
+	env.Append(LIBS = ['stdc++', 'm'])
 
 if 'gcc' in env['TOOLS']:
-	env.Append(CPPDEFINES = ['BOOST_HAS_GCC_TR1'])
+	if dev.is_win32():
+		env.Append(LINKFLAGS = ['-Wl,--enable-auto-import'])
 
 	if env['savetemps']:
 		env.Append(CCFLAGS = ['-save-temps', '-fverbose-asm'])
@@ -225,9 +227,10 @@ env.Append(LIBPATH = env.Dir(dev.get_build_root() + 'bin/').abspath)
 if not dev.is_win32():
 	dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
 
+dev.boost_date_time = dev.build('boost/libs/date_time/src/')
 dev.boost_system = dev.build('boost/libs/system/src/')
 
-env.Append(LIBS = ['aboost_system'])
+env.Append(LIBS = ['aboost_system', 'aboost_date_time'])
 
 dev.adchpp = dev.build('adchpp/')
 
@@ -244,12 +247,14 @@ for plugin in env['plugins']:
 	dev.build('plugins/' + plugin + '/')
 
 if env['docs']:
-	if env.WhereIs('asciidoc') is None:
+	asciidoc_cmd = dev.get_asciidoc()
+	if asciidoc_cmd is None:
 		print 'asciidoc not found, docs won\'t be built'
 
 	else:
+		env['asciidoc_cmd'] = asciidoc_cmd
 		def asciidoc(target, source, env):
-			env.Execute('asciidoc -o"' + str(target[0]) + '" "' + str(source[0]) + '"')
+			env.Execute(env['asciidoc_cmd'] + ' -o"' + str(target[0]) + '" "' + str(source[0]) + '"')
 
 		doc_path = '#/build/docs/'
 

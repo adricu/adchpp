@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,13 +28,11 @@ namespace adchpp {
 class ADCHPP_VISIBLE Bot : public Entity {
 public:
 
-	typedef std::tr1::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
+	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
 	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
 
-	virtual void send(const BufferPtr& cmd) { handler(*this, cmd); }
-
-	ADCHPP_DLL void inject(AdcCommand& cmd);
+	virtual void send(const BufferPtr& cmd) { if(handler) handler(*this, cmd); }
 
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
 

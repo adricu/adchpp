@@ -67,7 +67,7 @@ namespace boost {
         return detail::is_directed(Cat());
     }
 
-    /** Return false if the given graph is undirected. */
+    /** Return true if the given graph is undirected. */
     template <typename Graph>
     bool is_undirected(const Graph& g) {
         return !is_directed(g);
@@ -178,6 +178,16 @@ namespace boost {
             is_convertible<
                 typename graph_traits<Graph>::traversal_category,
                 edge_list_graph_tag
+            >::value
+        >
+    { };
+
+    template <typename Graph>
+    struct is_adjacency_matrix
+        : mpl::bool_<
+            is_convertible<
+                typename graph_traits<Graph>::traversal_category,
+                adjacency_matrix_tag
             >::value
         >
     { };

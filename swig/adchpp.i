@@ -14,6 +14,8 @@
 #include <adchpp/SocketManager.h>
 #include <adchpp/Hub.h>
 #include <adchpp/Bot.h>
+#include <adchpp/Text.h>
+#include <adchpp/version.h>
 
 using namespace adchpp;
 
@@ -65,10 +67,12 @@ void shutdown() {
 %nodefaultdtor ClientManager;
 %nodefaultdtor SocketManager;
 %nodefaultdtor LogManager;
+%nodefaultdtor Text;
 %nodefaultdtor Util;
 %nodefaultdtor PluginManager;
 
 namespace adchpp {
+	class Bot;
 	class Client;
 	class Entity;
 	typedef std::vector<std::string> StringList;
@@ -111,6 +115,10 @@ typedef ServerInfo::TLSInfo TLSInfo;
 
 namespace adchpp {
 
+extern std::string appName;
+extern std::string versionString;
+extern float versionFloat;
+
 class BufferPtr;
 
 void initialize(const std::string& configPath);
@@ -142,15 +150,29 @@ typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager {
 public:
+	typedef std::function<void()> Callback;
+	%extend {
+		/* work around 2 problems:
+		- SWIG fails to convert a script function to const Callback&.
+		- SWIG has trouble choosing the overload of addJob to use.
+		*/
+		Callback addJob(const long msec, Callback callback) {
+			return self->addJob(msec, callback);
+		}
+		Callback addJob_str(const std::string& time, Callback callback) {
+			return self->addJob(time, callback);
+		}
+	}
+
 	void setServers(const ServerInfoList& servers_);
-	
+
 	std::map<std::string, int> errors;
 };
 
 template<typename F>
 struct Signal {
 %extend {
-	ManagedConnectionPtr connect(std::tr1::function<F> f) {
+	ManagedConnectionPtr connect(std::function<F> f) {
 		return manage(self, f);
 	}
 }
@@ -184,6 +206,17 @@ struct Stats {
 	static time_t startTime;
 };
 
+class Text {
+public:
+	static std::string acpToUtf8(const std::string& str) throw();
+	static std::wstring acpToWide(const std::string& str) throw();
+	static std::string utf8ToAcp(const std::string& str) throw();
+	static std::wstring utf8ToWide(const std::string& str) throw();
+	static std::string wideToAcp(const std::wstring& str) throw();
+	static std::string wideToUtf8(const std::wstring& str) throw();
+	static bool validateUtf8(const std::string& str) throw();
+};
+
 class Util
 {
 public:
@@ -209,6 +242,7 @@ public:
 		REASON_PLUGIN,
 		REASON_WRITE_OVERFLOW,
 		REASON_NO_BANDWIDTH,
+		REASON_INVALID_DESCRIPTION,
 		REASON_LAST,
 	};
 
@@ -229,12 +263,6 @@ public:
 
 	static std::string translateError(int aError);
 
-	static std::string toAcp(const std::wstring& wString);
-	static const std::string& toAcp(const std::string& wString);
-
-	static std::wstring toUnicode(const std::string& aString);
-	static const std::wstring& toUnicode(const std::wstring& aString);
-
 	static std::string formatBytes(const std::string& aString);
 
 	static std::string getShortTimeString();
@@ -254,6 +282,9 @@ public:
 	static uint32_t rand(uint32_t high);
 	static uint32_t rand(uint32_t low, uint32_t high);
 	static double randd();
+	
+	static bool isPrivateIp(std::string const& ip);
+	static bool validateCharset(std::string const& field, int p);
 
 };
 
@@ -468,21 +499,27 @@ public:
 		FLAG_OWNER = 0x10,
 		FLAG_HUB = 0x20,
 		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
+
 		FLAG_PASSWORD = 0x100,
 		FLAG_HIDDEN = 0x200,
 		/** Extended away, no need to send msg */
 		FLAG_EXT_AWAY = 0x400,
+
 		/** Plugins can use these flags to disable various checks */
 		/** Bypass ip check */
-		FLAG_OK_IP = 0x800
-	};
+		FLAG_OK_IP = 0x800,
 
+		/** This entity is now a ghost being disconnected, totally ignored by ADCH++ */
+		FLAG_GHOST = 0x1000
+	};
 
 	Entity(uint32_t sid_) : sid(sid_) {
 
 	}
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
+
+	virtual void inject(AdcCommand& cmd);
 
 	const std::string& getField(const char* name) const;
 	bool hasField(const char* name) const;
@@ -546,11 +583,8 @@ public:
 	 * Set data mode for aBytes bytes.
 	 * May only be called from on(ClientListener::Command...).
 	 */
-	typedef std::tr1::function<void (Client&, const uint8_t*, size_t)> DataFunction;
+	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
-
-	bool isUdpActive() const;
-	bool isTcpActive() const;
 
 	bool isFlooding(time_t addSeconds);
 
@@ -558,13 +592,12 @@ public:
 
 class Bot : public Entity {
 public:
+	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
+
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
 	
-	void inject(AdcCommand& cmd);
 	virtual void disconnect(Util::Reason reason);
-private:
-	SendHandler handler;
 };
 
 class Hub : public Entity {
@@ -619,12 +652,17 @@ public:
 class ClientManager
 {
 public:
-	uint32_t getSID(const std::string& nick) const throw();
-	uint32_t getSID(const CID& cid) const throw();
-
 	Entity* getEntity(uint32_t aSid) throw();
-	
-	// EntityMap& getEntities() throw() { return entities; }
+
+	%extend{
+	Bot* createBot(Bot::SendHandler handler) {
+		return self->createBot(handler);
+	}
+	Bot* createSimpleBot() {
+		return self->createBot(Bot::SendHandler());
+	}
+	}
+	void regBot(Bot& bot);
 
 	%extend{
 
@@ -636,14 +674,22 @@ public:
 		return ret;
 	}
 
-	Entity* findByNick(const std::string& nick) {
-		uint32_t sid = $self->getSID(nick);
+	Entity* findByCID(const CID& cid) {
+		uint32_t sid = self->getSID(cid);
 		if(sid != 0) {
 			return self->getEntity(sid);
 		}
-
 		return 0;
 	}
+
+	Entity* findByNick(const std::string& nick) {
+		uint32_t sid = self->getSID(nick);
+		if(sid != 0) {
+			return self->getEntity(sid);
+		}
+		return 0;
+	}
+
 	}
 
 	void send(const AdcCommand& cmd) throw();
@@ -762,7 +808,11 @@ public:
 class PluginManager
 {
 public:
-	void attention(const std::tr1::function<void()>& f);
+	%extend {
+		void attention(std::function<void()> f) {
+			self->attention(f);
+		}
+	}
 
 	//typedef HASH_MAP<std::string, Plugin*> Registry;
 	//typedef Registry::iterator RegistryIter;

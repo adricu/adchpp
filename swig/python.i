@@ -1,5 +1,10 @@
 %module(directors="1") pyadchpp
 
+%begin%{
+// prevent Python.h from tempering with this by including it before everything else
+#include <cmath>
+%}
+
 %runtime %{
 #ifdef socklen_t
 // Python pollution
@@ -11,34 +16,34 @@
     %pythoncode { NAME = property(STUFF) }
 %enddef
 
-%typemap(in) std::tr1::function<void ()> {
+%typemap(in) std::function<void ()> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void ( const std::string&)> {
+%typemap(in) std::function<void ( const std::string&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&)> {
+%typemap(in) std::function<void (adchpp::Entity&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, adchpp::AdcCommand&)> {
+%typemap(in) std::function<void (adchpp::Entity&, adchpp::AdcCommand&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, int)> {
+%typemap(in) std::function<void (adchpp::Entity&, int)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, const std::string&)> {
+%typemap(in) std::function<void (adchpp::Entity&, const std::string&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, adchpp::AdcCommand&, bool&)> {
+%typemap(in) std::function<void (adchpp::Entity&, adchpp::AdcCommand&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::AdcCommand&, bool&)> {
+%typemap(in) std::function<void (adchpp::Entity&, const adchpp::AdcCommand&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
+%typemap(in) std::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::tr1::function<void (adchpp::Bot&, const adchpp::BufferPtr&)> {
+%typemap(in) std::function<void (adchpp::Bot&, const adchpp::BufferPtr&)> {
 	$1 = PyHandle($input, false);
 }
 
@@ -119,8 +124,6 @@
 
 %extend adchpp::Client {
 	%property(ip, getIp)
-	%property(udpActive, isUdpActive)
-	%property(tcpActive, isTcpActive)
 }
 
 %extend adchpp::LogManager {

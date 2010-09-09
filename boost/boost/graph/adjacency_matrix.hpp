@@ -766,7 +766,7 @@ namespace boost {
   {
     typename adjacency_matrix<D,VP,EP,GP,A>::degree_size_type n = 0;
     typename adjacency_matrix<D,VP,EP,GP,A>::out_edge_iterator f, l;
-    for (tie(f, l) = out_edges(u, g); f != l; ++f)
+    for (boost::tie(f, l) = out_edges(u, g); f != l; ++f)
       ++n;
     return n;
   }
@@ -848,7 +848,7 @@ namespace boost {
   {
     typename adjacency_matrix<D,VP,EP,GP,A>::degree_size_type n = 0;
     typename adjacency_matrix<D,VP,EP,GP,A>::in_edge_iterator f, l;
-    for (tie(f, l) = in_edges(u, g); f != l; ++f)
+    for (boost::tie(f, l) = in_edges(u, g); f != l; ++f)
       ++n;
     return n;
   }
@@ -925,18 +925,19 @@ namespace boost {
   // Functions required by the MutableGraph concept
 
   // O(1)
-  template <typename D, typename VP, typename EP, typename GP, typename A>
+  template <typename D, typename VP, typename EP, typename GP, typename A,
+            typename EP2>
   std::pair<typename adjacency_matrix<D,VP,EP,GP,A>::edge_descriptor, bool>
   add_edge(typename adjacency_matrix<D,VP,EP,GP,A>::vertex_descriptor u,
            typename adjacency_matrix<D,VP,EP,GP,A>::vertex_descriptor v,
-           const EP& ep,
+           const EP2& ep,
            adjacency_matrix<D,VP,EP,GP,A>& g)
   {
     typedef typename adjacency_matrix<D,VP,EP,GP,A>::edge_descriptor
       edge_descriptor;
     if (detail::get_edge_exists(g.get_edge(u,v), 0) == false) {
       ++(g.m_num_edges);
-      detail::set_property(g.get_edge(u,v), ep, 0);
+      detail::set_property(g.get_edge(u,v), EP(ep), 0);
       detail::set_edge_exists(g.get_edge(u,v), true, 0);
       return std::make_pair
         (edge_descriptor(true, u, v, &detail::get_property(g.get_edge(u,v))),
@@ -989,9 +990,10 @@ namespace boost {
     return *vertices(g).first;
   }
 
-  template <typename D, typename VP, typename EP, typename GP, typename A>
+  template <typename D, typename VP, typename EP, typename GP, typename A,
+            typename VP2>
   inline typename adjacency_matrix<D,VP,EP,GP,A>::vertex_descriptor
-  add_vertex(const VP& vp, adjacency_matrix<D,VP,EP,GP,A>& g) {
+  add_vertex(const VP2& /*vp*/, adjacency_matrix<D,VP,EP,GP,A>& g) {
     // UNDER CONSTRUCTION
     assert(false);
     return *vertices(g).first;
@@ -999,8 +1001,8 @@ namespace boost {
 
   template <typename D, typename VP, typename EP, typename GP, typename A>
   inline void
-  remove_vertex(typename adjacency_matrix<D,VP,EP,GP,A>::vertex_descriptor u,
-                adjacency_matrix<D,VP,EP,GP,A>& g)
+  remove_vertex(typename adjacency_matrix<D,VP,EP,GP,A>::vertex_descriptor /*u*/,
+                adjacency_matrix<D,VP,EP,GP,A>& /*g*/)
   {
     // UNDER CONSTRUCTION
     assert(false);
@@ -1015,9 +1017,9 @@ namespace boost {
   {
     typename adjacency_matrix<directedS,VP,EP,GP,A>::vertex_iterator
       vi, vi_end;
-    for (tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
+    for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
       remove_edge(u, *vi, g);
-    for (tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
+    for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
       remove_edge(*vi, u, g);
   }
 
@@ -1030,7 +1032,7 @@ namespace boost {
   {
     typename adjacency_matrix<undirectedS,VP,EP,GP,A>::vertex_iterator
       vi, vi_end;
-    for (tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
+    for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
       remove_edge(u, *vi, g);
   }
 
@@ -1298,7 +1300,7 @@ namespace boost {
   template <typename D, typename VP, typename EP, typename GP, typename A>
   typename adjacency_matrix<D,VP,EP,GP,A>::vertex_descriptor
   vertex(typename adjacency_matrix<D,VP,EP,GP,A>::vertices_size_type n,
-         const adjacency_matrix<D,VP,EP,GP,A>& g)
+         const adjacency_matrix<D,VP,EP,GP,A>&)
   {
     return n;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,11 +49,11 @@ public:
 	const std::string& getIp() const { return ip; }
 	void setIp(const std::string& ip_) { ip = ip_; }
 
-	typedef std::tr1::function<void()> ConnectedHandler;
+	typedef std::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
-	typedef std::tr1::function<void(const BufferPtr&)> DataHandler;
+	typedef std::function<void(const BufferPtr&)> DataHandler;
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
-	typedef std::tr1::function<void()> FailedHandler;
+	typedef std::function<void()> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
 	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }

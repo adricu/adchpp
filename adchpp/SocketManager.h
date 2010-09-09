@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,18 +32,29 @@ namespace adchpp {
 
 class SocketManager : public Singleton<SocketManager>, public Thread {
 public:
-	typedef std::tr1::function<void()> Callback;
+	typedef std::function<void()> Callback;
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
+	/** execute a function after the specified amount of time
+	* @param msec milliseconds
+	* @return function one may call to cancel the timer (its callback will still be executed)
+	*/
+	ADCHPP_DLL Callback addJob(const long msec, const Callback& callback);
+	/** execute a function after the specified amount of time
+	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
+	* @return function one may call to cancel the timer (its callback will still be executed)
+	*/
+	ADCHPP_DLL Callback addJob(const std::string& time, const Callback& callback);
 
 	void startup() throw(ThreadException);
 	void shutdown();
 
 	void setServers(const ServerInfoList& servers_) { servers = servers_; }
 
-	typedef std::tr1::function<void (const ManagedSocketPtr&)> IncomingHandler;
+	typedef std::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 
 	std::map<std::string, int> errors;
+
 private:
 	friend class ManagedSocket;
 	friend class SocketFactory;
@@ -53,7 +64,7 @@ private:
 	void closeFactories();
 
 	boost::asio::io_service io;
-	std::auto_ptr<boost::asio::io_service::work> work;
+	std::unique_ptr<boost::asio::io_service::work> work;
 
 	ServerInfoList servers;
 	std::vector<SocketFactoryPtr> factories;
@@ -64,6 +75,13 @@ private:
 
 	friend class Singleton<SocketManager>;
 	ADCHPP_DLL static SocketManager* instance;
+
+	typedef std::shared_ptr<boost::asio::deadline_timer> timer_ptr;
+	Callback addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
+	void setTimer(timer_ptr timer, const boost::asio::deadline_timer::duration_type& duration, Callback* callback);
+	void handleWait(timer_ptr timer, const boost::asio::deadline_timer::duration_type& duration, const boost::system::error_code& error,
+		Callback* callback);
+	void cancelTimer(timer_ptr timer, Callback* callback);
 
 	void onLoad(const SimpleXML& xml) throw();
 

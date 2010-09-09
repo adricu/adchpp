@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 #include <adchpp/PluginManager.h>
 
 using namespace std;
-using namespace std::tr1::placeholders;
+using namespace std::placeholders;
 
 ScriptManager* ScriptManager::instance = 0;
 const string ScriptManager::className = "ScriptManager";
@@ -41,9 +41,9 @@ ScriptManager::ScriptManager() {
 	LOG(className, "Starting");
 
 	reloadConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("reload",
-		std::tr1::bind(&ScriptManager::onReload, this, _1))));
+		std::bind(&ScriptManager::onReload, this, _1))));
 	statsConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("stats",
-		std::tr1::bind(&ScriptManager::onStats, this, _1))));
+		std::bind(&ScriptManager::onStats, this, _1))));
 
 	load();
 }
@@ -93,7 +93,7 @@ void ScriptManager::reload() {
 }
 
 void ScriptManager::onReload(Entity& c) {
-	PluginManager::getInstance()->attention(std::tr1::bind(&ScriptManager::reload, this));
+	PluginManager::getInstance()->attention(std::bind(&ScriptManager::reload, this));
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Reloading scripts"));
 }
 

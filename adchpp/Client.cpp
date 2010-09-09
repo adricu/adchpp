@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1::placeholders;
+using namespace std::placeholders;
 
 size_t Client::defaultMaxCommandSize = 16 * 1024;
 
@@ -45,7 +45,7 @@ Client::~Client() {
 }
 
 namespace {
-	// Lightweight call forwarders, instead of tr1::bind
+	// Lightweight call forwarders, instead of std::bind
 	template<void (Client::*F)()>
 	struct Handler0 {
 		Handler0(Client* c_) : c(c_) { }

@@ -73,8 +73,10 @@
 		 the difference between the two is absurd. This way, it's also possible to
 		 write a script plugin, enabling people to choose their own script language,
 		 if someone's written a script plugin for it. You must specify the path to your
-		 plugins in linux!!! -->
-	<!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"-->
+		 plugins in linux default place it looks for the plugin path is /home/<username>/adchpp/ -->
+		 
+	<!--Plugins Path="~/adchpp/"-->
+	
 	<Plugins>
 		<!-- This plugins provides the scripting support. -->
 		<Plugin>Script</Plugin>

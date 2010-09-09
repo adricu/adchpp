@@ -1,0 +1,10 @@
+Import('dev source_path')
+
+env, target, sources = dev.prepare_build(source_path, 'aboost_date_time', '*/*.cpp')
+
+if '-fvisibility=hidden' in env['CCFLAGS']:
+	env['CCFLAGS'].remove('-fvisibility=hidden')
+
+ret = env.SharedLibrary(target, sources)
+
+Return('ret')

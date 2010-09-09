@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,14 @@
 
 class Script;
 
-typedef std::tr1::unordered_set<std::string, std::string> ParameterMap;
+typedef std::unordered_set<std::string, std::string> ParameterMap;
 
 class Engine {
 public:
 	virtual ~Engine() { }
 	
 	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters) = 0;
-	virtual void unloadScript(Script* script) = 0;
+	virtual void unloadScript(Script* script, bool force = false) = 0;
 
 	virtual void getStats(std::string& str) const = 0;
 private:

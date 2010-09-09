@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,13 +50,18 @@ public:
 		FLAG_OWNER = 0x10,
 		FLAG_HUB = 0x20,
 		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
+
 		FLAG_PASSWORD = 0x100,
 		FLAG_HIDDEN = 0x200,
 		/** Extended away, no need to send msg */
 		FLAG_EXT_AWAY = 0x400,
+
 		/** Plugins can use these flags to disable various checks */
 		/** Bypass ip check */
-		FLAG_OK_IP = 0x800
+		FLAG_OK_IP = 0x800,
+
+		/** This entity is now a ghost being disconnected, totally ignored by ADCH++ */
+		FLAG_GHOST = 0x1000
 	};
 
 
@@ -64,6 +69,8 @@ public:
 
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
+
+	ADCHPP_DLL virtual void inject(AdcCommand& cmd);
 
 	ADCHPP_DLL const std::string& getField(const char* name) const;
 	ADCHPP_DLL bool hasField(const char* name) const;

@@ -1,6 +1,6 @@
 Import('dev source_path')
 
-env, target, sources = dev.prepare_build(source_path, 'aboost_system', 'error_code.cpp')
+env, target, sources = dev.prepare_build(source_path, 'aboost_system', '*.cpp')
 
 if '-fvisibility=hidden' in env['CCFLAGS']:
 	env['CCFLAGS'].remove('-fvisibility=hidden')

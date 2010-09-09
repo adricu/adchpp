@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,12 +109,14 @@ public:
 		REASON_PLUGIN,
 		REASON_WRITE_OVERFLOW,
 		REASON_NO_BANDWIDTH,
+		REASON_INVALID_DESCRIPTION,
 		REASON_LAST,
 	};
 
 	ADCHPP_DLL static size_t reasons[REASON_LAST];
 
 	ADCHPP_DLL static std::string emptyString;
+	static std::wstring emptyStringW;
 
 	ADCHPP_DLL static void initialize(const std::string& configPath);
 	ADCHPP_DLL static std::string getOsVersion();
@@ -135,16 +137,6 @@ public:
 #endif
 
 	ADCHPP_DLL static std::string translateError(int aError);
-
-	ADCHPP_DLL static std::string toAcp(const std::wstring& wString);
-	static const std::string& toAcp(const std::string& wString) { return wString; }
-	static std::string& toAcp(std::string& wString) { return wString; }
-
-	ADCHPP_DLL static std::wstring toUnicode(const std::string& aString);
-	static const std::wstring& toUnicode(const std::wstring& aString) { return aString; }
-	static std::wstring& toUnicode(std::wstring& aString) { return aString; }
-
-	ADCHPP_DLL static bool validateUtf8(const std::string& str) throw();
 
 	static std::string formatBytes(const std::string& aString) { return formatBytes(toInt64(aString)); }
 
@@ -250,7 +242,8 @@ public:
 	static uint32_t rand(uint32_t low, uint32_t high) { return rand(high-low) + low; }
 	static double randd() { return ((double)rand()) / ((double)0xffffffff); }
 
-	static bool isPrivateIp(std::string const& ip);
+	ADCHPP_DLL static bool isPrivateIp(std::string const& ip);
+	ADCHPP_DLL static bool validateCharset(std::string const& field, int p);
 private:
 	ADCHPP_DLL static std::string cfgPath;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,59 +31,33 @@ public:
 	virtual void disconnect() = 0;
 };
 
-typedef std::auto_ptr<Connection> ConnectionPtr;
+typedef std::unique_ptr<Connection> ConnectionPtr;
 
 template<typename F>
 class Signal {
 public:
-	typedef std::tr1::function<F> Slot;
+	typedef std::function<F> Slot;
 	typedef std::list<Slot> SlotList;
 	typedef F FunctionType;
 
 	template<typename T0>
-	void operator()(T0& t0) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0);
-		}
-	}
-	template<typename T0>
-	void operator()(const T0& t0) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0);
+	void operator()(T0&& t0) {
+		for(auto i = slots.begin(), iend = slots.end(); i != iend;) {
+			(*i++)(std::forward<T0>(t0));
 		}
 	}
 
 	template<typename T0, typename T1>
-	void operator()(T0& t0, T1& t1) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1);
+	void operator()(T0&& t0, T1&& t1) {
+		for(auto i = slots.begin(), iend = slots.end(); i != iend;) {
+			(*i++)(std::forward<T0>(t0), std::forward<T1>(t1));
 		}
 	}
 
 	template<typename T0, typename T1, typename T2>
-	void operator()(const T0& t0, const T1& t1, const T2& t2) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1, t2);
-		}
-	}
-
-	template<typename T0, typename T1, typename T2>
-	void operator()(const T0& t0, T1& t1, T2& t2) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1, t2);
-		}
-	}
-
-	template<typename T0, typename T1, typename T2>
-	void operator()(T0& t0, T1& t1, T2& t2) {
-		typename SlotList::iterator end = slots.end();
-		for(typename SlotList::iterator i = slots.begin(); i != end;) {
-			(*i++)(t0, t1, t2);
+	void operator()(T0&& t0, T1&& t1, T2&& t2) {
+		for(auto i = slots.begin(), iend = slots.end(); i != iend;) {
+			(*i++)(std::forward<T0>(t0), std::forward<T1>(t1), std::forward<T2>(t2));
 		}
 	}
 
@@ -108,7 +82,7 @@ private:
 };
 
 struct ManagedConnection : public intrusive_ptr_base<ManagedConnection>, private boost::noncopyable {
-	ManagedConnection(ConnectionPtr conn_) : conn(conn_) {
+	ManagedConnection(ConnectionPtr&& conn_) : conn(move(conn_)) {
 	}
 
 	void disconnect() {

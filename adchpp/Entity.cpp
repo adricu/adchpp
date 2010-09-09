@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,18 @@
 
 #include "Entity.h"
 
+#include "ClientManager.h"
+
 namespace adchpp {
 
 Entity::~Entity() {
 	for(PluginDataMap::iterator i = pluginData.begin(), iend = pluginData.end(); i != iend; ++i) {
 		(*i->first)(i->second);
 	}
+}
+
+void Entity::inject(AdcCommand& cmd) {
+	ClientManager::getInstance()->onReceive(*this, cmd);
 }
 
 const std::string& Entity::getField(const char* name) const {

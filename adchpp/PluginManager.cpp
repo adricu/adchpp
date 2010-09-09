@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "SocketManager.h"
 #include "version.h"
 #include "File.h"
+#include "Text.h"
 
 #ifdef _WIN32
 
@@ -51,8 +52,7 @@
 namespace adchpp {
 
 using namespace std;
-using namespace std::tr1;
-using std::tr1::placeholders::_1;
+using std::placeholders::_1;
 
 PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
@@ -96,7 +96,7 @@ bool PluginManager::loadPlugin(const string& file) {
 #endif
 
 	if(h == NULL) {
-		LOG(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
+		LOG(className, "Failed to load " + Text::utf8ToAcp(file) + ": " + PM_GET_ERROR_STRING());
 		return false;
 	}
 
@@ -113,7 +113,7 @@ bool PluginManager::loadPlugin(const string& file) {
 				h = PM_LOAD_LIBRARY(file.c_str());
 			}
 			if(h == NULL) {
-				LOG(className, "Failed to load " + Util::toAcp(file) + ": " + PM_GET_ERROR_STRING());
+				LOG(className, "Failed to load " + Text::utf8ToAcp(file) + ": " + PM_GET_ERROR_STRING());
 				return false;
 			}
 #endif
@@ -123,21 +123,21 @@ bool PluginManager::loadPlugin(const string& file) {
 			if(l != NULL && u != NULL) {
 				int i = l();
 				if(i != 0) {
-					LOG(className, "Failed to load plugin " + Util::toAcp(file) + " (Error " + Util::toString(i) + ")");
+					LOG(className, "Failed to load plugin " + Text::utf8ToAcp(file) + " (Error " + Util::toString(i) + ")");
 				} else {
 					// Wonderful, we have a plugin...
 					active.push_back(PluginInfo(h, v, l, u));
-					LOG(className, Util::toAcp(file) + " loaded");
+					LOG(className, Text::utf8ToAcp(file) + " loaded");
 					return true;
 				}
 			} else {
-				LOG(className, Util::toAcp(file) + " is not a valid ADCH++ plugin");
+				LOG(className, Text::utf8ToAcp(file) + " is not a valid ADCH++ plugin");
 			}
 		} else {
-			LOG(className, Util::toAcp(file) + " is for another version of ADCH++ (" + Util::toString(ver) + "), please get the correct one from the author");
+			LOG(className, Text::utf8ToAcp(file) + " is for another version of ADCH++ (" + Util::toString(ver) + "), please get the correct one from the author");
 		}
 	} else {
-		LOG(className, Util::toAcp(file) + " is not a valid ADCH++ plugin");
+		LOG(className, Text::utf8ToAcp(file) + " is not a valid ADCH++ plugin");
 	}
 
 	PM_UNLOAD_LIBRARY(h);

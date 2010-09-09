@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ LuaScript::LuaScript(Engine* engine) : Script(engine) {
 }
 
 LuaScript::~LuaScript() {
+	getEngine()->call("unloaded", filename);
 }
 
 void LuaScript::loadFile(const string& path, const string& filename_) {
@@ -65,11 +66,12 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 		LOG(className, "Loaded " + filename);
 	}
 	chdir(old_dir);
+
+	getEngine()->call("loaded", filename);
 }
 
 void LuaScript::getStats(string& str) const {
 	str += filename + "\n";
-	str += "\tUsed Memory: " + Util::toString(lua_gc(getEngine()->l, LUA_GCCOUNT, 0)) + " KiB\n";
 }
 
 LuaEngine* LuaScript::getEngine() const {

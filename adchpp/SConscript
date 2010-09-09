@@ -8,8 +8,22 @@ def getRevision(env):
 		tree = bzrlib.builtins.WorkingTree.open_containing(env.Dir("#").abspath)[0]
 
 		return tree.branch.revision_id_to_revno(tree.last_revision())
-	except ImportError:
-		return 0
+
+	except:
+		f = None
+		try:
+			f = open(env.Dir("#").abspath+"/.bzr/branch/last-revision",'r')
+			line = f.read()
+			pos = line.find(' ')
+			if pos > 0:
+				return int(line[:pos])
+		except:
+			pass
+		if f:
+			f.close()
+
+	return 0
+
  
 Import('dev source_path')
 

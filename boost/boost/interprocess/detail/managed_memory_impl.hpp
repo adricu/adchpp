@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -263,7 +263,7 @@ class basic_managed_memory_impl
    bool belongs_to_segment (const void *ptr) const
    {  
       return ptr >= this->get_address() && 
-             ptr <  (reinterpret_cast<const char*>(ptr) + this->get_size());
+             ptr <  (reinterpret_cast<const char*>(this->get_address()) + this->get_size());
    }
 
    //!Transforms previously obtained offset into an absolute address in the 
@@ -673,7 +673,7 @@ class basic_managed_memory_impl
    template<class T>
    typename allocator<T>::type
       get_allocator()
-   {   return mp_header->get_allocator<T>(); }
+   {   return mp_header->BOOST_NESTED_TEMPLATE get_allocator<T>(); }
 
    //!This is the default deleter to delete types T
    //!from this managed segment.
@@ -688,7 +688,7 @@ class basic_managed_memory_impl
    template<class T>
    typename deleter<T>::type
       get_deleter()
-   {   return mp_header->get_deleter<T>(); }
+   {   return mp_header->BOOST_NESTED_TEMPLATE get_deleter<T>(); }
 
    /// @cond
    //!Tries to find a previous named allocation address. Returns a memory

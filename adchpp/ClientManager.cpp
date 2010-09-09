@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ ClientManager::ClientManager() throw() : loginTimeout(30 * 1000) {
 	hub.addSupports(AdcCommand::toFourCC("BASE"));
 	hub.addSupports(AdcCommand::toFourCC("TIGR"));
 
-	SocketManager::getInstance()->setIncomingHandler(std::tr1::bind(&ClientManager::handleIncoming, this, std::tr1::placeholders::_1));
+	SocketManager::getInstance()->setIncomingHandler(std::bind(&ClientManager::handleIncoming, this, std::placeholders::_1));
 }
 
 ClientManager::~ClientManager() throw() {
@@ -49,8 +49,14 @@ ClientManager::~ClientManager() throw() {
 
 Bot* ClientManager::createBot(const Bot::SendHandler& handler) {
 	Bot* ret = new Bot(makeSID(), handler);
-	//enterIdentify(*ret, false);
 	return ret;
+}
+
+void ClientManager::regBot(Bot& bot) {
+	enterIdentify(bot, false);
+	enterNormal(bot, false, true);
+	cids.insert(make_pair(bot.getCID(), &bot));
+	nicks.insert(make_pair(bot.getField("NI"), &bot));
 }
 
 void ClientManager::send(const AdcCommand& cmd) throw() {
@@ -263,7 +269,14 @@ bool ClientManager::verifyINF(Entity& c, AdcCommand& cmd) throw() {
 
 	if(!verifyNick(c, cmd))
 		return false;
-
+	
+	if(cmd.getParam("DE", 0, strtmp)) {
+		if (!Util::validateCharset(strtmp, 32)){
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid character in description"));
+			c.disconnect(Util::REASON_INVALID_DESCRIPTION);
+			return false;
+		}
+	}
 	c.updateFields(cmd);
 	return true;
 }
@@ -324,26 +337,29 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 	if(c.isSet(Client::FLAG_OK_IP))
 		return true;
 
-	for(StringIter j = cmd.getParameters().begin(); j != cmd.getParameters().end(); ++j) {
-		if(j->compare(0, 2, "I4") == 0) {
-			dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
-			if(j->size() == 2) {
-				// Clearing is ok
-			} else if(Util::isPrivateIp(c.getIp())) {
-				dcdebug("Skipping local ip %s\n",c.getIp().c_str());
-				c.setFlag(Client::FLAG_OK_IP);
-			} else if(j->compare(2, j->size() - 2, "0.0.0.0") == 0) {
-				c.setField("I4", c.getIp());
-				*j = "I4" + c.getIp();
-				cmd.resetBuffer();
-			} else if(j->size() - 2 != c.getIp().size() || j->compare(2, j->size() - 2, c.getIp()) != 0) {
-				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam(
-					"IP", c.getIp()));
-				c.disconnect(Util::REASON_INVALID_IP);
-				return false;
-			}
-		}
+	std::string ip;
+	if(cmd.getParam("I4", 0, ip)) {
+		dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
+		if(ip.empty() || ip == "0.0.0.0") {
+			cmd.delParam("I4", 0);
+			cmd.resetBuffer();
+		} else if(ip != c.getIp() && !Util::isPrivateIp(c.getIp())) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam(
+				"IP", c.getIp()));
+			c.disconnect(Util::REASON_INVALID_IP);
+			return false;
+		} else
+			return true;
 	}
+
+	if(!c.hasField("I4")) {
+		c.setField("I4", c.getIp());
+	}
+	if(c.getState() != Client::STATE_NORMAL) {
+		cmd.addParam("I4", c.getIp());
+		cmd.resetBuffer();
+	}
+
 	return true;
 }
 
@@ -380,14 +396,13 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 			return false;
 		}
 
-		CIDMap::iterator i = cids.find(cid);
-		if(i != cids.end()) {
-			// Send a newline to see if the other client is still alive
-			i->second->send(BufferPtr(new Buffer("\n", 1)));
-
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken, please try again later"));
-			c.disconnect(Util::REASON_CID_TAKEN);
-			return false;
+		Entity* other = getEntity(getSID(cid));
+		if(other) {
+			// disconnect the ghost
+			removeEntity(*other);
+			other->setFlag(Entity::FLAG_GHOST);
+			other->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
+			other->disconnect(Util::REASON_CID_TAKEN);
 		}
 
 		c.setCID(cid);
@@ -404,15 +419,16 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
+
 bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	if(cmd.getParam("NI", 0, strtmp)) {
 		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
-		for(string::size_type i = 0; i < strtmp.length(); ++i) {
-			if((uint8_t) strtmp[i] < 33) {
+
+		
+		if (!Util::validateCharset(strtmp, 33)){
 				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, "Invalid character in nick"));
 				c.disconnect(Util::REASON_NICK_INVALID);
 				return false;
-			}
 		}
 
 		const string& oldNick = c.getField("NI");
@@ -477,18 +493,20 @@ bool ClientManager::enterNormal(Entity& c, bool sendData, bool sendOwnInf) throw
 		for(EntityIter i = entities.begin(); i != entities.end(); ++i) {
 			c.send(i->second->getINF());
 		}
+	}
 
-		if(sendOwnInf) {
-			sendToAll(c.getINF());
+	if(sendOwnInf) {
+		sendToAll(c.getINF());
+		if(sendData) {
 			c.send(c.getINF());
 		}
 	}
 
 	removeLogins(c);
-	setState(c, Entity::STATE_NORMAL);
 
 	entities.insert(make_pair(c.getSID(), &c));
 
+	setState(c, Entity::STATE_NORMAL);
 	return true;
 }
 
@@ -506,6 +524,9 @@ void ClientManager::removeLogins(Entity& e) throw() {
 }
 
 void ClientManager::removeEntity(Entity& c) throw() {
+	if(c.isSet(Entity::FLAG_GHOST))
+		return;
+
 	signalDisconnected_(c);
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Client::STATE_NORMAL) {

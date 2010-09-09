@@ -37,7 +37,7 @@ To compile the sources you will also need (other versions might work but I don't
 	** Microsoft Visual C++ 9.0 (2008) with at least Service Pack 1 and https://connect.microsoft.com/VisualStudio/Downloads/DownloadDetails.aspx?DownloadID=17034&amp;wa=wsignin1.0[this hotfixed-hotfix]
 * http://www.scons.org[SCons 0.98.5]
 * http://www.swig.org[SWIG 1.3.39]
-* http://www.python.org[Python] 2.5 (Windows) or 2.4+ (Linux)
+* http://www.python.org[Python] 2.5-2.7 (Windows) or 2.4+ (Linux)
 * Optional: http://www.openssl.org[OpenSSL 1.0.0-beta3]
 
 == Building

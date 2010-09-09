@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2009 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
 #ifndef ADCHPP_INTRUSIVE_PTR_H
 #define ADCHPP_INTRUSIVE_PTR_H
 
-namespace std { namespace tr1 {
+namespace std {
 
 template<typename T>
 struct hash<boost::intrusive_ptr<T> > {
 	size_t operator()(const boost::intrusive_ptr<T>& t) const { return hash<T*>()(t.get()); }
 };
 
-} }
+}
 
 namespace adchpp {
 
