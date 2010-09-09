@@ -1,5 +1,6 @@
 * Export PluginManager::attention to scripts
 * Update Boost to version 1.44
+* [L#537905] Add redhat init scripts (thanks E_zombie)
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support
@@ -28,6 +29,7 @@
 * [L#502280] Fix Windows service
 * Accept relative paths in config files
 * [L#518972] Fix python memory leak
+ 
 * Plugins can use timers (see SocketManager::addJob)
 * [L#491951] Give unsent messages 10 seconds before disconnecting
 * Send IPs of passive users
