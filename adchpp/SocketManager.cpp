@@ -64,18 +64,18 @@ public:
 	}
 
 	virtual void write(const BufferList& bufs, const Handler& handler) {
-		if(true || bufs.size() == 1) {
+		if(bufs.size() == 1) {
 			sock.async_write_some(boost::asio::buffer(bufs[0]->data(), bufs[0]->size()), handler);
 		} else {
 			size_t n = std::min(bufs.size(), static_cast<size_t>(64));
 			std::vector<boost::asio::const_buffer> buffers;
 			buffers.reserve(n);
 
-			const size_t maxBytes = 64*1024;
+			const size_t maxBytes = 1024;
 
 			for(size_t i = 0, total = 0; i < n && total < maxBytes; ++i) {
 				size_t left = maxBytes - total;
-				size_t bytes = bufs[i]->size() > left ? left : bufs[i]->size();
+				size_t bytes = min(bufs[i]->size(), left);
 				buffers.push_back(boost::asio::const_buffer(bufs[i]->data(), bytes));
 				total += bytes;
 			}
