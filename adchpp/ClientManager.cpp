@@ -215,7 +215,7 @@ void ClientManager::badState(Entity& c, const AdcCommand& cmd) throw() {
 }
 
 bool ClientManager::handleDefault(Entity& c, AdcCommand& cmd) throw() {
-	if(c.getState() != Client::STATE_NORMAL) {
+	if(c.getState() != Entity::STATE_NORMAL) {
 		badState(c, cmd);
 		return false;
 	}
@@ -227,9 +227,9 @@ bool ClientManager::handle(AdcCommand::SUP, Entity& c, AdcCommand& cmd) throw() 
 		return false;
 	}
 
-	if(c.getState() == Client::STATE_PROTOCOL) {
+	if(c.getState() == Entity::STATE_PROTOCOL) {
 		enterIdentify(c, true);
-	} else if(c.getState() != Client::STATE_NORMAL) {
+	} else if(c.getState() != Entity::STATE_NORMAL) {
 		badState(c, cmd);
 		return false;
 	}
@@ -313,7 +313,7 @@ bool ClientManager::verifyOverflow(Entity& c) {
 }
 
 bool ClientManager::handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw() {
-	if(c.getState() != Client::STATE_IDENTIFY && c.getState() != Client::STATE_NORMAL) {
+	if(c.getState() != Entity::STATE_IDENTIFY && c.getState() != Entity::STATE_NORMAL) {
 		badState(c, cmd);
 		return false;
 	}
@@ -321,7 +321,7 @@ bool ClientManager::handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw() 
 	if(!verifyINF(c, cmd))
 		return false;
 
-	if(c.getState() == Client::STATE_IDENTIFY) {
+	if(c.getState() == Entity::STATE_IDENTIFY) {
 		if(!verifyOverflow(c)) {
 			return false;
 		}
@@ -334,7 +334,7 @@ bool ClientManager::handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw() 
 }
 
 bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
-	if(c.isSet(Client::FLAG_OK_IP))
+	if(c.isSet(Entity::FLAG_OK_IP))
 		return true;
 
 	std::string ip;
@@ -355,7 +355,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 	if(!c.hasField("I4")) {
 		c.setField("I4", c.getIp());
 	}
-	if(c.getState() != Client::STATE_NORMAL) {
+	if(c.getState() != Entity::STATE_NORMAL) {
 		cmd.addParam("I4", c.getIp());
 		cmd.resetBuffer();
 	}
@@ -366,7 +366,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	if(cmd.getParam("ID", 0, strtmp)) {
 		dcdebug("%s verifying CID\n", AdcCommand::fromSID(c.getSID()).c_str());
-		if(c.getState() != Client::STATE_IDENTIFY) {
+		if(c.getState() != Entity::STATE_IDENTIFY) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID changes not allowed"));
 			c.disconnect(Util::REASON_CID_CHANGE);
 			return false;
@@ -448,8 +448,8 @@ bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	return true;
 }
 
-void ClientManager::setState(Entity& c, Client::State newState) throw() {
-	Client::State oldState = c.getState();
+void ClientManager::setState(Entity& c, Entity::State newState) throw() {
+	Entity::State oldState = c.getState();
 	c.setState(newState);
 	signalState_(c, oldState);
 }
@@ -529,7 +529,7 @@ void ClientManager::removeEntity(Entity& c) throw() {
 
 	signalDisconnected_(c);
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
-	if(c.getState() == Client::STATE_NORMAL) {
+	if(c.getState() == Entity::STATE_NORMAL) {
 		entities.erase(c.getSID());
 		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())).addParam("DI", "1").getBuffer());
 	} else {
