@@ -53,8 +53,8 @@ public:
 
 	ADCHPP_DLL bool isFlooding(time_t addSeconds);
 
-	void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
-	size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
+	static void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
+	static size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
 
 	void setMaxCommandSize(size_t newSize) { maxCommandSize = newSize; }
 	size_t getMaxCommandSize() { return maxCommandSize; }
