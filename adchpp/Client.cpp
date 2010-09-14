@@ -22,6 +22,7 @@
 
 #include "ClientManager.h"
 #include "TimerManager.h"
+#include "SocketManager.h"
 
 namespace adchpp {
 
@@ -158,10 +159,19 @@ bool Client::isFlooding(time_t addSeconds) {
 }
 
 void Client::disconnect(Util::Reason reason) throw() {
-	if(socket && !disconnecting) {
+	dcassert(socket);
+	if(!disconnecting) {
 		disconnecting = true;
+
+		socket->setConnectedHandler(ManagedSocket::ConnectedHandler());
+		socket->setDataHandler(ManagedSocket::DataHandler());
+		socket->setFailedHandler(ManagedSocket::FailedHandler());
+
 		/// @todo fix timeout
 		socket->disconnect(5000, reason);
+
+		// We fail the client ASAP to release nicks etc used...
+		SocketManager::getInstance()->addJob(Handler0<&Client::onFailed>(this));
 	}
 }
 

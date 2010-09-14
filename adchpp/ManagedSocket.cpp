@@ -184,6 +184,10 @@ void ManagedSocket::disconnect(size_t timeout, Util::Reason reason) throw() {
 	}
 
 	prepareWrite();
+
+	// Schedule an extra socket close after the timeout in case the write doesn't
+	// finish on time
+	SocketManager::getInstance()->addJob(timeout, bind(&AsyncStream::close, sock));
 }
 
 }
