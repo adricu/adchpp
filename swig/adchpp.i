@@ -409,8 +409,6 @@ public:
 	explicit AdcCommand(const std::string& aLine) throw(ParseException);
     explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException);
 	
-	AdcCommand(const AdcCommand& rhs);
-
 	static uint32_t toSID(const std::string& aSID);
 	static std::string fromSID(const uint32_t aSID);
 	static void appendSID(std::string& str, uint32_t aSID);

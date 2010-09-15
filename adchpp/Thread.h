@@ -31,7 +31,7 @@ namespace adchpp {
 
 STANDARD_EXCEPTION(ThreadException);
 
-class Thread  
+class Thread : private boost::noncopyable
 {
 public:
 
@@ -85,10 +85,6 @@ public:
 protected:
 	virtual int run() = 0;
 	
-private:
-	Thread(const Thread&);
-	Thread& operator=(const Thread&);
-
 #ifdef _WIN32
 	HANDLE threadHandle;
 	static DWORD WINAPI starter(void* p) {

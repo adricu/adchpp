@@ -22,7 +22,7 @@
 
 namespace adchpp {
 
-class AsyncStream : public intrusive_ptr_base<AsyncStream>, boost::noncopyable {
+class AsyncStream : public intrusive_ptr_base<AsyncStream>, private boost::noncopyable {
 public:
 	typedef std::function<void (const boost::system::error_code& ec, size_t)> Handler;
 

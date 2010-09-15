@@ -33,7 +33,7 @@ namespace adchpp {
 /**
  * An asynchronous socket managed by SocketManager.
  */
-class ManagedSocket : public intrusive_ptr_base<ManagedSocket>, boost::noncopyable {
+class ManagedSocket : public intrusive_ptr_base<ManagedSocket>, private boost::noncopyable {
 public:
 	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overflow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
 

@@ -33,6 +33,9 @@ public:
 	explicit CID(const uint8_t* data) { memcpy(cid, data, sizeof(cid)); }
 	explicit CID(const std::string& base32) { Encoder::fromBase32(base32.c_str(), cid, sizeof(cid)); }
 
+	CID(const CID& rhs) { memcpy(cid, rhs.cid, sizeof(cid)); }
+	CID& operator=(const CID& rhs) { memcpy(cid, rhs.cid, sizeof(cid)); return *this; }
+
 	bool operator==(const CID& rhs) const { return memcmp(cid, rhs.cid, sizeof(cid)) == 0; }
 	bool operator<(const CID& rhs) const { return memcmp(cid, rhs.cid, sizeof(cid)) < 0; }
 

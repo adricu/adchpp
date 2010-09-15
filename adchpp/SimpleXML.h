@@ -30,7 +30,7 @@ STANDARD_EXCEPTION(SimpleXMLException);
  * A simple XML class that loads an XML-ish structure into an internal tree
  * and allows easy access to each element through a "current location".
  */
-class SimpleXML
+class SimpleXML : private boost::noncopyable
 {
 public:
 	ADCHPP_DLL SimpleXML(int numAttribs = 0);

@@ -28,7 +28,7 @@ namespace adchpp {
 
 STANDARD_EXCEPTION(ParseException);
 
-class AdcCommand {
+class AdcCommand : private boost::noncopyable {
 public:
 	template<uint32_t T>
 	struct Type {
@@ -129,7 +129,6 @@ public:
 	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), priority(PRIORITY_NORMAL), from(aFrom), type(aType) { }
 	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), priority(PRIORITY_NORMAL), type(0) { parse(aLine); }
 	explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException) : buffer(buffer_), cmdInt(0), priority(PRIORITY_NORMAL), type(0) { parse((const char*)buffer->data(), buffer->size()); }
-	AdcCommand(const AdcCommand& rhs) : parameters(rhs.parameters), cmdInt(rhs.cmdInt), priority(PRIORITY_NORMAL), from(rhs.from), to(rhs.to), type(rhs.type) { }
 
 	void parse(const std::string& str) throw(ParseException) { parse(str.data(), str.size()); }
 	ADCHPP_DLL void parse(const char* buf, size_t len) throw(ParseException);
@@ -178,8 +177,6 @@ public:
 	void setPriority(Priority priority_) { priority = priority_; }
 
 private:
-	AdcCommand& operator=(const AdcCommand&);
-
 	StringList parameters;
 	std::string features;
 

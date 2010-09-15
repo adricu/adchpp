@@ -21,7 +21,7 @@
 
 namespace adchpp { 
 
-class TigerHash {
+class TigerHash : private boost::noncopyable {
 public:
 	/** Hash size */
 	static const size_t BITS = 192;
@@ -33,8 +33,7 @@ public:
 		res[2]=_ULL(0xF096A5B4C3B2E187);
 	}
 
-	~TigerHash() {
-	}
+	~TigerHash() { }
 
 	/** Calculates the Tiger hash of the data. */
 	ADCHPP_DLL void update(const void* data, size_t len);

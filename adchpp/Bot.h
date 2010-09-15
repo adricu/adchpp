@@ -27,7 +27,6 @@ namespace adchpp {
 
 class ADCHPP_VISIBLE Bot : public Entity {
 public:
-
 	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
 	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
@@ -38,7 +37,6 @@ public:
 
 	using Entity::send;
 private:
-
 	SendHandler handler;
 };
 

@@ -32,7 +32,7 @@ namespace adchpp {
 /**
  * The client represents one connection to a user.
  */
-class ADCHPP_VISIBLE Client : public Entity, public FastAlloc<Client>, public boost::noncopyable {
+class ADCHPP_VISIBLE Client : public Entity, public FastAlloc<Client> {
 public:
 	static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
 

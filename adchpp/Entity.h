@@ -27,7 +27,7 @@
 
 namespace adchpp {
 
-class ADCHPP_VISIBLE Entity {
+class ADCHPP_VISIBLE Entity : private boost::noncopyable {
 public:
 	enum State {
 		/** Initial protocol negotiation (wait for SUP) */

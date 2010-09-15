@@ -28,7 +28,11 @@ namespace adchpp {
 /**
  * Reference-counted buffer
  */
-class Buffer : public intrusive_ptr_base<Buffer>, public FastAlloc<Buffer> {
+class Buffer :
+	public intrusive_ptr_base<Buffer>,
+	public FastAlloc<Buffer>,
+	private boost::noncopyable
+{
 public:
 	Buffer(const std::string& str) : bufp(pool.get()) { append((uint8_t*)str.data(), (uint8_t*)str.data() + str.size()); }
 	Buffer(const void* ptr, const size_t size) : bufp(pool.get()) { append((uint8_t*) ptr, ((uint8_t*)ptr)+size); }
