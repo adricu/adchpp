@@ -52,8 +52,8 @@ BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
 	bloomHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<HashBloom>);
 	pendingHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<PendingItem>);
 
-	statsConn = ManagedConnectionPtr(new ManagedConnection(pm->onCommand("stats",
-		std::bind(&BloomManager::onStats, this, _1))));
+	statsConn = std::make_shared<ManagedConnection>(pm->onCommand("stats",
+		std::bind(&BloomManager::onStats, this, _1)));
 }
 
 BloomManager::~BloomManager() {

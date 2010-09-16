@@ -40,10 +40,10 @@ const string ScriptManager::className = "ScriptManager";
 ScriptManager::ScriptManager() {
 	LOG(className, "Starting");
 
-	reloadConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("reload",
-		std::bind(&ScriptManager::onReload, this, _1))));
-	statsConn = ManagedConnectionPtr(new ManagedConnection(PluginManager::getInstance()->onCommand("stats",
-		std::bind(&ScriptManager::onStats, this, _1))));
+	reloadConn = std::make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("reload",
+		std::bind(&ScriptManager::onReload, this, _1)));
+	statsConn = std::make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("stats",
+		std::bind(&ScriptManager::onStats, this, _1)));
 
 	load();
 }
@@ -54,7 +54,6 @@ ScriptManager::~ScriptManager() {
 }
 
 void ScriptManager::clearEngines() {
-	for_each(engines.begin(), engines.end(), DeleteFunction());
 	engines.clear();
 }
 
@@ -68,9 +67,9 @@ void ScriptManager::load() {
 			const std::string& language = xml.getChildAttrib("language");
 
 			if(language.empty() || language == "lua") {
-				engines.push_back(new LuaEngine);
+				engines.push_back(std::unique_ptr<LuaEngine>(new LuaEngine));
 			} else {
-				LOG(className, "Unrecognised language " + language);
+				LOG(className, "Unrecognized language " + language);
 				continue;
 			}
 
@@ -99,7 +98,7 @@ void ScriptManager::onReload(Entity& c) {
 
 void ScriptManager::onStats(Entity& c) {
 	string tmp("Currently loaded scripts:\n");
-	for(vector<Engine*>::const_iterator i = engines.begin(); i != engines.end(); ++i) {
+	for(auto i = engines.begin(), iend = engines.end(); i != iend; ++i) {
 		(*i)->getStats(tmp);
 	}
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(tmp));

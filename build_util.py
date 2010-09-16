@@ -73,7 +73,7 @@ class Dev:
 	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True,
 			precompiled_header = None, shared_precompiled_header = None):
 		env = self.env.Clone()
-		env.BuildDir(self.get_build_path(source_path), '.', duplicate = 0)
+		env.VariantDir(self.get_build_path(source_path), '.', duplicate = 0)
 
 		sources = self.get_sources(source_path, source_glob)
 

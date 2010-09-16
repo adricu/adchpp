@@ -105,7 +105,7 @@ typedef std::shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 template<typename F1, typename F2>
 ManagedConnectionPtr manage(Signal<F1>* signal, const F2& f) {
-	return ManagedConnectionPtr(new ManagedConnection(signal->connect(f)));
+	return std::make_shared<ManagedConnection>(signal->connect(f));
 }
 
 template<typename F>

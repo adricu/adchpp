@@ -95,7 +95,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 					if(done == 0) {
 						buffer = buf;
 					} else {
-						buffer = BufferPtr(new Buffer(data + done, len - done));
+						buffer = std::make_shared<Buffer>(data + done, len - done);
 					}
 				} else {
 					buffer->append(data + done, data + len);
@@ -105,7 +105,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 				if(done == 0 && j == len-1) {
 					buffer = buf;
 				} else {
-					buffer = BufferPtr(new Buffer(data + done, j - done + 1));
+					buffer = std::make_shared<Buffer>(data + done, j - done + 1);
 				}
 			} else {
 				buffer->append(data + done, data + j + 1);

@@ -65,7 +65,7 @@ void loadXML(const string& aFileName)
 				ServerInfoList servers;
 
 				while(xml.findChild("Server")) {
-					ServerInfoPtr server(new ServerInfo);
+					ServerInfoPtr server = std::make_shared<ServerInfo>();
 					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
 
 					if(xml.getBoolChildAttrib("TLS")) {

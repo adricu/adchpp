@@ -58,7 +58,7 @@ private:
 	friend class Singleton<ScriptManager>;
 	static ScriptManager* instance;
 
-	std::vector<Engine*> engines;
+	std::vector<std::unique_ptr<Engine>> engines;
 
 	void load();
 	void reload();

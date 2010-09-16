@@ -182,7 +182,7 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
 
 const BufferPtr& AdcCommand::getBuffer() const {
 	if(!buffer) {
-		buffer = BufferPtr(new Buffer(toString()));
+		buffer = std::make_shared<Buffer>(toString());
 	}
 	return buffer;
 }

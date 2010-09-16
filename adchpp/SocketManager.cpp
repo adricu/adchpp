@@ -112,7 +112,7 @@ public:
 	{
 #ifdef HAVE_OPENSSL
 		if(info->secure()) {
-			context.reset(new boost::asio::ssl::context(io, ssl::context::tlsv1_server));
+			context = std::make_shared<boost::asio::ssl::context>(io, ssl::context::tlsv1_server);
 		    context->set_options(
 		        boost::asio::ssl::context::no_sslv2
 		        | boost::asio::ssl::context::no_sslv3
@@ -133,13 +133,13 @@ public:
 		}
 #ifdef HAVE_OPENSSL
 		if(serverInfo->secure()) {
-			TLSSocketStream* s = new TLSSocketStream(io, *context);
-			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
+			std::shared_ptr<TLSSocketStream> s = std::make_shared<TLSSocketStream>(io, *context);
+			ManagedSocketPtr socket = std::make_shared<ManagedSocket>(s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, shared_from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
-			SimpleSocketStream* s = new SimpleSocketStream(io);
-			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
+			std::shared_ptr<SimpleSocketStream> s = std::make_shared<SimpleSocketStream>(io);
+			ManagedSocketPtr socket = std::make_shared<ManagedSocket>(s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
@@ -204,7 +204,7 @@ int SocketManager::run() {
 		const ServerInfoPtr& si = *i;
 
 		try {
-			factories.push_back(SocketFactoryPtr(new SocketFactory(io, incomingHandler, si)));
+			factories.push_back(std::make_shared<SocketFactory>(io, incomingHandler, si));
 		} catch(const system_error& se) {
 			LOG(SocketManager::className, "Error while loading server on port " + Util::toString(si->port) +": " + se.what());
 		}
@@ -237,7 +237,7 @@ SocketManager::Callback SocketManager::addJob(const std::string& time, const Cal
 }
 
 SocketManager::Callback SocketManager::addJob(const deadline_timer::duration_type& duration, const Callback& callback) {
-	timer_ptr timer(new timer_ptr::element_type(io, duration));
+	timer_ptr timer = std::make_shared<timer_ptr::element_type>(io, duration);
 	Callback* pCallback = new Callback(callback); // create a separate callback on the heap to avoid shutdown crashes
 	setTimer(timer, duration, pCallback);
 	return std::bind(&SocketManager::cancelTimer, this, timer, pCallback);
