@@ -19,8 +19,6 @@
 #ifndef ADCHPP_SIGNAL_H
 #define ADCHPP_SIGNAL_H
 
-#include "intrusive_ptr.h"
-
 namespace adchpp {
 
 struct Connection : private boost::noncopyable {
@@ -81,7 +79,7 @@ private:
 	};
 };
 
-struct ManagedConnection : public intrusive_ptr_base<ManagedConnection>, private boost::noncopyable {
+struct ManagedConnection : private boost::noncopyable {
 	ManagedConnection(ConnectionPtr&& conn_) : conn(move(conn_)) {
 	}
 
@@ -103,7 +101,7 @@ private:
 	ConnectionPtr conn;
 };
 
-typedef boost::intrusive_ptr<ManagedConnection> ManagedConnectionPtr;
+typedef std::shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 template<typename F1, typename F2>
 ManagedConnectionPtr manage(Signal<F1>* signal, const F2& f) {

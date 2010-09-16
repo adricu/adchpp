@@ -28,6 +28,9 @@ using namespace adchpp;
 %include "std_pair.i"
 %include "std_map.i"
 
+#define SWIG_SHARED_PTR_NAMESPACE std
+%include "shared_ptr.i"
+
 %include "carrays.i"
 
 %array_functions(size_t, size_t);
@@ -83,7 +86,7 @@ namespace adchpp {
 %template(TEntityList) std::vector<adchpp::Entity*>;
 %template(TStringList) std::vector<std::string>;
 %template(TByteVector) std::vector<uint8_t>;
-%template(TServerInfoList) std::vector<boost::intrusive_ptr<adchpp::ServerInfo> >;
+%template(TServerInfoList) std::vector<std::shared_ptr<adchpp::ServerInfo> >;
 %template(TIntIntMap) std::map<std::string, int>;
 
 %inline%{
@@ -91,15 +94,6 @@ namespace adchpp {
 typedef std::vector<adchpp::Entity*> EntityList;
 	}
 %}
-namespace boost {
-
-template<typename T>
-class intrusive_ptr {
-public:
-	T* operator->();
-};
-
-}
 
 /* some SWIG hackery: SWIG can't parse nested C++ structs so we take TLSInfo out as a global class,
 then redeclare it with a typedef */
@@ -129,7 +123,7 @@ struct ManagedConnection {
 	void release();
 };
 
-typedef boost::intrusive_ptr<ManagedConnection> ManagedConnectionPtr;
+typedef std::shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 struct ServerInfo {
 	std::string ip;
@@ -145,7 +139,7 @@ struct ServerInfo {
 	}
 };
 
-typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
+typedef std::shared_ptr<ServerInfo> ServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager {
@@ -839,8 +833,8 @@ public:
 	CommandSignal& getCommandSignal(const std::string& commandName);
 };
 
-%template (ServerInfoPtr) boost::intrusive_ptr<ServerInfo>;
-%template (ManagedConnectrionPtr) boost::intrusive_ptr<ManagedConnection>;
+%template (ServerInfoPtr) std::shared_ptr<ServerInfo>;
+%template (ManagedConnectrionPtr) std::shared_ptr<ManagedConnection>;
 
 }
 

@@ -114,7 +114,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <boost/intrusive_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 #ifdef _UNICODE

@@ -19,7 +19,6 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
-#include "intrusive_ptr.h"
 #include "Pool.h"
 #include "FastAlloc.h"
 
@@ -29,7 +28,6 @@ namespace adchpp {
  * Reference-counted buffer
  */
 class Buffer :
-	public intrusive_ptr_base<Buffer>,
 	public FastAlloc<Buffer>,
 	private boost::noncopyable
 {
@@ -55,10 +53,8 @@ public:
 	static void setDefaultBufferSize(size_t newSize) { defaultBufferSize = newSize; }
 	static size_t getDefaultBufferSize() { return defaultBufferSize; }
 
+	virtual ~Buffer() { pool.put(bufp); }
 private:
-	friend void intrusive_ptr_release(Buffer* p);
-	~Buffer() { pool.put(bufp); }
-
 	static size_t defaultBufferSize;
 
 	const ByteVector& buf() const { return *bufp; }
@@ -73,7 +69,7 @@ private:
 	ADCHPP_DLL static SimplePool<ByteVector, Clear> pool;
 };
 
-typedef boost::intrusive_ptr<Buffer> BufferPtr;
+typedef std::shared_ptr<Buffer> BufferPtr;
 typedef std::vector<BufferPtr> BufferList;
 
 }

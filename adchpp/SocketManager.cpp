@@ -102,7 +102,7 @@ typedef SocketStream<ip::tcp::socket> SimpleSocketStream;
 typedef SocketStream<ssl::stream<ip::tcp::socket> > TLSSocketStream;
 #endif
 
-class SocketFactory : public intrusive_ptr_base<SocketFactory> {
+class SocketFactory : public std::enable_shared_from_this<SocketFactory> {
 public:
 	SocketFactory(io_service& io_, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
 		io(io_),
@@ -135,12 +135,12 @@ public:
 		if(serverInfo->secure()) {
 			TLSSocketStream* s = new TLSSocketStream(io, *context);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, from_this(), std::placeholders::_1, socket));
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, shared_from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
 			SimpleSocketStream* s = new SimpleSocketStream(io);
 			ManagedSocketPtr socket(new ManagedSocket(AsyncStreamPtr(s)));
-			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, from_this(), std::placeholders::_1, socket));
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
 #endif
@@ -149,14 +149,14 @@ public:
 #ifdef HAVE_OPENSSL
 	void prepareHandshake(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
-			boost::intrusive_ptr<TLSSocketStream> tls = boost::static_pointer_cast<TLSSocketStream>(socket->sock);
+			TLSSocketStream* tls = static_cast<TLSSocketStream*>(socket->sock.get());
 			// By default, we linger for 30 seconds (this will happen when the stream
 			// is deallocated without calling close first)
 			tls->sock.lowest_layer().set_option(socket_base::linger(true, 30));
 			try {
 				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }
-			tls->sock.async_handshake(ssl::stream_base::server, std::bind(&SocketFactory::completeAccept, from_this(), std::placeholders::_1, socket));
+			tls->sock.async_handshake(ssl::stream_base::server, std::bind(&SocketFactory::completeAccept, shared_from_this(), std::placeholders::_1, socket));
 		}
 
 		prepareAccept();
@@ -165,7 +165,7 @@ public:
 
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
-			boost::intrusive_ptr<SimpleSocketStream> s = boost::static_pointer_cast<SimpleSocketStream>(socket->sock);
+			std::shared_ptr<SimpleSocketStream> s = std::static_pointer_cast<SimpleSocketStream>(socket->sock);
 			// By default, we linger for 30 seconds (this will happen when the stream
 			// is deallocated without calling close first)
 			s->sock.lowest_layer().set_option(socket_base::linger(true, 30));

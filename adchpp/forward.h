@@ -29,18 +29,18 @@ class Entity;
 typedef std::map<uint16_t, std::string> FieldMap;
 
 class ManagedSocket;
-typedef boost::intrusive_ptr<ManagedSocket> ManagedSocketPtr;
+typedef std::shared_ptr<ManagedSocket> ManagedSocketPtr;
 
 class PluginManager;
 
 struct ServerInfo;
-typedef boost::intrusive_ptr<ServerInfo> ServerInfoPtr;
+typedef std::shared_ptr<ServerInfo> ServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SimpleXML;
 
 class SocketFactory;
-typedef boost::intrusive_ptr<SocketFactory> SocketFactoryPtr;
+typedef std::shared_ptr<SocketFactory> SocketFactoryPtr;
 
 class SocketManager;
 

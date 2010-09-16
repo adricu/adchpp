@@ -33,7 +33,7 @@ namespace adchpp {
 /**
  * An asynchronous socket managed by SocketManager.
  */
-class ManagedSocket : public intrusive_ptr_base<ManagedSocket>, private boost::noncopyable {
+class ManagedSocket : private boost::noncopyable, public std::enable_shared_from_this<ManagedSocket> {
 public:
 	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overflow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
 
@@ -67,6 +67,7 @@ public:
 	static size_t getDefaultMaxBufferSize() { return defaultMaxBufferSize; }
 
 	static time_t getOverflowTimeout() { return overflowTimeout; }
+	~ManagedSocket() throw();
 
 private:
 	static size_t defaultMaxBufferSize;
@@ -74,8 +75,6 @@ private:
 
 	friend class SocketManager;
 	friend class SocketFactory;
-	friend void intrusive_ptr_release(ManagedSocket*);
-	~ManagedSocket() throw();
 
 	void completeAccept(const boost::system::error_code&) throw();
 	void prepareWrite() throw();

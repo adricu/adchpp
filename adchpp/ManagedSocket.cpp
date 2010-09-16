@@ -98,7 +98,7 @@ void ManagedSocket::prepareWrite() throw() {
 		sock->close();
 	} else if(!outBuf.empty() && lastWrite == 0) {
 		lastWrite = TimerManager::getTime();
-		sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(from_this()));
+		sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(shared_from_this()));
 	}
 }
 
@@ -136,7 +136,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 void ManagedSocket::prepareRead() throw() {
 	if(!readBuf) {
 		readBuf = BufferPtr(new Buffer(Buffer::getDefaultBufferSize()));
-		sock->read(readBuf, Handler<&ManagedSocket::completeRead>(from_this()));
+		sock->read(readBuf, Handler<&ManagedSocket::completeRead>(shared_from_this()));
 	}
 }
 

@@ -19,11 +19,9 @@
 #ifndef ADCHPP_SERVER_INFO_H
 #define ADCHPP_SERVER_INFO_H
 
-#include "intrusive_ptr.h"
-
 namespace adchpp {
 
-struct ServerInfo : intrusive_ptr_base<ServerInfo> {
+struct ServerInfo {
 	std::string ip;
 	unsigned short port;
 
