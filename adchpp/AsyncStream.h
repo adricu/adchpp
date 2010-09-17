@@ -26,7 +26,9 @@ class AsyncStream : private boost::noncopyable {
 public:
 	typedef std::function<void (const boost::system::error_code& ec, size_t)> Handler;
 
-	virtual void read(const BufferPtr& buf, const Handler& handler) = 0;
+	virtual size_t available() = 0;
+	virtual void prepareRead(const Handler& handler) = 0;
+	virtual size_t read(const BufferPtr& buf) = 0;
 	virtual void write(const BufferList& bufs, const Handler& handler) = 0;
 	virtual void close() = 0;
 

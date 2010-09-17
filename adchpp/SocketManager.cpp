@@ -60,8 +60,16 @@ public:
 	SocketStream(X& x, Y& y) : sock(x, y) {
 	}
 
-	virtual void read(const BufferPtr& buf, const Handler& handler) {
-		sock.async_read_some(boost::asio::buffer(buf->data(), buf->size()), handler);
+	virtual size_t available() {
+		return sock.lowest_layer().available();
+	}
+
+	virtual void prepareRead(const Handler& handler) {
+		sock.async_read_some(boost::asio::null_buffers(), handler);
+	}
+
+	virtual size_t read(const BufferPtr& buf) {
+		return sock.read_some(boost::asio::buffer(buf->data(), buf->size()));
 	}
 
 	virtual void write(const BufferList& bufs, const Handler& handler) {
@@ -88,8 +96,9 @@ public:
 	virtual void close() {
 		// Abortive close, just go away...
 		if(sock.lowest_layer().is_open()) {
-			sock.lowest_layer().set_option(socket_base::linger(true, 10));
-			sock.lowest_layer().close();
+			boost::system::error_code ec;
+			sock.lowest_layer().set_option(socket_base::linger(true, 10), ec); // Ignore errors
+			sock.lowest_layer().close(ec); // Ignore errors
 		}
 	}
 
@@ -101,6 +110,10 @@ typedef SocketStream<ip::tcp::socket> SimpleSocketStream;
 #ifdef HAVE_OPENSSL
 typedef SocketStream<ssl::stream<ip::tcp::socket> > TLSSocketStream;
 #endif
+
+// Default buffer size used for SO_RCVBUF/SO_SNDBUF
+// We don't need a large one since we generally deal with very short messages
+static const int SOCKET_BUFFER_SIZE = 1024;
 
 class SocketFactory : public std::enable_shared_from_this<SocketFactory> {
 public:
@@ -123,8 +136,6 @@ public:
 		    context->use_tmp_dh_file(info->TLSParams.dh);
 		}
 #endif
-
-		prepareAccept();
 	}
 
 	void prepareAccept() {
@@ -153,6 +164,8 @@ public:
 			// By default, we linger for 30 seconds (this will happen when the stream
 			// is deallocated without calling close first)
 			tls->sock.lowest_layer().set_option(socket_base::linger(true, 30));
+			tls->sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(SOCKET_BUFFER_SIZE));
+			tls->sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(SOCKET_BUFFER_SIZE));
 			try {
 				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }
@@ -169,6 +182,8 @@ public:
 			// By default, we linger for 30 seconds (this will happen when the stream
 			// is deallocated without calling close first)
 			s->sock.lowest_layer().set_option(socket_base::linger(true, 30));
+			s->sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(SOCKET_BUFFER_SIZE));
+			s->sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(SOCKET_BUFFER_SIZE));
 			try {
 				socket->setIp(s->sock.lowest_layer().remote_endpoint().address().to_string());
 			} catch(const system_error&) { }
@@ -204,7 +219,9 @@ int SocketManager::run() {
 		const ServerInfoPtr& si = *i;
 
 		try {
-			factories.push_back(std::make_shared<SocketFactory>(io, incomingHandler, si));
+			SocketFactoryPtr factory = std::make_shared<SocketFactory>(io, incomingHandler, si);
+			factory->prepareAccept();
+			factories.push_back(factory);
 		} catch(const system_error& se) {
 			LOG(SocketManager::className, "Error while loading server on port " + Util::toString(si->port) +": " + se.what());
 		}

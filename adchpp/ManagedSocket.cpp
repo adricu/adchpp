@@ -134,24 +134,29 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 }
 
 void ManagedSocket::prepareRead() throw() {
-	if(!readBuf) {
-		readBuf = BufferPtr(new Buffer(Buffer::getDefaultBufferSize()));
-		sock->read(readBuf, Handler<&ManagedSocket::completeRead>(shared_from_this()));
-	}
+	sock->prepareRead(Handler<&ManagedSocket::completeRead>(shared_from_this()));
 }
 
-void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t bytes) throw() {
+void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t) throw() {
 	if(!ec) {
-		Stats::recvBytes += bytes;
-		Stats::recvCalls++;
+		try {
+			size_t bytes = sock->available();
+			BufferPtr readBuf = std::make_shared<Buffer>(bytes);
 
-		readBuf->resize(bytes);
+			bytes = sock->read(readBuf);
 
-		if(dataHandler)
-			dataHandler(readBuf);
-		readBuf.reset();
+			Stats::recvBytes += bytes;
+			Stats::recvCalls++;
 
-		prepareRead();
+			readBuf->resize(bytes);
+
+			if(dataHandler)
+				dataHandler(readBuf);
+
+			prepareRead();
+		} catch(const boost::system::system_error& e) {
+			failSocket(e.code());
+		}
 	} else {
 		failSocket(ec);
 	}

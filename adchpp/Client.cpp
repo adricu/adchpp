@@ -120,7 +120,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 			}
 
 			if(buffer->size() == 1) {
-				buffer = BufferPtr();
+				buffer.reset();
 				continue;
 			}
 
@@ -137,7 +137,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 			} catch(const ParseException&) {
 				ClientManager::getInstance()->onBadLine(*this, string((char*)buffer->data(), buffer->size()));
 			}
-			buffer = BufferPtr();
+			buffer.reset();
 		}
 	}
 }
