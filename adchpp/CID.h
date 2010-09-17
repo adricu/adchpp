@@ -42,7 +42,7 @@ public:
 	std::string toBase32() const { return Encoder::toBase32(cid, sizeof(cid)); }
 	std::string& toBase32(std::string& tmp) const { return Encoder::toBase32(cid, sizeof(cid), tmp); }
 
-	size_t toHash() const { return *reinterpret_cast<const size_t*>(cid); }
+	size_t toHash() const { static_assert(sizeof(cid) >= sizeof(cidHash), "cid too small, cidHash invalid"); return cidHash; }
 	const uint8_t* data() const { return cid; }
 
 	bool isZero() const { return std::find_if(cid, cid+SIZE, std::bind2nd(std::not_equal_to<uint8_t>(), 0)) == (cid+SIZE); }
@@ -56,7 +56,10 @@ public:
 	}
 
 private:
-	uint8_t cid[SIZE];
+	union {
+		uint8_t cid[SIZE];
+		size_t cidHash;
+	};
 };
 
 }
@@ -64,8 +67,8 @@ private:
 namespace std {
 template<>
 struct hash<adchpp::CID> {
-	size_t operator()(const adchpp::CID& rhs) const {
-		return *reinterpret_cast<const size_t*>(rhs.data());
+	size_t operator()(const adchpp::CID& cid) const {
+		return cid.toHash();
 	}
 };
 }
