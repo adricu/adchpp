@@ -18,7 +18,6 @@
 
 #include <boost/system/error_code.hpp>
 #include "Buffer.h"
-#include "Util.h"
 
 namespace adchpp {
 

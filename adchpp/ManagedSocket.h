@@ -22,7 +22,6 @@
 #include "common.h"
 
 #include "forward.h"
-#include "Mutex.h"
 #include "Signal.h"
 #include "Util.h"
 #include "Buffer.h"
