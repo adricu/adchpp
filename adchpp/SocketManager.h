@@ -24,7 +24,7 @@
 #include "forward.h"
 #include "ServerInfo.h"
 #include "Singleton.h"
-#include "Util.h"
+#include "Thread.h"
 
 #include <boost/asio.hpp>
 

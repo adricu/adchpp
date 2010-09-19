@@ -19,7 +19,7 @@
 #ifndef ADCHPP_UTIL_H
 #define ADCHPP_UTIL_H
 
-#include "Pool.h"
+#include "common.h"
 
 namespace adchpp {
 

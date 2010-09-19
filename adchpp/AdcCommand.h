@@ -152,7 +152,7 @@ public:
 		return getParameters().size() > n ? getParameters()[n] : Util::emptyString;
 	}
 
-	void resetBuffer() { buffer = BufferPtr(); }
+	void resetBuffer() { buffer.reset(); }
 
 	const std::string& getFeatures() const { return features; }
 

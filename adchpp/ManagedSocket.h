@@ -22,7 +22,6 @@
 #include "common.h"
 
 #include "forward.h"
-#include "Mutex.h"
 #include "Signal.h"
 #include "Util.h"
 #include "Buffer.h"
@@ -88,8 +87,6 @@ private:
 
 	/** Output buffer, for storing data that's waiting to be transmitted */
 	BufferList outBuf;
-	/** Input buffer */
-	BufferPtr readBuf;
 
 	/** Overflow timer, the time when the socket started to overflow */
 	time_t overflow;
