@@ -3,6 +3,7 @@
 * [L#537905] Add redhat init scripts (thanks E_zombie)
 * [L#609436] Fix SCons warnings
 * Save some memory by not pre-allocating read buffer
+* [L#650587] Add NAT & RNT to the known commands
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support
