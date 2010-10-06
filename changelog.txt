@@ -4,6 +4,7 @@
 * [L#609436] Fix SCons warnings
 * Save some memory by not pre-allocating read buffer
 * [L#650587] Add NAT & RNT to the known commands
+* [L#654218] Fix timer issues
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support

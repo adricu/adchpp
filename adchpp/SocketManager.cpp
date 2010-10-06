@@ -269,7 +269,7 @@ void SocketManager::handleWait(timer_ptr timer, const deadline_timer::duration_t
 		timer->expires_at(timer->expires_at() + duration);
 		setTimer(timer, duration, callback);
 
-		(*callback)();
+		addJob(*callback);
 	}
 }
 
