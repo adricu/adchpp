@@ -148,19 +148,19 @@ public:
 	%extend {
 		/* work around 2 problems:
 		- SWIG fails to convert a script function to const Callback&.
-		- SWIG has trouble choosing the overload of addJob / addJobOnce to use.
+		- SWIG has trouble choosing the overload of addJob / addTimedJob to use.
 		*/
-		Callback addJob(const long msec, Callback callback) {
-			return self->addJob(msec, callback);
-		}
-		Callback addJob_str(const std::string& time, Callback callback) {
-			return self->addJob(time, callback);
-		}
-		void addJobOnce(const long msec, Callback callback) {
-			self->addJobOnce(msec, callback);
+		void addJob(const long msec, Callback callback) {
+			self->addJob(msec, callback);
 		}
 		void addJob_str(const std::string& time, Callback callback) {
-			self->addJobOnce(time, callback);
+			self->addJob(time, callback);
+		}
+		Callback addTimedJob(const long msec, Callback callback) {
+			return self->addTimedJob(msec, callback);
+		}
+		Callback addTimedJob_str(const std::string& time, Callback callback) {
+			return self->addTimedJob(time, callback);
 		}
 	}
 

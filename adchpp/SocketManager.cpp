@@ -245,31 +245,31 @@ void SocketManager::addJob(const Callback& callback) throw() {
 	io.post(callback);
 }
 
-SocketManager::Callback SocketManager::addJob(const long msec, const Callback& callback) {
-	return addJob(boost::posix_time::milliseconds(msec), callback);
+void SocketManager::addJob(const long msec, const Callback& callback) {
+	addJob(boost::posix_time::milliseconds(msec), callback);
 }
 
-SocketManager::Callback SocketManager::addJob(const std::string& time, const Callback& callback) {
-	return addJob(boost::posix_time::duration_from_string(time), callback);
+void SocketManager::addJob(const std::string& time, const Callback& callback) {
+	addJob(boost::posix_time::duration_from_string(time), callback);
 }
 
-void SocketManager::addJobOnce(const long msec, const Callback& callback) {
-	addJobOnce(boost::posix_time::milliseconds(msec), callback);
+SocketManager::Callback SocketManager::addTimedJob(const long msec, const Callback& callback) {
+	return addTimedJob(boost::posix_time::milliseconds(msec), callback);
 }
 
-void SocketManager::addJobOnce(const std::string& time, const Callback& callback) {
-	addJobOnce(boost::posix_time::duration_from_string(time), callback);
+SocketManager::Callback SocketManager::addTimedJob(const std::string& time, const Callback& callback) {
+	return addTimedJob(boost::posix_time::duration_from_string(time), callback);
 }
 
-SocketManager::Callback SocketManager::addJob(const deadline_timer::duration_type& duration, const Callback& callback) {
+void SocketManager::addJob(const deadline_timer::duration_type& duration, const Callback& callback) {
+	setTimer(std::make_shared<timer_ptr::element_type>(io, duration), deadline_timer::duration_type(), new Callback(callback));
+}
+
+SocketManager::Callback SocketManager::addTimedJob(const deadline_timer::duration_type& duration, const Callback& callback) {
 	timer_ptr timer = std::make_shared<timer_ptr::element_type>(io, duration);
 	Callback* pCallback = new Callback(callback); // create a separate callback on the heap to avoid shutdown crashes
 	setTimer(timer, duration, pCallback);
 	return std::bind(&SocketManager::cancelTimer, this, timer, pCallback);
-}
-
-void SocketManager::addJobOnce(const deadline_timer::duration_type& duration, const Callback& callback) {
-	setTimer(std::make_shared<timer_ptr::element_type>(io, duration), deadline_timer::duration_type(), new Callback(callback));
 }
 
 void SocketManager::setTimer(timer_ptr timer, const deadline_timer::duration_type& duration, Callback* callback) {

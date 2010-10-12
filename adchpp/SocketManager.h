@@ -35,24 +35,24 @@ public:
 	typedef std::function<void()> Callback;
 	/** execute a function asynchronously */
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
-	/** execute a function at regular intervals
-	* @param msec milliseconds
-	* @return function one may call to cancel the timer (its callback will still be executed)
-	*/
-	ADCHPP_DLL Callback addJob(const long msec, const Callback& callback);
-	/** execute a function at regular intervals
-	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
-	* @return function one may call to cancel the timer (its callback will still be executed)
-	*/
-	ADCHPP_DLL Callback addJob(const std::string& time, const Callback& callback);
 	/** execute a function after the specified amount of time
 	* @param msec milliseconds
 	*/
-	ADCHPP_DLL void addJobOnce(const long msec, const Callback& callback);
+	ADCHPP_DLL void addJob(const long msec, const Callback& callback);
 	/** execute a function after the specified amount of time
 	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
 	*/
-	ADCHPP_DLL void addJobOnce(const std::string& time, const Callback& callback);
+	ADCHPP_DLL void addJob(const std::string& time, const Callback& callback);
+	/** execute a function at regular intervals
+	* @param msec milliseconds
+	* @return function one must call to cancel the timer (its callback will still be executed)
+	*/
+	ADCHPP_DLL Callback addTimedJob(const long msec, const Callback& callback);
+	/** execute a function at regular intervals
+	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
+	* @return function one must call to cancel the timer (its callback will still be executed)
+	*/
+	ADCHPP_DLL Callback addTimedJob(const std::string& time, const Callback& callback);
 
 	void startup() throw(ThreadException);
 	void shutdown();
@@ -86,8 +86,8 @@ private:
 	ADCHPP_DLL static SocketManager* instance;
 
 	typedef std::shared_ptr<boost::asio::deadline_timer> timer_ptr;
-	Callback addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
-	void addJobOnce(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
+	void addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
+	Callback addTimedJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
 	void setTimer(timer_ptr timer, const boost::asio::deadline_timer::duration_type& duration, Callback* callback);
 	void handleWait(timer_ptr timer, const boost::asio::deadline_timer::duration_type& duration, const boost::system::error_code& error,
 		Callback* callback);
