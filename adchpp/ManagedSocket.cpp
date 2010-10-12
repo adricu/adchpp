@@ -141,17 +141,21 @@ void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t) th
 	if(!ec) {
 		try {
 			size_t bytes = sock->available();
-			BufferPtr readBuf = std::make_shared<Buffer>(bytes);
+			if(bytes) {
+				BufferPtr readBuf = std::make_shared<Buffer>(bytes);
 
-			bytes = sock->read(readBuf);
+				bytes = sock->read(readBuf);
 
-			Stats::recvBytes += bytes;
-			Stats::recvCalls++;
+				if(bytes) {
+					Stats::recvBytes += bytes;
+					Stats::recvCalls++;
 
-			readBuf->resize(bytes);
+					readBuf->resize(bytes);
 
-			if(dataHandler)
-				dataHandler(readBuf);
+					if(dataHandler)
+						dataHandler(readBuf);
+				}
+			}
 
 			prepareRead();
 		} catch(const boost::system::system_error& e) {
@@ -192,7 +196,7 @@ void ManagedSocket::disconnect(size_t timeout, Util::Reason reason) throw() {
 
 	// Schedule an extra socket close after the timeout in case the write doesn't
 	// finish on time
-	SocketManager::getInstance()->addJob(timeout, bind(&AsyncStream::close, sock));
+	SocketManager::getInstance()->addJobOnce(timeout, bind(&AsyncStream::close, sock));
 }
 
 }

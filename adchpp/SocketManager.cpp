@@ -253,6 +253,14 @@ SocketManager::Callback SocketManager::addJob(const std::string& time, const Cal
 	return addJob(boost::posix_time::duration_from_string(time), callback);
 }
 
+void SocketManager::addJobOnce(const long msec, const Callback& callback) {
+	addJobOnce(boost::posix_time::milliseconds(msec), callback);
+}
+
+void SocketManager::addJobOnce(const std::string& time, const Callback& callback) {
+	addJobOnce(boost::posix_time::duration_from_string(time), callback);
+}
+
 SocketManager::Callback SocketManager::addJob(const deadline_timer::duration_type& duration, const Callback& callback) {
 	timer_ptr timer = std::make_shared<timer_ptr::element_type>(io, duration);
 	Callback* pCallback = new Callback(callback); // create a separate callback on the heap to avoid shutdown crashes
@@ -260,16 +268,30 @@ SocketManager::Callback SocketManager::addJob(const deadline_timer::duration_typ
 	return std::bind(&SocketManager::cancelTimer, this, timer, pCallback);
 }
 
+void SocketManager::addJobOnce(const deadline_timer::duration_type& duration, const Callback& callback) {
+	setTimer(std::make_shared<timer_ptr::element_type>(io, duration), deadline_timer::duration_type(), new Callback(callback));
+}
+
 void SocketManager::setTimer(timer_ptr timer, const deadline_timer::duration_type& duration, Callback* callback) {
 	timer->async_wait(std::bind(&SocketManager::handleWait, this, timer, duration, std::placeholders::_1, callback));
 }
 
 void SocketManager::handleWait(timer_ptr timer, const deadline_timer::duration_type& duration, const error_code& error, Callback* callback) {
+	bool run_on = duration.ticks();
+
 	if(!error) {
-		timer->expires_at(timer->expires_at() + duration);
-		setTimer(timer, duration, callback);
+		if(run_on) {
+			// re-schedule the timer
+			timer->expires_at(timer->expires_at() + duration);
+			setTimer(timer, duration, callback);
+		}
 
 		addJob(*callback);
+	}
+
+	if(!run_on) {
+		// this timer was only running once, so it has no cancel function
+		delete callback;
 	}
 }
 
