@@ -100,7 +100,7 @@ def buildPyModule():
 		env.Append(LIBS=['python' + sys.version[0:3]])
 	env.Append(LIBS=['adchpp'])
 
-	if sys.platform == 'win32':
+	if dev.is_win32():
 		env['SHLIBSUFFIX'] ='.pyd'
 
 	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
@@ -118,7 +118,7 @@ def buildLuaModule():
 	
 	env.Append(CPPPATH=['#', '#/lua/'])
 	
-	if env['PLATFORM'] == 'win32':
+	if dev.is_win32():
 		env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
 	else:
 		env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
@@ -126,12 +126,54 @@ def buildLuaModule():
 	luadchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(luadchpp)
 
-# buildRbModule() - needs threading sorted out
+def buildPHPModule():
+	env, target, sources = dev.prepare_build(source_path, 'php_adchpp', 'php.i')
 
+	if not dev.is_win32():
+		print 'No Linux support for PHP extensions yet'
+		# TODO add Linux support (see TODO below)
+		return
+
+	php_path = '#/php/'
+	if env['arch'] != 'x86':
+		php_path = php_path + env['arch'] + '/'
+
+	if dev.is_win32():
+		if env['CC'] == 'cl': # MSVC
+			from os.path import exists
+			if not exists(env.File(php_path + 'lib/php5.lib').abspath):
+				print 'No php5.lib file, skipping PHP'
+				return
+		else:
+			print 'Skipping the PHP module, use MSVC or Linux'
+			return
+
+	bin_dir = dev.get_build_path('bin')
+
+	env['SWIGOUTDIR'] = Dir(bin_dir)
+	env.Append(SWIGFLAGS = ['-c++', '-Wall', '-php'])
+
+	env.Append(CPPPATH = ['#', bin_dir])
+	env.Append(LIBS = ['adchpp'])
+
+	if dev.is_win32():
+		env.Append(CPPPATH = [php_path + 'include/', php_path + 'include/main/', php_path + 'include/TSRM/', php_path + 'include/Zend/'])
+		env.Append(CPPDEFINES = ['WIN32', 'PHP_WIN32=1', 'ZEND_WIN32=1', 'PHP_DEBUG=0', 'ZEND_DEBUG=0', '_USE_32BIT_TIME_T=1'])
+		env.Append(LIBPATH = [php_path + 'lib/'])
+		env.Append(LIBS = ['php5'])
+
+	else:
+		pass # TODO run "php-config --includes"
+
+	php_adchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
+	targets.append(php_adchpp)
+
+# buildRbModule() - needs threading sorted out
 
 buildPyModule()
 
 buildLuaModule()
 
-Return('targets')
+buildPHPModule()
 
+Return('targets')

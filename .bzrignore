@@ -14,3 +14,7 @@ openssl/
 *.gch
 *.pot
 .csettings
+php/include/*
+php/lib/*
+php/x64/include/*
+php/x64/lib/*

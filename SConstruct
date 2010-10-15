@@ -151,6 +151,9 @@ if env['CC'] == 'cl': # MSVC
 	link_flags = msvc_link_flags
 	defs = msvc_defs
 
+	if env['arch'] == 'x86':
+		env.Append(CPPDEFINES = ['_USE_32BIT_TIME_T=1']) # for compatibility with PHP
+
 else:
 	flags = gcc_flags
 	xxflags = gcc_xxflags
