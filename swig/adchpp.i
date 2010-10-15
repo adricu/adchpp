@@ -840,7 +840,7 @@ public:
 };
 
 %template (ServerInfoPtr) std::shared_ptr<ServerInfo>;
-%template (ManagedConnectrionPtr) std::shared_ptr<ManagedConnection>;
+%template (ManagedConnectionPtr) std::shared_ptr<ManagedConnection>;
 
 }
 
