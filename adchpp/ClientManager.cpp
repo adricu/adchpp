@@ -161,6 +161,7 @@ uint32_t ClientManager::makeSID() {
 }
 
 void ClientManager::onConnected(Client& c) throw() {
+	dcdebug("%s connected\n", AdcCommand::fromSID(c.getSID()).c_str());
 	// First let's check if any clients have passed the login timeout...
 	uint32_t timeout = GET_TICK() - getLoginTimeout();
 	while(!logins.empty() && (timeout > logins.front().second)) {
@@ -559,7 +560,9 @@ uint32_t ClientManager::getSID(const CID& cid) const throw() {
 	return (i == cids.end()) ? 0 : i->second->getSID();
 }
 
-void ClientManager::onFailed(Client& c) throw() {
+void ClientManager::onFailed(Client& c, const boost::system::error_code& ec) throw() {
+	dcdebug("%s failed: %d %s\n", AdcCommand::fromSID(c.getSID()).c_str(), ec.value(), ec.message().c_str());
+
 	removeEntity(c);
 }
 

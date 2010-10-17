@@ -54,10 +54,17 @@ namespace {
 		Client* c;
 	};
 
-	template<void (Client::*F)(const BufferPtr&)>
+	template<void (Client::*F)(const boost::system::error_code&)>
+	struct Handler0x {
+		Handler0x(Client* c_) : c(c_) { }
+		void operator()() { (c->*F)(boost::system::error_code(boost::system::errc::timed_out, boost::system::get_generic_category())); }
+		Client* c;
+	};
+
+	template<typename T, void (Client::*F)(const T&)>
 	struct Handler1 {
 		Handler1(Client* c_) : c(c_) { }
-		void operator()(const BufferPtr& bv) { (c->*F)(bv); }
+		void operator()(const T& bv) { (c->*F)(bv); }
 		Client* c;
 	};
 }
@@ -66,12 +73,11 @@ void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 	dcassert(!socket);
 	socket = aSocket;
 	socket->setConnectedHandler(Handler0<&Client::onConnected>(this));
-	socket->setDataHandler(Handler1<&Client::onData>(this));
-	socket->setFailedHandler(Handler0<&Client::onFailed>(this));
+	socket->setDataHandler(Handler1<BufferPtr, &Client::onData>(this));
+	socket->setFailedHandler(Handler1<boost::system::error_code, &Client::onFailed>(this));
 }
 
 void Client::onConnected() throw() {
-	dcdebug("Client::onConnected\n");
 	ClientManager::getInstance()->onConnected(*this);
 }
 
@@ -161,6 +167,7 @@ bool Client::isFlooding(time_t addSeconds) {
 void Client::disconnect(Util::Reason reason) throw() {
 	dcassert(socket);
 	if(!disconnecting) {
+		dcdebug("%s disconnecting because %d\n", AdcCommand::fromSID(getSID()).c_str(), reason);
 		disconnecting = true;
 
 		socket->setConnectedHandler(ManagedSocket::ConnectedHandler());
@@ -171,12 +178,12 @@ void Client::disconnect(Util::Reason reason) throw() {
 		socket->disconnect(5000, reason);
 
 		// We fail the client ASAP to release nicks etc used...
-		SocketManager::getInstance()->addJob(Handler0<&Client::onFailed>(this));
+		SocketManager::getInstance()->addJob(Handler0x<&Client::onFailed>(this));
 	}
 }
 
-void Client::onFailed() throw() {
-	ClientManager::getInstance()->onFailed(*this);
+void Client::onFailed(const boost::system::error_code& ec) throw() {
+	ClientManager::getInstance()->onFailed(*this, ec);
 	delete this;
 }
 

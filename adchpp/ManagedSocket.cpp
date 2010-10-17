@@ -95,7 +95,7 @@ void ManagedSocket::prepareWrite() throw() {
 	}
 
 	if(lastWrite != 0 && TimerManager::getTime() > lastWrite + 60) {
-		sock->close();
+		disconnect(5000, Util::REASON_WRITE_TIMEOUT);
 	} else if(!outBuf.empty() && lastWrite == 0) {
 		lastWrite = TimerManager::getTime();
 		sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(shared_from_this()));
@@ -141,6 +141,7 @@ void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t) th
 	if(!ec) {
 		try {
 			size_t bytes = sock->available();
+
 			if(bytes) {
 				BufferPtr readBuf = std::make_shared<Buffer>(bytes);
 
@@ -177,7 +178,7 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
 	SocketManager::getInstance()->errors[code.message()]++;
 	if(failedHandler) {
-		failedHandler();
+		failedHandler(code);
 		failedHandler = FailedHandler();
 		dataHandler = DataHandler();
 		connectedHandler = ConnectedHandler();

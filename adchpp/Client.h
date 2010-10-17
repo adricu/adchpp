@@ -82,7 +82,7 @@ private:
 
 	void onConnected() throw();
 	void onData(const BufferPtr&) throw();
-	void onFailed() throw();
+	void onFailed(const boost::system::error_code& ec) throw();
 
 };
 

@@ -4,6 +4,7 @@ import sys
 sys.path.append('../build/debug-default/bin')
 
 CLIENTS = 100
+MESSAGES = 100
 
 import socket, threading, time, random, sys
 
@@ -21,13 +22,15 @@ class Client(object):
 		self.nick = "user_" + str(n) + "_" + self.cid.toBase32()
 		self.running = True
 		self.line = ""
-	
+		self.messages = 0
+		self.n = n
+
 	def connect(self, ipport):
 		self.sock.connect(ipport)
 	
 	def command(self, cmd):
 		s = cmd.toString()
-		print self.nick, "sending", len(s), s
+		print self.nick, "sending", self.messages, len(s), s
 		self.sock.send(s)
 	
 	def get_command(self):
@@ -91,7 +94,7 @@ class Client(object):
 		self.command(cmd)
 		
 	def test_nick(self):
-		self.nick = "user_" + str(CID_generate())
+		self.nick = "user_" + str(self.n) + "_" + str(CID_generate())
 		cmd = AdcCommand(AdcCommand.CMD_MSG, AdcCommand.TYPE_BROADCAST, self.sid)
 		cmd.addParam("renaming myself to " + self.nick)
 		self.command(cmd)
@@ -148,6 +151,12 @@ try:
 				
 			if random.random() > (5./len(clients)):
 				continue
+
+			if MESSAGES > 0 and c.messages >= MESSAGES:
+				c.sock.close()
+				continue
+
+			c.messages = c.messages + 1
 			try:
 				random.choice(tests)(c)
 			except Exception, e:

@@ -5,6 +5,8 @@
 * Save some memory by not pre-allocating read buffer
 * [L#650587] Add NAT & RNT to the known commands
 * [L#654218] Fix timer issues
+* Propagate error codes
+* Count write timeouts
 * Add PHP bindings
 
 -- 2.5.2 2010-07-23 --

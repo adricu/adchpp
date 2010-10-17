@@ -206,7 +206,7 @@ private:
 	void onConnected(Client&) throw();
 	void onReceive(Entity&, AdcCommand&) throw();
 	void onBadLine(Client&, const std::string&) throw();
-	void onFailed(Client&) throw();
+	void onFailed(Client&, const boost::system::error_code& e) throw();
 
 	void badState(Entity& c, const AdcCommand& cmd) throw();
 

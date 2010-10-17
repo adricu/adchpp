@@ -52,7 +52,7 @@ public:
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
 	typedef std::function<void(const BufferPtr&)> DataHandler;
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
-	typedef std::function<void()> FailedHandler;
+	typedef std::function<void(const boost::system::error_code&)> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
 	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
