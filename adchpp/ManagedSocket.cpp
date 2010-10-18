@@ -140,20 +140,22 @@ void ManagedSocket::prepareRead() throw() {
 void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t) throw() {
 	if(!ec) {
 		try {
-			size_t bytes = sock->available();
+			// ADC commands are typically small - using a small buffer
+			// helps with fairness
+			// Calling available() on an ASIO socket seems to be terribly slow
+			// Also, we might end up here if the socket has been closed, in which
+			// case available would return 0 bytes...
+			BufferPtr readBuf = std::make_shared<Buffer>(64);
 
-			if(bytes) {
-				BufferPtr readBuf = std::make_shared<Buffer>(bytes);
+			bytes = sock->read(readBuf);
 
-				bytes = sock->read(readBuf);
+			Stats::recvBytes += bytes;
+			Stats::recvCalls++;
 
-				Stats::recvBytes += bytes;
-				Stats::recvCalls++;
+			readBuf->resize(bytes);
 
-				readBuf->resize(bytes);
-
-				if(dataHandler)
-					dataHandler(readBuf);
+			if(dataHandler) {
+				dataHandler(readBuf);
 			}
 
 			prepareRead();
