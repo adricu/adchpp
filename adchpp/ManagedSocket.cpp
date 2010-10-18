@@ -147,7 +147,7 @@ void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t) th
 			// case available would return 0 bytes...
 			BufferPtr readBuf = std::make_shared<Buffer>(64);
 
-			bytes = sock->read(readBuf);
+			size_t bytes = sock->read(readBuf);
 
 			Stats::recvBytes += bytes;
 			Stats::recvCalls++;
