@@ -32,7 +32,7 @@ template<typename T, class Clear = PoolDummy<T> >
 class SimplePool {
 public:
 	SimplePool() : busy(0) { }
-	~SimplePool() { dcdebug("Busy pool objects: %d\n", busy); }
+	~SimplePool() { dcdebug("Busy pool objects: %d\n", (int)busy); }
 
 	T* get() {
 		busy++;

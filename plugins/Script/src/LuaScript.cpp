@@ -54,20 +54,27 @@ LuaScript::~LuaScript() {
 void LuaScript::loadFile(const string& path, const string& filename_) {
 	filename = filename_;
 	char old_dir[MAX_PATH];
-	getcwd(old_dir, MAX_PATH);
-
-	chdir(File::makeAbsolutePath(path).c_str());
-
-	int error = luaL_loadfile(getEngine()->l, filename.c_str()) || lua_pcall(getEngine()->l, 0, 0, 0);
-
-	if(error) {
-		LOG(className, string("Error loading file: ") + lua_tostring(getEngine()->l, -1));
-	} else {
-		LOG(className, "Loaded " + filename);
+	if(!getcwd(old_dir, MAX_PATH)) {
+		old_dir[0] = 0;
 	}
-	chdir(old_dir);
 
-	getEngine()->call("loaded", filename);
+	auto absPath = File::makeAbsolutePath(path);
+	if(chdir(absPath.c_str()) != 0) {
+		LOG(className, "Unable to change to directory " + absPath);
+	} else {
+		int error = luaL_loadfile(getEngine()->l, filename.c_str()) || lua_pcall(getEngine()->l, 0, 0, 0);
+
+		if(error) {
+			LOG(className, string("Error loading file: ") + lua_tostring(getEngine()->l, -1));
+		} else {
+			LOG(className, "Loaded " + filename);
+			getEngine()->call("loaded", filename);
+		}
+
+		if(old_dir[0]) {
+			chdir(old_dir);
+		}
+	}
 }
 
 void LuaScript::getStats(string& str) const {
@@ -75,6 +82,6 @@ void LuaScript::getStats(string& str) const {
 }
 
 LuaEngine* LuaScript::getEngine() const {
-	return dynamic_cast<LuaEngine*>(engine);
+	return static_cast<LuaEngine*>(engine);
 }
 
