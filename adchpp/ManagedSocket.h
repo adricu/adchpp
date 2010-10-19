@@ -79,6 +79,7 @@ private:
 	void prepareWrite() throw();
 	void completeWrite(const boost::system::error_code& ec, size_t bytes) throw();
 	void prepareRead() throw();
+	void prepareRead2(const boost::system::error_code& ec, size_t bytes) throw();
 	void completeRead(const boost::system::error_code& ec, size_t bytes) throw();
 
 	void failSocket(const boost::system::error_code& error) throw();
@@ -87,6 +88,9 @@ private:
 
 	/** Output buffer, for storing data that's waiting to be transmitted */
 	BufferList outBuf;
+
+	/** Input buffer used when receiving data */
+	BufferPtr inBuf;
 
 	/** Overflow timer, the time when the socket started to overflow */
 	time_t overflow;

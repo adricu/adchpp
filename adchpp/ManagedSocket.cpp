@@ -134,35 +134,48 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 }
 
 void ManagedSocket::prepareRead() throw() {
-	sock->prepareRead(Handler<&ManagedSocket::completeRead>(shared_from_this()));
+	// We first send in an empty buffer to get notification when there's data available
+	sock->prepareRead(BufferPtr(), Handler<&ManagedSocket::prepareRead2>(shared_from_this()));
 }
 
-void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t) throw() {
+void ManagedSocket::prepareRead2(const boost::system::error_code& ec, size_t) throw() {
+	if(!ec) {
+		// ADC commands are typically small - using a small buffer
+		// helps with fairness
+		// Calling available() on an ASIO socket seems to be terribly slow
+		// Also, we might end up here if the socket has been closed, in which
+		// case available would return 0 bytes...
+		// We can't make a synchronous receive here because when using SSL
+		// there might be data on the socket that won't translate into user data
+		// and thus read_some will block
+		// If there's no user data, this will effectively post a read operation
+		// with a buffer and waste memory...to be continued.
+		inBuf = std::make_shared<Buffer>(64);
+
+		sock->prepareRead(inBuf, Handler<&ManagedSocket::completeRead>(shared_from_this()));
+	} else {
+		failSocket(ec);
+	}
+}
+
+void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t bytes) throw() {
 	if(!ec) {
 		try {
-			// ADC commands are typically small - using a small buffer
-			// helps with fairness
-			// Calling available() on an ASIO socket seems to be terribly slow
-			// Also, we might end up here if the socket has been closed, in which
-			// case available would return 0 bytes...
-			BufferPtr readBuf = std::make_shared<Buffer>(64);
-
-			size_t bytes = sock->read(readBuf);
-
 			Stats::recvBytes += bytes;
 			Stats::recvCalls++;
 
-			readBuf->resize(bytes);
+			inBuf->resize(bytes);
 
 			if(dataHandler) {
-				dataHandler(readBuf);
+				dataHandler(inBuf);
 			}
-
+			inBuf.reset();
 			prepareRead();
 		} catch(const boost::system::system_error& e) {
 			failSocket(e.code());
 		}
 	} else {
+		inBuf.reset();
 		failSocket(ec);
 	}
 }

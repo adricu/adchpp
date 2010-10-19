@@ -64,8 +64,12 @@ public:
 		return sock.lowest_layer().available();
 	}
 
-	virtual void prepareRead(const Handler& handler) {
-		sock.async_read_some(boost::asio::null_buffers(), handler);
+	virtual void prepareRead(const BufferPtr& buf, const Handler& handler) {
+		if(buf) {
+			sock.async_read_some(boost::asio::buffer(buf->data(), buf->size()), handler);
+		} else {
+			sock.async_read_some(boost::asio::null_buffers(), handler);
+		}
 	}
 
 	virtual size_t read(const BufferPtr& buf) {
