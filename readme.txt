@@ -50,10 +50,11 @@ To build ADCH++ from source you have to:
 * Linux: Install GCC and appropriate header files, in particular, these packages spring to mind:
 	** gcc-c++
 	** libstdc++-devel
-	** readline-devel
+	** redhat: readline-devel, debian: libreadline-dev
+	   sys-libs/readline
 * To compile with support for secure connections, you need OpenSSL:
 	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory. append a 'd' to debug libs and put x64 / ia64 libs into openssl/lib/x64 / openssl/lib/ia64 respectively.
-	** Linux: if you don't have it already, get the openssl-devel package
+	** Linux: if you don't have it already, get the openssl-devel/libssl-dev package
 * In the source folder, type "scons -h" to see additional compile options
 * Type "scons" to create a debug build. "scons mode=release" will create a
   release build.
