@@ -112,7 +112,7 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 
 		int64_t bytes = Util::toInt(cmd.getParam(3));
 
-		if(bytes != pending->m / 8) {
+		if(bytes != static_cast<int64_t>(pending->m / 8)) {
 			dcdebug("Disconnecting for invalid number of bytes: %d, %d\n", (int)bytes, (int)pending->m / 8);
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid number of bytes"));
 			c.disconnect(Util::REASON_PLUGIN);
