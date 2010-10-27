@@ -37,7 +37,7 @@ const char AdcCommand::TYPE_UDP;
 
 using namespace std;
 
-AdcCommand::AdcCommand() : cmdInt(0), priority(PRIORITY_NORMAL), from(0), type(0) { }
+AdcCommand::AdcCommand() : cmdInt(0), priority(PRIORITY_NORMAL), from(INVALID_SID), to(INVALID_SID), type(TYPE_INFO) { }
 
 AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), priority(PRIORITY_NORMAL), from(HUB_SID), type(aType) {
 	addParam(Util::toString(sev * 100 + err));
@@ -66,6 +66,10 @@ void AdcCommand::parse(const char* buf, size_t len) throw(ParseException) {
 
 	if(type != TYPE_BROADCAST && type != TYPE_CLIENT && type != TYPE_DIRECT && type != TYPE_ECHO && type != TYPE_FEATURE && type != TYPE_INFO && type != TYPE_HUB && type != TYPE_UDP) {
 		throw ParseException("Invalid type");
+	}
+
+	if(type == TYPE_HUB) {
+		to = HUB_SID;
 	}
 
 	cmd[0] = buf[1];

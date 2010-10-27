@@ -111,7 +111,8 @@ public:
 	C(RNT, 'R','N','T');
 #undef C
 
-	static const uint32_t HUB_SID = 0xffffffff;
+	static const uint32_t HUB_SID = static_cast<uint32_t>(-1);
+	static const uint32_t INVALID_SID = static_cast<uint32_t>(-2);
 
 	static uint32_t toSID(const std::string& aSID) { return *reinterpret_cast<const uint32_t*>(aSID.data()); }
 	static std::string fromSID(const uint32_t aSID) { return std::string(reinterpret_cast<const char*>(&aSID), sizeof(aSID)); }

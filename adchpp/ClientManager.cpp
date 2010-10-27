@@ -542,6 +542,11 @@ void ClientManager::removeEntity(Entity& c) throw() {
 }
 
 Entity* ClientManager::getEntity(uint32_t aSid) throw() {
+	if(aSid == AdcCommand::INVALID_SID) {
+		dcdebug("Request for invalid SID\n");
+		return 0;
+	}
+
 	if(aSid == AdcCommand::HUB_SID) {
 		return &hub;
 	}

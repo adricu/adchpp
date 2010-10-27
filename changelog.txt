@@ -8,6 +8,8 @@
 * Propagate error codes
 * Count write timeouts
 * Add PHP bindings
+* [L#610321] Fix some warnings
+* Fix an uninitialized member issue resulting in random behaviour
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support
