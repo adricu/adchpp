@@ -375,14 +375,6 @@ settings.passinlist = {
 	value = 1
 }
 
-settings.sendversion = {
-	alias = { displayversion = true },
-
-	help = "send hub version information at login, 1 = alllow, 0 = disallow",
-
-	value = 1
-}
-
 settings.topic = {
 	alias = { hubtopic = true },
 
@@ -1068,10 +1060,6 @@ local function onPAS(c, cmd)
 
 	if message then
 		autil.reply(c, message)
-	end
-
-	if settings.sendversion.value == 1 then
-		autil.reply(c, "This hub is running " .. adchpp.versionString)
 	end
 
 	autil.reply(c, "Welcome back")
@@ -2327,7 +2315,9 @@ local function onReceive(entity, cmd, ok)
 		return onPAS(c, cmd)
 	end
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
-		autil.reply_from = cm:getEntity(cmd:getTo())
+		if cmd:getTo() ~= adchpp.AdcCommand_HUB_SID then
+			autil.reply_from = cm:getEntity(cmd:getTo())
+		end
 		local ret = onMSG(c, cmd)
 		autil.reply_from = nil
 		return ret
