@@ -21,18 +21,35 @@
 #include "Bot.h"
 
 #include "ClientManager.h"
+#include "SocketManager.h"
 
 namespace adchpp {
 
-Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(handler_) {
+// TODO replace with lambda
+struct BotRemover {
+	BotRemover(Bot* bot_) : bot(bot_) { }
+	void operator()() {
+		bot->die();
+	}
+
+	Bot* bot;
+};
+
+Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(handler_), disconnecting(false) {
 	setFlag(FLAG_BOT);
 
-	// Fake a CID (maybe this should be permanent?)
+	// Fake a CID, the script can change this if it wants to
 	setCID(CID::generate());
 }
 
 void Bot::disconnect(Util::Reason reason) throw() {
-	//@todo, maby improve?
+	if(!disconnecting) {
+		handler = SendHandler();
+		SocketManager::getInstance()->addJob(BotRemover(this));
+	}
+}
+
+void Bot::die() {
 	ClientManager::getInstance()->removeEntity(*this);
 	delete this;
 }

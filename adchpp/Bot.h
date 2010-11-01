@@ -25,6 +25,8 @@
 
 namespace adchpp {
 
+struct BotRemover;
+
 class ADCHPP_VISIBLE Bot : public Entity {
 public:
 	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
@@ -37,7 +39,12 @@ public:
 
 	using Entity::send;
 private:
+	friend struct BotRemover;
+
 	SendHandler handler;
+	bool disconnecting;
+
+	void die();
 };
 
 }
