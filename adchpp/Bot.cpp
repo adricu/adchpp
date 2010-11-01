@@ -44,6 +44,8 @@ Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(
 
 void Bot::disconnect(Util::Reason reason) throw() {
 	if(!disconnecting) {
+		disconnecting = true;
+
 		handler = SendHandler();
 		SocketManager::getInstance()->addJob(BotRemover(this));
 	}
