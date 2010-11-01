@@ -58,7 +58,7 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 		if(lowPrio) {
 			return;
 		} else if(overflow > 0 && overflow + getOverflowTimeout() < GET_TIME()) {
-			disconnect(0, Util::REASON_WRITE_OVERFLOW);
+			disconnect(5000, Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
 			overflow = GET_TIME();
@@ -87,13 +87,6 @@ struct Handler {
 }
 
 void ManagedSocket::prepareWrite() throw() {
-	if(disc > 0) {
-		if(outBuf.empty() || GET_TICK() >= disc) {
-			sock->close();
-			return;
-		}
-	}
-
 	if(lastWrite != 0 && TimerManager::getTime() > lastWrite + 60) {
 		disconnect(5000, Util::REASON_WRITE_TIMEOUT);
 	} else if(!outBuf.empty() && lastWrite == 0) {
@@ -127,7 +120,11 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 			}
 		}
 
-		prepareWrite();
+		if(disc && outBuf.empty()) {
+			sock->close();
+		} else {
+			prepareWrite();
+		}
 	} else {
 		failSocket(ec);
 	}
@@ -200,17 +197,23 @@ void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
 	}
 }
 
+struct Disconnector {
+	Disconnector(const AsyncStreamPtr& stream_) : stream(stream_) { }
+	void operator()() { stream->close(); }
+	AsyncStreamPtr stream;
+};
+
 void ManagedSocket::disconnect(size_t timeout, Util::Reason reason) throw() {
 	if(!disc) {
 		disc = GET_TICK() + timeout;
+
 		Util::reasons[reason]++;
+		if(!lastWrite) {
+			sock->close();
+		} else {
+			SocketManager::getInstance()->addJob(timeout, Disconnector(sock));
+		}
 	}
-
-	prepareWrite();
-
-	// Schedule an extra socket close after the timeout in case the write doesn't
-	// finish on time
-	SocketManager::getInstance()->addJob(timeout, bind(&AsyncStream::close, sock));
 }
 
 }

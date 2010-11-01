@@ -53,7 +53,7 @@ public:
 	static void setDefaultBufferSize(size_t newSize) { defaultBufferSize = newSize; }
 	static size_t getDefaultBufferSize() { return defaultBufferSize; }
 
-	virtual ~Buffer() { dcdebug("buffer going away\n"); pool.put(bufp); }
+	virtual ~Buffer() { pool.put(bufp); }
 private:
 	static size_t defaultBufferSize;
 

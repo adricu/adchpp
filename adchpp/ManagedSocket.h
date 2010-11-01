@@ -108,7 +108,6 @@ private:
 	ConnectedHandler connectedHandler;
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
-
 };
 
 }
