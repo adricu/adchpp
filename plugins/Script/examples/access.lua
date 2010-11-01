@@ -375,6 +375,14 @@ settings.passinlist = {
 	value = 1
 }
 
+settings.sendversion = {
+	alias = { displayversion = true },
+
+	help = "send hub version information at login, 1 = alllow, 0 = disallow",
+
+	value = 1
+}
+
 settings.topic = {
 	alias = { hubtopic = true },
 
@@ -1060,6 +1068,10 @@ local function onPAS(c, cmd)
 
 	if message then
 		autil.reply(c, message)
+	end
+
+	if settings.sendversion.value == 1 then
+		autil.reply(c, "This hub is running " .. adchpp.versionString)
 	end
 
 	autil.reply(c, "Welcome back")
