@@ -494,8 +494,7 @@ void ClientManager::removeLogins(Entity& e) throw() {
 		return;
 	}
 
-	deque<pair<Client*, uint32_t> >::iterator i = find_if(logins.begin(), logins.end(),
-		CompareFirst<Client*, uint32_t> (c));
+	auto i = find_if(logins.begin(), logins.end(), CompareFirst<Client*, uint32_t> (c));
 	if(i != logins.end()) {
 		logins.erase(i);
 	}

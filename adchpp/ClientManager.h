@@ -159,7 +159,7 @@ private:
 	friend class Entity;
 	friend class Bot;
 
-	std::deque<std::pair<Client*, uint32_t> > logins;
+	std::list<std::pair<Client*, uint32_t> > logins;
 
 	EntityMap entities;
 	typedef std::unordered_map<std::string, Entity*> NickMap;

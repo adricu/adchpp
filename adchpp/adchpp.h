@@ -105,7 +105,6 @@
 
 #include <string>
 #include <vector>
-#include <deque>
 #include <list>
 #include <functional>
 #include <memory>
