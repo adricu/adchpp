@@ -69,13 +69,6 @@ public:
 	ADCHPP_DLL void sendTo(const BufferPtr& buffer, uint32_t to);
 
 	/**
-	 * Calling this function will increase the flood-counter and kick/ban the user
-	 * if the counter exceeds the setting.
-	 * @return True if the user was flooding and was kicked, false otherwise.
-	 */
-	ADCHPP_DLL bool checkFlooding(Client& c, const AdcCommand&) throw();
-
-	/**
 	 * Enter IDENTIFY state.
 	 * Call this if you stop the SUP command when in PROTOCOL state.
 	 *

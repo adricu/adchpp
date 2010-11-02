@@ -125,21 +125,6 @@ void ClientManager::sendTo(const BufferPtr& buffer, uint32_t to) {
 	}
 }
 
-bool ClientManager::checkFlooding(Client& c, const AdcCommand& cmd) throw() {
-	// @todo Make multiplier configurable
-	if(true)
-		return false;
-
-	time_t add = ((cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_FEATURE) ? 1 : 0)
-		* 5;
-	if(c.isFlooding(add)) {
-		c.disconnect(Util::REASON_FLOODING);
-		return true;
-	}
-
-	return false;
-}
-
 void ClientManager::handleIncoming(const ManagedSocketPtr& socket) throw() {
 	Client::create(socket, makeSID());
 }
@@ -183,14 +168,6 @@ void ClientManager::onReceive(Entity& c, AdcCommand& cmd) throw() {
 		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid command type"));
 		c.disconnect(Util::REASON_INVALID_COMMAND_TYPE);
 		return;
-	}
-
-	Client *cc = dynamic_cast<Client*>(&c);
-
-	if(cc) {
-		if(checkFlooding(*cc, cmd)) {
-			return;
-		}
 	}
 
 	bool ok = true;

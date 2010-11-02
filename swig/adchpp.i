@@ -585,9 +585,6 @@ public:
 	 */
 	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
-
-	bool isFlooding(time_t addSeconds);
-
 };
 
 class Bot : public Entity {
@@ -695,8 +692,6 @@ public:
 	void send(const AdcCommand& cmd) throw();
 	void sendToAll(const BufferPtr& buffer) throw();
 	void sendTo(const BufferPtr& buffer, uint32_t to);
-
-	bool checkFlooding(Client& c, const AdcCommand&) throw();
 
 	void enterIdentify(Entity& c, bool sendData) throw();
 

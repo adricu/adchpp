@@ -51,8 +51,6 @@ public:
 	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
-	ADCHPP_DLL bool isFlooding(time_t addSeconds);
-
 	static void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
 	static size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
 
@@ -72,8 +70,6 @@ private:
 	BufferPtr buffer;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;
-
-	time_t floodTimer;
 
 	size_t maxCommandSize;
 

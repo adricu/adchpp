@@ -38,7 +38,7 @@ Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
 }
 
 Client::Client(uint32_t sid_) throw() : Entity(sid_), disconnecting(false),
-	dataBytes(0), floodTimer(0), maxCommandSize(getDefaultMaxCommandSize()) {
+	dataBytes(0), maxCommandSize(getDefaultMaxCommandSize()) {
 }
 
 Client::~Client() {
@@ -146,22 +146,6 @@ void Client::onData(const BufferPtr& buf) throw() {
 			buffer.reset();
 		}
 	}
-}
-
-bool Client::isFlooding(time_t addSeconds) {
-	time_t now = GET_TIME();
-	if(floodTimer < now) {
-		floodTimer = now;
-	}
-
-	floodTimer += addSeconds;
-
-	/// @todo fix flood timer threshold
-	if(false && floodTimer > now + 25) {
-		return true;
-	}
-
-	return false;
 }
 
 void Client::disconnect(Util::Reason reason) throw() {
