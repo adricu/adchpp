@@ -2327,7 +2327,7 @@ local function onReceive(entity, cmd, ok)
 		return onPAS(c, cmd)
 	end
 	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG then
-		if cmd:getTo() ~= adchpp.AdcCommand_HUB_SID then
+		if cmd:getTo() == adchpp.AdcCommand_HUB_SID then
 			autil.reply_from = cm:getEntity(cmd:getTo())
 		end
 		local ret = onMSG(c, cmd)
