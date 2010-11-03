@@ -88,7 +88,7 @@ void ScriptManager::load() {
 
 void ScriptManager::reload() {
 	clearEngines();
-	PluginManager::getInstance()->attention(std::bind(&ScriptManager::load, this));
+	load();
 }
 
 void ScriptManager::onReload(Entity& c) {

@@ -86,8 +86,10 @@ Script* LuaEngine::loadScript(const string& path, const string& filename, const 
 		return 0;
 
 	LuaScript* script = new LuaScript(this);
+	PluginManager::getInstance()->attention([this, path, filename, script]() {
 	script->loadFile(path, filename);
 	scripts.push_back(script);
+	});
 	return script;
 }
 
