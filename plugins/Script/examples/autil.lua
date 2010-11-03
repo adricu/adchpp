@@ -35,7 +35,7 @@ end
 
 function reply(c, m)
 	local command
-	if reply_from and reply_from:getSID() ~= adchpp.AdcCommand_HUB_SID then
+	if reply_from then
 		command = pm(m, reply_from:getSID(), c:getSID())
 	else
 		command = info(m)
