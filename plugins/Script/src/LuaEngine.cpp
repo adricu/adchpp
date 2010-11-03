@@ -79,6 +79,12 @@ LuaEngine::~LuaEngine() {
 		lua_close(l);
 }
 
+/// @todo lambda
+void LuaEngine::loadScript_(const string& path, const string& filename, LuaScript* script) {
+	script->loadFile(path, filename);
+	scripts.push_back(script);
+}
+
 Script* LuaEngine::loadScript(const string& path, const string& filename, const ParameterMap&) {
 	setScriptPath(l, File::makeAbsolutePath(path));
 
@@ -86,10 +92,7 @@ Script* LuaEngine::loadScript(const string& path, const string& filename, const 
 		return 0;
 
 	LuaScript* script = new LuaScript(this);
-	PluginManager::getInstance()->attention([this, path, filename, script]() {
-	script->loadFile(path, filename);
-	scripts.push_back(script);
-	});
+	PluginManager::getInstance()->attention(std::bind(&LuaEngine::loadScript_, this, path, filename, script));
 	return script;
 }
 

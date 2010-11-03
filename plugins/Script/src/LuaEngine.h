@@ -38,6 +38,7 @@ private:
 	friend class LuaScript;
 
 	bool call(const std::string& f, const std::string& arg);
+	void loadScript_(const std::string& path, const std::string& filename, LuaScript* script);
 
 	lua_State* l;
 
