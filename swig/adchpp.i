@@ -401,8 +401,8 @@ public:
 	C(CMD, 'C','M','D');
 #undef C
 
-	static const uint32_t HUB_SID = static_cast<uint32_t>(-1);
-	static const uint32_t INVALID_SID = static_cast<uint32_t>(-2);
+	static const uint32_t HUB_SID;
+	static const uint32_t INVALID_SID;
 	
 	AdcCommand();
 	
