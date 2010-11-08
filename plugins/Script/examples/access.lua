@@ -997,6 +997,10 @@ local function onINF(c, cmd)
 		return false
 	end
 
+	if settings.sendversion.value == 1 then
+		autil.reply(c, "This hub is running " .. adchpp.versionString)
+	end
+
 	local user = get_user(cid, nick)
 	if not user then
 		-- non-reg user
@@ -1019,6 +1023,8 @@ local function onINF(c, cmd)
 	if not cm:verifyINF(c, cmd) then
 		return false
 	end
+
+	autil.reply(c, "You are registered, please provide a password")
 
 	c:setByteVectorData(saltsHandle, cm:enterVerify(c, true))
 	return false
@@ -1068,10 +1074,6 @@ local function onPAS(c, cmd)
 
 	if message then
 		autil.reply(c, message)
-	end
-
-	if settings.sendversion.value == 1 then
-		autil.reply(c, "This hub is running " .. adchpp.versionString)
 	end
 
 	autil.reply(c, "Welcome back")
