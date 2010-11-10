@@ -73,6 +73,13 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 	Client& c = *cc;
 	if(cmd.getCommand() == AdcCommand::CMD_INF && c.hasSupport(FEATURE)) {
 		if(cmd.getParam("SF", 0, tmp)) {
+			if(e.getPluginData(pendingHandle)) {
+				// Already getting a blom - we'll end up with an old bloom but there's no trivial
+				// way to avoid it...
+				// TODO Queue the blom get?
+				return;
+			}
+
 			size_t n = adchpp::Util::toInt(tmp);
 			if(n == 0) {
 				return;
@@ -98,6 +105,7 @@ void BloomManager::onReceive(Entity& e, AdcCommand& cmd, bool& ok) {
 		if(cmd.getParameters().size() < 4) {
 			return;
 		}
+
 		if(cmd.getParam(0) != "blom") {
 			return;
 		}
@@ -145,9 +153,17 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 	}
 }
 
-int64_t BloomManager::getBytes() const {
-	int64_t bytes = 0;
-	// TODO
+std::pair<size_t, size_t> BloomManager::getBytes() const {
+	std::pair<size_t, size_t> bytes;
+	auto cm = ClientManager::getInstance();
+	for(auto i = cm->getEntities().begin(), iend = cm->getEntities().end(); i != iend; ++i) {
+		auto bloom = reinterpret_cast<HashBloom*>(i->second->getPluginData(bloomHandle));
+		if(bloom) {
+			bytes.first++;
+			bytes.second += bloom->size();
+		}
+	}
+
 	return bytes;
 }
 
@@ -173,9 +189,9 @@ void BloomManager::onStats(Entity& c) {
 	stats += "\nTotal outgoing searches: " + Util::toString(searches);
 	stats += "\nOutgoing TTH searches: " + Util::toString(tthSearches) + " (" + Util::toString(tthSearches * 100. / searches) + "% of total)";
 	stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
-	int64_t bytes = getBytes();
+	auto bytes = getBytes();
 	size_t clients = ClientManager::getInstance()->getEntities().size();
-	//			stats += "\nClient support: " + Util::toString(blooms.size()) + "/" + Util::toString(clients) + " (" + Util::toString(blooms.size() * 100. / clients) + "%)";
-	stats += "\nApproximate memory usage: " + Util::formatBytes(bytes) + ", " + Util::formatBytes(static_cast<double>(bytes) / clients) + "/client";
+	stats += "\nClient support: " + Util::toString(bytes.first) + "/" + Util::toString(clients) + " (" + Util::toString(bytes.first * 100. / clients) + "%)";
+	stats += "\nApproximate memory usage: " + Util::formatBytes(bytes.second) + ", " + Util::formatBytes(static_cast<double>(bytes.second) / clients) + "/client";
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));
 }

@@ -177,7 +177,7 @@ settings.address = {
 }
 
 settings.allownickchange = {
-	help = "authorize regged users to connect with a different nick, 1 = alllow, 0 = disallow",
+	help = "authorize regged users to connect with a different nick, 1 = allow, 0 = disallow",
 
 	value = 1
 }
