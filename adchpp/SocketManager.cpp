@@ -119,7 +119,7 @@ typedef SocketStream<ssl::stream<ip::tcp::socket> > TLSSocketStream;
 // We don't need a large one since we generally deal with very short messages
 static const int SOCKET_BUFFER_SIZE = 1024;
 
-class SocketFactory : public SHARED_PTR_NS::enable_shared_from_this<SocketFactory> {
+class SocketFactory : public enable_shared_from_this<SocketFactory> {
 public:
 	SocketFactory(io_service& io_, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
 		io(io_),
@@ -148,12 +148,12 @@ public:
 		}
 #ifdef HAVE_OPENSSL
 		if(serverInfo->secure()) {
-			SHARED_PTR_NS::shared_ptr<TLSSocketStream> s = make_shared<TLSSocketStream>(io, *context);
+			shared_ptr<TLSSocketStream> s = make_shared<TLSSocketStream>(io, *context);
 			ManagedSocketPtr socket = make_shared<ManagedSocket>(s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, shared_from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
-			SHARED_PTR_NS::shared_ptr<SimpleSocketStream> s = make_shared<SimpleSocketStream>(io);
+			shared_ptr<SimpleSocketStream> s = make_shared<SimpleSocketStream>(io);
 			ManagedSocketPtr socket = make_shared<ManagedSocket>(s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
@@ -182,7 +182,7 @@ public:
 
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
-			SHARED_PTR_NS::shared_ptr<SimpleSocketStream> s = SHARED_PTR_NS::static_pointer_cast<SimpleSocketStream>(socket->sock);
+			shared_ptr<SimpleSocketStream> s = SHARED_PTR_NS::static_pointer_cast<SimpleSocketStream>(socket->sock);
 			// By default, we linger for 30 seconds (this will happen when the stream
 			// is deallocated without calling close first)
 			s->sock.lowest_layer().set_option(socket_base::linger(true, 30));
@@ -211,7 +211,7 @@ public:
 	SocketManager::IncomingHandler handler;
 
 #ifdef HAVE_OPENSSL
-	SHARED_PTR_NS::shared_ptr<boost::asio::ssl::context> context;
+	shared_ptr<boost::asio::ssl::context> context;
 #endif
 
 };
