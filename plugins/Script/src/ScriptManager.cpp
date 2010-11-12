@@ -40,9 +40,9 @@ const string ScriptManager::className = "ScriptManager";
 ScriptManager::ScriptManager() {
 	LOG(className, "Starting");
 
-	reloadConn = std::make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("reload",
+	reloadConn = make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("reload",
 		std::bind(&ScriptManager::onReload, this, _1)));
-	statsConn = std::make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("stats",
+	statsConn = make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("stats",
 		std::bind(&ScriptManager::onStats, this, _1)));
 
 	load();

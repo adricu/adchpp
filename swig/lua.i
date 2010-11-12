@@ -174,7 +174,7 @@ private:
 	}
 
 	lua_State* L;
-	std::shared_ptr<RegistryItem> registryItem;
+	shared_ptr<RegistryItem> registryItem;
 };
 
 static int exec(lua_State* L) {

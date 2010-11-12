@@ -28,7 +28,7 @@ using namespace adchpp;
 %include "std_pair.i"
 %include "std_map.i"
 
-#define SWIG_SHARED_PTR_NAMESPACE std
+#define SWIG_SHARED_PTR_NAMESPACE SHARED_PTR_NS
 %include "shared_ptr.i"
 
 %include "carrays.i"
@@ -86,7 +86,7 @@ namespace adchpp {
 %template(TEntityList) std::vector<adchpp::Entity*>;
 %template(TStringList) std::vector<std::string>;
 %template(TByteVector) std::vector<uint8_t>;
-%template(TServerInfoList) std::vector<std::shared_ptr<adchpp::ServerInfo> >;
+%template(TServerInfoList) std::vector<SWIG_SHARED_PTR_NAMESPACE::shared_ptr<adchpp::ServerInfo> >;
 %template(TIntIntMap) std::map<std::string, int>;
 
 %inline%{
@@ -123,7 +123,7 @@ struct ManagedConnection {
 	void release();
 };
 
-typedef std::shared_ptr<ManagedConnection> ManagedConnectionPtr;
+typedef SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 struct ServerInfo {
 	std::string ip;
@@ -139,7 +139,7 @@ struct ServerInfo {
 	}
 };
 
-typedef std::shared_ptr<ServerInfo> ServerInfoPtr;
+typedef SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ServerInfo> ServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager {
@@ -836,8 +836,8 @@ public:
 	CommandSignal& getCommandSignal(const std::string& commandName);
 };
 
-%template (ServerInfoPtr) std::shared_ptr<ServerInfo>;
-%template (ManagedConnectionPtr) std::shared_ptr<ManagedConnection>;
+%template (ServerInfoPtr) SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ServerInfo>;
+%template (ManagedConnectionPtr) SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ManagedConnection>;
 
 }
 

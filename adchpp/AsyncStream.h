@@ -34,6 +34,6 @@ public:
 	virtual ~AsyncStream() { }
 };
 
-typedef std::shared_ptr<AsyncStream> AsyncStreamPtr;
+typedef shared_ptr<AsyncStream> AsyncStreamPtr;
 
 }

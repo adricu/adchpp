@@ -53,7 +53,7 @@ private:
 	PluginDataDeleter deleter;
 };
 
-typedef std::shared_ptr<PluginData> PluginDataHandle;
+typedef shared_ptr<PluginData> PluginDataHandle;
 
 }
 

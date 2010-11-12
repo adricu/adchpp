@@ -115,6 +115,20 @@
 
 #include <boost/noncopyable.hpp>
 
+#ifdef __MINGW32__
+/* the shared_ptr implementation provided by MinGW / GCC 4.5's libstdc++ consumes too many
+semaphores, so we prefer boost's one. see <https://bugs.launchpad.net/adchpp/+bug/654040>. */
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/make_shared.hpp>
+#define SHARED_PTR_NS boost
+#else
+#define SHARED_PTR_NS std
+#endif
+using SHARED_PTR_NS::shared_ptr;
+using SHARED_PTR_NS::enable_shared_from_this;
+using SHARED_PTR_NS::make_shared;
+
 #ifdef _UNICODE
 # ifndef _T
 #  define _T(s) L##s

@@ -101,11 +101,11 @@ private:
 	ConnectionPtr conn;
 };
 
-typedef std::shared_ptr<ManagedConnection> ManagedConnectionPtr;
+typedef shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 template<typename F1, typename F2>
 ManagedConnectionPtr manage(Signal<F1>* signal, const F2& f) {
-	return std::make_shared<ManagedConnection>(signal->connect(f));
+	return make_shared<ManagedConnection>(signal->connect(f));
 }
 
 template<typename F>

@@ -29,18 +29,18 @@ class Entity;
 typedef std::map<uint16_t, std::string> FieldMap;
 
 class ManagedSocket;
-typedef std::shared_ptr<ManagedSocket> ManagedSocketPtr;
+typedef shared_ptr<ManagedSocket> ManagedSocketPtr;
 
 class PluginManager;
 
 struct ServerInfo;
-typedef std::shared_ptr<ServerInfo> ServerInfoPtr;
+typedef shared_ptr<ServerInfo> ServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SimpleXML;
 
 class SocketFactory;
-typedef std::shared_ptr<SocketFactory> SocketFactoryPtr;
+typedef shared_ptr<SocketFactory> SocketFactoryPtr;
 
 class SocketManager;
 

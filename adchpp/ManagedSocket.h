@@ -32,7 +32,7 @@ namespace adchpp {
 /**
  * An asynchronous socket managed by SocketManager.
  */
-class ManagedSocket : private boost::noncopyable, public std::enable_shared_from_this<ManagedSocket> {
+class ManagedSocket : private boost::noncopyable, public enable_shared_from_this<ManagedSocket> {
 public:
 	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overflow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
 

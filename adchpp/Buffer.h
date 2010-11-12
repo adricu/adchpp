@@ -69,7 +69,7 @@ private:
 	ADCHPP_DLL static SimplePool<ByteVector, Clear> pool;
 };
 
-typedef std::shared_ptr<Buffer> BufferPtr;
+typedef shared_ptr<Buffer> BufferPtr;
 typedef std::vector<BufferPtr> BufferList;
 
 }
