@@ -1,6 +1,6 @@
 = Getting started with ADCH++ 
 Author: Toast <toast@adcportal.com> 
-Document Version 0.2.6
+Document Version 0.2.7
 ////
 0.1 
 * Inital Documentation
@@ -25,53 +25,67 @@ Document Version 0.2.6
 *Spellcheck FTW
 0.2.6
 *Updated compile requirements
+0.2.7
+*Updated corresponding to 2.5.5 (emtee)
+*Fixed typos, clear up some things (emtee)
 ////
+
+This document contains a quick rundown of features and basic steps needed to make ADCH++ up and running.
 
 == Installation
 
-First off you have to choose whether to run a debug or a release build of adchpp.  The difference between a debug and release build is the following:  A debug build shows the protocol at work like session id, etc.
+First of all you have to choose whether to run a debug or a release build of ADCH\+\+. For normal usage choose release builds, they are available for download in the offical ADCH\+\+ home page (links below). If you want to participate of testing and bug reporting or just want to help making ADCH++ better then its best to run any of the debug builds available at http://builds.adcportal.com/.
+The difference between a debug and release build is the following:  
 
-_This is how a debug build looks_
+    * Debug builds are bigger and slightly slower as they contain additional information for debugging
+    * The output of a debug build is more verbose as it shows the software and the protocol at work (like session ids, messages, etc.)
+    * In case of problems (crashes, abnormal behaviour) debug builds can provide vital information for the developers
+    
+_This is how the output of a debug build looks_
 
 image:images/img_adchpp_debug_build.png[]
 
-_This is how a release build looks_
+_This is how the output of a release build looks_
 
 image:images/img_adchpp_release_build.png[]
 
 === Download
 
-The ADCH\++ setup can be found at the Sourceforge web site located at http://sourceforge.net/projects/adchpp/. 
-On that page there are links to the ADCH++ distribution.
+ADCH\++ setup files can be found at the Sourceforge web site located at http://sourceforge.net/projects/adchpp/. 
+On that page there are links to the ADCH++ distribution files:
 
-    * An EXE file that gives the users an uninstaller option.
-    * A ZIP file that contains the binary and the configuration files.
-    * A ZIP file with the source for that distribution for those that want to compile themselves.
+    * Installer - a complete installer EXE file for Windows with uninstaller option.
+    * ZIP file - contains the Windows pre-compiled binaries, scripts and configuration files.
+    * Source - an archive with the source code of the current distribution for other operating systems and for those that want to compile themselves 
 
 === Installation on Windows
 
-If you are using the zip file then go head and skip this part but if your using the installer for the program and feel uncertain here is a little help section.
+If you use the ZIP archived binaries then you can skip this part. If you choose the installer and feel uncertain here is a little help section.
 
 The installation consists of three main screens.
 
 . Welcome Screen
 . License Screen
 . Installation Path
+. Query asking if you want to install ADCH++ as a service or not.
 
-CAUTION: Windows Vista and Windows 7 should not install to program files directory if they don't know how to workaround UAC and store configuration files with http://vistaonwindows.com/environment_variables.html[windows environment variables] if you feel that its too hard just install it to another folder where UAC doesn't apply a good alternative path is: _c:\Users\<Your Account>\_
+CAUTION: on Windows Vista and Windows 7 you should not install ADCH\+\+ to the Program files / Program files(x86) directory if you don't know how to workaround UAC Data Redirection and store configuration files with http://vistaonwindows.com/environment_variables.html[windows environment variables]. If you feel this too hard for you then just install/unpack ADCH\+\+ to another folder where UAC rules don't apply. A good alternative path is: _c:\Users\<Your Account>\_
+
+The difference between installing ADCH\+\+ as a program or as a service is that if it runs in program mode you'll always see its console window. Program mode can be an advantage as you are always able to see the hub is there, up and running. On the contrary, as the console window cannot be closed (only minimized) it will be always there in your taskbar what could be annoying for some users. 
+If ADCH\+\+ running in service mode then there's no any window and it only outputs to its log file only. You'll find detailed information about running ADCH++ in service mode later in this guide.
 
 === Installing on Linux 
 
-Here is a example on how you can install ADCH++ on Linux the example is for Linux distributions.
+Here is a example on how you can install ADCH++ on Linux. The example is for Linux distributions.
 
 .Step 1
 
-Get the source via wget in console issue the following command in console
+To get the source via wget, run the following command in console:
 
  wget https://sourceforge.net/projects/adchpp/files/Releases/ADCH%2B%2B%202.5/2.5.1/adchpp_2.5.1_source.tar.gz/download 
 
 .Step 2
-Then you need to install these tools in order to compile debian based systems uses `apt-get` and redhat systems uses `yum`
+Then you need to install the following tools in order to compile ADCH++. Debian based systems use `apt-get` while RedHat systems use `yum`.
 
 [width="100%"]
 |==========================	
@@ -93,30 +107,44 @@ Then you need to install these tools in order to compile debian based systems us
  
 . Enter the ADCH++ directory.
 . Start the compile of ADCH++.
-. Enter the bin dir and make two folders.
+. Enter the bin dir and create two folders.
 . Copy files to bin folder.
 . Start ADCH++.
  
 == Basic configuration
 
-All the settings for ADCH\++ is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as Notepad) and start changing values to your wishes.
-
-TIP: Linux users should enable the following line in adchpp.xml <!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"--> by removing !-- and -- from the line and editing the path to your adchpp directory.
-
 === MOTD (Message of the day)
 
 The MOTD is stored within motd.txt so enter your text into it and it will show upon login for everyone who enters your hub.
 
+=== Server settings
+
+All the settings for ADCH\++ is stored in the config folder in ADCH++. Open up adchpp.xml in a text editor (such as Notepad) and start changing values as you wish.
+
+TIP: Linux users should enable the following line in adchpp.xml <!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"--> by removing !-- and -- from the line and editing the path according to the actual adchpp directory.
+
+=== Setting up the port to connect to
+
+Add a new <Server/> entry to adchpp.xml with the port you wish you to run your hub on. You must put this line into the Servers part between the <Servers> and </Servers> nodes.
+
+Example:
+
+	<Servers>
+		<Server Port="2113"/>
+	</Servers>
+
+In this example you will use address adc://yourdomain:2113 to connect to your hub.
+
 === Using Transport Layer Security (TLS)
 
-To create secure connections, set TLS="1" and define the following (preferably absolute)
+To make users able to connect securely to your hub (ADCS connections), set TLS="1" and define the following (preferably absolute)
 paths: Certificate, PrivateKey, TrustedPath, DHParams. An example secure server setting:
 
-insert this to adchpp.xml on the server line:
+Example: insert this to the Server line in adchpp.xml:
 
 	<Server Port="2780" TLS="1" Certificate="certs/cacert.pem" PrivateKey="certs/privkey.pem" TrustedPath="certs/trusted/" DHParams="certs/dhparam.pem"/>
 
-Simple OpenSSL commands to generate files used for secure connections:
+For secure connectivity you must generate security certificates. Simple commands using OpenSSL to generate certificate files used for secure connections:
 
 --------------------------------------
 openssl genrsa -out privkey.pem 2048
@@ -124,33 +152,32 @@ openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 openssl dhparam -outform PEM -out dhparam.pem 1024
 --------------------------------------
 
-Alternatively, you can use the cert generator contributed on:
+OpenSSL download for Windows: http://www.slproweb.com/products/Win32OpenSSL.html
 
-http://launchpadlibrarian.net/31960965/Cert_Generator.7z
-
-http://builds.adcportal.com/adchpp/cert_generator/adchpp_cert_generator.7z
-
-Windows:
-http://www.slproweb.com/products/Win32OpenSSL.html
-
-Linux Debian/Ubuntu:
+OpenSSl for Linux Debian/Ubuntu:
 --------------------------------------
 sudo install apt-get openssl
 --------------------------------------
-Linux Redhat:
+OpenSSl for Linux Redhat:
 --------------------------------------
 yum install openssl
 --------------------------------------
 
-TIP: Remember that if you have specified TLS=1 in the config that you need to connect with the prefix adcs://
+Alternatively, you can use a certificate generator script available at:
+
+http://launchpadlibrarian.net/31960965/Cert_Generator.7z
+or
+http://builds.adcportal.com/adchpp/cert_generator/adchpp_cert_generator.7z
+
+TIP: Remember that if you have specified TLS=1 in the config users need to connect to your hub using the prefix adcs:// added to the hub address (adcs://yourdomain:port). You can open more than one ports for your hub by adding more <Server/> entries. You can even mix secure and unsecure (non-TLS) port connections by adding TLS=1 parameter to a particular <Server/> entry only.
 	
 === Additional settings
 
-There are also additional settings that can only be enabled via hub commands, which are stored in settings.txt (this guide will show how to make that further down).
+There are also additional settings and rules that can only be enabled via hub commands (which are stored in settings.txt) Later in this guide you will see how to modify them.
 
 == Accounts
 
-All the user accounts are stored in users.txt. This guide will explain how to create a user account. "First, edit your adchpp.xml, located in the config folder, and enter ports and a name for the hub. Then, start it up and enter:
+All the user accounts are stored in users.txt. Now we explain you how to create a user account for yourself. Start up the hub, log in and enter:
 
 	+regme <your desired password>
 
@@ -163,29 +190,31 @@ All the user accounts are stored in users.txt. This guide will explain how to cr
 [09-10-02][21:37:26] <ADCH++> You're now registered
 --------------------------------------
 
+Stop the hub. In order to set this first reg as an admin account open up users.txt in a text editor.
+
 .Example: users.txt
 --------------------------------------
 [{"password":"test","nick":"Testuser","level":1,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
 --------------------------------------
 
-.Change this to:
+.Change user level to eg. 10:
 --------------------------------------	
 [{"password":"test","nick":"Testuser","level":10,"cid":"ABCDEFGHIJ1KLMNOPQRSTUVXYZA23BCDEFGHIJK"}]
 --------------------------------------
 
-reconnect to the hub again and now you will have access to administrator commands so you can reg new administrators inside the hub with the command:
+Save the file, start the hub, reconnect and now you will have access to all the administrator commands so you can register new administrators, operators and users. Use the command:
 --------------------------------------
 +regnick <nick> <password> <level>
 --------------------------------------	
 
-Profiles Range from 1-infinite
+Profiles range are from 1-infinite. By default level 2 and higher users are operators:
 
 . registered at the hub
 . registered as a op
 
 == Scripts
 
-Things like scripts can be enabled from scripts.xml stored in the config folder the scripts themselves are stored in the Scripts folder.
+Scripts can be added by editing scripts.xml stored in the config folder. The scripts themselves are stored in the Scripts folder. 
 
 How to turn off scripts in scripts.xml:
 
@@ -201,7 +230,7 @@ Change to:
 
 or delete the line
 
-IMPORTANT: Linux Users make your your path to the scripts folder is an absolute path.
+IMPORTANT: Linux users shoud use absolute path's point to the script folder in script entries.
 
 === Making new scripts
 In order to help scripters get a clue of how ADCH++ interacts with lua we made an example file thats included in this document.
@@ -294,13 +323,15 @@ example_5 = pm:getCommandSignal("blah"):connect(function(entity, list, ok)
 end)
 --------------------------------------
 
-NOTE: Additional documentation can be found at (http://adchpp.sourceforge.net/) for anyone that wishes to contribute scripts for ADCH\++ submit new scripts either at (https://bugs.launchpad.net/adchpp) or (http://www.adcportal.com) ADCH++ supports LUA 5.1.4 (http://www.lua.org/docs.html).
+This example file is also available in the distribution.
 
-=== Importing Ptokax Scripts
+NOTE: Additional scripting documentation can be found at (http://adchpp.sourceforge.net/). Anyone who wishes to contribute scripts for ADCH\++ submit new scripts either to (https://bugs.launchpad.net/adchpp) or to (http://www.adcportal.com). ADCH++ supports LUA 5.1.4 (http://www.lua.org/docs.html).
 
-Its also possible to import Ptokax LUA Scripts to your hub via ADCH++ Ptokax Bridge at (https://launchpad.net/adchpp-ptokax) for those that alreadly know how to script for Ptokax. This is still under development and the whole Ptokax LUA API isn't imported yet so all scripts may not work yet make sure to have your Ptokax Bridge at lastest revision to get the most usage out of it.
+=== Using PtokaX scripts in ADCH++
 
-A sample of how it can look on a px bridge installation the folder structure.
+Its possible to create or run existing PtokaX API2 LUA scripts in your hub via Adchpp-Ptokax bridge available at (https://launchpad.net/adchpp-ptokax). Adchpp-Ptokax is still under development and the whole Ptokax LUA API isn't imported yet but most of the existing scripts should work well. Make sure you use the latest revision of Ptokax bridge to get the most out of it.
+
+A sample of how the folder structure can look on a px bridge installation:
 --------------------------------------
 
 Directory of c:\users\username\adchpp\Scripts
@@ -309,7 +340,6 @@ Directory of c:\users\username\adchpp\Scripts
 2010-05-27  18:01    <DIR>          ..
 2010-05-03  22:58            58 383 access.lua
 2010-05-26  17:26            33 141 adchpp-ptokax.lua
-2010-05-26  19:18               115 adchpp-ptokax.txt
 2010-05-03  22:58             2 653 autil.lua
 2010-05-03  22:58             3 699 example.lua
 2010-05-03  22:58             3 003 history.lua
@@ -330,8 +360,8 @@ Directory of c:\users\username\adchpp\Scripts
                5 File(s)         62 491 bytes
 --------------------------------------
 
-You can load scripts inside the hub via UCMD (via right-click) just specify where to load from default location is script folder so check your path to your script folder and if you have the scripts in a sub directory like the example then simply load em by typing (px/example_script.lua) and then hitting enter.
-This is how you load the multiple scripts file in adchpp-ptokax.txt configuration file. (just a sample your structure may differ)
+You can load PtokaX scripts inside the hub via brige user commands (right-click menu). You will be asked where to load the scripts from. The default location is the Scripts folder so if you have the scripts in a subdirectory like in the example above then you can simply load them by typing (px/example_script.lua) and then hitting enter.
+The bridge will create a file named adchpp-ptokax.txt in the Config directory of ADCH++ what lists the currently added scripts as a list of their names and path. You can edit the file to load multiple scripts in one go like in the following example (your structure may differ):
 
 --------------------------------------
 px\px_banner.lua
@@ -351,7 +381,8 @@ px\px_clock.lua
 px\px_badsearch.lua
 --------------------------------------
 
-Now incase the lua script requiers luafilesystem or socket like the lua script FreshStuff or Feedwatch here is how you go about it. Now move the lua5.1.dll and lua5.1.dll.manifest to bin folder, the lfs.dll and lfs.dll.manifest to the lib folder where the script looks for it lets take freshstuff as an example the just add the script as normal in your adchpp-ptokax.txt and the rest of the content in the dir.
+In case of any lua script requires luafilesystem or socket library (like the lua script FreshStuff or Feedwatch) here is how to configure it: Move the lua5.1.dll and lua5.1.dll.manifest from the pxbridge distribution to the bin folder and the lfs.dll and lfs.dll.manifest to the lib folder where the script looks for it. Make sure you use the .dlls corresponding the compiler your ADCH\+\+ compiled with (if you use the original ADCH\+\+ distibution then its release-mingw-x86). 
+Lets take Freshstuff script as an example. Just add the script as you would normally do with any scripts. The rest content of the dir:
 
 --------------------------------------
 Directory of c:\users\username\adchpp\Scripts\px
@@ -431,16 +462,11 @@ Directory of c:\users\username\adchpp\Scripts\px
 
 == Working with hub commands
 
-A simple way to find out how stuff works is by typing +help as we promised the guide will show additional configuration you should type
+A simple way to find out how commands work is by typing +help <command>. To see what additional configuration variables are available and what are their current value you should type
 
-.Example: Help Meny
+.Example: get list of possible configuration variables
 --------------------------------------
 +help cfg
---------------------------------------
-
-.Example: Configuration Variables
---------------------------------------
-+cfg name value - change hub configuration, use "+help cfg" to list all variables
 --------------------------------------
 
 List of all settings variables:
@@ -456,25 +482,40 @@ List of all settings variables:
 	history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
 	history_max - current value: 500 - number of messages to keep for +history
 	history_prefix - current value: [%Y-%m-%d %H:%M:%S]- prefix to put before each message in +history
+	maxhubscount - current value: 0 - maximum number of connected hubs allowed, 0 = disabled (aliases: maxhubs)
+	maxhubslotratio - current value: 0 - maximum hub/slot ratio allowed, 0 = disabled (aliases: maxhsr)
 	maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
 	maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
-	maxusers - current value: 0 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
-	menuname - current value: ADCH++ - title of the main user command menu sent to clients (aliases: ucmdname)
+	maxsharesize - current value: 0 - maximum share size allowed in bytes, 0 = disabled (aliases: maxss)
+	maxslots - current value: 0 - maximum number of opened upload slots allowed, 0 = disabled (aliases: maxsl)
+	maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
+	menuname - current value: MyHub - title of the main user command menu sent to clients (aliases: ucmdname)
 	minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
 	mindownloadlevel - current value: 0 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+	minhubslotratio - current value: 0 - minimum hub/slot ratio required, 0 = disabled (aliases: minhsr)
 	minsearchlevel - current value: 0 - minimum level to search - hub restart recommended
+	minsharesize - current value: 0 - minimum share size allowed in bytes, 0 = disabled (aliases: minss)
+	minslots - current value: 0 - minimum number of opened upload slots required, 0 = disabled (aliases: minsl)
 	name - current value: Just a hub - hub name (aliases: hubname)
 	network - current value: Just a network
 	owner - current value: Just an owner - owner name (aliases: ownername)
 	passinlist - current value: 1 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
+	sendversion - current value: 1 - send hub version information at login, 1 = alllow, 0 = disallow (aliases: displayversion)
 	topic - current value: Just a topic - hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists (aliases: hubtopic)
 	website - current value: www.somesite.net(aliases: url)
 
-These are all settings stored in settings.txt thats in the config dir in your adchpp installation.
+To change any value use
+
+.Example: Change a configuration variable
+--------------------------------------
++cfg name value
+--------------------------------------
+
+The all settings above stored in settings.txt file resides in the Config dir of your ADCH++ installation.
 
 === Setting the hub to private
 
-Here is how you set your hub to private so that registered users only can access
+Here is how you set your hub to private so that registered users can access only:
 
 .Example: Configuration Example
 --------------------------------------
@@ -485,23 +526,23 @@ The variable "maxusers" has the following description:
 
   maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed
 
-When the hub is set to registred users only the unregistered users will recive this message.
+When the hub is set to registered users only the connecting unregistered users will receive the following message:
 
 .Example: Connection Attempt (if not registred at the hub)
 --------------------------------------
 [09-10-02][22:07:09] <ADCH++> Only registered users are allowed in here
 --------------------------------------
 
-=== Setting the hub to register to download
+=== Setting the hub to register to chat/search/download
 
-So what does reg to download mean well its pretty simple if user is a guest and the reg to download lines are inserted they need to get an account on the server to be able to download anything from others by using the following command
+Its possible to restrict guest (unregistered) users to be able to chat/search/download until they get registered by an operator or by using the following command:
 
-.Example: Register
+.Example: Self-Register
 --------------------------------------
 +regme <password>
 --------------------------------------
 
-With the 2.5.1 release setting download/chat/search requierments is pretty easy its just a simple command to execute and use.	
+From ADCH++ version 2.5.1 setting up download/chat/search rules is pretty easy. You are just a few simple commands away to set these rules up:	
 
 .Example: Configuration Example
 --------------------------------------
@@ -514,9 +555,9 @@ With the 2.5.1 release setting download/chat/search requierments is pretty easy 
 * mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
 * minsearchlevel - current value: 1 - minimum level to search - hub restart recommended
 
-=== Working with banmsgre
+=== Automatic spam protection: working with banmsgre
 
-This is a very powerful system for getting rid of unwanted spam, it uses regular expressions for detecting unwanted content in your hub it requires knowledge of how to write a regular expression string so it might not be for the beginners.
+Banmsgre is a very powerful tool for getting rid of unwanted spam. It uses regular expressions for detecting unwanted chat content in your hub. It requires the knowledge of how to write a regular expression string so this command might not be for the beginners.
 
   +banmsgre <regexp> <reason> <time>
  
@@ -525,12 +566,12 @@ This is a very powerful system for getting rid of unwanted spam, it uses regular
 +banmsgre <http://www\.spam\.com> unwanted spam 99
 --------------------------------------
 
-For more information about regular expression go to this site:
+For more information about regular expressions go to this site:
 http://www.regular-expressions.info/
 
-== Running ADCH++ with paramters
+== Running ADCH++ with parameters
 
-Gonna run thru how to install ADCH++ as a service instead of a application
+This part is a quick run thrugh of how to install ADCH++ as a service module instead of an application.
 
 .Example: Command usage
 --------------------------------------	
@@ -551,7 +592,7 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 (Windows)	adchppd.exe -i adchpp
 --------------------------------------	
 
-Installing ADCH++ as a service requires it to be run in an elevated state as UAC will interfere in the process if its not executed as an administrator if its a Windows 7 or Vista machine its running on this is how you elevate adchpp.exe in Windows 7/Vista
+Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. Lets see how do you elevate adchpp.exe in Windows 7/Vista:
 
 .How it would look if it fails
 
@@ -567,23 +608,22 @@ image:images/img_adch_elevated_howto.png[]
 * Grant the application access if you have UAC enabled
 
 
-Now to verify that the installation of the service was a success we can check what services is installed via the control panel via (Control Panel\System and Security\Administrative Tools).
+To verify that the installation of the service was successful you can check what services are installed via Control Panel\System and Security\Administrative Tools (or you simply run services.msc command from a Windows prompt).
 
 image:images/img_adch_service_location.png[]
 
-To check if its there or not start the "services" application in administrative tools 
+To check if adchpp service is running start the "services" application in administrative tools:
 
 image:images/img_adch_service_verify.png[]
-
-So whats the difference between running as a program and as a service will basically if you wanna see the dos window or not so if you annoy yourself over a dos window run as a service instead.
 	
 == Issues and problems
-Not every software is perfect they all got flaws and can preform wierd or unwanted features and its very important that the developer is aware of such features, 
-so how do you (the user) fit into this well in the event that you find a bug try and recreate it so you have a consistant log of the problem so that you can give feedback to the developer.
+There's no perfect software all of them have some flaws, can preform wierd or have unwanted features. Its very important to make the developer aware of such problems. If you want to help improving ADCH\+\+ you can do so by giving feedback to the developers about found bugs helping them to recreate and fix the problems. To be able to help you must run a debug build of ADCH\+\+. If you cannot compile ADCH\+\+ in debug mode you can download nightly debug builds from http://builds.adcportal.com
 
 === Hub crash (core dumps)
 
-In the event of a total crash the hubsoft generates file called adchppd.RPT in folder where the binary is located, here is how an adchppd.RPT may look like:
+==== If you run an MSVC compiled debug build
+
+In the event of a total crash the hubsoftware generates file called adchppd.RPT in folder where the binary is located, here is how an adchppd.RPT may look like:
 
 	Error occured on Sunday, September 27, 2009 at 11:08:23.
 
@@ -609,10 +649,14 @@ In the event of a total crash the hubsoft generates file called adchppd.RPT in f
 	77C09D45  C:\Windows\SysWOW64\ntdll.dll:77C09D45  RtlInitializeExceptionChain
 
 TIP: Always submit adchppd.RPT to the bugtracker located at launchpad https://bugs.launchpad.net/adchpp
-	
+
+==== If you run MinGW compiled debug build
+
+Follow the DC\+\+ backtrace reporting procedure at https://answers.launchpad.net/dcplusplus/+faq/337 you can get backtrace logs for ADCH\+\+ crashes in the very similar way. Please report the problem at https://bugs.launchpad.net/adchpp including the backtrace log as an attachment.
+
 === LUA errors
 
-Sometimes lua scripts can preform errors and that will show up in the windows of ADCH++ while its running
+Sometimes lua scripts can preform errors and they will show up in the console window of ADCH++ while its running. Example:
 
 	access.lua:491: attempt to concatenate global 'reason' (a nil value)
 	stack traceback:
@@ -625,7 +669,7 @@ TIP: If you get similar errors while running your hubsoft do report them at the 
 
 === Missing dlls
 
-If your using the MSVC Builds you might get a error message that certain DLL files are missing there is a simple solution you need to download and install these packages.
+If you're using MSVC builds you might get an error message that certain DLL files are missing. There is a simple solution you need to download and install Microsoft Visual C++ Runtime packages.
 
 http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2[Microsoft Visual C\++ 2008 SP1 Redistributable Package (x86)]
 
@@ -633,11 +677,11 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 
 === Is something still unclear ?
 
-Well lucky you then cause we have an answer tracker for questions
+We have an answer tracker for additional questions at https://answers.launchpad.net/adchpp 
 
-https://answers.launchpad.net/adchpp you could additionally use ADCPortal also for questions http://www.adcportal.com
+You can additionally use ADCPortal for questions at http://www.adcportal.com as well.
 
-=== So what extensions does this hubsoft support
+=== Extensions that this hubsoft supports
 
 *BLOM* - this extension that allows hub software to create a map (bloom filter) of the shared files on the hub, but with minimal effort, e.g. the hub doesn't keep a list of files, but a filter that never produces false negatives but only possible false positives. This can potentially save bandwidth and effort on the client side.
 
@@ -645,18 +689,18 @@ https://answers.launchpad.net/adchpp you could additionally use ADCPortal also f
 
 *ADCS* - ADCS is an extension that has the goal of adding the TLS/SSL layer just over the TCP layer and beneath the application layer (where ADC runs). This way, the ADC protocol remains unchanged while the connections are encrypted.
 
-NOTE: _ADCS is still in drafting mode so any implementation is still an early draft version not final (28/06/2010)_
+NOTE: _ADCS is still in drafting mode so any implementation is still an early draft version not final (13/11/2010)_
 
 == Compiling and testing
 
-This part is not recommended for the newbie user this is for the novice or expert user this part will tell you how to compile
+This part is not recommended for newbies. This is for novice or expert users and will tell how to compile ADCH++.
 
 Here is a list of minimum versions of recommended tools:
     
-	* GCC 4.4 (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
-    * SCons 1.3 http://www.scons.org
-    * SWIG 1.3.40 http://www.swig.org
-    * Python 2.4 http://www.python.org
+	* GCC 4.4.x (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
+    * SCons 1.0 or later http://www.scons.org
+    * SWIG 1.3.40 or later http://www.swig.org
+    * Python 2.4.x or later http://www.python.org
     * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
 
 MinGW Builds
@@ -670,17 +714,19 @@ MSVC Builds
 	to build a x86 release version use: scons tools=default mode=release
 	to build a x64 debug version use: scons tools=default arch=x64
 	to build a x64 release version use: scons tools=default mode=release arch=x64
+	
+For more information refer to the readme.txt included with the ADCH++ distribution.
 
 === Right on the bleeding edge
 
-We have an open bzr repository that we use for publishing the source to ADCH++ its located at launchpad https://code.launchpad.net/adchpp
+We have an open bzr repository that we use for publishing the source code for ADCH++. Its located at Launchpad https://code.launchpad.net/adchpp
 
-It requires that you the user have bzr tools installed
+To create a local repository it requires that you have bzr tools installed
 http://bazaar-vcs.org/
 
-we also have a build archive for windows users that don't want to install a lot of compile tools themselves its located at
+We also have a build archive for windows users who don't want to install a lot of compile tools, its located at
 http://builds.adcportal.com/
 
 == Congratulations!
-If you have read this far and successfully followed the instruction, congratulations. You now know the basics of using ADCH\+\+. What has been described on this page is the bare minimum needed to use ADCH++. There are many other features. It is highly recommended that you explore the program and try new functions for yourself. Most of all, enjoy yourself. Good luck and happy sharing.
+If you have read this far and successfully followed the instructions, congratulations. You now know the basics of using ADCH\+\+. What has been described on this page is the bare minimum needed to use ADCH++. There are many other features. It is highly recommended that you explore the program and try new functions for yourself. Most of all, enjoy yourself. Good luck and happy sharing.
 // vim: set syntax=asciidoc:

@@ -12,6 +12,8 @@
 * Fix an uninitialized member issue resulting in random behaviour
 * [L#508641] Make bot disconnect asynchronous
 * Re-add missing bloom stats
+* Add basic rules (sharesize, slots, etc...)
+* Update user guide
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support

@@ -979,7 +979,6 @@ verify_info = function(c, cid, nick)
 	end
 
 	local ss = base.tonumber(c:getField("SS"))
-	base.print(base.tostring(base.type(ss)) .. base.tostring(ss))
 	if ss then
 		if settings.minsharesize.value > 0 and ss < settings.minsharesize.value then
 			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your share size (" .. c:getField("SS") .. " B) is too low, the minimum required size is " .. base.tostring(settings.minsharesize.value) .. " bytes")
