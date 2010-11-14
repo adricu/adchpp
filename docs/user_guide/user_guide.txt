@@ -28,6 +28,8 @@ Document Version 0.2.7
 0.2.7
 *Updated corresponding to 2.5.5 (emtee)
 *Fixed typos, clear up some things (emtee)
+0.2.8
+*additional linux information
 ////
 
 This document contains a quick rundown of features and basic steps needed to make ADCH++ up and running.
@@ -82,15 +84,23 @@ Here is a example on how you can install ADCH++ on Linux. The example is for Lin
 
 To get the source via wget, run the following command in console:
 
- wget https://sourceforge.net/projects/adchpp/files/Releases/ADCH%2B%2B%202.5/2.5.1/adchpp_2.5.1_source.tar.gz/download 
+ wget https://sourceforge.net/projects/adchpp/files/Releases/ADCH%2B%2B%202.5/2.5.5/adchpp_2.5.5_source.tar.gz/download 
 
 .Step 2
 Then you need to install the following tools in order to compile ADCH++. Debian based systems use `apt-get` while RedHat systems use `yum`.
 
 [width="100%"]
 |==========================	
-|*Debian*|python|scons|swig|gcc-c++|openssl-dev|readline-dev
-|*Redhat*|python|scons|swig|gcc-c++|openssl-devel|readline-devel
+				swig
+				python
+				scons
+				gcc-c++ (has to be 4.4.x or higher)
+				libstdc++-devel
+	`redhat`:	readline-devel, 
+	`debian`:	libreadline-dev 
+				sys-libs/readline
+	`redhat`:	openssl-devel
+	`debian`:	libssl-dev
 |==========================
 
 .Step 3
@@ -580,6 +590,7 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 	
 * -c specifies a path to configuration directory
 * -d deamon service _(Linux only)_
+* -p <pid-file> Write process pid to <pid-file> _(Linux only)_
 * -i service mode _(Windows only)_
 * -v version number
 * -h help message
@@ -588,6 +599,7 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 --------------------------------------	
 (Linux)		adchppd -c /home/test/adchpp/bin/config/
 (Linux)		adchppd -d
+(Linux)		adchppd -p adchpp.pid
 (Windows)	adchppd.exe -c c:/users/test/adchpp/bin/config/
 (Windows)	adchppd.exe -i adchpp
 --------------------------------------	
