@@ -629,7 +629,7 @@ To check if adchpp service is running start the "services" application in admini
 image:images/img_adch_service_verify.png[]
 	
 == Issues and problems
-There's no perfect software all of them have some flaws, can preform wierd or have unwanted features. Its very important to make the developer aware of such problems. If you want to help improving ADCH\+\+ you can do so by giving feedback to the developers about found bugs helping them to recreate and fix the problems. To be able to help you must run a debug build of ADCH\+\+. If you cannot compile ADCH\+\+ in debug mode you can download nightly debug builds from http://builds.adcportal.com
+There's no perfect software all of them have some flaws, can preform wierd or have unwanted features. Its very important to make the developer aware of such problems. If you want to help improving ADCH\++ you can do so by giving feedback to the developers about found bugs helping them to recreate and fix the problems. To be able to help you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from http://builds.adcportal.com
 
 === Hub crash (core dumps)
 
@@ -664,7 +664,11 @@ TIP: Always submit adchppd.RPT to the bugtracker located at launchpad https://bu
 
 ==== If you run MinGW compiled debug build
 
-Follow the DC\+\+ backtrace reporting procedure at https://answers.launchpad.net/dcplusplus/+faq/337 you can get backtrace logs for ADCH\+\+ crashes in the very similar way. Please report the problem at https://bugs.launchpad.net/adchpp including the backtrace log as an attachment.
+Follow the DC++ backtrace reporting procedure at 
+
+https://answers.launchpad.net/dcplusplus/+faq/337
+
+you can get backtrace logs for ADCH++ crashes in the very similar way. Please report the problem at https://bugs.launchpad.net/adchpp including the backtrace log as an attachment.
 
 === LUA errors
 
