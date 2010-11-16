@@ -267,26 +267,6 @@ settings.description = {
 	validate = validate_de
 }
 
-settings.maxhubscount = {
-	alias = { maxhubs = true },
-
-	change = recheck_info,
-
-	help = "maximum number of connected hubs allowed, 0 = disabled",
-
-	value = 0
-}
-
-settings.maxhubslotratio = {
-	alias = { maxhsr = true },
-
-	change = recheck_info,
-
-	help = "maximum hub/slot ratio allowed, 0 = disabled",
-
-	value = 0
-}
-
 settings.maxmsglength = {
 	alias = { maxmessagelength = true },
 
@@ -301,26 +281,6 @@ settings.maxnicklength = {
 	help = "maximum number of characters allowed per nick, 0 = no limit",
 
 	value = 50
-}
-
-settings.maxsharesize = {
-	alias = { maxss = true },
-
-	change = recheck_info,
-
-	help = "maximum share size allowed in bytes, 0 = disabled",
-
-	value = 0
-}
-
-settings.maxslots = {
-	alias = { maxsl = true },
-
-	change = recheck_info,
-
-	help = "maximum number of opened upload slots allowed, 0 = disabled",
-
-	value = 0
 }
 
 settings.maxusers = {
@@ -362,16 +322,6 @@ settings.mindownloadlevel = {
 	value = 0
 }
 
-settings.minhubslotratio = {
-	alias = { minhsr = true },
-
-	change = recheck_info,
-
-	help = "minimum hub/slot ratio required, 0 = disabled",
-
-	value = 0
-}
-
 settings.minsearchlevel = {
 	change = function()
 		restricted_commands[adchpp.AdcCommand_CMD_SCH] = { level = settings.minsearchlevel.value, str = "search" }
@@ -379,26 +329,6 @@ settings.minsearchlevel = {
 	end,
 
 	help = "minimum level to search - hub restart recommended",
-
-	value = 0
-}
-
-settings.minsharesize = {
-	alias = { minss = true },
-
-	change = recheck_info,
-
-	help = "minimum share size allowed in bytes, 0 = disabled",
-
-	value = 0
-}
-
-settings.minslots = {
-	alias = { minsl = true },
-
-	change = recheck_info,
-
-	help = "minimum number of opened upload slots required, 0 = disabled",
 
 	value = 0
 }
@@ -828,57 +758,6 @@ verify_info = function(c, cid, nick)
 		return false
 	end
 
-	local ss = base.tonumber(c:getField("SS"))
-	if ss then
-		if settings.minsharesize.value > 0 and ss < settings.minsharesize.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your share size (" .. c:getField("SS") .. " B) is too low, the minimum required size is " .. base.tostring(settings.minsharesize.value) .. " bytes")
-			return false
-		end
-	
-		if settings.maxsharesize.value > 0 and ss > settings.minsharesize.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your share size (" .. c:getField("SS") .. " B) is too high, the maximum allowed size is " .. base.tostring(settings.minsharesize.value) .. " bytes")
-			return false
-		end
-	end
-
-	local sl = base.tonumber(c:getField("SL"))
-	if sl then
-		if settings.minslots.value > 0 and sl < settings.minslots.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your number of opened upload slots (" .. c:getField("SL") .. ") is too few, the minimum required number of slots is " .. base.tostring(settings.minslots.value))
-			return false
-		end
-
-		if settings.maxslots.value > 0 and sl > settings.maxslots.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your number of opened upload slots (" .. c:getField("SL") .. ") is too high, the maximum allowed number of slots is " .. base.tostring(settings.maxslots.value))
-			return false
-		end
-	end
-
-	local h1 = base.tonumber(c:getField("HN"))
-	local h2 = base.tonumber(c:getField("HR"))
-	local h3 = base.tonumber(c:getField("HO"))
-	local h
-	if (h1 and h2 and h3) then
-		h = base.tonumber(h1) + base.tonumber(h2) + base.tonumber(h3)
-		if settings.maxhubscount.value > 0 and h > settings.maxhubscount.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "The number of hubs you're connected to (" .. base.tostring(h) .. ") is too high, the maximum allowed hubs count is " .. base.tostring(settings.maxhubscount.value))
-			return false
-		end
-	end
-
-	if sl and h and sl > 0 and h > 0 then -- Correct hubcount may not arrive with the first info
-		local r = sl / h
-		if settings.minhubslotratio.value > 0 and r < settings.minhubslotratio.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your hubs/slots ratio (" .. base.tostring(r) .. ") is too low, you must open up more upload slots or disconnect from some hubs to achieve ratio " .. base.tostring(settings.minhubslotratio.value))
-			return false
-		end
-
-		if settings.maxhubslotratio.value > 0 and r > settings.minhubslotratio.value then
-			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your hubs/slots ratio (" .. base.tostring(r) .. ") is too high, you must lower your number of opened upload slots or connect to more hubs to achieve ratio " .. base.tostring(settings.maxhubslotratio.value))
-			return false
-		end
-	end
-
 	return true
 end
 
@@ -904,7 +783,7 @@ local function onSUP(c, cmd)
 
 	c:send(hub:getSUP())
 	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-	:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
+		:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
 
 	local entities = cm:getEntities()
 	local uc = entities:size()
