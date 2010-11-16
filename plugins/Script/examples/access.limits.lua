@@ -1,3 +1,5 @@
+-- This script contains basic login right limits such as min/max slots, hubs, share etc
+
 local base = _G
 
 module("access.limits.lua")

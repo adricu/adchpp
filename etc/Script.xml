@@ -4,6 +4,8 @@
 		<Script>access.lua</Script>
 		<Script>access.bans.lua</Script>
 		<Script>access.limits.lua</Script>
+		<Script>access.op.lua</Script>
+		<Script>access.bot.lua</Script>
 		<Script>history.lua</Script>
 		<Script>motd.lua</Script>
 	</Engine>

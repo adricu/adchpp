@@ -192,69 +192,6 @@ settings.allowreg = {
 	value = 1
 }
 
-settings.botcid = {
-	alias = { botid = true },
-
-	help = "CID of the bot, restart the hub after the change",
-
-	value = adchpp.CID_generate():toBase32(),
-
-	validate = function(new)
-		if adchpp.CID(new):isZero() then
-			return "the CID must be a valid 39-byte base32 representation"
-		end
-	end
-}
-
-settings.botname = {
-	alias = { botnick = true, botni = true },
-
-	change = function()
-		if bot then
-			bot:setField("NI", settings.botname.value)
-			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("NI", settings.botname.value):getBuffer())
-		end
-	end,
-
-	help = "name of the hub bot",
-
-	value = "Bot",
-
-	validate = validate_ni
-}
-
-settings.botdescription = {
-	alias = { botdescr = true, botde = true },
-
-	change = function()
-		if bot then
-			bot:setField("DE", settings.botdescription.value)
-			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("DE", settings.botdescription.value):getBuffer())
-		end
-	end,
-
-	help = "description of the hub bot",
-
-	value = "",
-
-	validate = validate_de
-}
-
-settings.botemail = {
-	alias = { botmail = true, botem = true },
-
-	change = function()
-		if bot then
-			bot:setField("EM", settings.botemail.value)
-			cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_BROADCAST, bot:getSID()):addParam("EM", settings.botemail.value):getBuffer())
-		end
-	end,
-
-	help = "e-mail of the hub bot",
-
-	value = ""
-}
-
 settings.description = {
 	alias = { hubdescription = true },
 
@@ -1281,65 +1218,6 @@ commands.info = {
 	user_command = { user_params = { "%[userNI]" } }
 }
 
-commands.kick = {
-	alias = { drop = true, dropuser = true, kickuser = true },
-
-	command = function(c, parameters)
-		local level = get_level(c)
-		if level < level_op then
-			return
-		end
-
-		local nick, reason = parameters:match("^(%S+) ?(.*)")
-		if not nick then
-			autil.reply(c, "You need to supply a nick")
-			return
-		end
-
-		local victim = cm:findByNick(nick)
-		if victim then
-			victim = victim:asClient()
-		end
-		if not victim then
-			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
-			return
-		end
-
-		local victim_cid = victim:getCID():toBase32()
-		local victim_user = get_user(victim_cid, 0)
-		if level <= victim_user.level then
-			autil.reply(c, "You can't kick users whose level is higher or equal than yours")
-			return
-		end
-
-		local text = "You have been kicked"
-		if string.len(reason) > 0 then
-			text = text .. " (reason: " .. reason .. ")"
-		end
-		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
-			cmd:addParam("ID" .. adchpp.AdcCommand_fromSID(c:getSID()))
-			:addParam("MS" .. text)
-		end)
-		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") has been kicked")
-	end,
-
-	help = "user [reason] - disconnect the user, she can reconnect whenever she wants to",
-
-	protected = is_op,
-
-	user_command = {
-		hub_params = {
-			autil.ucmd_line("User"),
-			autil.ucmd_line("Reason (facultative)")
-		},
-		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Kick",
-		user_params = {
-			"%[userNI]",
-			autil.ucmd_line("Reason (facultative)")
-		}
-	}
-}
-
 commands.listregs = {
 	alias = { listreg = true, listregged = true, reggedusers = true, showreg = true, showregs = true, showregged = true },
 
@@ -1374,66 +1252,6 @@ commands.listregs = {
 	protected = function(c) return not get_user_c(c).is_default end,
 
 	user_command = { name = "List regs" }
-}
-
-commands.mass = {
-	alias = { massmessage = true },
-
-	command = function(c, parameters)
-		if not commands.mass.protected(c) then
-			return
-		end
-
-		local level_pos, _, level = parameters:find(" ?(%d*)$")
-		local message = parameters:sub(0, level_pos - 1)
-		if #message <= 0 then
-			autil.reply(c, "You need to supply a message")
-			return
-		end
-		if string.len(level) > 0 then
-			level = base.tonumber(level)
-		end
-
-		local entities = cm:getEntities()
-		local size = entities:size()
-		if size == 0 then
-			return
-		end
-
-		local mass_cmd = autil.pm(message, bot:getSID(), 0)
-
-		local count = 0
-		for i = 0, size - 1 do
-			local other = entities[i]:asClient()
-			if other then
-				local ok = string.len(level) == 0 or level <= 0
-				if not ok then
-					local user = get_user_c(other)
-					ok = user.level >= level
-				end
-
-				if ok then
-					mass_cmd:setTo(other:getSID())
-					other:send(mass_cmd)
-					count = count + 1
-				end
-			end
-		end
-
-		autil.reply(c, "Message sent to " .. count .. " users")
-	end,
-
-	help = "message [min-level]",
-
-	protected = is_op,
-
-	user_command = {
-		name = "Hub management" .. autil.ucmd_sep .. "Mass message",
-		params = {
-			autil.ucmd_line("Message"),
-			autil.ucmd_line("Minimum level (facultative)")
-		}
-	}
 }
 
 commands.myip = {
@@ -1477,58 +1295,6 @@ commands.mypass = {
 	user_command = {
 		name = "My pass",
 		params = { autil.ucmd_line("New password") }
-	}
-}
-
-commands.redirect = {
-	alias = { forward = true },
-
-	command = function(c, parameters)
-		local level = get_level(c)
-		if level < level_op then
-			return
-		end
-
-		local nick, address = parameters:match("^(%S+) (.+)")
-		if not nick or not address then
-			autil.reply(c, "You need to supply a nick and an address")
-			return
-		end
-
-		local victim = cm:findByNick(nick)
-		if victim then
-			victim = victim:asClient()
-		end
-		if not victim then
-			autil.reply(c, "No user nick-named \"" .. nick .. "\"")
-			return
-		end
-
-		local victim_cid = victim:getCID():toBase32()
-		local victim_user = get_user(victim_cid, 0)
-		if level <= victim_user.level then
-			autil.reply(c, "You can't redirect users whose level is higher or equal than yours")
-			return
-		end
-
-		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd) cmd:addParam("RD" .. address) end)
-		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") has been redirected to \"" .. address .. "\"")
-	end,
-
-	help = "nick address",
-
-	protected = is_op,
-
-	user_command = {
-		hub_params = {
-			autil.ucmd_line("Nick"),
-			autil.ucmd_line("Address")
-		},
-		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Redirect",
-		user_params = {
-			"%[userNI]",
-			autil.ucmd_line("Address")
-		}
 	}
 }
 
@@ -1669,23 +1435,26 @@ commands.topic = {
 	}
 }
 
+function handle_plus_command(c, msg)
+	local command, parameters = msg:match("^%+(%a+) ?(.*)")
+	if command then
+		for k, v in base.pairs(commands) do
+			if k == command or (v.alias and v.alias[command]) then
+				add_stats('+' .. command)
+				v.command(c, parameters)
+				return true
+			end
+		end
+	end
+	
+	return false
+end
+
 local function onMSG(c, cmd)
 	local msg = cmd:getParam(0)
 
-	local bot = autil.reply_from and autil.reply_from:getSID() == bot:getSID()
-	if not autil.reply_from or bot then
-		local command, parameters = msg:match("^%+(%a+) ?(.*)")
-		if command then
-			for k, v in base.pairs(commands) do
-				if k == command or (v.alias and v.alias[command]) then
-					add_stats('+' .. command)
-					v.command(c, parameters)
-					return false
-				end
-			end
-		end
-		if bot then
-			autil.reply(c, 'Invalid command, send "+help" for a list of available commands')
+	if not autil.reply_from then
+		if handle_plus_command(c, msg) then
 			return false
 		end
 	end
@@ -1781,21 +1550,6 @@ base.pcall(load_users)
 if not base.pcall(load_settings) then
 	base.pcall(save_settings) -- save initial settings
 end
-
-bot = cm:createSimpleBot()
-bot:setCID(adchpp.CID(settings.botcid.value))
-bot:setField("ID", settings.botcid.value)
-bot:setField("NI", settings.botname.value)
-bot:setField("DE", settings.botdescription.value)
-bot:setField("EM", settings.botemail.value)
-bot:setFlag(adchpp.Entity_FLAG_OP)
-bot:setFlag(adchpp.Entity_FLAG_SU)
-bot:setFlag(adchpp.Entity_FLAG_OWNER)
-cm:regBot(bot)
-
-autil.on_unloaded(_NAME, function()
-	bot:disconnect(adchpp.Util_REASON_PLUGIN)
-end)
 
 table.foreach(extensions, function(_, extension)
 	cm:getEntity(adchpp.AdcCommand_HUB_SID):addSupports(adchpp.AdcCommand_toFourCC(extension))

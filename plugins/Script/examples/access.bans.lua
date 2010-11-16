@@ -1,3 +1,5 @@
+-- This script contains commands and settings related to banning and muting users
+
 -- TODO: clear expired bans with timer
 
 local base=_G
