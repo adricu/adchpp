@@ -13,6 +13,8 @@ local access = base.access
 -- Where to read/write history file - set to nil to disable persistent history
 local history_file = adchpp.Util_getCfgPath() .. "history.txt"
 
+local cm = adchpp.getCM()
+
 local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
@@ -23,23 +25,29 @@ local pos = 0
 
 local messages = {}
 
-access.settings.history_max = {
+access.add_setting('history_max', {
 	help = "number of messages to keep for +history",
 
 	value = 500
-}
+})
 
-access.settings.history_default = {
+access.add_setting('history_default', {
 	help = "number of messages to display in +history if the user doesn't select anything else",
 
 	value = 50
-}
+})
 
-access.settings.history_prefix = {
+access.add_setting('history_method', {
+	help = "strategy used by the +history script to record messages, restart the hub after the change, 1 = use a hidden bot, 0 = direct ADCH++ interface",
+
+	value = 1
+})
+
+access.add_setting('history_prefix', {
 	help = "prefix to put before each message in +history",
 
 	value = "[%Y-%m-%d %H:%M:%S] "
-}
+})
 
 local function idx(p)
 	return (p % access.settings.history_max.value) + 1
@@ -118,10 +126,19 @@ local function load_messages()
 	end
 end
 
-local function onMSG(entity, cmd)
-	local nick = entity:getField("NI")
+local function parse(cmd)
+	if cmd:getCommand() ~= adchpp.AdcCommand_CMD_MSG or cmd:getType() ~= adchpp.AdcCommand_TYPE_BROADCAST then
+		return
+	end
+
+	local from = cm:getEntity(cmd:getFrom())
+	if not from then
+		return
+	end
+
+	local nick = from:getField("NI")
 	if #nick < 1 then
-		return true
+		return
 	end
 
 	local now = os.date(access.settings.history_prefix.value)
@@ -130,22 +147,34 @@ local function onMSG(entity, cmd)
 	pos = pos + 1
 
 	base.pcall(save_messages)
-
-	return true
 end
 
-local function onReceive(entity, cmd, ok)
-	if not ok then
-		return ok
-	end
-
-	if cmd:getCommand() == adchpp.AdcCommand_CMD_MSG and cmd:getType() == adchpp.AdcCommand_TYPE_BROADCAST then
-		return onMSG(entity, cmd)
-	end
-
-	return true
-end
+base.pcall(access.load_settings)
 
 base.pcall(load_messages)
 
-history_1 = adchpp.getCM():signalReceive():connect(onReceive)
+if access.settings.history_method.value == 0 then
+	history_1 = cm:signalReceive():connect(function(entity, cmd, ok)
+		if not ok then
+			return ok
+		end
+
+		parse(cmd)
+
+		return true
+	end)
+
+else
+	hidden_bot = cm:createBot(function(bot, buffer)
+		parse(adchpp.AdcCommand(buffer))
+	end)
+	hidden_bot:setField('ID', hidden_bot:getCID():toBase32())
+	hidden_bot:setField('NI', _NAME .. '-hidden_bot')
+	hidden_bot:setField('DE', 'Hidden bot used by the ' .. _NAME .. ' script')
+	hidden_bot:setField('HI', 1)
+	cm:regBot(hidden_bot)
+
+	autil.on_unloaded(_NAME, function()
+		hidden_bot:disconnect(adchpp.Util_REASON_PLUGIN)
+	end)
+end

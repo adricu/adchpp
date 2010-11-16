@@ -537,6 +537,20 @@ local function save_users()
 	file:close()
 end
 
+function add_setting(name, options)
+	local change = false
+	if settings[name] then
+		change = settings[name].value ~= options.value
+		options.value = settings[name].value
+	end
+
+	settings[name] = options
+
+	if change and options.change then
+		settings[name].change()
+	end
+end
+
 local function load_settings()
 	local file = io.open(settings_file, "r")
 	if not file then
@@ -564,6 +578,9 @@ local function load_settings()
 			if change and settings[k].change then
 				settings[k].change()
 			end
+		else
+			-- must have been regged by a script that has not been loaded yet
+			settings[k] = { value = v }
 		end
 	end
 
