@@ -12,6 +12,7 @@
 * Fix an uninitialized member issue resulting in random behaviour
 * [L#508641] Make bot disconnect asynchronous
 * Re-add missing bloom stats
+* [L#609435] Fix bloom race condition
 * Add basic rules (sharesize, slots, etc...)
 * Update user guide
 

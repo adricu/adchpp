@@ -2,6 +2,7 @@
 <ScriptPlugin>
 	<Engine language="lua" scriptPath="Scripts/">
 		<Script>access.lua</Script>
+		<Script>access.bans.lua</Script>
 		<Script>history.lua</Script>
 		<Script>motd.lua</Script>
 	</Engine>
