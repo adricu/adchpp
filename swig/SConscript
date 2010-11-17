@@ -6,30 +6,26 @@ targets = []
 build_path = dev.get_build_path(source_path)
 
 def runCommand(cmd):
-	import os
+	import subprocess
 	try:
-		i, o = os.popen4(cmd)
-		i.close()
-		output = o.read()
-		o.close()
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		(output, err) = p.communicate()
 		return output
 	except Exception,e:
+		print e
 		return ""
 
 def getRbConf(name):
-	if dev.env['PLATFORM'] == 'win32':
-		return runCommand("ruby -rmkmf -e \"print Config.expand('$(" + name + ")')\"")
-	else:
-		return runCommand("ruby -rmkmf -e \"print Config.expand('\$(" + name + ")')\"")
+	return runCommand(['ruby', '-rmkmf', '-e', "print Config.expand('$(" + name + ")')"])
 
 def buildRbModule():
-	if not runCommand("ruby -v"):
+	if not runCommand(['ruby', '-v']):
 		print "Ruby not found"
 		return
 	
-	env = dev.env.Copy()
+	env = dev.env.Clone()
 	
-	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby'])
+	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby','-autorename'])
 	f = env.CFile(target=dev.get_build_path(source_path) + 'ruby_wrap.cxx', source='ruby.i')
 	
 	import distutils.sysconfig
@@ -39,9 +35,14 @@ def buildRbModule():
 		print "Ruby libdir not found"
 		return 
 	
-	incdir = getRbConf("archdir")
+	incdir = getRbConf("rubyhdrdir")
 	if not incdir:
-		print "Ruby archdir not found"
+		print "Ruby hdrdir not found"
+		return
+
+	arch = getRbConf("arch")
+	if not arch:
+		print "Ruby arch not found"
 		return
 
 	soname = getRbConf("RUBY_SO_NAME")
@@ -51,9 +52,9 @@ def buildRbModule():
 	
 	if '_DEBUG' in env['CPPDEFINES']:
 		env['CPPDEFINES'].remove('_DEBUG')
-	
+	import os.path
 	env.Append(LIBPATH=[libdir])
-	env.Append(CPPPATH=['#', incdir])
+	env.Append(CPPPATH=['#', incdir, os.path.join(incdir, arch)])
 	env.Append(LIBS=[soname, 'adchpp'])
 		
 	rb = env.SharedLibrary(dev.get_target(source_path, 'rbadchpp'), [f],
@@ -168,7 +169,7 @@ def buildPHPModule():
 	php_adchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(php_adchpp)
 
-# buildRbModule() - needs threading sorted out
+buildRbModule()
 
 buildPyModule()
 
