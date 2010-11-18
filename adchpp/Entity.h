@@ -49,19 +49,20 @@ public:
 		FLAG_SU = 0x08,
 		FLAG_OWNER = 0x10,
 		FLAG_HUB = 0x20,
-		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB,
+		FLAG_HIDDEN = 0x40,
+		MASK_CLIENT_TYPE = FLAG_BOT | FLAG_REGISTERED | FLAG_OP | FLAG_SU | FLAG_OWNER | FLAG_HUB | FLAG_HIDDEN,
 
 		FLAG_PASSWORD = 0x100,
-		FLAG_HIDDEN = 0x200,
+
 		/** Extended away, no need to send msg */
-		FLAG_EXT_AWAY = 0x400,
+		FLAG_EXT_AWAY = 0x200,
 
 		/** Plugins can use these flags to disable various checks */
 		/** Bypass ip check */
-		FLAG_OK_IP = 0x800,
+		FLAG_OK_IP = 0x400,
 
 		/** This entity is now a ghost being disconnected, totally ignored by ADCH++ */
-		FLAG_GHOST = 0x1000
+		FLAG_GHOST = 0x800
 	};
 
 

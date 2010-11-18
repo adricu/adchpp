@@ -149,8 +149,6 @@ local function parse(cmd)
 	base.pcall(save_messages)
 end
 
-base.pcall(access.load_settings)
-
 base.pcall(load_messages)
 
 if access.settings.history_method.value == 0 then
@@ -171,7 +169,7 @@ else
 	hidden_bot:setField('ID', hidden_bot:getCID():toBase32())
 	hidden_bot:setField('NI', _NAME .. '-hidden_bot')
 	hidden_bot:setField('DE', 'Hidden bot used by the ' .. _NAME .. ' script')
-	hidden_bot:setField('HI', 1)
+	hidden_bot:setFlag(adchpp.Entity_FLAG_HIDDEN)
 	cm:regBot(hidden_bot)
 
 	autil.on_unloaded(_NAME, function()
