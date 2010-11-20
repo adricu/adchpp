@@ -481,40 +481,42 @@ A simple way to find out how commands work is by typing +help <command>. To see 
 +help cfg
 --------------------------------------
 
-List of all settings variables:
-	address - current value: adc://myhub.com:411 - host address (DNS or IP) (aliases: dns, host)
-	allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = allow, 0 = disallow
-	allowreg - current value: 0 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
-	botcid - current value: BOFV3JDRP4ETJ0SITVGUDSE2VPO4UB3EC7V2TVY - CID of the bot, restart the hub after the change (aliases: botid)
-	botdescription - current value:  - description of the hub bot (aliases: botde, botdescr)
-	botemail - current value:  - e-mail of the hub bot (aliases: botem, botmail)
-	botname - current value: -Bot- - name of the hub bot (aliases: botni, botnick)
-	description - current value: This cool hub - hub description (aliases: hubdescription)
-	history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
-	history_max - current value: 500 - number of messages to keep for +history
-	history_method - current value: 1 - strategy used by the +history script to record messages, restart the hub after the change, 1 = use a hidden bot, 0 = direct ADCH++ interface
-	history_prefix - current value: [%Y-%m-%d %H:%M:%S]  - prefix to put before each message in +history
-	maxhubscount - current value: 0 - maximum number of connected hubs allowed, 0 = disabled (aliases: maxhubs)
-	maxhubslotratio - current value: 0 - maximum hub/slot ratio allowed, 0 = disabled (aliases: maxhsr)
-	maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
-	maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
-	maxsharesize - current value: 0 - maximum share size allowed in bytes, 0 = disabled (aliases: maxss)
-	maxslots - current value: 0 - maximum number of opened upload slots allowed, 0 = disabled (aliases: maxsl)
-	maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
-	menuname - current value: My Menu - title of the main user command menu sent to clients (aliases: ucmdname)
-	minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
-	mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
-	minhubslotratio - current value: 0 - minimum hub/slot ratio required, 0 = disabled (aliases: minhsr)
-	minsearchlevel - current value: 2 - minimum level to search - hub restart recommended
-	minsharesize - current value: 0 - minimum share size allowed in bytes, 0 = disabled (aliases: minss)
-	minslots - current value: 0 - minimum number of opened upload slots required, 0 = disabled (aliases: minsl)
-	name - current value: Some Hub - hub name (aliases: hubname)
-	network - current value: N/A
-	owner - current value: Some Owner - owner name (aliases: ownername)
-	passinlist - current value: 0 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
-	sendversion - current value: 1 - send hub version information at login, 1 = alllow, 0 = disallow (aliases: displayversion)
-	topic - current value: some topic
-	website - current value: http://www.someadress.com (aliases: url)
+
+  List of all settings variables:
+  address - current value: adc://myhub.com:411 - host address (DNS or IP) (aliases: dns, host)
+  allownickchange - current value: 1 - authorize regged users to connect with a different nick, 1 = allow, 0 = disallow
+  allowreg - current value: 0 - authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow (aliases: allowregistration)
+  botcid - current value: BOFV3JDRP4ETJ0SITVGUDSE2VPO4UB3EC7V2TVY - CID of the bot, restart the hub after the change (aliases: botid)
+  botdescription - current value:  - description of the hub bot (aliases: botde, botdescr)
+  botemail - current value:  - e-mail of the hub bot (aliases: botem, botmail)
+  botname - current value: -Bot- - name of the hub bot (aliases: botni, botnick)
+  description - current value: This cool hub - hub description (aliases: hubdescription)
+  history_default - current value: 50 - number of messages to display in +history if the user doesn't select anything else
+  history_max - current value: 500 - number of messages to keep for +history
+  history_method - current value: 1 - strategy used by the +history script to record messages, restart the hub after the change, 1 = use a hidden bot, 0 = direct ADCH++ interface
+  history_prefix - current value: [%Y-%m-%d %H:%M:%S]  - prefix to put before each message in +history
+  maxhubscount - current value: 0 - maximum number of connected hubs allowed, 0 = disabled (aliases: maxhubs)
+  maxhubslotratio - current value: 0 - maximum hub/slot ratio allowed, 0 = disabled (aliases: maxhsr)
+  maxmsglength - current value: 0 - maximum number of characters allowed per chat message, 0 = no limit (aliases: maxmessagelength)
+  maxnicklength - current value: 50 - maximum number of characters allowed per nick, 0 = no limit
+  maxsharesize - current value: 0 - maximum share size allowed in bytes, 0 = disabled (aliases: maxss)
+  maxslots - current value: 0 - maximum number of opened upload slots allowed, 0 = disabled (aliases: maxsl)
+  maxusers - current value: -1 - maximum number of non-registered users, -1 = no limit, 0 = no unregistered users allowed (aliases: max_users, user_max, usermax, users_max, usersmax)
+  menuname - current value: My Menu - title of the main user command menu sent to clients (aliases: ucmdname)
+  minchatlevel - current value: 0 - minimum level to chat - hub restart recommended
+  mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+  minhubslotratio - current value: 0 - minimum hub/slot ratio required, 0 = disabled (aliases: minhsr)
+  minsearchlevel - current value: 2 - minimum level to search - hub restart recommended
+  minsharesize - current value: 0 - minimum share size allowed in bytes, 0 = disabled (aliases: minss)
+  minslots - current value: 0 - minimum number of opened upload slots required, 0 = disabled (aliases: minsl)
+  name - current value: Some Hub - hub name (aliases: hubname)
+  network - current value: N/A
+  owner - current value: Some Owner - owner name (aliases: ownername)
+  passinlist - current value: 0 - show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show
+  sendversion - current value: 1 - send hub version information at login, 1 = alllow, 0 = disallow (aliases: displayversion)
+  topic - current value: some topic
+  website - current value: http://www.someadress.com (aliases: url)
+
 
 To change any value use
 
