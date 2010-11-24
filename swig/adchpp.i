@@ -28,9 +28,6 @@ using namespace adchpp;
 %include "std_pair.i"
 %include "std_map.i"
 
-#define SWIG_SHARED_PTR_NAMESPACE SHARED_PTR_NS
-%include "shared_ptr.i"
-
 %include "carrays.i"
 
 %array_functions(size_t, size_t);
@@ -54,6 +51,11 @@ typedef signed long long int64_t;
 typedef unsigned int time_t;
 
 using namespace std;
+
+template<typename T>
+struct shared_ptr {
+	T* operator->();
+};
 
 %inline%{
 void startup() {
@@ -80,18 +82,19 @@ namespace adchpp {
 	class Entity;
 	typedef std::vector<std::string> StringList;
 	typedef std::vector<uint8_t> ByteVector;
-	typedef std::vector<Entity*> EntityList;
 }
 
+%template(TServerInfoPtr) shared_ptr<adchpp::ServerInfo>;
+%template(TManagedConnectionPtr) shared_ptr<adchpp::ManagedConnection>;
 %template(TEntityList) std::vector<adchpp::Entity*>;
 %template(TStringList) std::vector<std::string>;
 %template(TByteVector) std::vector<uint8_t>;
-%template(TServerInfoList) std::vector<SWIG_SHARED_PTR_NAMESPACE::shared_ptr<adchpp::ServerInfo> >;
+%template(TServerInfoList) std::vector<shared_ptr<adchpp::ServerInfo> >;
 %template(TIntIntMap) std::map<std::string, int>;
 
 %inline%{
 	namespace adchpp {
-typedef std::vector<adchpp::Entity*> EntityList;
+	typedef std::vector<adchpp::Entity*> EntityList;
 	}
 %}
 
@@ -123,7 +126,7 @@ struct ManagedConnection {
 	void release();
 };
 
-typedef SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ManagedConnection> ManagedConnectionPtr;
+typedef shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 struct ServerInfo {
 	std::string ip;
@@ -133,13 +136,13 @@ struct ServerInfo {
 	bool secure() const;
 
 	%extend {
-		static adchpp::ServerInfoPtr create() {
-			return adchpp::ServerInfoPtr(new adchpp::ServerInfo);
+		static shared_ptr<adchpp::ServerInfo> create() {
+			return make_shared<ServerInfo>();
 		}
 	}
 };
 
-typedef SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ServerInfo> ServerInfoPtr;
+typedef shared_ptr<ServerInfo> ServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
 class SocketManager {
@@ -836,9 +839,6 @@ public:
 	}
 	CommandSignal& getCommandSignal(const std::string& commandName);
 };
-
-%template (ServerInfoPtr) SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ServerInfo>;
-%template (ManagedConnectionPtr) SWIG_SHARED_PTR_NAMESPACE::shared_ptr<ManagedConnection>;
 
 }
 

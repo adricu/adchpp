@@ -26,8 +26,16 @@ def buildRbModule():
 	env = dev.env.Clone()
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby','-autorename'])
-	f = env.CFile(target=dev.get_build_path(source_path) + 'ruby_wrap.cxx', source='ruby.i')
 	
+	ruby_wrap = dev.get_build_path(source_path) + 'ruby_wrap.cxx'
+
+	f = env.CFile(target=ruby_wrap, source='ruby.i')
+	
+	doc_path = env.Dir(dev.get_target(source_path, "doc/")).path
+	env["DOCPATH"] = doc_path
+	# TODO make it not rebuild every time...
+	# docs = env.Command(doc_path + "/index.html", ruby_wrap, "rdoc -o \"$DOCPATH\" $SOURCES")
+
 	import distutils.sysconfig
 	
 	libdir = getRbConf("libdir")
