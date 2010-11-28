@@ -893,7 +893,11 @@ local function gen_cfg_list()
 	end
 	local list = {}
 	for k, v in base.pairs(settings) do
-		table.insert(list, k .. ": <" .. cut_str(v.help or "no information", 30) .. ">")
+		local str = cut_str(v.help or "no information", 30)
+		str = string.gsub(str, '/', '//')
+		str = string.gsub(str, '%[', '{')
+		str = string.gsub(str, '%]', '}')
+		table.insert(list, k .. ": <" .. str .. ">")
 	end
 	table.sort(list)
 	commands.cfg.user_command.params[1] = autil.ucmd_list("Name of the setting to change", list)

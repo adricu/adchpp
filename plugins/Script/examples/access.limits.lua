@@ -91,14 +91,14 @@ local function onINF(c, cmd)
 	if c:getLevel() >= level_op then
 		return true
 	end
-	
+
 	local ss = base.tonumber(c:getField("SS"))
 	if ss then
 		if settings.minsharesize.value > 0 and ss < settings.minsharesize.value then
 			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your share size (" .. c:getField("SS") .. " B) is too low, the minimum required size is " .. base.tostring(settings.minsharesize.value) .. " bytes")
 			return false
 		end
-	
+
 		if settings.maxsharesize.value > 0 and ss > settings.minsharesize.value then
 			autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your share size (" .. c:getField("SS") .. " B) is too high, the maximum allowed size is " .. base.tostring(settings.minsharesize.value) .. " bytes")
 			return false
@@ -142,7 +142,7 @@ local function onINF(c, cmd)
 			return false
 		end
 	end
-	
+
 	return true
 end
 
