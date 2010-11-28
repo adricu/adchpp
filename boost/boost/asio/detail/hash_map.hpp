@@ -42,7 +42,7 @@ inline std::size_t calculate_hash_value(void* p)
     + (reinterpret_cast<std::size_t>(p) >> 3);
 }
 
-#if defined(BOOST_WINDOWS) || defined(__CYGWIN__)
+#if 0 and defined(BOOST_WINDOWS) || defined(__CYGWIN__)
 inline std::size_t calculate_hash_value(SOCKET s)
 {
   return static_cast<std::size_t>(s);

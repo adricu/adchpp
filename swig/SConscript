@@ -19,6 +19,10 @@ def getRbConf(name):
 	return runCommand(['ruby', '-rmkmf', '-e', "print Config.expand('$(" + name + ")')"])
 
 def buildRbModule():
+	if dev.is_win32():
+		# TODO could this work on Win?
+		return
+
 	if not runCommand(['ruby', '-v']):
 		print "Ruby not found"
 		return

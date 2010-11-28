@@ -3,13 +3,10 @@ import sys
 import os
 
 class Dev:
-	def __init__(self, mode, tools, env):
-
-		self.mode = mode
-		self.tools = tools
+	def __init__(self, env):
 		self.env = env
 
-		self.build_root = '#/build/' + self.mode + '-' + self.tools
+		self.build_root = '#/build/' + env['mode'] + '-' + env['tools']
 		if env['arch'] != 'x86':
 			self.build_root += '-' + env['arch']
 		self.build_root += '/'
@@ -27,7 +24,7 @@ class Dev:
 			self.env['LINKCOMSTR'] = "Linking $TARGET (static)"
 			self.env['ARCOMSTR'] = "Archiving $TARGET"
 			self.env['RCCOMSTR'] = "Resource $TARGET"
-		
+
 		self.env.SConsignFile()
 		self.env.SetOption('implicit_cache', '1')
 		self.env.SetOption('max_drift', 60*10)
@@ -36,21 +33,27 @@ class Dev:
 		if 'mingw' in self.env['TOOLS']:
 			self.env.Append(LINKFLAGS=["-Wl,--enable-runtime-pseudo-reloc"])
 
+			prefix = ''
+			if self.env.get('prefix') is not None:
+				prefix = self.env['prefix']
+			elif sys.platform != 'win32':
+				prefix = 'i386-mingw32-'
+
+			self.env['CC'] = prefix + 'gcc'
+			self.env['CXX'] = prefix + 'g++'
+			self.env['LINK'] = prefix + 'g++'
+			self.env['AR'] = prefix + 'ar'
+			self.env['RANLIB'] = prefix + 'ranlib'
+			self.env['RC'] = prefix + 'windres'
+
 			if sys.platform != 'win32':
-				if self.env.get('prefix') is not None:
-					prefix = self.env['prefix']
-				else:
-					prefix = 'i386-mingw32-'
-				self.env['CC'] = prefix + 'gcc'
-				self.env['CXX'] = prefix + 'g++'
-				self.env['LINK'] = prefix + 'g++'
-				self.env['AR'] = prefix + 'ar'
-				self.env['RANLIB'] = prefix + 'ranlib'
-				self.env['RC'] = prefix + 'windres'
 				self.env['PROGSUFFIX'] = '.exe'
 				self.env['LIBPREFIX'] = 'lib'
 				self.env['LIBSUFFIX'] = '.a'
 				self.env['SHLIBSUFFIX'] = '.dll'
+
+			# some distros of windres fail when they receive Win paths as input, so convert...
+			self.env['RCCOM'] = self.env['RCCOM'].replace('-i $SOURCE', '-i ${SOURCE.posix}', 1)
 
 	def is_win32(self):
 		return sys.platform == 'win32' or 'mingw' in self.env['TOOLS']
@@ -108,25 +111,30 @@ class Dev:
 		return local_env.SConscript(source_path + 'SConscript', exports={'dev' : self, 'source_path' : full_path })
 
 	def i18n (self, source_path, buildenv, sources, name):
-		if self.env['mode'] != 'release' and not self.env['i18n']:
+		if not self.env['i18n']:
 			return
 
 		p_oze = glob.glob('po/*.po')
-		languages = [ os.path.basename(po).replace ('.po', '') for po in p_oze ]
+
 		potfile = 'po/' + name + '.pot'
 		buildenv['PACKAGE'] = name
 		ret = buildenv.PotBuild(potfile, sources)
 
 		for po_file in p_oze:
 			buildenv.Precious(buildenv.PoBuild(po_file, [potfile]))
-			lang = os.path.basename(po_file)[:-3]
-			mo_file = self.get_target(source_path, "locale/" + lang + "/LC_MESSAGES/" + name + ".mo", True)
-			buildenv.MoBuild (mo_file, po_file)
 
+			lang = os.path.basename(po_file)[:-3]
+			locale_path = self.get_target(source_path, 'locale/' + lang + '/')
+
+			buildenv.MoBuild(locale_path + 'LC_MESSAGES/' + name + '.mo', po_file,
+					NAME_FILE = buildenv.File(locale_path + 'name.txt'))
+
+#		languages = [ os.path.basename(po).replace ('.po', '') for po in p_oze ]
 #		for lang in languages:
 #			modir = (os.path.join (install_prefix, 'share/locale/' + lang + '/LC_MESSAGES/'))
 #			moname = domain + '.mo'
 #			installenv.Alias('install', installenv.InstallAs (os.path.join (modir, moname), lang + '.mo'))
+
 		return ret
 
 	# support installs that only have an asciidoc.py file but no executable

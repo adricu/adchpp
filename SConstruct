@@ -105,11 +105,6 @@ if TARGET_ARCH == 'x64':
 
 env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, TARGET_ARCH = TARGET_ARCH, MSVS_ARCH = TARGET_ARCH)
 
-mode = env['mode']
-if mode not in gcc_flags:
-	print "Unknown mode, exiting"
-	Exit(1)
-
 # filter out boost from dependencies to get a speedier rebuild scan
 # this means that if boost changes, scons -c needs to be run
 # delete .sconsign.dblite to see the effects of this if you're upgrading
@@ -121,7 +116,7 @@ SourceFileScanner.function['.cpp'].recurse_nodes = filterBoost
 SourceFileScanner.function['.h'].recurse_nodes = filterBoost
 SourceFileScanner.function['.hpp'].recurse_nodes = filterBoost
 
-dev = Dev(mode, env['tools'], env)
+dev = Dev(env)
 dev.prepare()
 
 env.SConsignFile()
@@ -162,16 +157,16 @@ else:
 
 	env.Tool("gch", toolpath=".")
 
-env.Append(CPPDEFINES = defs[mode])
+env.Append(CPPDEFINES = defs[env['mode']])
 env.Append(CPPDEFINES = defs['common'])
 
-env.Append(CCFLAGS = flags[mode])
+env.Append(CCFLAGS = flags[env['mode']])
 env.Append(CCFLAGS = flags['common'])
 
-env.Append(CXXFLAGS = xxflags[mode])
+env.Append(CXXFLAGS = xxflags[env['mode']])
 env.Append(CXXFLAGS = xxflags['common'])
 
-env.Append(LINKFLAGS = link_flags[mode])
+env.Append(LINKFLAGS = link_flags[env['mode']])
 env.Append(LINKFLAGS = link_flags['common'])
 
 if dev.is_win32():
@@ -192,7 +187,7 @@ env.Append(SCANNERS=[SWIGScanner])
 # internationalization (ardour.org provided the initial idea)
 #
 
-po_args = ['msgmerge', '-q', '--update', '--backup=none', '--no-location', '$TARGET', '$SOURCE']
+po_args = ['msgmerge', '-q', '--update', '--backup=none', '$TARGET', '$SOURCE']
 po_bld = Builder (action = Action([po_args], 'Updating translation $TARGET from $SOURCES'))
 env.Append(BUILDERS = {'PoBuild' : po_bld})
 
@@ -209,7 +204,7 @@ pot_args = ['xgettext', '--from-code=UTF-8', '--foreign-user', '--package-name=$
 pot_bld = Builder (action = Action([pot_args], 'Extracting messages to $TARGET from $SOURCES'))
 env.Append(BUILDERS = {'PotBuild' : pot_bld})
 
-conf = Configure(env)
+conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
 
 if conf.CheckCHeader('poll.h'):
 	conf.env.Append(CPPDEFINES='HAVE_POLL_H')
@@ -217,11 +212,15 @@ if conf.CheckCHeader('sys/epoll.h'):
 	conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
 if conf.CheckLib('dl', 'dlopen'):
 	conf.env.Append(CPPDEFINES=['HAVE_DL'])
-if conf.CheckLib('pthread', 'pthread_create'):
-	conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
-if conf.CheckLib('ssl', 'SSL_connect') or os.path.exists(Dir('#/openssl/include').abspath):
-	conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
-	
+if not dev.is_win32():
+	if conf.CheckLib('pthread', 'pthread_create'):
+		conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
+	if conf.CheckLib('ssl', 'SSL_connect') or os.path.exists(Dir('#/openssl/include').abspath):
+		conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
+else:
+	if os.path.exists(Dir('#/openssl/include').abspath):
+		conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
+
 env = conf.Finish()
 
 #dev.intl = dev.build('intl/')
