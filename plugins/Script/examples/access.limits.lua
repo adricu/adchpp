@@ -17,7 +17,7 @@ local function log(message)
 	lm:log(_NAME, message)
 end
 
-settings.maxhubscount = {
+access.add_setting('maxhubscount', {
 	alias = { maxhubs = true },
 
 	change = recheck_info,
@@ -25,9 +25,9 @@ settings.maxhubscount = {
 	help = "maximum number of connected hubs allowed, 0 = disabled",
 
 	value = 0
-}
+})
 
-settings.maxhubslotratio = {
+access.add_setting('maxhubslotratio', {
 	alias = { maxhsr = true },
 
 	change = recheck_info,
@@ -35,9 +35,9 @@ settings.maxhubslotratio = {
 	help = "maximum hub/slot ratio allowed, 0 = disabled",
 
 	value = 0
-}
+})
 
-settings.maxsharesize = {
+access.add_setting('maxsharesize', {
 	alias = { maxss = true },
 
 	change = recheck_info,
@@ -45,9 +45,9 @@ settings.maxsharesize = {
 	help = "maximum share size allowed in bytes, 0 = disabled",
 
 	value = 0
-}
+})
 
-settings.maxslots = {
+access.add_setting('maxslots', {
 	alias = { maxsl = true },
 
 	change = recheck_info,
@@ -55,9 +55,9 @@ settings.maxslots = {
 	help = "maximum number of opened upload slots allowed, 0 = disabled",
 
 	value = 0
-}
+})
 
-settings.minhubslotratio = {
+access.add_setting('minhubslotratio', {
 	alias = { minhsr = true },
 
 	change = recheck_info,
@@ -65,9 +65,9 @@ settings.minhubslotratio = {
 	help = "minimum hub/slot ratio required, 0 = disabled",
 
 	value = 0
-}
+})
 
-settings.minsharesize = {
+access.add_setting('minsharesize', {
 	alias = { minss = true },
 
 	change = recheck_info,
@@ -75,9 +75,9 @@ settings.minsharesize = {
 	help = "minimum share size allowed in bytes, 0 = disabled",
 
 	value = 0
-}
+})
 
-settings.minslots = {
+access.add_setting('minslots', {
 	alias = { minsl = true },
 
 	change = recheck_info,
@@ -85,7 +85,7 @@ settings.minslots = {
 	help = "minimum number of opened upload slots required, 0 = disabled",
 
 	value = 0
-}
+})
 
 local function onINF(c, cmd)
 	if c:getLevel() >= level_op then

@@ -12,7 +12,7 @@ local settings = access.settings
 local commands = access.commands
 local cm = adchpp.getCM()
 
-settings.botcid = {
+access.add_setting('botcid', {
 	alias = { botid = true },
 
 	help = "CID of the bot, restart the hub after the change",
@@ -24,9 +24,9 @@ settings.botcid = {
 			return "the CID must be a valid 39-byte base32 representation"
 		end
 	end
-}
+})
 
-settings.botname = {
+access.add_setting('botname', {
 	alias = { botnick = true, botni = true },
 
 	change = function()
@@ -41,9 +41,9 @@ settings.botname = {
 	value = "Bot",
 
 	validate = validate_ni
-}
+})
 
-settings.botdescription = {
+access.add_setting('botdescription', {
 	alias = { botdescr = true, botde = true },
 
 	change = function()
@@ -58,9 +58,9 @@ settings.botdescription = {
 	value = "",
 
 	validate = validate_de
-}
+})
 
-settings.botemail = {
+access.add_setting('botemail', {
 	alias = { botmail = true, botem = true },
 
 	change = function()
@@ -73,7 +73,7 @@ settings.botemail = {
 	help = "e-mail of the hub bot",
 
 	value = ""
-}
+})
 
 local function onMSG(c, cmd)
 	local bot = autil.reply_from and autil.reply_from:getSID() == access.bot:getSID()
