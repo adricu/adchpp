@@ -489,7 +489,7 @@ end
 
 local default_user = { level = 0, is_default = true }
 
-local function get_user(cid, nick)
+function get_user(cid, nick)
 	local user
 
 	if cid then
@@ -507,7 +507,7 @@ local function get_user(cid, nick)
 	return user
 end
 
-local function get_user_c(c)
+function get_user_c(c)
 	return get_user(c:getCID():toBase32(), c:getField("NI"))
 end
 
@@ -676,19 +676,20 @@ remove_user_commands = function(c)
 end
 
 verify_info = function(c, cid, nick)
-	if not cid or #cid == 0 then
+	if cid and #cid > 0 then
+		c:setCID(adchpp.CID(cid))
+	else
 		cid = c:getCID():toBase32()
 	end
-	if not nick or #nick == 0 then
+	if nick and #nick > 0 then
+		c:setField("NI", nick)
+	else
 		nick = c:getField("NI")
 	end
 	if #nick == 0 or #cid == 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return false
 	end
-
-	local user = get_user(cid, nick) -- can't use get_user_c if checking the first INF
-	local level = user.level
 
 	if settings.maxnicklength.value > 0 and #nick > settings.maxnicklength.value then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your nick (" .. nick .. ") is too long, it must contain " .. base.tostring(settings.maxnicklength.value) .. " characters max")

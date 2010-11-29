@@ -1,16 +1,16 @@
 -- This script contains commands and settings related to banning and muting users
 
--- TODO: clear expired bans with timer
-
 local base=_G
 module("access.bans")
 
 base.require("luadchpp")
 local adchpp = base.luadchpp
 local access = base.require("access")
-local string = base.require("string")
 local autil = base.require("autil")
+local json = base.require("json")
 local io = base.require("io")
+local os = base.require("os")
+local string = base.require("string")
 
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
@@ -28,6 +28,7 @@ local commands = access.commands
 local level_op = access.level_op
 
 local cm = adchpp.getCM()
+local sm = adchpp.getSM()
 
 local function log(message)
 	lm:log(_NAME, message)
@@ -93,6 +94,9 @@ local function save_bans()
 	file:close()
 end
 
+local function ban_expiration_diff(ban)
+	return os.difftime(ban.expires, os.time())
+end
 
 local function clear_expired_bans()
 	local save = false
@@ -115,7 +119,7 @@ local function ban_expiration_string(ban)
 	if ban.expires then
 		local diff = ban_expiration_diff(ban)
 		if diff > 0 then
-			return "in " .. format_seconds(diff)
+			return "in " .. access.format_seconds(diff)
 		else
 			return "expired"
 		end
@@ -168,10 +172,6 @@ local function make_ban(level, reason, minutes)
 	return ban
 end
 
-local function ban_expiration_diff(ban)
-	return os.difftime(ban.expires, os.time())
-end
-
 commands.ban = {
 	alias = { banuser = true },
 
@@ -204,8 +204,9 @@ commands.ban = {
 			return
 		end
 
-		local victim_level = victim:getLevel()
-		if victim_user and level <= victim_evel then
+		local victim_cid = victim:getCID():toBase32()
+		local victim_user = access.get_user(victim_cid, 0)
+		if victim_user and level <= victim_user.level then
 			autil.reply(c, "You can't ban users whose level is higher or equal than yours")
 			return
 		end
@@ -557,8 +558,9 @@ commands.mute = {
 			return
 		end
 
-		local victim_level = victim:getLevel()
-		if level <= victim_level then
+		local victim_cid = victim:getCID():toBase32()
+		local victim_user = access.get_user(victim_cid, 0)
+		if victim_user and level <= victim_user.level then
 			autil.reply(c, "You can't mute users whose level is higher or equal than yours")
 			return
 		end
@@ -632,7 +634,7 @@ local function onINF(c, cmd)
 			end
 		end
 	end
-	if ban and ban.level > level then
+	if ban and ban.level > c:getLevel() then
 		dump_banned(c, ban)
 		return false
 	end
@@ -643,5 +645,7 @@ end
 base.pcall(load_bans)
 
 access.register_handler(adchpp.AdcCommand_CMD_MSG, onMSG, true)
-access.register_handler(adchpp.AdcCommand_CMD_INF, onINF, true)
+access.register_handler(adchpp.AdcCommand_CMD_INF, onINF)
 
+local cancel_timer = sm:addTimedJob(1000, clear_expired_bans)
+autil.on_unloading(_NAME, cancel_timer)

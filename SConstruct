@@ -215,7 +215,7 @@ if conf.CheckLib('dl', 'dlopen'):
 if not dev.is_win32():
 	if conf.CheckLib('pthread', 'pthread_create'):
 		conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
-	if conf.CheckLib('ssl', 'SSL_connect') or os.path.exists(Dir('#/openssl/include').abspath):
+	if conf.CheckLib('ssl', 'SSL_connect'):
 		conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
 else:
 	if os.path.exists(Dir('#/openssl/include').abspath):
