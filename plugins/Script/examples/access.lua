@@ -102,7 +102,7 @@ local sm = adchpp.getSM()
 local saltsHandle = pm:registerByteVectorData()
 
 -- forward declarations.
-local format_seconds, cut_str,
+local cut_str,
 send_user_commands, remove_user_commands,
 verify_info
 
@@ -871,7 +871,7 @@ local function onPAS(c, cmd)
 	return false
 end
 
-format_seconds = function(t)
+function format_seconds(t)
 	local t_d = math.floor(t / (60*60*24))
 	local t_h = math.floor(t / (60*60)) % 24
 	local t_m = math.floor(t / 60) % 60

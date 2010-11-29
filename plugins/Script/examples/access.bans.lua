@@ -647,5 +647,5 @@ base.pcall(load_bans)
 access.register_handler(adchpp.AdcCommand_CMD_MSG, onMSG, true)
 access.register_handler(adchpp.AdcCommand_CMD_INF, onINF)
 
-local cancel_timer = sm:addTimedJob(1000, clear_expired_bans)
+cancel_timer = sm:addTimedJob(1000, clear_expired_bans)
 autil.on_unloading(_NAME, cancel_timer)
