@@ -1533,15 +1533,12 @@ local function onReceive(entity, cmd, ok)
 		fn.getUser = get_user_c
 		fn.getLevel = function(c) return get_user_c(c).level end
 	end
-	
+
 	local ret = true
 	local handler = handlers[cmd:getCommand()]
 	if handler then
-		for k,v in base.pairs(handler) do
-			ret = v(c, cmd)
-			if not ret then
-				break
-			end
+		for _, v in base.pairs(handler) do
+			ret = v(c, cmd) and ret
 		end
 	end
 
