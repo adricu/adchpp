@@ -88,7 +88,7 @@ opts.AddVariables(
 	BoolVariable('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
 	BoolVariable('i18n', 'Rebuild i18n files in debug build', 'no'),
 	BoolVariable('nls', 'Build with internationalization support', 'yes'),
-	('prefix', 'Prefix to use when cross compiling', 'i386-mingw32-'),
+	('prefix', 'Prefix to use when cross compiling', ''),
 	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix')),
 	BoolVariable('docs', 'Build docs (requires asciidoc)', 'no')

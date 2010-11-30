@@ -45,7 +45,7 @@ if 'HAVE_PTHREAD' in env['CPPDEFINES']:
 if 'HAVE_OPENSSL' in env['CPPDEFINES']:
 	if dev.is_win32():
 		if env['CC'] == 'cl': # MSVC
-			if dev.mode == 'debug':
+			if env['mode'] == 'debug':
 				env.Prepend(LIBS = ['ssleay32d', 'libeay32d'])
 			else:
 				env.Prepend(LIBS = ['ssleay32', 'libeay32'])
