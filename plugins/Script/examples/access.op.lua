@@ -15,7 +15,7 @@ commands.kick = {
 	alias = { drop = true, dropuser = true, kickuser = true },
 
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -139,7 +139,7 @@ commands.redirect = {
 	alias = { forward = true },
 
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end

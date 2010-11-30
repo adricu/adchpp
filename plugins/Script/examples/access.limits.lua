@@ -17,8 +17,8 @@ local function log(message)
 	lm:log(_NAME, message)
 end
 
-function onINF(c, cmd)
-	if c:getLevel() >= level_op then
+local function onINF(c, cmd)
+	if access.get_level(c) >= level_op then
 		return true
 	end
 

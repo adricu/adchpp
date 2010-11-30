@@ -176,7 +176,7 @@ commands.ban = {
 	alias = { banuser = true },
 
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -240,7 +240,7 @@ commands.ban = {
 
 commands.bancid = {
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -286,7 +286,7 @@ commands.bancid = {
 
 commands.banip = {
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -332,7 +332,7 @@ commands.banip = {
 
 commands.bannick = {
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -378,7 +378,7 @@ commands.bannick = {
 
 commands.bannickre = {
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -419,7 +419,7 @@ commands.bannickre = {
 
 commands.banmsgre = {
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -462,7 +462,7 @@ commands.listbans = {
 	alias = { listban = true, listbanned = true, showban = true, showbans = true, showbanned = true },
 
 	command = function(c)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -509,7 +509,7 @@ commands.loadbans = {
 	alias = { reloadbans = true },
 
 	command = function(c)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -530,7 +530,7 @@ commands.mute = {
 	alias = { stfu = true },
 
 	command = function(c, parameters)
-		local level = c:getLevel()
+		local level = access.get_level(c)
 		if level < level_op then
 			return
 		end
@@ -599,7 +599,7 @@ local function onMSG(c, cmd)
 		return false
 	end
 
-	local level = c:getLevel()
+	local level = access.get_level(c)
 	local msg = cmd:getParam(0)
 
 	for re, reban in base.pairs(bans.msgsre) do
@@ -634,7 +634,7 @@ local function onINF(c, cmd)
 			end
 		end
 	end
-	if ban and ban.level > c:getLevel() then
+	if ban and ban.level > access.get_level(c) then
 		dump_banned(c, ban)
 		return false
 	end

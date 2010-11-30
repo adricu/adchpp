@@ -1526,14 +1526,6 @@ local function onReceive(entity, cmd, ok)
 		autil.reply_from = cm:getEntity(cmd:getTo())
 	end
 
-	-- TODO There has to be a better way of doing this...
-	local meta = base.getmetatable(c)
-	local fn = meta[".fn"]
-	if not fn.getUser then
-		fn.getUser = get_user_c
-		fn.getLevel = function(c) return get_user_c(c).level end
-	end
-
 	local ret = true
 	local handler = handlers[cmd:getCommand()]
 	if handler then
