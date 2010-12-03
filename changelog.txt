@@ -1,5 +1,5 @@
 * Export PluginManager::attention to scripts
-* Update Boost to version 1.44
+* Update Boost to version 1.45
 * [L#537905] Add redhat init scripts (thanks E_zombie)
 * [L#609436] Fix SCons warnings
 * Save some memory by not pre-allocating read buffer
@@ -7,7 +7,7 @@
 * [L#654218] Fix timer issues
 * Propagate error codes
 * Count write timeouts
-* Add PHP bindings
+* Start PHP and Ruby bindings
 * [L#610321] Fix some warnings
 * Fix an uninitialized member issue resulting in random behaviour
 * [L#508641] Make bot disconnect asynchronous
