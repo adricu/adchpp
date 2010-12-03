@@ -7,9 +7,13 @@ base.require("luadchpp")
 local adchpp = base.luadchpp
 local access = base.require("access")
 local autil = base.require("autil")
+local string = base.require("string")
 
 local commands = access.commands
 local is_op = access.is_op
+local level_op = access.level_op
+
+local cm = adchpp.getCM()
 
 commands.kick = {
 	alias = { drop = true, dropuser = true, kickuser = true },
@@ -95,12 +99,12 @@ commands.mass = {
 		end
 
 		local mass_cmd
-		if adchpp.bot then
-			mass_cmd = autil.pm(message, adchpp.bot:getSID(), 0)
+		if access.bot then
+			mass_cmd = autil.pm(message, access.bot:getSID(), 0)
 		else
 			mass_cmd = autil.info(message)
 		end
-		
+
 		local count = 0
 		for i = 0, size - 1 do
 			local other = entities[i]:asClient()
