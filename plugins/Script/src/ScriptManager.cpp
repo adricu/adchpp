@@ -24,28 +24,24 @@
 
 #include <adchpp/SimpleXML.h>
 #include <adchpp/File.h>
-#include <adchpp/TimerManager.h>
 #include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
 #include <adchpp/AdcCommand.h>
 #include <adchpp/Client.h>
 #include <adchpp/PluginManager.h>
+#include <adchpp/Core.h>
 
 using namespace std;
 using namespace std::placeholders;
 
-ScriptManager* ScriptManager::instance = 0;
 const string ScriptManager::className = "ScriptManager";
 
-ScriptManager::ScriptManager() {
+ScriptManager::ScriptManager(Core &core) : core(core) {
 	LOG(className, "Starting");
 
-	reloadConn = make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("reload",
-		std::bind(&ScriptManager::onReload, this, _1)));
-	statsConn = make_shared<ManagedConnection>(PluginManager::getInstance()->onCommand("stats",
-		std::bind(&ScriptManager::onStats, this, _1)));
-
-	load();
+	auto &pm = core.getPluginManager();
+	reloadConn = manage(pm.onCommand("reload",	std::bind(&ScriptManager::onReload, this, _1)));
+	statsConn = manage(pm.onCommand("stats", std::bind(&ScriptManager::onStats, this, _1)));
 }
 
 ScriptManager::~ScriptManager() {
@@ -60,14 +56,15 @@ void ScriptManager::clearEngines() {
 void ScriptManager::load() {
 	try {
 		SimpleXML xml;
-		xml.fromXML(File(Util::getCfgPath() + "Script.xml", File::READ).read());
+
+		xml.fromXML(File(core.getConfigPath() + "Script.xml", File::READ).read());
 		xml.stepIn();
 		while(xml.findChild("Engine")) {
 			const std::string& scriptPath = xml.getChildAttrib("scriptPath");
 			const std::string& language = xml.getChildAttrib("language");
 
 			if(language.empty() || language == "lua") {
-				engines.push_back(std::unique_ptr<LuaEngine>(new LuaEngine));
+				engines.push_back(std::unique_ptr<LuaEngine>(new LuaEngine(core)));
 			} else {
 				LOG(className, "Unrecognized language " + language);
 				continue;
@@ -92,7 +89,7 @@ void ScriptManager::reload() {
 }
 
 void ScriptManager::onReload(Entity& c) {
-	PluginManager::getInstance()->attention(std::bind(&ScriptManager::reload, this));
+	core.getPluginManager().attention(std::bind(&ScriptManager::reload, this));
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam("Reloading scripts"));
 }
 
@@ -101,5 +98,6 @@ void ScriptManager::onStats(Entity& c) {
 	for(auto i = engines.begin(), iend = engines.end(); i != iend; ++i) {
 		(*i)->getStats(tmp);
 	}
+
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(tmp));
 }

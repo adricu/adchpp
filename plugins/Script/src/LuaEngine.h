@@ -19,6 +19,8 @@
 #ifndef LUAENGINE_H_
 #define LUAENGINE_H_
 
+#include <adchpp/forward.h>
+
 #include "Engine.h"
 
 struct lua_State;
@@ -26,7 +28,7 @@ class LuaScript;
 
 class LuaEngine : public Engine {
 public:
-	LuaEngine();
+	LuaEngine(adchpp::Core &core);
 	virtual ~LuaEngine();
 
 	virtual Script* loadScript(const std::string& path, const std::string& filename, const ParameterMap& parameters);
@@ -43,5 +45,6 @@ private:
 	lua_State* l;
 
 	std::vector<LuaScript*> scripts;
+	adchpp::Core &core;
 };
 #endif /*LUAENGINE_H_*/

@@ -27,7 +27,7 @@ namespace adchpp {
 
 class ADCHPP_VISIBLE Hub : public Entity {
 public:
-	ADCHPP_DLL Hub();
+	ADCHPP_DLL Hub(ClientManager &cm);
 
 	virtual void send(const BufferPtr& cmd) { }
 	virtual void disconnect(Util::Reason reason) throw() { }

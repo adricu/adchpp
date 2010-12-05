@@ -79,37 +79,12 @@ inline void debugTrace(const char* format, ...)
 #define dcdrun(exp)
 #endif //NDEBUG
 
-// Make sure we're using the templates from algorithm...
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
 typedef std::vector<std::string> StringList;
 typedef StringList::iterator StringIter;
 typedef StringList::const_iterator StringIterC;
 
 typedef std::vector<uint8_t> ByteVector;
 typedef ByteVector::iterator ByteIter;
-
-/**
- * Initialize configuration.
- */ADCHPP_DLL void initialize(const std::string& path);
-
-/**
- * Load plugins and start listening for incoming connections
- */ADCHPP_DLL void startup(void (*f)());
-
-/**
- * Stop listening for incoming connections
- */ADCHPP_DLL void shutdown(void (*f)());
-
-/**
- * Release any resources held by adchpp. Before using any library routines again, you must call initalialize.
- */
-ADCHPP_DLL void cleanup();
 
 }
 

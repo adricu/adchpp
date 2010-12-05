@@ -21,8 +21,9 @@
 #include "Client.h"
 
 #include "ClientManager.h"
-#include "TimerManager.h"
+#include "Time.h"
 #include "SocketManager.h"
+#include "Core.h"
 
 namespace adchpp {
 
@@ -31,13 +32,13 @@ using namespace std::placeholders;
 
 size_t Client::defaultMaxCommandSize = 16 * 1024;
 
-Client* Client::create(const ManagedSocketPtr& ms, uint32_t sid) throw() {
-	Client* c = new Client(sid);
+Client* Client::create(ClientManager &cm, const ManagedSocketPtr& ms, uint32_t sid) throw() {
+	Client* c = new Client(cm, sid);
 	c->setSocket(ms);
 	return c;
 }
 
-Client::Client(uint32_t sid_) throw() : Entity(sid_), disconnecting(false),
+Client::Client(ClientManager &cm, uint32_t sid_) throw() : Entity(cm, sid_), disconnecting(false),
 	dataBytes(0), maxCommandSize(getDefaultMaxCommandSize()) {
 }
 
@@ -78,7 +79,7 @@ void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 }
 
 void Client::onConnected() throw() {
-	ClientManager::getInstance()->onConnected(*this);
+	cm.onConnected(*this);
 }
 
 void Client::onData(const BufferPtr& buf) throw() {
@@ -139,9 +140,10 @@ void Client::onData(const BufferPtr& buf) throw() {
 					disconnect(Util::REASON_INVALID_SID);
 					return;
 				}
-				ClientManager::getInstance()->onReceive(*this, cmd);
+
+				cm.onReceive(*this, cmd);
 			} catch(const ParseException&) {
-				ClientManager::getInstance()->onBadLine(*this, string((char*)buffer->data(), buffer->size()));
+				cm.onBadLine(*this, string((char*)buffer->data(), buffer->size()));
 			}
 			buffer.reset();
 		}
@@ -162,12 +164,12 @@ void Client::disconnect(Util::Reason reason) throw() {
 		socket->disconnect(5000, reason);
 
 		// We fail the client ASAP to release nicks etc used...
-		SocketManager::getInstance()->addJob(Handler0x<&Client::onFailed>(this));
+		cm.getCore().addJob(Handler0x<&Client::onFailed>(this));
 	}
 }
 
 void Client::onFailed(const boost::system::error_code& ec) throw() {
-	ClientManager::getInstance()->onFailed(*this, ec);
+	cm.onFailed(*this, ec);
 	delete this;
 }
 

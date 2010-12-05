@@ -21,7 +21,6 @@
 #include "ManagedSocket.h"
 
 #include "SocketManager.h"
-#include "TimerManager.h"
 
 namespace adchpp {
 
@@ -31,6 +30,15 @@ using namespace boost::asio;
 
 size_t ManagedSocket::defaultMaxBufferSize = 16 * 1024;
 time_t ManagedSocket::overflowTimeout = 60;
+
+ManagedSocket::ManagedSocket(SocketManager &sm, const AsyncStreamPtr &sock_) :
+	sock(sock_),
+	overflow(time::not_a_date_time),
+	disc(time::not_a_date_time),
+	maxBufferSize(getDefaultMaxBufferSize()),
+	lastWrite(time::not_a_date_time),
+	sm(sm)
+{ }
 
 ManagedSocket::~ManagedSocket() throw() {
 	dcdebug("ManagedSocket deleted\n");
@@ -49,7 +57,7 @@ size_t ManagedSocket::getQueuedBytes() const {
 }
 
 void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) throw() {
-	if((buf->size() == 0) || (disc > 0))
+	if((buf->size() == 0) || !disc.is_not_a_date_time())
 		return;
 
 	size_t queued = getQueuedBytes();
@@ -57,16 +65,16 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 	if(getMaxBufferSize() > 0 && queued + buf->size() > getMaxBufferSize()) {
 		if(lowPrio) {
 			return;
-		} else if(overflow > 0 && overflow + getOverflowTimeout() < GET_TIME()) {
+		} else if(!overflow.is_not_a_date_time() && overflow + time::millisec(getOverflowTimeout()) < time::now()) {
 			disconnect(5000, Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
-			overflow = GET_TIME();
+			overflow = time::now();
 		}
 	}
 
-	Stats::queueBytes += buf->size();
-	Stats::queueCalls++;
+	sm.queueBytes += buf->size();
+	sm.queueCalls++;
 
 	outBuf.push_back(buf);
 
@@ -87,20 +95,22 @@ struct Handler {
 }
 
 void ManagedSocket::prepareWrite() throw() {
-	if(lastWrite != 0 && TimerManager::getTime() > lastWrite + 60) {
+	if(lastWrite.is_not_a_date_time()) {	// Not writing
+		if(!outBuf.empty()) {
+			lastWrite = time::now();
+			sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(shared_from_this()));
+		}
+	} else if(time::now() > lastWrite + time::seconds(60)) {
 		disconnect(5000, Util::REASON_WRITE_TIMEOUT);
-	} else if(!outBuf.empty() && lastWrite == 0) {
-		lastWrite = TimerManager::getTime();
-		sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(shared_from_this()));
 	}
 }
 
 void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t bytes) throw() {
-	lastWrite = 0;
+	lastWrite = time::not_a_date_time;
 
 	if(!ec) {
-		Stats::sendBytes += bytes;
-		Stats::sendCalls++;
+		sm.sendBytes += bytes;
+		sm.sendCalls++;
 
 		while(bytes > 0) {
 			BufferPtr& p = *outBuf.begin();
@@ -113,14 +123,14 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 			}
 		}
 
-		if(overflow > 0) {
+		if(!overflow.is_not_a_date_time()) {
 			size_t left = getQueuedBytes();
 			if(left < getMaxBufferSize()) {
-				overflow = 0;
+				overflow = time::not_a_date_time;
 			}
 		}
 
-		if(disc && outBuf.empty()) {
+		if(!disc.is_not_a_date_time() && outBuf.empty()) {
 			sock->close();
 		} else {
 			prepareWrite();
@@ -158,8 +168,8 @@ void ManagedSocket::prepareRead2(const boost::system::error_code& ec, size_t) th
 void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t bytes) throw() {
 	if(!ec) {
 		try {
-			Stats::recvBytes += bytes;
-			Stats::recvCalls++;
+			sm.recvBytes += bytes;
+			sm.recvCalls++;
 
 			inBuf->resize(bytes);
 
@@ -188,7 +198,7 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 }
 
 void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
-	SocketManager::getInstance()->errors[code.message()]++;
+	sm.errors[code.message()]++;
 	if(failedHandler) {
 		failedHandler(code);
 		failedHandler = FailedHandler();
@@ -204,14 +214,14 @@ struct Disconnector {
 };
 
 void ManagedSocket::disconnect(size_t timeout, Util::Reason reason) throw() {
-	if(!disc) {
-		disc = GET_TICK() + timeout;
+	if(disc.is_not_a_date_time()) {
+		disc = time::now() + time::millisec(timeout);
 
 		Util::reasons[reason]++;
-		if(!lastWrite) {
+		if(lastWrite.is_not_a_date_time()) {	// Not writing
 			sock->close();
 		} else {
-			SocketManager::getInstance()->addJob(timeout, Disconnector(sock));
+			sm.addJob(timeout, Disconnector(sock));
 		}
 	}
 }

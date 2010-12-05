@@ -23,16 +23,16 @@
 
 #include "forward.h"
 #include "ServerInfo.h"
-#include "Singleton.h"
-#include "Thread.h"
 
-#include <boost/asio.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/deadline_timer.hpp>
 
 namespace adchpp {
 
-class SocketManager : public Singleton<SocketManager>, public Thread {
+class SocketManager {
 public:
 	typedef std::function<void()> Callback;
+
 	/** execute a function asynchronously */
 	ADCHPP_DLL void addJob(const Callback& callback) throw();
 	/** execute a function after the specified amount of time
@@ -54,7 +54,6 @@ public:
 	*/
 	ADCHPP_DLL Callback addTimedJob(const std::string& time, const Callback& callback);
 
-	void startup() throw(ThreadException);
 	void shutdown();
 
 	void setServers(const ServerInfoList& servers_) { servers = servers_; }
@@ -62,15 +61,27 @@ public:
 	typedef std::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 
+	// Temporary location for socket stats...
+	// TODO These should go somewhere else - plugin?
+	size_t queueCalls;
+	int64_t queueBytes;
+	size_t sendCalls;
+	int64_t sendBytes;
+	int64_t recvCalls;
+	int64_t recvBytes;
+
 	std::map<std::string, int> errors;
 
+	int run();
+
 private:
+	friend class Core;
 	friend class ManagedSocket;
 	friend class SocketFactory;
 
-	virtual int run();
-
 	void closeFactories();
+
+	Core &core;
 
 	boost::asio::io_service io;
 	std::unique_ptr<boost::asio::io_service::work> work;
@@ -82,9 +93,6 @@ private:
 
 	static const std::string className;
 
-	friend class Singleton<SocketManager>;
-	ADCHPP_DLL static SocketManager* instance;
-
 	typedef shared_ptr<boost::asio::deadline_timer> timer_ptr;
 	void addJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
 	Callback addTimedJob(const boost::asio::deadline_timer::duration_type& duration, const Callback& callback);
@@ -95,8 +103,7 @@ private:
 
 	void onLoad(const SimpleXML& xml) throw();
 
-	SocketManager();
-	virtual ~SocketManager();
+	SocketManager(Core &core);
 };
 
 }

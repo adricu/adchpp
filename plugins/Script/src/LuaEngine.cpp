@@ -24,6 +24,7 @@
 #include <adchpp/PluginManager.h>
 #include <adchpp/File.h>
 #include <adchpp/Util.h>
+#include <adchpp/Core.h>
 
 extern "C" {
 #include <lua.h>
@@ -61,11 +62,12 @@ namespace {
 	}
 }
 
-LuaEngine::LuaEngine() {
+LuaEngine::LuaEngine(Core &core) : core(core) {
 	l = lua_open();
 	luaL_openlibs(l);
-
-	prepare_cpath(l, PluginManager::getInstance()->getPluginPath());
+    lua_pushlightuserdata(l, &core);
+    lua_setglobal(l, "currentCore");
+	prepare_cpath(l, core.getPluginManager().getPluginPath());
 
 	setScriptPath(l, Util::emptyString);
 }
@@ -92,7 +94,7 @@ Script* LuaEngine::loadScript(const string& path, const string& filename, const 
 		return 0;
 
 	LuaScript* script = new LuaScript(this);
-	PluginManager::getInstance()->attention(std::bind(&LuaEngine::loadScript_, this, path, filename, script));
+	core.getPluginManager().attention(std::bind(&LuaEngine::loadScript_, this, path, filename, script));
 	return script;
 }
 

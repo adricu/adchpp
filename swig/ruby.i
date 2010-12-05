@@ -89,6 +89,20 @@ private:
 
 %}
 
+namespace std {
+	template<typename F>
+	class function {
+	public:
+		void operator()();
+	};
+}
+
+%template(VoidFunction) std::function<void()>;
+
+%typemap(in) std::function<void () > {
+	$1 = RbFunction($input);
+}
+
 %typemap(in) std::function<void (adchpp::Entity &) > {
 	$1 = RbFunction($input);
 }
@@ -121,4 +135,4 @@ private:
 	$1 = RbFunction($input);
 }
 
-%include "adchpp.i"
+%include "full.i"

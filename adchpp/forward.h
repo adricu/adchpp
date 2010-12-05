@@ -16,17 +16,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef FORWARD_H_
-#define FORWARD_H_
+#ifndef ADCHPP_ADCHPP_FORWARD_H_
+#define ADCHPP_ADCHPP_FORWARD_H_
+
+#include <vector>
+
+#include "shared_ptr.h"
 
 namespace adchpp {
 
 class Client;
 
+class ClientManager;
+
+class Core;
+
 class Entity;
 
-/// Named parameter map (INF etc), AdcCommand::toField offers conversion
-typedef std::map<uint16_t, std::string> FieldMap;
+class LogManager;
 
 class ManagedSocket;
 typedef shared_ptr<ManagedSocket> ManagedSocketPtr;

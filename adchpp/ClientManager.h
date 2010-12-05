@@ -23,9 +23,11 @@
 #include "AdcCommand.h"
 #include "Signal.h"
 #include "Client.h"
-#include "Singleton.h"
 #include "Hub.h"
 #include "Bot.h"
+#include "Time.h"
+
+#include "forward.h"
 
 namespace adchpp {
 
@@ -35,7 +37,7 @@ class ManagedSocket;
  * The ClientManager takes care of all protocol details, clients and so on. This is the very
  * heart of ADCH++ together with SocketManager and ManagedSocket.
  */
-class ClientManager : public Singleton<ClientManager>, public CommandHandler<ClientManager>
+class ClientManager : public CommandHandler<ClientManager>
 {
 public:
 	typedef std::unordered_map<uint32_t, Entity*> EntityMap;
@@ -151,15 +153,19 @@ public:
 	SignalState::Signal& signalState() { return signalState_; }
 	SignalDisconnected::Signal& signalDisconnected() { return signalDisconnected_; }
 
-	void setLoginTimeout(uint32_t millis) { loginTimeout = millis; }
-	uint32_t getLoginTimeout() { return loginTimeout; }
+	void setLoginTimeout(size_t millis) { loginTimeout = millis; }
+	size_t getLoginTimeout() { return loginTimeout; }
 
+	Core &getCore() const { return core; }
 private:
+	friend class Core;
 	friend class Client;
 	friend class Entity;
 	friend class Bot;
 
-	std::list<std::pair<Client*, uint32_t> > logins;
+	Core &core;
+
+	std::list<std::pair<Client*, time::ptime> > logins;
 
 	EntityMap entities;
 	typedef std::unordered_map<std::string, Entity*> NickMap;
@@ -175,9 +181,6 @@ private:
 	std::string strtmp;
 
 	static const std::string className;
-
-	friend class Singleton<ClientManager>;
-	ADCHPP_DLL static ClientManager* instance;
 
 	friend class CommandHandler<ClientManager>;
 
@@ -210,10 +213,7 @@ private:
 	SignalState::Signal signalState_;
 	SignalDisconnected::Signal signalDisconnected_;
 
-	ClientManager() throw();
-
-	virtual ~ClientManager() throw();
-
+	ClientManager(Core &core) throw();
 };
 
 }

@@ -23,7 +23,6 @@
 #include "File.h"
 #include "Client.h"
 #include "LogManager.h"
-#include "TimerManager.h"
 #include "SocketManager.h"
 #include "TigerHash.h"
 #include "Encoder.h"
@@ -33,22 +32,15 @@ namespace adchpp {
 
 using namespace std;
 
-ClientManager* ClientManager::instance = 0;
 const string ClientManager::className = "ClientManager";
 
-ClientManager::ClientManager() throw() : loginTimeout(30 * 1000) {
+ClientManager::ClientManager(Core &core) throw() : core(core), hub(*this), loginTimeout(30 * 1000) {
 	hub.addSupports(AdcCommand::toFourCC("BASE"));
 	hub.addSupports(AdcCommand::toFourCC("TIGR"));
-
-	SocketManager::getInstance()->setIncomingHandler(std::bind(&ClientManager::handleIncoming, this, std::placeholders::_1));
-}
-
-ClientManager::~ClientManager() throw() {
-
 }
 
 Bot* ClientManager::createBot(const Bot::SendHandler& handler) {
-	Bot* ret = new Bot(makeSID(), handler);
+	Bot* ret = new Bot(*this, makeSID(), handler);
 	return ret;
 }
 
@@ -126,7 +118,7 @@ void ClientManager::sendTo(const BufferPtr& buffer, uint32_t to) {
 }
 
 void ClientManager::handleIncoming(const ManagedSocketPtr& socket) throw() {
-	Client::create(socket, makeSID());
+	Client::create(*this, socket, makeSID());
 }
 
 uint32_t ClientManager::makeSID() {
@@ -148,7 +140,8 @@ uint32_t ClientManager::makeSID() {
 void ClientManager::onConnected(Client& c) throw() {
 	dcdebug("%s connected\n", AdcCommand::fromSID(c.getSID()).c_str());
 	// First let's check if any clients have passed the login timeout...
-	uint32_t timeout = GET_TICK() - getLoginTimeout();
+	auto timeout = time::now() - time::millisec(getLoginTimeout());
+
 	while(!logins.empty() && (timeout > logins.front().second)) {
 		Client* cc = logins.front().first;
 
@@ -157,7 +150,7 @@ void ClientManager::onConnected(Client& c) throw() {
 		logins.pop_front();
 	}
 
-	logins.push_back(make_pair(&c, GET_TICK()));
+	logins.push_back(make_pair(&c, time::now()));
 
 	signalConnected_(c);
 }
@@ -276,7 +269,7 @@ bool ClientManager::verifyPassword(Entity& c, const string& password, const Byte
 bool ClientManager::verifyOverflow(Entity& c) {
 	size_t overflowing = 0;
 	for(EntityIter i = entities.begin(), iend = entities.end(); i != iend; ++i) {
-		if(i->second->getOverflow()) {
+		if(!i->second->getOverflow().is_not_a_date_time()) {
 			overflowing++;
 		}
 	}
@@ -494,7 +487,7 @@ void ClientManager::removeLogins(Entity& e) throw() {
 		return;
 	}
 
-	auto i = find_if(logins.begin(), logins.end(), CompareFirst<Client*, uint32_t> (c));
+	auto i = find_if(logins.begin(), logins.end(), CompareFirst<Client*, time::ptime> (c));
 	if(i != logins.end()) {
 		logins.erase(i);
 	}

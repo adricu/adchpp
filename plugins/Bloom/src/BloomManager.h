@@ -22,36 +22,24 @@
 #include <tuple>
 #include <adchpp/forward.h>
 #include <adchpp/Exception.h>
-#include <adchpp/Singleton.h>
 #include <adchpp/ClientManager.h>
 #include <adchpp/Plugin.h>
 
 #include "HashBloom.h"
 
-#ifdef _WIN32
-# ifdef BLOOM_EXPORT
-#  define BLOOM_DLL __declspec(dllexport)
-# else
-#  define BLOOM_DLL __declspec(dllimport)
-# endif
-#else
-# define BLOOM_DLL
-#endif
-
 STANDARD_EXCEPTION(BloomException);
 
-class BloomManager : public Singleton<BloomManager> {
+class BloomManager : public Plugin {
 public:
-	BloomManager();
+	BloomManager(Core &core);
 	virtual ~BloomManager();
 
 	virtual int getVersion() { return 0; }
 
+	void init();
+
 	static const std::string className;
 private:
-	friend class Singleton<BloomManager>;
-	static BloomManager* instance;
-
 	PluginDataHandle bloomHandle;
 	PluginDataHandle pendingHandle;
 
@@ -68,6 +56,8 @@ private:
 	void onSend(Entity& c, const AdcCommand& cmd, bool&);
 	void onData(Entity& c, const uint8_t* data, size_t len);
 	void onStats(Entity& c);
+
+	Core &core;
 };
 
 #endif //ACCESSMANAGER_H

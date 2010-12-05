@@ -24,6 +24,7 @@
 #include "AdcCommand.h"
 #include "Plugin.h"
 #include "CID.h"
+#include "Time.h"
 
 namespace adchpp {
 
@@ -66,7 +67,7 @@ public:
 	};
 
 
-	Entity(uint32_t sid_) : sid(sid_), state(STATE_PROTOCOL) { }
+	Entity(ClientManager &cm, uint32_t sid_) : sid(sid_), state(STATE_PROTOCOL), cm(cm) { }
 
 	void send(const AdcCommand& cmd) { send(cmd.getBuffer()); }
 	virtual void send(const BufferPtr& cmd) = 0;
@@ -133,7 +134,7 @@ public:
 	ADCHPP_DLL virtual size_t getQueuedBytes() const;
 
 	/** The time that this entity's write buffer size exceeded the maximum buffer size, 0 if no overflow */
-	ADCHPP_DLL virtual time_t getOverflow() const;
+	ADCHPP_DLL virtual time::ptime getOverflow() const;
 
 protected:
 	virtual ~Entity();
@@ -152,7 +153,7 @@ protected:
 	std::vector<uint32_t> filters;
 
 	/** INF fields */
-	FieldMap fields;
+	std::map<uint16_t, std::string> fields;
 
 	/** Plugin data, see PluginManager::registerPluginData */
 	PluginDataMap pluginData;
@@ -162,6 +163,9 @@ protected:
 
 	/** Latest SUP cached */
 	mutable BufferPtr SUP;
+
+	/** ClientManager that owns this entity */
+	ClientManager &cm;
 };
 
 }

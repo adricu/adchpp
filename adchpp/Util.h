@@ -74,16 +74,6 @@ class Flags {
 		MaskType flags;
 };
 
-struct Stats {
-	ADCHPP_DLL static size_t queueCalls;
-	ADCHPP_DLL static int64_t queueBytes;
-	ADCHPP_DLL static size_t sendCalls;
-	ADCHPP_DLL static int64_t sendBytes;
-	ADCHPP_DLL static int64_t recvCalls;
-	ADCHPP_DLL static int64_t recvBytes;
-	ADCHPP_DLL static time_t startTime;
-};
-
 class Util
 {
 public:
@@ -119,13 +109,10 @@ public:
 	ADCHPP_DLL static std::string emptyString;
 	static std::wstring emptyStringW;
 
-	ADCHPP_DLL static void initialize(const std::string& configPath);
+	ADCHPP_DLL static void initialize();
 	ADCHPP_DLL static std::string getOsVersion();
 	ADCHPP_DLL static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
-	ADCHPP_DLL static std::string formatTime(const std::string& msg, time_t t = time(NULL));
-
-	static const std::string& getCfgPath() { return cfgPath; }
-	static void setCfgPath(const std::string& path) { cfgPath = path; }
+	ADCHPP_DLL static std::string formatTime(const std::string& msg, time_t t = std::time(NULL));
 
 	ADCHPP_DLL static std::string getAppPath();
 	ADCHPP_DLL static std::string getAppName();
@@ -245,8 +232,6 @@ public:
 
 	ADCHPP_DLL static bool isPrivateIp(std::string const& ip);
 	ADCHPP_DLL static bool validateCharset(std::string const& field, int p);
-private:
-	ADCHPP_DLL static std::string cfgPath;
 };
 
 }

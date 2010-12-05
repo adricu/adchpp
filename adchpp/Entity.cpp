@@ -31,11 +31,11 @@ Entity::~Entity() {
 }
 
 void Entity::inject(AdcCommand& cmd) {
-	ClientManager::getInstance()->onReceive(*this, cmd);
+	cm.onReceive(*this, cmd);
 }
 
 const std::string& Entity::getField(const char* name) const {
-	FieldMap::const_iterator i = fields.find(AdcCommand::toField(name));
+	auto i = fields.find(AdcCommand::toField(name));
 	return i == fields.end() ? Util::emptyString : i->second;
 }
 
@@ -67,7 +67,7 @@ void Entity::setField(const char* name, const std::string& value) {
 }
 
 bool Entity::getAllFields(AdcCommand& cmd) const throw() {
-	for(FieldMap::const_iterator i = fields.begin(); i != fields.end(); ++i)
+	for(auto i = fields.begin(); i != fields.end(); ++i)
 		cmd.addParam(AdcCommand::fromField(i->first), i->second);
 	return !fields.empty();
 }
@@ -211,8 +211,8 @@ size_t Entity::getQueuedBytes() const {
 	return 0;
 }
 
-time_t Entity::getOverflow() const {
-	return 0;
+time::ptime Entity::getOverflow() const {
+	return time::not_a_date_time;
 }
 
 }

@@ -23,6 +23,8 @@
 #include <adchpp/Util.h>
 #include <adchpp/version.h>
 #include <adchpp/File.h>
+#include <adchpp/Core.h>
+#include <adchpp/shared_ptr.h>
 
 #include <signal.h>
 #include <limits.h>
@@ -39,15 +41,26 @@ static const string modName = "adchpp";
 static FILE* pidFile;
 static string pidFileName;
 static bool asdaemon = false;
+static shared_ptr<Core> core;
+
+static void installHandler();
+
+void breakHandler(int) {
+	if(core) {
+		core->shutdown();
+	}
+
+	installHandler();
+}
 
 static void init() {
 	// Ignore SIGPIPE...
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = SIG_IGN;
 
 	sigaction(SIGPIPE, &sa, NULL);
+	sigaction(SIGHUP, &sa, NULL);
 
 	sigset_t mask;
 
@@ -58,26 +71,33 @@ static void init() {
 	sigdelset(&mask, SIGILL);
 	sigdelset(&mask, SIGSEGV);
 	sigdelset(&mask, SIGBUS);
+	sigdelset(&mask, SIGINT);
+	sigdelset(&mask, SIGTRAP);
 	pthread_sigmask(SIG_SETMASK, &mask, NULL);
+
+	installHandler();
 
 	if(pidFile != NULL) {
 		fprintf(pidFile, "%d", (int)getpid());
 		fflush(pidFile);
 	}
 
-	loadXML(File::makeAbsolutePath(Util::getCfgPath(), "adchpp.xml"));
+	loadXML(*core, File::makeAbsolutePath(core->getConfigPath(), "adchpp.xml"));
 }
 
-static void f2() {
-	printf(",");
+static void installHandler() {
+	struct sigaction sa = { 0 };
+
+	sa.sa_handler = breakHandler;
+
+	sigaction(SIGINT, &sa, NULL);
 }
 
 static void uninit() {
-	LOG(modName, versionString + " shut down");
+	//LOG(modName, versionString + " shut down");
 	if(!asdaemon)
 		printf(_("Shutting down."));
-	shutdown(&f2);
-	cleanup();
+
 	if(!asdaemon)
 		printf(".\n");
 
@@ -93,19 +113,19 @@ static void uninit() {
 static void daemonize() {
 	switch(fork()) {
 	case -1:
-		LOG(modName, string("First fork failed: ") + strerror(errno));
+		//LOG(modName, string("First fork failed: ") + strerror(errno));
 		exit(5);
 	case 0: break;
 	default: _exit(0);
 	}
 
 	if(setsid() < 0) {
-		LOG(modName, string("setsid failed: ") + strerror(errno));
+		//LOG(modName, string("setsid failed: ") + strerror(errno));
 		exit(6);
 	}
 	switch(fork()) {
 		case -1:
-			LOG(modName, string("Second fork failed: ") + strerror(errno));
+			//LOG(modName, string("Second fork failed: ") + strerror(errno));
 			exit(7);
 		case 0: break;
 		default: exit(0);
@@ -122,50 +142,44 @@ static void daemonize() {
 #include <sys/wait.h>
 
 static void runDaemon(const string& configPath) {
-	initialize(configPath);
 	daemonize();
-	init();
+
 	try {
-		adchpp::startup(&f2);
+		core = Core::create(configPath);
+
+		init();
+
+		core->run();
+
+		core->shutdown();
+		core.reset();
 	} catch(const adchpp::Exception& e) {
-		LOG(modName, "Failed to start: " + e.getError());
-		uninit();
-		return;
+		//LOG(modName, "Failed to start: " + e.getError());
 	}
-	LOG(modName, versionString + " started as a daemon");
-	// Now what?
-	int x = 0;
-	sigset_t st;
-	sigfillset(&st);
-	sigaddset(&st, SIGTERM);
-	sigaddset(&st, SIGINT);
-	sigwait(&st, &x);
 
 	uninit();
 }
 
 static void runConsole(const string& configPath) {
-	printf(_("Starting\n"));
-	initialize(configPath);
-	init();
-	LOG(modName, versionString + " starting from console");
-	printf(".");
+	printf("Starting."); fflush(stdout);
+
 	try {
-		startup(&f2);
+		core = Core::create(configPath);
+
+		printf("."); fflush(stdout);
+		init();
+
+		// LOG(modName, versionString + " starting from console");
+		printf(_(".\n%s running, press ctrl-c to exit...\n"), versionString.c_str());
+		core->run();
+
+		core->shutdown();
+
+		core.reset();
 	} catch(const Exception& e) {
 		printf(_("\n\nFATAL: Can't start ADCH++: %s\n"), e.getError().c_str());
-		uninit();
-		return;
 	}
 
-
-	printf(_(".\n%s running, press ctrl-c to exit...\n"), versionString.c_str());
-	int x = 0;
-	sigset_t st;
-	sigemptyset(&st);
-	sigaddset(&st, SIGTERM);
-	sigaddset(&st, SIGINT);
-	sigwait(&st, &x);
 	uninit();
 }
 
@@ -222,7 +236,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(!pidFileName.empty()) {
-		pidFileName = File::makeAbsolutePath(Util::getCfgPath(), pidFileName);
+		pidFileName = File::makeAbsolutePath(configPath, pidFileName);
 		pidFile = fopen(pidFileName.c_str(), "w");
 		if(pidFile == NULL) {
 			fprintf(stderr, _("Can't open %s for writing\n"), pidFileName.c_str());

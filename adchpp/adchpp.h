@@ -19,75 +19,17 @@
 #ifndef ADCHPP_ADCHPP_H
 #define ADCHPP_ADCHPP_H
 
-// --- Shouldn't have to change anything under here...
-
-#ifndef _REENTRANT
-# define _REENTRANT 1
-#endif
-
-#ifdef _MSC_VER
-//disable the deprecated warnings for the CRT functions.
-# define _CRT_SECURE_NO_DEPRECATE 1
-# define _ATL_SECURE_NO_DEPRECATE 1
-# define _CRT_NON_CONFORMING_SWPRINTFS 1
-#endif
-
-#if defined(_MSC_VER) || defined(__MINGW32__)
-# define _LL(x) x##ll
-# define _ULL(x) x##ull
-# define I64_FMT "%I64d"
-#elif defined(SIZEOF_LONG) && SIZEOF_LONG == 8
-# define _LL(x) x##l
-# define _ULL(x) x##ul
-# define I64_FMT "%ld"
-#else
-# define _LL(x) x##ll
-# define _ULL(x) x##ull
-# define I64_FMT "%lld"
-#endif
+#include "config.h"
 
 #ifdef _WIN32
-#define PATH_SEPARATOR '\\'
-#define PATH_SEPARATOR_STR "\\"
-#else
-#define PATH_SEPARATOR '/'
-#define PATH_SEPARATOR_STR "/"
-#endif
-
-#ifdef _WIN32
-
-# ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x0501
-# endif
-# ifndef _WIN32_IE
-#  define _WIN32_IE 0x0501
-# endif
-# ifndef WINVER
-#  define WINVER 0x0501
-# endif
-# ifndef STRICT
-#  define STRICT 1
-# endif
-# ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN 1
-# endif
-
-# define ADCHPP_VISIBLE
-# ifdef BUILDING_ADCHPP
-#  define ADCHPP_DLL __declspec(dllexport)
-# else
-#  define ADCHPP_DLL __declspec(dllimport)
-# endif // DLLEXPORT
 
 #include <winsock2.h>
-
 #include <windows.h>
 #include <tchar.h>
 
 #else
 
-# define ADCHPP_DLL __attribute__ ((visibility("default")))
-# define ADCHPP_VISIBLE __attribute__ ((visibility("default")))
+#include <sys/time.h>
 
 #endif
 
@@ -99,22 +41,6 @@
 #include <cstring>
 #include <ctime>
 
-#ifndef _WIN32
-#include <sys/time.h>
-#endif
-
-#ifdef __MINGW32__
-/* the shared_ptr implementation provided by MinGW / GCC 4.5's libstdc++ consumes too many
-semaphores, so we prefer boost's one. see <https://bugs.launchpad.net/dcplusplus/+bug/654040>. */
-#define _SHARED_PTR_H 1 // skip libstdc++'s bits/shared_ptr.h
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/make_shared.hpp>
-#define SHARED_PTR_NS boost
-#else
-#define SHARED_PTR_NS std
-#endif
-
 #include <string>
 #include <vector>
 #include <list>
@@ -125,11 +51,9 @@ semaphores, so we prefer boost's one. see <https://bugs.launchpad.net/dcplusplus
 #include <unordered_map>
 #include <unordered_set>
 
-#include <boost/noncopyable.hpp>
+#include "shared_ptr.h"
 
-using SHARED_PTR_NS::shared_ptr;
-using SHARED_PTR_NS::enable_shared_from_this;
-using SHARED_PTR_NS::make_shared;
+#include <boost/noncopyable.hpp>
 
 #ifdef _UNICODE
 # ifndef _T
@@ -139,6 +63,10 @@ using SHARED_PTR_NS::make_shared;
 # ifndef _T
 #  define _T(s) s
 # endif
+#endif
+
+#if defined(max) || defined(min)
+#error Max/max defined
 #endif
 
 #endif // STDINC_H

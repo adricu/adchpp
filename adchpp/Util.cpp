@@ -32,6 +32,8 @@
 
 #endif
 
+#include "Time.h"
+
 namespace adchpp {
 
 using namespace std;
@@ -45,26 +47,15 @@ string Util::appName;
 string Util::appPath;
 #endif
 
-size_t Stats::queueCalls = 0;
-int64_t Stats::queueBytes = 0;
-size_t Stats::sendCalls = 0;
-int64_t Stats::sendBytes = 0;
-int64_t Stats::recvCalls = 0;
-int64_t Stats::recvBytes = 0;
-time_t Stats::startTime = 0;
-
 string Util::emptyString;
 wstring Util::emptyStringW;
-string Util::cfgPath;
 size_t Util::reasons[REASON_LAST];
 
 static void sgenrand(unsigned long seed);
 
-void Util::initialize(const string& configPath) {
+void Util::initialize() {
 	setlocale(LC_ALL, "");
-	sgenrand((unsigned long)time(NULL));
-
-	setCfgPath(configPath);
+	sgenrand(time::now().time_of_day().total_microseconds());
 }
 
 /**
@@ -207,7 +198,7 @@ string Util::formatBytes(int64_t aBytes) {
 string Util::getShortTimeString() {
 	char buf[8];
 	time_t _tt;
-	time(&_tt);
+	std::time(&_tt);
 	tm* _tm = localtime(&_tt);
 	strftime(buf, 8, "%H:%M", _tm);
 	return buf;
@@ -216,7 +207,7 @@ string Util::getShortTimeString() {
 string Util::getTimeString() {
 	char buf[64];
 	time_t _tt;
-	time(&_tt);
+	std::time(&_tt);
 	tm* _tm = localtime(&_tt);
 	if(_tm == NULL) {
 		strcpy(buf, "xx:xx:xx");

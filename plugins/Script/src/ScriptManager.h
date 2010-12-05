@@ -24,18 +24,8 @@
 #endif // _MSC_VER > 1000
 
 #include <adchpp/Exception.h>
-#include <adchpp/Singleton.h>
 #include <adchpp/ClientManager.h>
-
-#ifdef _WIN32
-# ifdef ACCESS_EXPORT
-#  define SCRIPT_DLL __declspec(dllexport)
-# else
-#  define SCRIPT_DLL __declspec(dllimport)
-# endif
-#else
-# define SCRIPT_DLL
-#endif
+#include <adchpp/Plugin.h>
 
 STANDARD_EXCEPTION(ScriptException);
 class Engine;
@@ -46,21 +36,20 @@ class Client;
 class AdcCommand;
 }
 
-class ScriptManager : public Singleton<ScriptManager> {
+class ScriptManager : public Plugin {
 public:
-	ScriptManager();
+	ScriptManager(Core &core);
 	virtual ~ScriptManager();
 
 	virtual int getVersion() { return 0; }
 
+	void load();
+
 	static const std::string className;
 private:
-	friend class Singleton<ScriptManager>;
-	static ScriptManager* instance;
 
 	std::vector<std::unique_ptr<Engine>> engines;
 
-	void load();
 	void reload();
 	void clearEngines();
 
@@ -69,6 +58,8 @@ private:
 
 	void onReload(Entity& c);
 	void onStats(Entity& c);
+
+	Core &core;
 };
 
 #endif //ACCESSMANAGER_H

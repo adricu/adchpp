@@ -28,11 +28,12 @@
 #include <adchpp/Entity.h>
 #include <adchpp/File.h>
 #include <adchpp/SimpleXML.h>
+#include <adchpp/Core.h>
 
 using namespace adchpp;
 using namespace std;
 
-void loadXML(const string& aFileName)
+void loadXML(Core &core, const string& aFileName)
 {
 	try {
 		SimpleXML xml;
@@ -51,9 +52,9 @@ void loadXML(const string& aFileName)
 
 					printf("Processing %s\n", xml.getChildName().c_str());
 					if(xml.getChildName() == "HubName") {
-						ClientManager::getInstance()->getEntity(AdcCommand::HUB_SID)->setField("NI", xml.getChildData());
+						core.getClientManager().getEntity(AdcCommand::HUB_SID)->setField("NI", xml.getChildData());
 					} else if(xml.getChildName() == "Description") {
-						ClientManager::getInstance()->getEntity(AdcCommand::HUB_SID)->setField("DE", xml.getChildData());
+						core.getClientManager().getEntity(AdcCommand::HUB_SID)->setField("DE", xml.getChildData());
 					} else if(xml.getChildName() == "Log") {
 					}
 				}
@@ -86,17 +87,18 @@ void loadXML(const string& aFileName)
 					}
 				}
 
-				SocketManager::getInstance()->setServers(servers);
+				core.getSocketManager().setServers(servers);
 
 				xml.stepOut();
 			} else if(xml.getChildName() == "Plugins") {
-				PluginManager::getInstance()->setPluginPath(xml.getChildAttrib("Path"));
+				core.getPluginManager().setPluginPath(xml.getChildAttrib("Path"));
 				xml.stepIn();
 				StringList plugins;
 				while(xml.findChild("Plugin")) {
 					plugins.push_back(xml.getChildData());
 				}
-				PluginManager::getInstance()->setPluginList(plugins);
+
+				core.getPluginManager().setPluginList(plugins);
 				xml.stepOut();
 			}
 		}

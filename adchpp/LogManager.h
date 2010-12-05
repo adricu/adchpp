@@ -19,7 +19,8 @@
 #ifndef ADCHPP_LOGMANAGER_H
 #define ADCHPP_LOGMANAGER_H
 
-#include "Singleton.h"
+#include "forward.h"
+
 #include "Mutex.h"
 #include "Signal.h"
 
@@ -27,7 +28,7 @@ namespace adchpp {
 /**
  * Log writing utilities.
  */
-class LogManager : public Singleton<LogManager>
+class LogManager
 {
 public:
 	/**
@@ -47,20 +48,21 @@ public:
 	SignalLog::Signal& signalLog() { return signalLog_; }
 
 private:
-	friend class Singleton<LogManager>;
-	ADCHPP_DLL static LogManager* instance;
+	friend class Core;
+
 	FastMutex mtx;
 	std::string logFile;
 	bool enabled;
 
-	LogManager();
-	virtual ~LogManager() throw() { }
+	LogManager(Core &core);
 	
 	SignalLog::Signal signalLog_;
+	Core &core;
+
 	ADCHPP_DLL void dolog(const std::string& msg) throw();
 };
 
-#define LOG(area, msg) LogManager::getInstance()->log(area, msg)
+#define LOG(area, msg) core.getLogManager().log(area, msg)
 
 }
 

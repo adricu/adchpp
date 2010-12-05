@@ -22,6 +22,7 @@
 
 #include "ClientManager.h"
 #include "SocketManager.h"
+#include "Core.h"
 
 namespace adchpp {
 
@@ -35,7 +36,7 @@ struct BotRemover {
 	Bot* bot;
 };
 
-Bot::Bot(uint32_t sid, const Bot::SendHandler& handler_) : Entity(sid), handler(handler_), disconnecting(false) {
+Bot::Bot(ClientManager &cm, uint32_t sid, const Bot::SendHandler& handler_) : Entity(cm, sid), handler(handler_), disconnecting(false) {
 	setFlag(FLAG_BOT);
 
 	// Fake a CID, the script can change this if it wants to
@@ -47,12 +48,12 @@ void Bot::disconnect(Util::Reason reason) throw() {
 		disconnecting = true;
 
 		handler = SendHandler();
-		SocketManager::getInstance()->addJob(BotRemover(this));
+		cm.getCore().addJob(BotRemover(this));
 	}
 }
 
 void Bot::die() {
-	ClientManager::getInstance()->removeEntity(*this);
+	cm.removeEntity(*this);
 	delete this;
 }
 

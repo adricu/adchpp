@@ -31,7 +31,7 @@ class ADCHPP_VISIBLE Bot : public Entity {
 public:
 	typedef std::function<void (Bot& bot, const BufferPtr& cmd)> SendHandler;
 
-	ADCHPP_DLL Bot(uint32_t sid, const SendHandler& handler_);
+	ADCHPP_DLL Bot(ClientManager &cm, uint32_t sid, const SendHandler& handler_);
 
 	virtual void send(const BufferPtr& cmd) { if(handler) handler(*this, cmd); }
 

@@ -21,15 +21,17 @@
 #include "SocketManager.h"
 
 #include "LogManager.h"
-#include "TimerManager.h"
 #include "ManagedSocket.h"
 #include "ServerInfo.h"
 #include "SimpleXML.h"
+#include "Core.h"
 
 #ifdef HAVE_OPENSSL
 #include <boost/asio/ssl.hpp>
 #endif
+
 #include <boost/date_time/posix_time/time_parsers.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 namespace adchpp {
 
@@ -39,15 +41,10 @@ using namespace boost::asio;
 using boost::system::error_code;
 using boost::system::system_error;
 
-SocketManager::SocketManager()  {
+SocketManager::SocketManager(Core &core) : core(core)  {
 
 }
 
-SocketManager::~SocketManager() {
-
-}
-
-SocketManager* SocketManager::instance = 0;
 const string SocketManager::className = "SocketManager";
 
 template<typename T>
@@ -119,17 +116,17 @@ typedef SocketStream<ssl::stream<ip::tcp::socket> > TLSSocketStream;
 // We don't need a large one since we generally deal with very short messages
 static const int SOCKET_BUFFER_SIZE = 1024;
 
-class SocketFactory : public enable_shared_from_this<SocketFactory> {
+class SocketFactory : public enable_shared_from_this<SocketFactory>, boost::noncopyable {
 public:
-	SocketFactory(io_service& io_, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
-		io(io_),
-		acceptor(io_, ip::tcp::endpoint(boost::asio::ip::tcp::v4(), info->port)),
+	SocketFactory(SocketManager& sm, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
+		sm(sm),
+		acceptor(sm.io, ip::tcp::endpoint(boost::asio::ip::tcp::v4(), info->port)),
 		serverInfo(info),
 		handler(handler_)
 	{
 #ifdef HAVE_OPENSSL
 		if(info->secure()) {
-			context = make_shared<boost::asio::ssl::context>(io, ssl::context::tlsv1_server);
+			context.reset(new boost::asio::ssl::context(sm.io, ssl::context::tlsv1_server));
 		    context->set_options(
 		        boost::asio::ssl::context::no_sslv2
 		        | boost::asio::ssl::context::no_sslv3
@@ -143,18 +140,18 @@ public:
 	}
 
 	void prepareAccept() {
-		if(!SocketManager::getInstance()->work.get()) {
+		if(!sm.work.get()) {
 			return;
 		}
 #ifdef HAVE_OPENSSL
 		if(serverInfo->secure()) {
-			shared_ptr<TLSSocketStream> s = make_shared<TLSSocketStream>(io, *context);
-			ManagedSocketPtr socket = make_shared<ManagedSocket>(s);
+			shared_ptr<TLSSocketStream> s = make_shared<TLSSocketStream>(sm.io, *context);
+			ManagedSocketPtr socket = make_shared<ManagedSocket>(sm, s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, shared_from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
-			shared_ptr<SimpleSocketStream> s = make_shared<SimpleSocketStream>(io);
-			ManagedSocketPtr socket = make_shared<ManagedSocket>(s);
+			shared_ptr<SimpleSocketStream> s = make_shared<SimpleSocketStream>(sm.io);
+			ManagedSocketPtr socket = make_shared<ManagedSocket>(sm, s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
@@ -182,7 +179,7 @@ public:
 
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
-			shared_ptr<SimpleSocketStream> s = SHARED_PTR_NS::static_pointer_cast<SimpleSocketStream>(socket->sock);
+			shared_ptr<SimpleSocketStream> s = static_pointer_cast<SimpleSocketStream>(socket->sock);
 			// By default, we linger for 30 seconds (this will happen when the stream
 			// is deallocated without calling close first)
 			s->sock.lowest_layer().set_option(socket_base::linger(true, 30));
@@ -205,13 +202,13 @@ public:
 
 	void close() { acceptor.close(); }
 
-	io_service& io;
+	SocketManager &sm;
 	ip::tcp::acceptor acceptor;
 	ServerInfoPtr serverInfo;
 	SocketManager::IncomingHandler handler;
 
 #ifdef HAVE_OPENSSL
-	shared_ptr<boost::asio::ssl::context> context;
+	unique_ptr<boost::asio::ssl::context> context;
 #endif
 
 };
@@ -219,11 +216,13 @@ public:
 int SocketManager::run() {
 	LOG(SocketManager::className, "Starting");
 
+	work.reset(new io_service::work(io));
+
 	for(std::vector<ServerInfoPtr>::iterator i = servers.begin(), iend = servers.end(); i != iend; ++i) {
 		const ServerInfoPtr& si = *i;
 
 		try {
-			SocketFactoryPtr factory = make_shared<SocketFactory>(io, incomingHandler, si);
+			SocketFactoryPtr factory = make_shared<SocketFactory>(*this, incomingHandler, si);
 			factory->prepareAccept();
 			factories.push_back(factory);
 		} catch(const system_error& se) {
@@ -308,16 +307,11 @@ void SocketManager::cancelTimer(timer_ptr timer, Callback* callback) {
 	delete callback;
 }
 
-void SocketManager::startup() throw(ThreadException) {
-	work.reset(new io_service::work(io));
-	start();
-}
-
 void SocketManager::shutdown() {
-	work.reset();
 	addJob(std::bind(&SocketManager::closeFactories, this));
+
+	work.reset();
 	io.stop();
-	join();
 }
 
 void SocketManager::onLoad(const SimpleXML& xml) throw() {

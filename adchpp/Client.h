@@ -34,11 +34,11 @@ namespace adchpp {
  */
 class ADCHPP_VISIBLE Client : public Entity, public FastAlloc<Client> {
 public:
-	static Client* create(const ManagedSocketPtr& ms_, uint32_t sid_) throw();
+	static Client* create(ClientManager &cm, const ManagedSocketPtr& ms_, uint32_t sid_) throw();
 
 	using Entity::send;
 
-	virtual void send(const BufferPtr& command) throw() { socket->write(command); }
+	virtual void send(const BufferPtr& command) { socket->write(command); }
 
 	/** @param reason The statistic to update */
 	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
@@ -58,11 +58,11 @@ public:
 	size_t getMaxCommandSize() { return maxCommandSize; }
 
 	virtual size_t getQueuedBytes() const { return socket->getQueuedBytes(); }
-	virtual time_t getOverflow() const { return socket->getOverflow(); }
+	virtual time::ptime getOverflow() const { return socket->getOverflow(); }
 private:
 	static size_t defaultMaxCommandSize;
 
-	Client(uint32_t sid_) throw();
+	Client(ClientManager &cm, uint32_t sid_) throw();
 	virtual ~Client();
 
 	bool disconnecting;

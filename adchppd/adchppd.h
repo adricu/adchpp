@@ -16,4 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-void loadXML(const std::string& fileName);
+#include <adchpp/Core.h>
+
+void loadXML(adchpp::Core &core, const std::string& fileName);

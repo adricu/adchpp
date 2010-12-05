@@ -26,6 +26,7 @@
 #include "Util.h"
 #include "Buffer.h"
 #include "AsyncStream.h"
+#include "Time.h"
 
 namespace adchpp {
 
@@ -34,7 +35,7 @@ namespace adchpp {
  */
 class ManagedSocket : private boost::noncopyable, public enable_shared_from_this<ManagedSocket> {
 public:
-	ManagedSocket(const AsyncStreamPtr& sock_) : sock(sock_), overflow(0), disc(0), maxBufferSize(getDefaultMaxBufferSize()), lastWrite(0) { }
+	ManagedSocket(SocketManager &sm, const AsyncStreamPtr& sock_);
 
 	/** Asynchronous write */
 	ADCHPP_DLL void write(const BufferPtr& buf, bool lowPrio = false) throw();
@@ -58,9 +59,9 @@ public:
 	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
 	size_t getMaxBufferSize() { return maxBufferSize; }
 
-	time_t getOverflow() { return overflow; }
+	time::ptime getOverflow() { return overflow; }
 
-	time_t getLastWrite() { return lastWrite; }
+	time::ptime getLastWrite() { return lastWrite; }
 
 	static void setDefaultMaxBufferSize(size_t newSize) { defaultMaxBufferSize = newSize; }
 	static size_t getDefaultMaxBufferSize() { return defaultMaxBufferSize; }
@@ -93,21 +94,24 @@ private:
 	BufferPtr inBuf;
 
 	/** Overflow timer, the time when the socket started to overflow */
-	time_t overflow;
-	/** Disconnection scheduled for this socket */
-	uint32_t disc;
+	time::ptime overflow;
+
+	/** Time when this socket will be disconnected regardless of buffers */
+	time::ptime disc;
 
 	/** Max allowed write buffer size for this socket */
 	size_t maxBufferSize;
 
 	/** Last time that a write started, 0 if no active write */
-	time_t lastWrite;
+	time::ptime lastWrite;
 
 	std::string ip;
 
 	ConnectedHandler connectedHandler;
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
+
+	SocketManager &sm;
 };
 
 }

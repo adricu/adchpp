@@ -129,9 +129,9 @@ public:
 
 	ADCHPP_DLL AdcCommand();
 	ADCHPP_DLL explicit AdcCommand(Severity sev, Error err, const std::string& desc, char aType = TYPE_INFO);
-	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), priority(PRIORITY_NORMAL), from(aFrom), type(aType) { }
-	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), priority(PRIORITY_NORMAL), type(0) { parse(aLine); }
-	explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException) : buffer(buffer_), cmdInt(0), priority(PRIORITY_NORMAL), type(0) { parse((const char*)buffer->data(), buffer->size()); }
+	explicit AdcCommand(uint32_t cmd, char aType = TYPE_INFO, uint32_t aFrom = HUB_SID) : cmdInt(cmd), priority(PRIORITY_NORMAL), from(aFrom), to(INVALID_SID), type(aType) { }
+	explicit AdcCommand(const std::string& aLine) throw(ParseException) : cmdInt(0), priority(PRIORITY_NORMAL), from(INVALID_SID), to(INVALID_SID), type(0) { parse(aLine); }
+	explicit AdcCommand(const BufferPtr& buffer_) throw(ParseException) : buffer(buffer_), cmdInt(0), priority(PRIORITY_NORMAL), from(INVALID_SID), to(INVALID_SID), type(0) { parse((const char*)buffer->data(), buffer->size()); }
 
 	void parse(const std::string& str) throw(ParseException) { parse(str.data(), str.size()); }
 	ADCHPP_DLL void parse(const char* buf, size_t len) throw(ParseException);

@@ -24,12 +24,12 @@
 #include <adchpp/AdcCommand.h>
 #include <adchpp/Util.h>
 #include <adchpp/PluginManager.h>
+#include <adchpp/Core.h>
 
 using namespace std;
 using namespace std::placeholders;
 using namespace adchpp;
 
-BloomManager* BloomManager::instance = 0;
 const string BloomManager::className = "BloomManager";
 
 // TODO Make configurable
@@ -42,18 +42,20 @@ struct PendingItem {
 	size_t k;
 };
 
-BloomManager::BloomManager() : searches(0), tthSearches(0), stopped(0) {
+BloomManager::BloomManager(Core &core) : searches(0), tthSearches(0), stopped(0), core(core) {
 	LOG(className, "Starting");
-	ClientManager* cm = ClientManager::getInstance();
-	receiveConn = manage(&cm->signalReceive(), std::bind(&BloomManager::onReceive, this, _1, _2, _3));
-	sendConn = manage(&cm->signalSend(), std::bind(&BloomManager::onSend, this, _1, _2, _3));
+}
 
-	PluginManager* pm = PluginManager::getInstance();
-	bloomHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<HashBloom>);
-	pendingHandle = pm->registerPluginData(&PluginData::simpleDataDeleter<PendingItem>);
+void BloomManager::init() {
+	auto &cm = core.getClientManager();
+	receiveConn = manage(cm.signalReceive().connect(std::bind(&BloomManager::onReceive, this, _1, _2, _3)));
+	sendConn = manage(cm.signalSend().connect(std::bind(&BloomManager::onSend, this, _1, _2, _3)));
 
-	statsConn = make_shared<ManagedConnection>(pm->onCommand("stats",
-		std::bind(&BloomManager::onStats, this, _1)));
+	auto &pm = core.getPluginManager();
+	bloomHandle = pm.registerPluginData(&PluginData::simpleDataDeleter<HashBloom>);
+	pendingHandle = pm.registerPluginData(&PluginData::simpleDataDeleter<PendingItem>);
+
+	statsConn = manage(pm.onCommand("stats", std::bind(&BloomManager::onStats, this, _1)));
 }
 
 BloomManager::~BloomManager() {
@@ -155,8 +157,8 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 
 std::pair<size_t, size_t> BloomManager::getBytes() const {
 	std::pair<size_t, size_t> bytes;
-	auto cm = ClientManager::getInstance();
-	for(auto i = cm->getEntities().begin(), iend = cm->getEntities().end(); i != iend; ++i) {
+	auto &cm = core.getClientManager();
+	for(auto i = cm.getEntities().begin(), iend = cm.getEntities().end(); i != iend; ++i) {
 		auto bloom = reinterpret_cast<HashBloom*>(i->second->getPluginData(bloomHandle));
 		if(bloom) {
 			bytes.first++;
@@ -190,7 +192,7 @@ void BloomManager::onStats(Entity& c) {
 	stats += "\nOutgoing TTH searches: " + Util::toString(tthSearches) + " (" + Util::toString(tthSearches * 100. / searches) + "% of total)";
 	stats += "\nStopped outgoing searches: " + Util::toString(stopped) + " (" + Util::toString(stopped * 100. / searches) + "% of total, " + Util::toString(stopped * 100. / tthSearches) + "% of TTH searches";
 	auto bytes = getBytes();
-	size_t clients = ClientManager::getInstance()->getEntities().size();
+	size_t clients = core.getClientManager().getEntities().size();
 	stats += "\nClient support: " + Util::toString(bytes.first) + "/" + Util::toString(clients) + " (" + Util::toString(bytes.first * 100. / clients) + "%)";
 	stats += "\nApproximate memory usage: " + Util::formatBytes(bytes.second) + ", " + Util::formatBytes(static_cast<double>(bytes.second) / clients) + "/client";
 	c.send(AdcCommand(AdcCommand::CMD_MSG).addParam(stats));

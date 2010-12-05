@@ -39,7 +39,7 @@ using namespace std;
 
 AdcCommand::AdcCommand() : cmdInt(0), priority(PRIORITY_NORMAL), from(INVALID_SID), to(INVALID_SID), type(TYPE_INFO) { }
 
-AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), priority(PRIORITY_NORMAL), from(HUB_SID), type(aType) {
+AdcCommand::AdcCommand(Severity sev, Error err, const string& desc, char aType /* = TYPE_INFO */) : cmdInt(CMD_STA), priority(PRIORITY_NORMAL), from(HUB_SID), to(INVALID_SID), type(aType) {
 	addParam(Util::toString(sev * 100 + err));
 	addParam(desc);
 }

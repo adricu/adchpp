@@ -30,15 +30,19 @@ BOOL APIENTRY DllMain(HANDLE /*hModule */, DWORD /* reason*/, LPVOID /*lpReserve
 #endif
 
 extern "C" {
+
 int PLUGIN_API pluginGetVersion() { return PLUGINVERSION; }
 
-int PLUGIN_API pluginLoad() {
-	BloomManager::newInstance();
+int PLUGIN_API pluginLoad(PluginManager *pm) {
+	auto bm = make_shared<BloomManager>(pm->getCore());
+	bm->init();
+	pm->registerPlugin("BloomManager", bm);
 	return 0;
 }
 
 void PLUGIN_API pluginUnload() {
-	BloomManager::deleteInstance();
+
 }
+
 }
 

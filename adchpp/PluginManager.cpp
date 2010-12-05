@@ -26,6 +26,7 @@
 #include "version.h"
 #include "File.h"
 #include "Text.h"
+#include "Core.h"
 
 #ifdef _WIN32
 
@@ -54,22 +55,17 @@ namespace adchpp {
 using namespace std;
 using std::placeholders::_1;
 
-PluginManager* PluginManager::instance = 0;
 const string PluginManager::className = "PluginManager";
 
-PluginManager::PluginManager() throw() {
-
-}
-
-PluginManager::~PluginManager() throw() {
+PluginManager::PluginManager(Core &core) throw() : core(core) {
 
 }
 
 void PluginManager::attention(const function<void()>& f) {
-	SocketManager::getInstance()->addJob(f);
+	core.addJob(f);
 }
 
-void PluginManager::load()  {
+void PluginManager::load() {
 	for(StringIter i = plugins.begin(); i != plugins.end(); ++i) {
 		loadPlugin(*i + PLUGIN_EXT);
 	}
@@ -121,7 +117,7 @@ bool PluginManager::loadPlugin(const string& file) {
 			PLUGIN_UNLOAD u = (PLUGIN_UNLOAD)PM_GET_ADDRESS(h, "pluginUnload");
 
 			if(l != NULL && u != NULL) {
-				int i = l();
+				int i = l(this);
 				if(i != 0) {
 					LOG(className, "Failed to load plugin " + Text::utf8ToAcp(file) + " (Error " + Util::toString(i) + ")");
 				} else {
@@ -145,20 +141,21 @@ bool PluginManager::loadPlugin(const string& file) {
 }
 
 void PluginManager::shutdown() {
+	registry.clear();
+	active.clear();
+
 	for(PluginList::reverse_iterator i = active.rbegin(); i != active.rend(); ++i)
 		i->pluginUnload();
 #ifndef HAVE_BROKEN_MTALLOC
 	for(PluginList::reverse_iterator i = active.rbegin(); i != active.rend(); ++i)
 		PM_UNLOAD_LIBRARY(i->handle);
 #endif
-
-	registry.clear();
-	active.clear();
 }
 
-PluginManager::CommandDispatch::CommandDispatch(const std::string& name_, const PluginManager::CommandSlot& f_) :
+PluginManager::CommandDispatch::CommandDispatch(PluginManager& pm, const std::string& name_, const PluginManager::CommandSlot& f_) :
 name('+' + name_),
-f(f_)
+f(f_),
+pm(&pm)
 {
 }
 
@@ -180,9 +177,10 @@ void PluginManager::CommandDispatch::operator()(Entity& e, AdcCommand& cmd, bool
 	if(l[0] != name) {
 		return;
 	}
+
 	l[0] = name.substr(1);
 
-	if(!PluginManager::getInstance()->handleCommand(e, l)) {
+	if(!pm->handleCommand(e, l)) {
 		return;
 	}
 
@@ -191,7 +189,7 @@ void PluginManager::CommandDispatch::operator()(Entity& e, AdcCommand& cmd, bool
 }
 
 ClientManager::SignalReceive::Connection PluginManager::onCommand(const std::string& commandName, const CommandSlot& f) {
-	return ClientManager::getInstance()->signalReceive().connect(CommandDispatch(commandName, f));
+	return core.getClientManager().signalReceive().connect(CommandDispatch(*this, commandName, f));
 }
 
 PluginManager::CommandSignal& PluginManager::getCommandSignal(const std::string& commandName) {
@@ -212,4 +210,5 @@ bool PluginManager::handleCommand(Entity& e, const StringList& l) {
 	return ok;
 }
 
+Core &PluginManager::getCore() { return core; }
 }

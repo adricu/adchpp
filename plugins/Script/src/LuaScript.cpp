@@ -60,14 +60,15 @@ void LuaScript::loadFile(const string& path, const string& filename_) {
 
 	auto absPath = File::makeAbsolutePath(path);
 	if(chdir(absPath.c_str()) != 0) {
-		LOG(className, "Unable to change to directory " + absPath);
+		//LOG(className, "Unable to change to directory " + absPath);
 	} else {
 		int error = luaL_loadfile(getEngine()->l, filename.c_str()) || lua_pcall(getEngine()->l, 0, 0, 0);
 
 		if(error) {
-			LOG(className, string("Error loading file: ") + lua_tostring(getEngine()->l, -1));
+			fprintf(stderr, "Error loading file: %s\n", lua_tostring(getEngine()->l, -1));
+			//LOG(className, string("Error loading file: ") + lua_tostring(getEngine()->l, -1));
 		} else {
-			LOG(className, "Loaded " + filename);
+			//LOG(className, "Loaded " + filename);
 			getEngine()->call("loaded", filename);
 		}
 

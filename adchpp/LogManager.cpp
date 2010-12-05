@@ -21,18 +21,17 @@
 #include "LogManager.h"
 
 #include "File.h"
+#include "Core.h"
 
 namespace adchpp {
 
 using namespace std;
 
-LogManager* LogManager::instance = 0;
-
-LogManager::LogManager() : logFile("logs/adchpp%Y%m.log"), enabled(true) { }
+LogManager::LogManager(Core &core) : logFile("logs/adchpp%Y%m.log"), enabled(true), core(core) { }
 
 void LogManager::log(const string& area, const string& msg) throw() {
 	char buf[64];
-	time_t now = time(NULL);
+	time_t now = std::time(NULL);
 	size_t s = strftime(buf, 64, "%Y-%m-%d %H:%M:%S: ", localtime(&now));
 	string tmp(buf, s);
 	tmp += area;
@@ -45,7 +44,7 @@ void LogManager::dolog(const string& msg) throw() {
 	dcdebug("Logging: %s\n", msg.c_str());
 	signalLog_(msg);
 	if(getEnabled()) {
-		string logFile = Util::formatTime(File::makeAbsolutePath(Util::getCfgPath(), getLogFile()));
+		string logFile = Util::formatTime(File::makeAbsolutePath(core.getConfigPath(), getLogFile()));
 		FastMutex::Lock l(mtx);
 		try {
 			File f(logFile, File::WRITE, File::OPEN | File::CREATE);

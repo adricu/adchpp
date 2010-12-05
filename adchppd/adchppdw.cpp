@@ -48,6 +48,7 @@ static ExceptionHandler eh;	//  global instance of class
 
 bool asService = true;
 static const TCHAR* serviceName = _T("adchpp");
+static shared_ptr<Core> core;
 
 static void installService(const TCHAR* name, const std::string& configPath) {
 	Util::setCfgPath(configPath);
@@ -104,15 +105,13 @@ static void removeService(const TCHAR* name) {
 	CloseServiceHandle(scm);
 }
 
-static void init(const string& configPath) {
-	initialize(configPath);
+static void init() {
+	//if(asService)
+		//LOG(modName, versionString + " started as a service");
+	//else
+		//LOG(modName, versionString + " started from console");
 
-	if(asService)
-		LOG(modName, versionString + " started as a service");
-	else
-		LOG(modName, versionString + " started from console");
-
-	loadXML(File::makeAbsolutePath(configPath, "adchpp.xml"));
+	loadXML(*core, File::makeAbsolutePath(core->getConfigPath(), "adchpp.xml"));
 }
 
 static void f2() {
@@ -121,10 +120,6 @@ static void f2() {
 
 static void uninit() {
 	LOG(modName, versionString + " shut down");
-	printf("Shutting down.");
-	shutdown(&f2);
-	printf(".\n");
-	cleanup();
 }
 
 Semaphore exitSem;
@@ -176,6 +171,16 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 	}
 
 	try {
+		core = Core::create(configPath);
+
+		init();
+	} catch(const adchpp::Exception& e) {
+		//LOG(modName, "Failed to start: " + e.getError());
+	}
+
+	uninit();
+
+	try {
 		startup(&f);
 	} catch(const Exception& e) {
 		LOG(modName, "ADCH++ startup failed because: " + e.getError());
@@ -218,19 +223,25 @@ static void runService(const TCHAR* name, const string& configPath) {
 }
 
 static void runConsole(const string& configPath) {
-	asService = false;
-	printf("Starting\n");
-	init(configPath);
-	printf(".");
+	printf("Starting."); fflush(stdout);
+
 	try {
-		startup(&f2);
+		core = Core::create(configPath);
+
+		printf("."); fflush(stdout);
+		init();
+
+		// LOG(modName, versionString + " starting from console");
+		printf(_(".\n%s running, press ctrl-c to exit...\n"), versionString.c_str());
+		core->run();
+
+		core->shutdown();
+
+		core.reset();
 	} catch(const Exception& e) {
-		printf("\n\nFATAL: Can't start ADCH++: %s\n", e.getError().c_str());
-		uninit();
-		return;
+		printf(_("\n\nFATAL: Can't start ADCH++: %s\n"), e.getError().c_str());
 	}
-	printf(".\n%s running, press any key to exit...\n", versionString.c_str());
-	getc(stdin);
+
 	uninit();
 }
 

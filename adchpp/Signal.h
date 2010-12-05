@@ -104,8 +104,12 @@ private:
 typedef shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 template<typename F1, typename F2>
-ManagedConnectionPtr manage(Signal<F1>* signal, const F2& f) {
+inline ManagedConnectionPtr manage(Signal<F1>* signal, const F2& f) {
 	return make_shared<ManagedConnection>(signal->connect(f));
+}
+
+inline ManagedConnectionPtr manage(ConnectionPtr && conn) {
+	return make_shared<ManagedConnection>(move(conn));
 }
 
 template<typename F>

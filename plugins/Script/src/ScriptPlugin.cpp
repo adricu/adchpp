@@ -32,12 +32,15 @@ BOOL APIENTRY DllMain(HANDLE /*hModule */, DWORD /* reason*/, LPVOID /*lpReserve
 extern "C" {
 int PLUGIN_API pluginGetVersion() { return PLUGINVERSION; }
 
-int PLUGIN_API pluginLoad() {
-	ScriptManager::newInstance();
+int PLUGIN_API pluginLoad(PluginManager *pm) {
+	auto sm = make_shared<ScriptManager>(pm->getCore());
+	sm->load();
+
+	pm->registerPlugin("ScriptManager", sm);
+
 	return 0;
 }
 
 void PLUGIN_API pluginUnload() {
-	ScriptManager::deleteInstance();
 }
 }

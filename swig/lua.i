@@ -11,6 +11,19 @@ before a script is being loaded or unloaded. return true to discard further proc
 
 typedef unsigned int size_t;
 
+%{
+	static adchpp::Core *getCurrentCore(lua_State *l) {
+		lua_getglobal(l, "currentCore");
+		void *core = lua_touserdata(l, 1);
+		lua_pop(l, 1);
+		return reinterpret_cast<Core*>(core);
+	}
+
+	namespace adchpp {
+		const std::string &getConfigPath(lua_State *l);
+	}
+%}
+
 %wrapper %{
 
 static int traceback (lua_State *L) {
@@ -50,8 +63,8 @@ private:
 class LuaFunction {
 public:
 	LuaFunction(lua_State* L_) : L(L_), registryItem(new RegistryItem(L_)) { }
-	LuaFunction(const LuaFunction& rhs) : L(rhs.L), registryItem(rhs.registryItem) { }
-	LuaFunction& operator=(const LuaFunction& rhs) { L = rhs.L; registryItem = rhs.registryItem; return *this; }
+	LuaFunction(const LuaFunction& rhs) = default;
+	LuaFunction& operator=(const LuaFunction& rhs) = default;
 
 	void operator()() {
 		pushFunction();
@@ -144,7 +157,9 @@ public:
 	}
 
 private:
-	void pushFunction() { registryItem->push(); }
+	void pushFunction() {
+		registryItem->push();
+	}
 
 	int docall(int narg, int nret) {
 		int status;
@@ -193,6 +208,7 @@ uint32_t, const uint32_t&
 {
 	$1 = ($1_ltype)lua_tonumber(L,$input);
 }
+
 %typemap(out) int64_t,uint64_t,const int64_t&, const uint64_t& {
    lua_pushnumber(L, (lua_Number)$1); SWIG_arg++;
 }
@@ -239,7 +255,7 @@ uint32_t, const uint32_t&
 	$1 = LuaFunction(L);
 }
 
-%include "adchpp.i"
+%include "embed.i"
 
 %extend adchpp::AdcCommand {
 	std::string getParam(const char* name, size_t start) {
@@ -279,11 +295,11 @@ uint32_t, const uint32_t&
 
 %extend adchpp::PluginManager {
 	PluginDataHandle registerStringData() {
-		return PluginManager::getInstance()->registerPluginData(PluginData::simpleDataDeleter<std::string>);
+		return self->registerPluginData(PluginData::simpleDataDeleter<std::string>);
 	}
 
 	PluginDataHandle registerByteVectorData() {
-		return PluginManager::getInstance()->registerPluginData(PluginData::simpleDataDeleter<ByteVector>);
+		return self->registerPluginData(PluginData::simpleDataDeleter<ByteVector>);
 	}
 }
 
@@ -297,4 +313,21 @@ uint32_t, const uint32_t&
 		
 		return ret;
 	}
+}
+
+%inline %{
+
+namespace adchpp {
+	ClientManager* getCM(lua_State* l) { return &getCurrentCore(l)->getClientManager(); }
+	LogManager* getLM(lua_State* l) { return &getCurrentCore(l)->getLogManager(); }
+	PluginManager* getPM(lua_State* l) { return &getCurrentCore(l)->getPluginManager(); }
+	SocketManager* getSM(lua_State* l) { return &getCurrentCore(l)->getSocketManager(); }
+
+	const std::string &getConfigPath(lua_State *l) { return getCurrentCore(l)->getConfigPath(); }
+}
+
+%}
+
+%extend adchpp::Util {
+	static const std::string &getCfgPath(lua_State *l) { return adchpp::getConfigPath(l); }
 }

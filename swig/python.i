@@ -1,4 +1,5 @@
 %module(directors="1") pyadchpp
+%feature(autodoc, "1");
 
 %begin%{
 // prevent Python.h from tempering with this by including it before everything else
@@ -47,7 +48,7 @@
 	$1 = PyHandle($input, false);
 }
 
-%include "adchpp.i"
+%include "full.i"
 
 %init%{
 	PyEval_InitThreads();
@@ -61,7 +62,7 @@
 	static PluginDataHandle dataHandle;
 	static inline const PluginDataHandle& getDataHandle() {
 		if(!dataHandle) {
-			dataHandle = PluginManager::getInstance()->registerPluginData(&decRef);
+			//dataHandle = self->registerPluginData(&decRef);
 		}
 
 		return dataHandle;
@@ -133,7 +134,7 @@
 
 %extend adchpp::PluginManager {
 	PluginDataHandle registerPluginData() {
-		return PluginManager::getInstance()->registerPluginData(&decRef);
+		return self->registerPluginData(&decRef);
 	}
 	%property(pluginPath, getPluginPath, setPluginPath)
 	%property(pluginList, getPluginList, setPluginList)

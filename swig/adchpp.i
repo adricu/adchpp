@@ -16,6 +16,7 @@
 #include <adchpp/Bot.h>
 #include <adchpp/Text.h>
 #include <adchpp/version.h>
+#include <adchpp/Core.h>
 
 using namespace adchpp;
 
@@ -56,15 +57,6 @@ template<typename T>
 struct shared_ptr {
 	T* operator->();
 };
-
-%inline%{
-void startup() {
-	adchpp::startup(0);
-}
-void shutdown() {
-	adchpp::shutdown(0);
-}
-%}
 
 %nodefaultctor;
 %nodefaultdtor Entity;
@@ -117,9 +109,6 @@ extern std::string versionString;
 extern float versionFloat;
 
 class BufferPtr;
-
-void initialize(const std::string& configPath);
-void cleanup();
 
 struct ManagedConnection {
 	void disconnect();
@@ -199,16 +188,6 @@ public:
 	virtual const char* what();
 };
 
-struct Stats {
-	static size_t queueCalls;
-	static int64_t queueBytes;
-	static size_t sendCalls;
-	static int64_t sendBytes;
-	static int64_t recvCalls;
-	static int64_t recvBytes;
-	static time_t startTime;
-};
-
 class Text {
 public:
 	static std::string acpToUtf8(const std::string& str) throw();
@@ -254,13 +233,9 @@ public:
 
 	static std::string emptyString;
 
-	static void initialize(const std::string& configPath);
 	static std::string getOsVersion();
 	static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
 	static std::string formatTime(const std::string& msg, time_t t = time(NULL));
-
-	static const std::string& getCfgPath();
-	static void setCfgPath(const std::string& path);
 
 	static std::string getAppPath();
 	static std::string getAppName();
@@ -575,7 +550,7 @@ public:
 
 	using Entity::send;
 
-	virtual void send(const BufferPtr& command) throw();
+	virtual void send(const BufferPtr& command);
 
 	size_t getQueuedBytes() throw();
 
@@ -603,8 +578,6 @@ public:
 
 class Hub : public Entity {
 public:
-	Hub();
-
 	virtual void send(const BufferPtr& cmd);
 
 private:
@@ -708,7 +681,7 @@ public:
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Entity& c, AdcCommand& cmd) throw();
 	bool verifyOverflow(Entity& c);
-	void setState(Entity& c, Client::State newState) throw();
+	void setState(Entity& c, Entity::State newState) throw();
 	size_t getQueuedBytes() throw();
 
 	typedef SignalTraits<void (Entity&)> SignalConnected;
@@ -798,10 +771,12 @@ public:
 
 class Plugin {
 public:
-	Plugin() { }
-	virtual ~Plugin() { }
+	virtual ~Plugin();
 	/** @return API version for a plugin (incremented every time API changes) */
 	virtual int getVersion() = 0;
+
+protected:
+	Plugin();
 };
 
 class PluginManager
@@ -823,9 +798,9 @@ public:
 	
 	//int getPluginId() { return pluginIds++; }
 
-	bool registerPlugin(const std::string& name, Plugin* ptr);
+	bool registerPlugin(const std::string& name, shared_ptr<Plugin> ptr);
 	bool unregisterPlugin(const std::string& name);
-	Plugin* getPlugin(const std::string& name);
+	shared_ptr<Plugin> getPlugin(const std::string& name);
 	//const Registry& getPlugins();
 	//void load();
 	//void shutdown();
@@ -841,12 +816,3 @@ public:
 };
 
 }
-
-%inline%{
-namespace adchpp {
-	ClientManager* getCM() { return ClientManager::getInstance(); }
-	LogManager* getLM() { return LogManager::getInstance(); }
-	PluginManager* getPM() { return PluginManager::getInstance(); }
-	SocketManager* getSM() { return SocketManager::getInstance(); }
-}
-%}

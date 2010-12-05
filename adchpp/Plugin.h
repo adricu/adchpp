@@ -30,10 +30,12 @@ namespace adchpp {
  */
 class Plugin {
 public:
-	Plugin() { }
 	virtual ~Plugin() { }
 	/** @return API version for a plugin (incremented every time API changes) */
 	virtual int getVersion() = 0;
+
+protected:
+	Plugin() { }
 };
 
 typedef std::function<void (void*)> PluginDataDeleter;
