@@ -2,7 +2,7 @@
 #define ADCHPP_ADCHPP_CORE_H_
 
 #include "common.h"
-#include "Time.h"
+#include "TimeUtil.h"
 
 #include "forward.h"
 

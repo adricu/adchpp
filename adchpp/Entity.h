@@ -24,7 +24,7 @@
 #include "AdcCommand.h"
 #include "Plugin.h"
 #include "CID.h"
-#include "Time.h"
+#include "TimeUtil.h"
 
 namespace adchpp {
 

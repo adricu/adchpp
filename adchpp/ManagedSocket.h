@@ -26,7 +26,7 @@
 #include "Util.h"
 #include "Buffer.h"
 #include "AsyncStream.h"
-#include "Time.h"
+#include "TimeUtil.h"
 
 namespace adchpp {
 
