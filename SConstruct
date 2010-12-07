@@ -86,8 +86,6 @@ opts.AddVariables(
 	BoolVariable('gch', 'Use GCH when compiling GUI (disable if you have linking problems with mingw)', 'yes'),
 	BoolVariable('verbose', 'Show verbose command lines', 'no'),
 	BoolVariable('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
-	BoolVariable('i18n', 'Rebuild i18n files in debug build', 'no'),
-	BoolVariable('nls', 'Build with internationalization support', 'yes'),
 	('prefix', 'Prefix to use when cross compiling', ''),
 	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix')),
@@ -183,47 +181,25 @@ SWIGScanner = SCons.Scanner.ClassicCPP(
 )
 env.Append(SCANNERS=[SWIGScanner])
 
-#
-# internationalization (ardour.org provided the initial idea)
-#
-
-po_args = ['msgmerge', '-q', '--update', '--backup=none', '$TARGET', '$SOURCE']
-po_bld = Builder (action = Action([po_args], 'Updating translation $TARGET from $SOURCES'))
-env.Append(BUILDERS = {'PoBuild' : po_bld})
-
-mo_args = ['msgfmt', '-c', '-o', '$TARGET', '$SOURCE']
-mo_bld = Builder (action = Action([mo_args], 'Compiling message catalog $TARGET from $SOURCES'))
-env.Append(BUILDERS = {'MoBuild' : mo_bld})
-
-pot_args = ['xgettext', '--from-code=UTF-8', '--foreign-user', '--package-name=$PACKAGE',
-		'--copyright-holder=Jacek Sieka', '--msgid-bugs-address=dcplusplus-devel@lists.sourceforge.net',
-		'--no-wrap', '--keyword=_', '--keyword=T_', '--keyword=TF_', '--keyword=TFN_:1,2',
-		'--keyword=F_', '--keyword=gettext_noop', '--keyword=N_', '--keyword=CT_', '--boost', '-s',
-		'--output=$TARGET', '$SOURCES']
-
-pot_bld = Builder (action = Action([pot_args], 'Extracting messages to $TARGET from $SOURCES'))
-env.Append(BUILDERS = {'PotBuild' : pot_bld})
-
-conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
-
-if conf.CheckCHeader('poll.h'):
-	conf.env.Append(CPPDEFINES='HAVE_POLL_H')
-if conf.CheckCHeader('sys/epoll.h'):
-	conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
-if conf.CheckLib('dl', 'dlopen'):
-	conf.env.Append(CPPDEFINES=['HAVE_DL'])
-if not dev.is_win32():
-	if conf.CheckLib('pthread', 'pthread_create'):
-		conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
-	if conf.CheckLib('ssl', 'SSL_connect'):
-		conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
-else:
-	if os.path.exists(Dir('#/openssl/include').abspath):
-		conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
-
-env = conf.Finish()
-
-#dev.intl = dev.build('intl/')
+if not env.GetOption('clean') and not env.GetOption("help"):
+	conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
+	
+	if conf.CheckCHeader('poll.h'):
+		conf.env.Append(CPPDEFINES='HAVE_POLL_H')
+	if conf.CheckCHeader('sys/epoll.h'):
+		conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
+	if conf.CheckLib('dl', 'dlopen'):
+		conf.env.Append(CPPDEFINES=['HAVE_DL'])
+	if not dev.is_win32():
+		if conf.CheckLib('pthread', 'pthread_create'):
+			conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
+		if conf.CheckLib('ssl', 'SSL_connect'):
+			conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
+	else:
+		if os.path.exists(Dir('#/openssl/include').abspath):
+			conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
+	
+	env = conf.Finish()
 
 env.Append(LIBPATH = env.Dir(dev.get_build_root() + 'bin/').abspath)
 if not dev.is_win32():

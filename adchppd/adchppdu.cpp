@@ -31,8 +31,6 @@
 
 #include "adchppd.h"
 
-#define _(x) x
-
 using namespace std;
 using namespace adchpp;
 
@@ -94,16 +92,14 @@ static void installHandler() {
 }
 
 static void uninit() {
-	//LOG(modName, versionString + " shut down");
+	LOGC(*core, modName, versionString + " shut down");
 	if(!asdaemon)
-		printf(_("Shutting down."));
-
-	if(!asdaemon)
-		printf(".\n");
+		printf("Shut down");
 
 	if(pidFile != NULL)
 		fclose(pidFile);
 	pidFile = NULL;
+
 	if(!pidFileName.empty())
 		unlink(pidFileName.c_str());
 }
@@ -113,19 +109,20 @@ static void uninit() {
 static void daemonize() {
 	switch(fork()) {
 	case -1:
-		//LOG(modName, string("First fork failed: ") + strerror(errno));
+		fprintf(stderr, "First fork failed: %s\n", strerror(errno));
 		exit(5);
 	case 0: break;
 	default: _exit(0);
 	}
 
 	if(setsid() < 0) {
-		//LOG(modName, string("setsid failed: ") + strerror(errno));
+		fprintf(stderr, "setsid failed: %s\n", strerror(errno));
 		exit(6);
 	}
+
 	switch(fork()) {
 		case -1:
-			//LOG(modName, string("Second fork failed: ") + strerror(errno));
+			fprintf(stderr, "Second fork failed: %s\n", strerror(errno));
 			exit(7);
 		case 0: break;
 		default: exit(0);
@@ -154,7 +151,7 @@ static void runDaemon(const string& configPath) {
 		core->shutdown();
 		core.reset();
 	} catch(const adchpp::Exception& e) {
-		//LOG(modName, "Failed to start: " + e.getError());
+		fprintf(stderr, "Failed to start: %s\n", e.what());
 	}
 
 	uninit();
@@ -169,22 +166,22 @@ static void runConsole(const string& configPath) {
 		printf("."); fflush(stdout);
 		init();
 
-		// LOG(modName, versionString + " starting from console");
-		printf(_(".\n%s running, press ctrl-c to exit...\n"), versionString.c_str());
+		LOGC(*core, modName, versionString + " starting from console");
+		printf(".\n%s running, press ctrl-c to exit...\n", versionString.c_str());
 		core->run();
 
 		core->shutdown();
 
 		core.reset();
 	} catch(const Exception& e) {
-		printf(_("\n\nFATAL: Can't start ADCH++: %s\n"), e.getError().c_str());
+		fprintf(stderr, "\nFATAL: Can't start ADCH++: %s\n", e.what());
 	}
 
 	uninit();
 }
 
 static void printUsage() {
-	printf(_("Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]\n"));
+	printf("Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -206,31 +203,35 @@ int main(int argc, char* argv[]) {
 			return 0;
 		} else if(strcmp(argv[i], "-c") == 0) {
 			if((i + 1) == argc) {
-				fprintf(stderr, _("-c <directory>\n"));
+				fprintf(stderr, "-c <directory>\n");
 				return 1;
 			}
+
 			i++;
 			string cfg = argv[i];
 			if(cfg[0] != '/') {
-				fprintf(stderr, _("Config dir must be an absolute path\n"));
+				fprintf(stderr, "Config dir must be an absolute path\n");
 				return 2;
 			}
+
 			if(cfg[cfg.length() - 1] != '/') {
 				cfg+='/';
 			}
+
 			configPath = cfg;
 		} else if(strcmp(argv[i], "-p") == 0) {
 			if((i+1) == argc) {
-				fprintf(stderr, _("-p <pid-file>\n"));
+				fprintf(stderr, "-p <pid-file>\n");
 				return 1;
 			}
+
 			i++;
 			pidFileName = argv[i];
 		} else if(strcmp(argv[i], "-h") == 0) {
 			printUsage();
 			return 0;
 		} else {
-			fprintf(stderr, _("Unknown parameter: %s\n"), argv[i]);
+			fprintf(stderr, "Unknown parameter: %s\n", argv[i]);
 			return 4;
 		}
 	}
@@ -239,7 +240,7 @@ int main(int argc, char* argv[]) {
 		pidFileName = File::makeAbsolutePath(configPath, pidFileName);
 		pidFile = fopen(pidFileName.c_str(), "w");
 		if(pidFile == NULL) {
-			fprintf(stderr, _("Can't open %s for writing\n"), pidFileName.c_str());
+			fprintf(stderr, "Can't open %s for writing\n", pidFileName.c_str());
 			return 1;
 		}
 	}

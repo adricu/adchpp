@@ -62,7 +62,8 @@ private:
 	ADCHPP_DLL void dolog(const std::string& msg) throw();
 };
 
-#define LOG(area, msg) core.getLogManager().log(area, msg)
+#define LOGC(core, area, msg) (core).getLogManager().log(area, msg)
+#define LOG(area, msg) LOGC(core, area, msg)
 
 }
 

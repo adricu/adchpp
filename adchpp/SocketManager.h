@@ -74,6 +74,7 @@ public:
 
 	int run();
 
+	Core &getCore() { return core; }
 private:
 	friend class Core;
 	friend class ManagedSocket;

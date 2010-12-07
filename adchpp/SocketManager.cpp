@@ -124,6 +124,10 @@ public:
 		serverInfo(info),
 		handler(handler_)
 	{
+		LOGC(sm.getCore(), SocketManager::className,
+			"Listening on port " + Util::toString(info->port) +
+			" (Encrypted: " + (info->secure() ? "Yes)" : "No)"));
+
 #ifdef HAVE_OPENSSL
 		if(info->secure()) {
 			context.reset(new boost::asio::ssl::context(sm.io, ssl::context::tlsv1_server));
