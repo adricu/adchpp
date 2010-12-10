@@ -25,6 +25,7 @@ bans.muted = {}
 
 local settings = access.settings
 local commands = access.commands
+local is_op = access.is_op
 local level_op = access.level_op
 
 local cm = adchpp.getCM()
@@ -221,7 +222,7 @@ commands.ban = {
 
 	help = "nick [reason] [minutes] - ban an online user (set minutes to 0 to un-ban)",
 
-	protected = access.is_op,
+	protected = is_op,
 
 	user_command = {
 		hub_params = {
@@ -267,7 +268,7 @@ commands.bancid = {
 
 	help = "CID [reason] [minutes] (set minutes to 0 to un-ban)",
 
-	protected = access.is_op,
+	protected = is_op,
 
 	user_command = {
 		hub_params = {
@@ -313,7 +314,7 @@ commands.banip = {
 
 	help = "IP [reason] [minutes] (set minutes to 0 to un-ban)",
 
-	protected = access.is_op,
+	protected = is_op,
 
 	user_command = {
 		hub_params = {
@@ -359,7 +360,7 @@ commands.bannick = {
 
 	help = "nick [reason] [minutes] (set minutes to 0 to un-ban)",
 
-	protected = access.is_op,
+	protected = is_op,
 
 	user_command = {
 		hub_params = {
@@ -405,7 +406,7 @@ commands.bannickre = {
 
 	help = "<nick-reg-exp> [reason] [minutes] - ban nicks that match the given reg exp (must be within '<' and '>' brackets) (set minutes to 0 to un-ban)",
 
-	protected = access.is_op,
+	protected = is_op,
 
 	user_command = {
 		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban nick (reg exp)",
