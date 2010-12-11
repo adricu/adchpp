@@ -1,7 +1,7 @@
 import sys,os
 sys.path.append(os.path.abspath('../build/debug-default/bin/'))
 sys.path.append(os.path.abspath('../build/debug-mingw/bin/'))
-print sys.path
+
 import pyadchpp as a
 
 from Helpers import *
@@ -18,6 +18,9 @@ users = [User(profile=op, nick='arnetheduck', password='test')]
 nicks = dict([(x.nick, x) for x in users if x.nick])
 cids = dict([(x.cid, x) for x in users if x.cid])
 
+configPath = os.path.abspath('../etc/') + os.sep
+core = a.Core.create(configPath)
+
 def findUser(nick, cid):
 	print "looking for", nick, cid
 	if nick in nicks:
@@ -27,32 +30,30 @@ def findUser(nick, cid):
 	
 	return None
 
+def handler(signum, frame):
+    core.shutdown()
+
 def run():
     print "Starting"
-    a.initialize(os.path.abspath('../etc/') + os.sep)
     sil = a.TServerInfoList(1)
     si = a.ServerInfo.create()
     si.port = 2780
     sil[0] = si
-    a.getSM().setServers(sil)
-    pw = PasswordHandler(findUser, None, None)
-    iv = InfVerifier(None, None)
+    core.getSocketManager().setServers(sil)
+    pw = PasswordHandler(core, findUser, None, None)
+    iv = InfVerifier(core, None, None)
     print "."
-    
+    import signal
+    signal.signal(signal.SIGINT, handler)
+
     try:
-        a.startup()
-        
         import plugins
-        
-        raw_input("Running...")
+        plugins.init(core)
+        core.run()
     except Exception as e:
         print "\n\nFATAL: Can't start ADCH++: %s\n" % e
-    
-    a.shutdown()
-    
-    a.cleanup()
 
 if __name__ == '__main__':
     run()
-    
 
+core = None

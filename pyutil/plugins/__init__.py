@@ -1,8 +1,8 @@
 import pyadchpp as a
 
 class Echo(a.Plugin):
-    def __init__(self):
-        self.bot = a.getCM().createBot(lambda bot, cmd: self.handle(bot, cmd))
+    def __init__(self, core):
+        self.bot = core.getClientManager().createBot(lambda bot, cmd: self.handle(bot, cmd))
         
         cmd = a.AdcCommand(a.AdcCommand.CMD_SUP, a.AdcCommand.TYPE_HUB, 0)
         cmd.addParam("ADBASE").addParam("ADTIGR")
@@ -13,7 +13,10 @@ class Echo(a.Plugin):
         ac = a.AdcCommand(cmd)
         # TODO Continue logging in...
         print ac.toString()
-    
+
+
 reg = {}    
-for x in a.Plugin.__subclasses__():
-    reg[x] = x()
+
+def init(core):
+    for x in a.Plugin.__subclasses__():
+        reg[x] = x(core)

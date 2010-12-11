@@ -10,8 +10,8 @@ def receiveHandler(client, cmd, ok, filter, callback):
     
     return callback(client, cmd, ok)
     
-def handleCommand(filter, callback):
-    cm = a.getCM()
+def handleCommand(core, filter, callback):
+    cm = core.getClientManager()
     return cm.signalReceive().connect(lambda client, cmd, ok: receiveHandler(client, cmd, ok, filter, callback))
 
 def dump(c, code, msg):
@@ -104,10 +104,11 @@ class InfVerifier(object):
         a.AdcCommand.CMD_PAS: (base32,)
     }
  
-    def __init__(self, succeeded, failed):
+    def __init__(self, core, succeeded, failed):
         self.succeeded = succeeded or (lambda client: True)
         self.failed = failed or dump
-        self.inf = handleCommand(a.AdcCommand.CMD_INF, self.validate)
+        self.core = core
+        self.inf = handleCommand(core, a.AdcCommand.CMD_INF, self.validate)
         
     def validate(self, c, cmd, ok):
         if ok and cmd.getCommand() in self.params:
@@ -136,17 +137,17 @@ class InfVerifier(object):
         return True
     
 class PasswordHandler(object):
-    def __init__(self, getPassword, succeeded, failed):
+    def __init__(self, core, getPassword, succeeded, failed):
         self.getPassword = getPassword or (lambda nick, cid: None)
         self.succeeded = succeeded or (lambda client: True)
         self.failed = failed or dump
         
-        self.inf = handleCommand(a.AdcCommand.CMD_INF, self.onINF)
-        self.pas = handleCommand(a.AdcCommand.CMD_PAS, self.onPAS)
+        self.inf = handleCommand(core, a.AdcCommand.CMD_INF, self.onINF)
+        self.pas = handleCommand(core, a.AdcCommand.CMD_PAS, self.onPAS)
         
-        self.cm = a.getCM()
+        self.cm = core.getClientManager()
         
-        self.salt = a.getPM().registerPluginData()
+        self.salt = core.getPluginManager().registerPluginData()
         
     def onINF(self, e, cmd, ok):
         if not ok:
