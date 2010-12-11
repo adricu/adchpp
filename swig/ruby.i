@@ -99,7 +99,7 @@ namespace std {
 
 %template(VoidFunction) std::function<void()>;
 
-%typemap(in) std::function<void () > {
+%typemap(in) std::function<void()> {
 	$1 = RbFunction($input);
 }
 

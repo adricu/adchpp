@@ -2,6 +2,8 @@
 
 %include "adchpp.i"
 
+%template(TCorePtr) shared_ptr<adchpp::Core>;
+
 namespace adchpp {
 
 class Core {
@@ -21,30 +23,25 @@ public:
 
 	const std::string &getConfigPath() const;
 
-	/** execute a function asynchronously */
-	void addJob(const Callback& callback) throw();
-
-	/** execute a function after the specified amount of time
-	* @param msec milliseconds
-	*/
-	void addJob(const long msec, const Callback& callback);
-
-	/** execute a function after the specified amount of time
-	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
-	*/
-	void addJob(const std::string& time, const Callback& callback);
-
-	/** execute a function at regular intervals
-	* @param msec milliseconds
-	* @return function one must call to cancel the timer (its callback will still be executed)
-	*/
-	Callback addTimedJob(const long msec, const Callback& callback);
-
-	/** execute a function at regular intervals
-	* @param time a string that obeys to the "[-]h[h][:mm][:ss][.fff]" format
-	* @return function one must call to cancel the timer (its callback will still be executed)
-	*/
-	Callback addTimedJob(const std::string& time, const Callback& callback);
+	typedef std::function<void()> Callback;
+	%extend {
+		/* work around 2 problems:
+		- SWIG fails to convert a script function to const Callback&.
+		- SWIG has trouble choosing the overload of addJob / addTimedJob to use.
+		*/
+		void addJob(const long msec, Callback callback) {
+			self->addJob(msec, callback);
+		}
+		void addJob_str(const std::string& time, Callback callback) {
+			self->addJob(time, callback);
+		}
+		Callback addTimedJob(const long msec, Callback callback) {
+			return self->addTimedJob(msec, callback);
+		}
+		Callback addTimedJob_str(const std::string& time, Callback callback) {
+			return self->addTimedJob(time, callback);
+		}
+	}
 
 %extend {
 	time_t getStartTime() const {

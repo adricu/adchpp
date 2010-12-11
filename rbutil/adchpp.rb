@@ -11,36 +11,32 @@ a = Rbadchpp
 config_path = File.expand_path("../etc/") + '/'
 puts "Configuration path is #{config_path}..."
 
-a.initialize(config_path)
+core = a::Core.create(config_path)
 
 sil = a::TServerInfoList.new
 si = a::ServerInfo.create()
 si.port= 2780
 sil.push(si)
-a.get_sm().set_servers(sil)
+
+core.get_socket_manager().set_servers(sil)
+cm = core.get_client_manager()
 
 print "."
 counter = 0
-connected = a.get_cm().signal_connected().connect(Proc.new { counter = counter + 1 })
-disconnected = a.get_cm().signal_disconnected().connect(Proc.new { counter = counter - 1 })
-cb = a.get_sm().add_timed_job(1000, Proc.new { puts counter })
-  
-a.startup()
+connected = cm.signal_connected().connect(Proc.new { counter = counter + 1 })
+disconnected = cm.signal_disconnected().connect(Proc.new { counter = counter - 1 })
+cb = core.add_timed_job(1000, Proc.new { puts counter })
 
-c = ''
-while c != "\n" do
-  c = STDIN.getc.chr
-  puts c
-end
+trap("INT") { core.shutdown() }
+core.run()
 
 puts "Shutting down..."
 
 disconnected = nil
 connected = nil
-cb()
+puts cb
+cb.call
+
 cb = nil
 
-a.shutdown()
- 
-a.cleanup()
-
+core = nil
