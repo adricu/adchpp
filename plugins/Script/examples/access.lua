@@ -262,7 +262,6 @@ settings.mindownloadlevel = {
 settings.minsearchlevel = {
 	change = function()
 		restricted_commands[adchpp.AdcCommand_CMD_SCH] = { level = settings.minsearchlevel.value, str = "search" }
-		restricted_commands[adchpp.AdcCommand_CMD_RES] = { level = settings.minsearchlevel.value, str = "send search results" }
 	end,
 
 	help = "minimum level to search - hub restart recommended",
