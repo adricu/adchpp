@@ -66,7 +66,7 @@
 #endif
 
 #if defined(max) || defined(min)
-#error Max/max defined
+#error min/max defined
 #endif
 
 #endif // STDINC_H

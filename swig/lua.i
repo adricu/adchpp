@@ -63,8 +63,6 @@ private:
 class LuaFunction {
 public:
 	LuaFunction(lua_State* L_) : L(L_), registryItem(new RegistryItem(L_)) { }
-	LuaFunction(const LuaFunction& rhs) = default;
-	LuaFunction& operator=(const LuaFunction& rhs) = default;
 
 	void operator()() {
 		pushFunction();

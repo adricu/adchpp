@@ -21,14 +21,14 @@ def getRbConf(name):
 	return runCommand(['ruby', '-rmkmf', '-e', "print Config.expand('$(" + name + ")')"])
 
 def buildRbModule():
-	if not runCommand(['ruby', '-v']):
+	env = dev.env.Clone()
+
+	if 'HAVE_RUBY_H' not in env or not runCommand(['ruby', '-v']):
 		print "Ruby not found, skipping ruby module"
 		return
-	
-	env = dev.env.Clone()
-	
+
 	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby','-autorename'])
-	
+
 	ruby_wrap = dev.get_build_path(source_path) + 'ruby_wrap.cxx'
 
 	f = env.CFile(target=ruby_wrap, source='ruby.i')

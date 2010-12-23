@@ -188,6 +188,8 @@ if not env.GetOption('clean') and not env.GetOption("help"):
 		conf.env.Append(CPPDEFINES='HAVE_POLL_H')
 	if conf.CheckCHeader('sys/epoll.h'):
 		conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
+	if conf.CheckCHeader('ruby.h'):
+		conf.env['HAVE_RUBY_H'] = True
 	if conf.CheckLib('dl', 'dlopen'):
 		conf.env.Append(CPPDEFINES=['HAVE_DL'])
 	if not dev.is_win32():
