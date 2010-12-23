@@ -980,7 +980,10 @@ commands.cfg = {
 			setting.change()
 		end
 		base.pcall(save_settings)
-		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+
+		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
+		log(message)
+		cm:sendToAll(autil.info(message):getBuffer())
 	end,
 
 	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
