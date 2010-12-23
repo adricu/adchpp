@@ -377,6 +377,8 @@ public:
 	C(SID, 'S','I','D');
 	// Extensions
 	C(CMD, 'C','M','D');
+	C(NAT, 'N','A','T');
+	C(RNT, 'R','N','T');
 #undef C
 
 	static const uint32_t HUB_SID;
