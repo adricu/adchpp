@@ -8,9 +8,9 @@ MESSAGES = 100
 
 import socket, threading, time, random, sys
 
-from pyadchpp import ParseException, Util_initialize, CID, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
+from pyadchpp import ParseException, CID, Core, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
 
-Util_initialize("")
+core = Core.create("")
 
 class Client(object):
 	def __init__(self, n):
@@ -102,6 +102,11 @@ class Client(object):
 		cmd.addParam("NI", self.nick)
 		self.command(cmd)
 
+	def test_big(self):
+		cmd = AdcCommand(AdcCommand.toCMD(ord('X'), ord('X'), ord('X')), AdcCommand.TYPE_BROADCAST, self.sid)
+		cmd.addParam("X" * 1000)
+		self.command(cmd)
+
 	def __call__(self):
 		try:
 			while self.get_command():
@@ -133,13 +138,14 @@ try:
 		t.setDaemon(True)
 		t.start()
 	
-	time.sleep(5)
+	time.sleep(3)
 	tests = []
 	for k,v in Client.__dict__.iteritems():
 		if len(k) < 4 or k[0:4] != "test":
 			continue
 		tests.append(v)
 	print tests
+	done = []
 	while len(clients) > 0:
 		#time.sleep(1)
 		for c in clients:
@@ -153,14 +159,16 @@ try:
 				continue
 
 			if MESSAGES > 0 and c.messages >= MESSAGES:
-				c.sock.close()
+				clients.remove(c)
 				continue
 
 			c.messages = c.messages + 1
 			try:
 				random.choice(tests)(c)
 			except Exception, e:
-				pass
+				print e
+	
+	time.sleep(20)
 	print "No more clients"
 except Exception, e:
 	print e

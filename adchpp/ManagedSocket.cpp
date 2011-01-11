@@ -65,7 +65,7 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 	if(getMaxBufferSize() > 0 && queued + buf->size() > getMaxBufferSize()) {
 		if(lowPrio) {
 			return;
-		} else if(!overflow.is_not_a_date_time() && overflow + time::millisec(getOverflowTimeout()) < time::now()) {
+		} else if(!overflow.is_not_a_date_time() && overflow + time::seconds(getOverflowTimeout()) < time::now()) {
 			disconnect(5000, Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
