@@ -19,7 +19,6 @@
 #include <adchpp/adchpp.h>
 #include <adchpp/common.h>
 
-#include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
 #include <adchpp/version.h>
 #include <adchpp/File.h>
@@ -33,8 +32,6 @@
 
 using namespace std;
 using namespace adchpp;
-
-static const string modName = "adchpp";
 
 static FILE* pidFile;
 static string pidFileName;
@@ -92,7 +89,6 @@ static void installHandler() {
 }
 
 static void uninit() {
-	LOGC(*core, modName, versionString + " shut down");
 	if(!asdaemon)
 		printf("Shut down");
 
@@ -166,7 +162,6 @@ static void runConsole(const string& configPath) {
 		printf("."); fflush(stdout);
 		init();
 
-		LOGC(*core, modName, versionString + " starting from console");
 		printf(".\n%s running, press ctrl-c to exit...\n", versionString.c_str());
 		core->run();
 

@@ -38,6 +38,7 @@ Core::Core(const std::string &configPath) : configPath(configPath), startTime(ti
 }
 
 Core::~Core() {
+	lm->log("core", "Shutting down...");
 	// Order is significant...
 	pm.reset();
 	cm.reset();
@@ -52,6 +53,7 @@ void Core::init() {
 	pm.reset(new PluginManager(*this));
 
 	sm->setIncomingHandler(std::bind(&ClientManager::handleIncoming, cm.get(), std::placeholders::_1));
+	lm->log("core", "Core initialized");
 }
 
 void Core::run() {
