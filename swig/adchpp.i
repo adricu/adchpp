@@ -158,6 +158,15 @@ public:
 
 	void setServers(const ServerInfoList& servers_);
 
+	// Temporary location for socket stats...
+	// TODO These should go somewhere else - plugin?
+	size_t queueCalls;
+	int64_t queueBytes;
+	size_t sendCalls;
+	int64_t sendBytes;
+	int64_t recvCalls;
+	int64_t recvBytes;
+
 	std::map<std::string, int> errors;
 };
 
@@ -651,19 +660,11 @@ public:
 	}
 
 	Entity* findByCID(const CID& cid) {
-		uint32_t sid = self->getSID(cid);
-		if(sid != 0) {
-			return self->getEntity(sid);
-		}
-		return 0;
+		return self->getEntity(self->getSID(cid));
 	}
 
 	Entity* findByNick(const std::string& nick) {
-		uint32_t sid = self->getSID(nick);
-		if(sid != 0) {
-			return self->getEntity(sid);
-		}
-		return 0;
+		return self->getEntity(self->getSID(nick));
 	}
 
 	}

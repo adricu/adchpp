@@ -511,27 +511,25 @@ void ClientManager::removeEntity(Entity& c) throw() {
 }
 
 Entity* ClientManager::getEntity(uint32_t aSid) throw() {
-	if(aSid == AdcCommand::INVALID_SID) {
-		dcdebug("Request for invalid SID\n");
-		return 0;
+	switch(aSid) {
+	case AdcCommand::INVALID_SID: return nullptr;
+	case AdcCommand::HUB_SID: return &hub;
+	default:
+		{
+			EntityIter i = entities.find(aSid);
+			return (i == entities.end()) ? nullptr : i->second;
+		}
 	}
-
-	if(aSid == AdcCommand::HUB_SID) {
-		return &hub;
-	}
-
-	EntityIter i = entities.find(aSid);
-	return (i == entities.end()) ? 0 : i->second;
 }
 
 uint32_t ClientManager::getSID(const string& aNick) const throw() {
 	NickMap::const_iterator i = nicks.find(aNick);
-	return (i == nicks.end()) ? 0 : i->second->getSID();
+	return (i == nicks.end()) ? AdcCommand::INVALID_SID : i->second->getSID();
 }
 
 uint32_t ClientManager::getSID(const CID& cid) const throw() {
 	CIDMap::const_iterator i = cids.find(cid);
-	return (i == cids.end()) ? 0 : i->second->getSID();
+	return (i == cids.end()) ? AdcCommand::INVALID_SID : i->second->getSID();
 }
 
 void ClientManager::onFailed(Client& c, const boost::system::error_code& ec) throw() {

@@ -47,6 +47,10 @@ public:
 	time_t getStartTime() const {
 		return ($self->getStartTime() - time::ptime(boost::gregorian::date(1970, 1, 1))).total_seconds();
 	}
+
+	uint32_t getUpTime() const {
+		return (time::now() - $self->getStartTime()).total_seconds();
+	}
 }
 
 };

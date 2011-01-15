@@ -43,9 +43,9 @@ public:
 	typedef std::unordered_map<uint32_t, Entity*> EntityMap;
 	typedef EntityMap::iterator EntityIter;
 
-	/** @return SID of entity or 0 if not found */
+	/** @return SID of entity or AdcCommand::INVALID_SID if not found */
 	ADCHPP_DLL uint32_t getSID(const std::string& nick) const throw();
-	/** @return SID of entity or 0 if not found */
+	/** @return SID of entity or AdcCommand::INVALID_SID if not found */
 	ADCHPP_DLL uint32_t getSID(const CID& cid) const throw();
 
 	/** @return The entity associated with a certain SID, NULL if not found */

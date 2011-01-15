@@ -10,6 +10,7 @@ local autil = base.require("autil")
 local string = base.require("string")
 
 local commands = access.commands
+local get_user = access.get_user
 local is_op = access.is_op
 local level_op = access.level_op
 

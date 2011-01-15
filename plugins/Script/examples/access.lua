@@ -1170,7 +1170,7 @@ commands.info = {
 
 			local now = os.time()
 			local scripttime = os.difftime(now, start_time)
-			local hubtime = os.difftime(now, adchpp.Stats_startTime)
+			local hubtime = cm:getUpTime()
 
 			str = "\n"
 			str = str .. "Hub uptime: " .. format_seconds(hubtime) .. "\n"
@@ -1200,12 +1200,12 @@ commands.info = {
 			
 
 			local queued = cm:getQueuedBytes()
-			local queueBytes = adchpp.Stats_queueBytes
-			local queueCalls = adchpp.Stats_queueCalls
-			local sendBytes = adchpp.Stats_sendBytes
-			local sendCalls = adchpp.Stats_sendCalls
-			local recvBytes = adchpp.Stats_recvBytes
-			local recvCalls = adchpp.Stats_recvCalls
+			local queueBytes = sm.queueBytes
+			local queueCalls = sm.queueCalls
+			local sendBytes = sm.sendBytes
+			local sendCalls = sm.sendCalls
+			local recvBytes = sm.recvBytes
+			local recvCalls = sm.recvCalls
 
 			str = str .. "\nBandwidth stats: \n"
 			str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getEntities():size()) .. "/user)\n"
