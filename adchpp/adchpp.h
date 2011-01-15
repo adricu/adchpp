@@ -53,6 +53,8 @@
 
 #include "shared_ptr.h"
 
+#include "nullptr.h"
+
 #include <boost/noncopyable.hpp>
 
 #ifdef _UNICODE
