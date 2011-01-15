@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <!--Ensure that you load the scripts in this order so that they work correctly.-->
 <ScriptPlugin>
   <Engine language="lua" scriptPath="Scripts/">
