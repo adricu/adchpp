@@ -1,7 +1,7 @@
 // for compilers that don't support nullptr, use the workaround in section 1.1 of the proposal.
 
 #ifdef __GNUC__
-#if __GNUC__ <= 4 && __GNUC_MINOR__ < 6 // GCC 4.6 is the first GCC to implement nullptr.
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 6) // GCC 4.6 is the first GCC to implement nullptr.
 
 const // this is a const object...
 class {

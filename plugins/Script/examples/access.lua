@@ -752,7 +752,7 @@ local function onSUP(c, cmd)
 	:addParam("UC" .. base.tostring(uc))
 	:addParam("SS" .. base.tostring(ss))
 	:addParam("SF" .. base.tostring(sf))
-	:addParam("UP" .. base.tostring(os.difftime(os.time(), adchpp.Stats_startTime)))
+	:addParam("UP" .. base.tostring(cm:getUpTime()))
 	if settings.maxusers.value > 0 then
 		inf:addParam("MC" .. base.tostring(settings.maxusers.value))
 	end

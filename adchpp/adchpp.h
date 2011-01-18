@@ -19,6 +19,7 @@
 #ifndef ADCHPP_ADCHPP_H
 #define ADCHPP_ADCHPP_H
 
+#include "compiler.h"
 #include "config.h"
 
 #ifdef _WIN32
