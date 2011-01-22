@@ -1,0 +1,355 @@
+﻿= ADCH++  Novice User Guide
+Author: Toast <toast@adcportal.com>
+Document Version 0.1.0
+
+This version corresponds with version: 2.6
+
+== Introduction
+footnote:[Introduction]
+indexterm:[Introduction]
+ADCH++ is a hub for the ADC network. It implements the ADC protocol. The core application is very simple, but extensible using plugins. 
+Among the standard plugins there is a scripting plugin that allows hub owners to further customize the hub using the Lua scripting language. 
+The core is also exposed as a Python and a Ruby module, thus it is possible to use it within a Python or Ruby application.
+
+== Preface
+footnote:[Preface]
+indexterm:[Preface]
+This part is inteneded for novice or expert users. This guide will focus on scripting interface along with crashes and how to compile ADCH++ we provide documentation over the core and the plugin interfaces on our homepage.
+
+http://adchpp.sourceforge.net/doc/index.html
+http://adchpp.sourceforge.net/doc/lua_api.html
+
+== Scripting Interface and examples
+footnote:[Scripting Interfaces and examples]
+indexterm:[Scripting Interfaces and examples]
+
+Add more text here
+
+=== LUA Interface
+
+---------------------------------------------------------------------
+[source,lua]
+include::..\..\plugins\Script\examples\example.lua[]
+---------------------------------------------------------------------
+
+=== Ruby Interface
+
+---------------------------------------------------------------------
+[source,ruby]
+include::..\..\rbutil\adchpp.rb[]
+---------------------------------------------------------------------
+
+=== Python Interface
+
+---------------------------------------------------------------------
+[source,python]
+include::..\..\pyutil\adchpp.py[]
+---------------------------------------------------------------------
+ 
+== PtokaX API2 for ADCH++
+footnote:[PtokaX API2 for ADCH+\+]
+indexterm:[PtokaX API2 for ADCH+\+]
+Its possible to create or run existing PtokaX API2 LUA scripts in your hub via Adchpp-Ptokax bridge available at (https://launchpad.net/adchpp-ptokax). Adchpp-Ptokax is still under development and the whole Ptokax LUA API isn't imported yet but most of the existing scripts should work well. Make sure you use the latest revision of Ptokax bridge to get the most out of it.
+
+A sample of how the folder structure can look on a px bridge installation:
+--------------------------------------
+
+Directory of c:\users\username\adchpp\Scripts
+
+2010-05-27  18:01    <DIR>          .
+2010-05-27  18:01    <DIR>          ..
+2010-05-03  22:58            58 383 access.lua
+2010-05-26  17:26            33 141 adchpp-ptokax.lua
+2010-05-03  22:58             2 653 autil.lua
+2010-05-03  22:58             3 699 example.lua
+2010-05-03  22:58             3 003 history.lua
+2010-05-03  22:58            15 808 json.lua
+2010-05-03  22:58               742 motd.lua
+2010-05-27  18:01    <DIR>          px
+               8 File(s)        117 544 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px
+
+2010-05-27  18:01    <DIR>          .
+2010-05-27  18:01    <DIR>          ..
+2010-05-26  19:14             4 652 px_lastip.lua
+2010-05-26  18:06            15 158 px_record.lua
+2010-05-26  18:02             3 935 px_tagcheck.lua
+2007-12-23  12:51            13 312 px_tophubbers.lua
+2010-05-26  17:50             5 918 px_topshare.lua
+               5 File(s)         62 491 bytes
+--------------------------------------
+
+You can load PtokaX scripts inside the hub via brige user commands (right-click menu). You will be asked where to load the scripts from. The default location is the Scripts folder so if you have the scripts in a subdirectory like in the example above then you can simply load them by typing (px/example_script.lua) and then hitting enter.
+The bridge will create a file named adchpp-ptokax.txt in the Config directory of ADCH++ what lists the currently added scripts as a list of their names and path. You can edit the file to load multiple scripts in one go like in the following example (your structure may differ):
+
+--------------------------------------
+px\px_banner.lua
+px\px_iprange.lua
+px\px_change.lua
+px\px_request.lua
+px\px_rotating.lua
+px\px_lastip.lua
+px\px_rlsbot.lua
+px\px_minchecker.lua
+px\px_userdb.lua
+px\px_pmfilter.lua
+px\px_test.lua
+px\px_profiles.lua
+px\px_pmblock.lua
+px\px_clock.lua
+px\px_badsearch.lua
+--------------------------------------
+
+In case of any lua script requires luafilesystem or socket library (like the lua script FreshStuff or Feedwatch) here is how to configure it: Move the lua5.1.dll and lua5.1.dll.manifest from the pxbridge distribution to the bin folder and the lfs.dll and lfs.dll.manifest to the lib folder where the script looks for it. Make sure you use the .dlls corresponding the compiler your ADCH\++ compiled with (if you use the original ADCH++ distibution then its release-mingw-x86). 
+Lets take Freshstuff script as an example. Just add the script as you would normally do with any scripts. The rest content of the dir:
+
+--------------------------------------
+Directory of c:\users\username\adchpp\Scripts\px
+
+2010-05-27  18:08    <DIR>          .
+2010-05-27  18:08    <DIR>          ..
+2010-05-26  18:31    <DIR>          freshstuff
+2010-05-26  18:14             1 815 freshstuff.lua
+2010-05-26  19:16            19 516 px_feedwatch.lua
+2010-05-26  19:14             4 652 px_lastip.lua
+2010-05-26  18:06            15 158 px_record.lua
+2010-05-26  18:02             3 935 px_tagcheck.lua
+2007-12-23  12:51            13 312 px_tophubbers.lua
+2010-05-26  17:50             5 918 px_topshare.lua
+               7 File(s)         64 306 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff
+
+2010-05-26  18:31    <DIR>          .
+2010-05-26  18:31    <DIR>          ..
+2010-05-26  18:14    <DIR>          components
+2010-05-26  18:14    <DIR>          config
+2010-05-26  18:15    <DIR>          data
+2010-05-26  18:14    <DIR>          docs
+2010-05-26  18:14            24 155 kernel.lua
+2010-05-26  18:42    <DIR>          lib
+2010-05-26  18:14            12 010 ptokax.lua
+2010-05-26  18:14             5 775 tables.lua
+               3 File(s)         41 940 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\components
+
+2010-05-26  18:14    <DIR>          .
+2010-05-26  18:14    <DIR>          ..
+2010-05-26  18:14             3 503 extras.lua
+2010-05-26  18:14            14 072 requester.lua
+               2 File(s)         17 575 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\config
+
+2010-05-26  18:14    <DIR>          .
+2010-05-26  18:14    <DIR>          ..
+2010-05-26  18:14               987 extras.lua
+2010-05-26  18:14             3 182 main.lua
+2010-05-26  18:14               374 requester.lua
+               3 File(s)          4 543 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\data
+
+2010-05-26  18:15    <DIR>          .
+2010-05-26  18:15    <DIR>          ..
+2010-05-26  18:15               125 categories.dat
+               1 File(s)            125 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\docs
+
+2010-05-26  18:14    <DIR>          .
+2010-05-26  18:14    <DIR>          ..
+2010-05-26  18:14             1 471 customprofile.txt
+2010-05-26  18:14             4 350 development.txt
+2010-05-26  18:14               201 INSTALL.txt
+2010-05-26  18:14            16 755 license.txt
+2010-05-26  18:14               735 README.txt
+2010-05-26  18:14               644 TODO.txt
+               6 File(s)         24 156 bytes
+
+ Directory of c:\users\username\adchpp\Scripts\px\freshstuff\lib
+
+2010-05-26  18:42    <DIR>          .
+2010-05-26  18:42    <DIR>          ..
+2010-05-13  16:14            13 824 lfs.dll
+2010-05-13  16:14               616 lfs.dll.manifest
+2010-05-26  18:14           138 240 PXLFS.dll
+2010-05-26  18:14           262 144 PXLFS.tds
+               4 File(s)        414 824 bytes
+--------------------------------------
+
+== Automatic spam protection: working with banmsgre
+footnote:[Automatic spam protection]
+indexterm:[Automatic spam protection]
+Banmsgre is a very powerful tool for getting rid of unwanted spam. It uses regular expressions for detecting unwanted chat content in your hub. It requires the knowledge of how to write a regular expression string so this command might not be for the beginners.
+
+  +banmsgre <regexp> <reason> <time>
+ 
+.Example: Command Example
+--------------------------------------
++banmsgre <http://www\.spam\.com> unwanted spam 99
+--------------------------------------
+
+For more information about regular expressions go to this site:
+http://www.regular-expressions.info/
+
+== Running ADCH++ with parameters
+footnote:[Running ADCH\++ with parameters]
+indexterm:[Running ADCH+\+ with parameters]
+This part is a quick run thrugh of how to install ADCH++ as a service module instead of an application.
+
+
+.Example: Command usage
+--------------------------------------
+Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
+--------------------------------------
+	
+* -c specifies a path to configuration directory
+* -d deamon service _(Linux only)_
+* -p <pid-file> Write process pid to <pid-file> _(Linux only)_
+* -i service mode _(Windows only)_
+* -v version number
+* -h help message
+
+.Varible Example
+[width="60%",]
+|==============================================
+|(Linux)	|adchppd -c /home/test/adchpp/bin/config/
+|(Linux)	|adchppd -d
+|(Linux)	|adchppd -p adchpp.pid
+|(Windows)	|adchppd.exe -c c:/users/test/adchpp/bin/config/
+|(Windows)	|adchppd.exe -i adchpp
+|==============================================
+
+Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. Lets see how do you elevate adchpp.exe in Windows 7/Vista:
+
+.How it would look if it fails
+
+image:images/img_adch_elevated_fail.png[]
+
+* Right click on the application
+* Choose properties
+* Go to compatibility tab
+
+image:images/img_adch_elevated_howto.png[]
+
+* Now execute the command adchpp - i <servicename> (example: adchpp.exe -i myserver) in your adchpp folder
+* Grant the application access if you have UAC enabled
+
+
+To verify that the installation of the service was successful you can check what services are installed via Control Panel\System and Security\Administrative Tools (or you simply run services.msc command from a Windows prompt).
+
+image:images/img_adch_service_location.png[]
+
+To check if adchpp service is running start the "services" application in administrative tools:
+
+image:images/img_adch_service_verify.png[]
+	
+== Issues and problems
+footnote:[Issues and problems]
+indexterm:[Issues and problems]
+There's no perfect software all of them have some flaws, can preform wierd or have unwanted features. Its very important to make the developer aware of such problems. If you want to help improving ADCH\++ you can do so by giving feedback to the developers about found bugs helping them to recreate and fix the problems. To be able to help you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from http://builds.adcportal.com
+
+=== Hub crash (core dumps)
+
+In the event of a total crash the hubsoftware generates file called adchppd.RPT in folder where the binary is located, here is how an adchppd.RPT may look like:
+
+	Error occured on Sunday, September 27, 2009 at 11:08:23.
+
+	H:\BZR Stuff\adchpp\build\release-mingw\bin\adchppd.exe caused a Breakpoint at location 6905059f in module H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll.
+
+	Registers:
+	eax=00000080 ebx=02bffca0 ecx=76740849 edx=00000000 esi=69059b05 edi=02bffcd7
+	eip=6905059f esp=02bffc94 ebp=02bffd1c iopl=0         nv up ei pl nz na pe nc
+	cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+
+	Call stack:
+	6905059F  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:6905059F  __w32sp_grab  ../../../../gcc-4.4.1/libgcc/../gcc/config/i386/w32-sharedptr.c:15
+	6904F764  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:6904F764  _Unwind_SjLj_Register  ../../../../gcc-4.4.1/libgcc/../gcc/unwind-sjlj.c:169
+	69041657  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:69041657  __tcf_1  c:/dev tools/mingw/bin/../lib/gcc/mingw32/4.4.1/include/c++/bits/basic_string.h:281
+	69041086  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:69041086BFD 2.13.90 20030111 assertion fail ../../src/bfd/libbfd.c:584Dwarf Error: found dwarf version '56067', this reader only handles version 2 information.
+	69041106  H:\BZR Stuff\adchpp\build\release-mingw\bin\Bloom.dll:69041106
+	77C097C0  C:\Windows\SysWOW64\ntdll.dll:77C097C0  RtlQueryEnvironmentVariable
+	77C1DCE2  C:\Windows\SysWOW64\ntdll.dll:77C1DCE2  LdrShutdownProcess
+	77C1DB84  C:\Windows\SysWOW64\ntdll.dll:77C1DB84  RtlExitUserProcess
+	7625699E  C:\Windows\syswow64\kernel32.dll:7625699E  AttachConsole
+	761B3677  C:\Windows\syswow64\kernel32.dll:761B3677  BaseThreadInitThunk
+	77C09D72  C:\Windows\SysWOW64\ntdll.dll:77C09D72  RtlInitializeExceptionChain
+	77C09D45  C:\Windows\SysWOW64\ntdll.dll:77C09D45  RtlInitializeExceptionChain
+
+TIP: Always submit adchppd.RPT to the bugtracker located at launchpad https://bugs.launchpad.net/adchpp
+
+==== If you run MinGW compiled debug build
+
+Follow the DC++ backtrace reporting procedure at 
+
+https://answers.launchpad.net/dcplusplus/+faq/337
+
+you can get backtrace logs for ADCH++ crashes in the very similar way. Please report the problem at https://bugs.launchpad.net/adchpp including the backtrace log as an attachment.
+
+=== LUA errors
+
+Sometimes lua scripts can preform errors and they will show up in the console window of ADCH++ while its running. Example:
+
+	access.lua:491: attempt to concatenate global 'reason' (a nil value)
+	stack traceback:
+	access.lua:491: in function 'dump_banned'
+	access.lua:579: in function <access.lua:496>
+	(tail call): ?
+	access.lua:1652: in function <access.lua:1651>
+
+TIP: If you get similar errors while running your hubsoft do report them at the official bug tracker at launchpad https://bugs.launchpad.net/adchpp
+
+=== Extension Support
+footnote:[Extension Support]
+indexterm:[Extension Support]
+
+*BLOM* - this extension that allows hub software to create a map (bloom filter) of the shared files on the hub, but with minimal effort, e.g. the hub doesn't keep a list of files, but a filter that never produces false negatives but only possible false positives. This can potentially save bandwidth and effort on the client side. +
+*UCMD* - User commands are used to send hub-specific commands to the client which provide useful shortcuts for the user. +
+*ADCS* - ADCS is an extension that has the goal of adding the TLS/SSL layer just over the TCP layer and beneath the application layer (where ADC runs). This way, the ADC protocol remains unchanged while the connections are encrypted. +
+*PING* - This extension can be supported by both clients and hubs, and when present, if hub supports it, it must send additional information to the client. +
+
+== Compiling ADCH++
+footnote:[Compiling ADCH\++]
+indexterm:[Compiling ADCH+\+]
+
+These are the absolute minimum versions for tools used in compiling ADCH++:
+    
+	* GCC 4.4.x (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
+    * SCons 1.0 or later http://www.scons.org
+    * SWIG 1.3.40 or later http://www.swig.org
+    * Python 2.4.x or later http://www.python.org
+    * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
+
+Docs Build
+	to generate documentation use: scons docs=1
+	
+MinGW Builds
+
+	to build a debug version use: scons
+	to build a release version use: scons mode=release
+
+MSVC Builds
+
+	to build a x86 debug version use: scons tools=default
+	to build a x86 release version use: scons tools=default mode=release
+	to build a x64 debug version use: scons tools=default arch=x64
+	to build a x64 release version use: scons tools=default mode=release arch=x64
+	
+== Appendix
+footnote:[Appendix]
+indexterm:[Appendix]
+This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
+
+Copyright (C) 2010 Toast
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation;    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.    A copy of the license is included in the section entitled "GNU Free Documentation License".
+
+== Index
+Here is the index to help you get the section you want to read
+////////////////////////////////////////////////////////////////
+Changelog: 
+0.1.0: Initial Documentation
+////////////////////////////////////////////////////////////////
+// vim: set syntax=asciidoc:

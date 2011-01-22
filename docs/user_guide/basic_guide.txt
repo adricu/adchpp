@@ -2,9 +2,8 @@
 Author: Toast <toast@adcportal.com>
 Document Version 0.3.0
 
-Additional Contributers: eMTee <n/a>, iceman50 <iceman50@adcportal.com>
-
-This version of the basic user guide corresponds with ADCH++ version: 2.6
+Additional Contributers: eMTee <n/a>, iceman50 <iceman50@adcportal.com> + 
+This version of the basic user guide corresponds with ADCH++ version: *2.6*
 
 == Introduction
 
@@ -407,3 +406,4 @@ Changelog:
 0.2.9: Additional information added
 0.3.0: Major updates to format of the guide broke it down to a novice and a newbie parts.
 ////////////////////////////////////////////////////////////////
+// vim: set syntax=asciidoc:
