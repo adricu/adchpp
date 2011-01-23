@@ -32,11 +32,11 @@ The difference between a debug and release build is the following:
     
 _This is how the output of a debug build looks_
 
-image:images/img_adchpp_debug_build.png[]
+image:images/img_adchpp_debug_build.png["ADCH++ debug build"]
 
 _This is how the output of a release build looks_
 
-image:images/img_adchpp_release_build.png[]
+image:images/img_adchpp_release_build.png["ADCH++ release build"]
 
 ADCH\++ setup files can be found at the Sourceforge web site located at http://sourceforge.net/projects/adchpp/. 
 On that page there are links to the ADCH++ distribution files:

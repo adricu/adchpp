@@ -241,5 +241,7 @@ if env['docs']:
 		env.Command(doc_path + 'readme.html', '#/readme.txt', asciidoc)
 
 		guide_path = '#/docs/user_guide/'
-		env.Command(doc_path + 'user_guide/index.html', guide_path + 'basic_guide.txt', asciidoc)
+		env.Command(doc_path + 'user_guide/basic_guide.html', guide_path + 'basic_guide.txt', asciidoc)
+		env.Command(doc_path + 'user_guide/novice_guide.html', guide_path + 'novice_guide.txt', asciidoc)
 		env.Command(doc_path + 'user_guide/images', guide_path + 'images', Copy('$TARGET', '$SOURCE'))
+

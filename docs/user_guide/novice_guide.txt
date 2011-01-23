@@ -16,14 +16,14 @@ footnote:[Preface]
 indexterm:[Preface]
 This guide is inteneded for novice or expert users. It will focus on the scripting interface, and later describes how to handle possible crashes and how to compile ADCH++. We provide documentation for the core and the plugin interfaces on our homepage:
 
-http://adchpp.sourceforge.net/doc/index.html
+http://adchpp.sourceforge.net/doc/index.html +
 http://adchpp.sourceforge.net/doc/lua_api.html
 
 == Scripting Interface and examples
 footnote:[Scripting Interfaces and examples]
 indexterm:[Scripting Interfaces and examples]
 
-Add more text here
+ADCH++ core is exposed to various scripting languages that either has direct access or can use the core as a plugin the following part is examples of how it could look.
 
 === LUA Interface
 
@@ -49,7 +49,7 @@ include::..\..\pyutil\adchpp.py[]
 == PtokaX API2 for ADCH++
 footnote:[PtokaX API2 for ADCH+\+]
 indexterm:[PtokaX API2 for ADCH+\+]
-Its possible to create or run existing PtokaX API2 LUA scripts in your hub using the Adchpp-Ptokax bridge available at (https://launchpad.net/adchpp-ptokax). Adchpp-Ptokax is still under development and the whole Ptokax LUA API isn't imported yet but most of the existing scripts should work well. Make sure you use the latest revision of Ptokax bridge to get the most out of it.
+Its possible to create or run existing PtokaX API2 LUA scripts in your hub using the Adchpp-Ptokax bridge available at (https://launchpad.net/adchpp-ptokax) make sure you use the latest revision of Ptokax bridge to get the most out of it.
 
 A sample of how the folder structure can look on a px bridge installation:
 --------------------------------------
@@ -213,7 +213,7 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 * -v version number
 * -h help message
 
-.Varible Example
+.Varible example
 [width="60%",]
 |==============================================
 |(Linux)	|adchppd -c /home/test/adchpp/bin/config/
@@ -225,15 +225,15 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 
 Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. Lets see how do you elevate adchpp.exe in Windows 7/Vista:
 
-.How it would look if it fails
+How it would look if it fails
 
-image:images/img_adch_elevated_fail.png[]
+image:images/img_adch_elevated_fail.png["ADCH++ elevation fails"]
 
 * Right click on the application
 * Choose properties
 * Go to compatibility tab
 
-image:images/img_adch_elevated_howto.png[]
+image:images/img_adch_elevated_howto.png["ADCH++ elevation howto"]
 
 * Now execute the command adchpp - i <servicename> (example: adchpp.exe -i myserver) in your adchpp folder
 * Grant the application access if you have UAC enabled
@@ -241,16 +241,16 @@ image:images/img_adch_elevated_howto.png[]
 
 To verify that the installation of the service was successful you can check what services are installed via Control Panel\System and Security\Administrative Tools (or you simply run services.msc command from a Windows prompt).
 
-image:images/img_adch_service_location.png[]
+image:images/img_adch_service_location.png["ADCH++ Services"]
 
 To check if adchpp service is running start the "services" application in administrative tools:
 
-image:images/img_adch_service_verify.png[]
+image:images/img_adch_service_verify.png["ADCH++ verify service"]
 	
 == Issues and problems
 footnote:[Issues and problems]
 indexterm:[Issues and problems]
-There's no perfect software all of them have some flaws, can preform wierd or have unwanted features. Its very important to make the developer aware of such problems. If you want to help improving ADCH\++ you can do so by giving feedback to the developers about found bugs helping them to recreate and fix the problems. To be able to help you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from http://builds.adcportal.com
+There's no perfect software all of them have some flaws, can preform wierd or have unwanted features. Its very important to make the developer aware of such problems so if you want to help improving ADCH\++ you can do so by giving feedback to the developers about found bugs helping them to recreate and fix the problems. To be able to help you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from http://builds.adcportal.com/index.php?folder=YWRjaHBw[ADCPortal Builds]
 
 === Hub crash (core dumps)
 
@@ -320,9 +320,30 @@ These are the minimum versions of tools required to compile ADCH++:
 	* GCC 4.4.x (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
     * SCons 1.2.0 or later http://www.scons.org
     * SWIG 1.3.40 or later http://www.swig.org
-    * Python 2.4.x or later http://www.python.org
+    * Optional: Python 2.4.x or later http://www.python.org
+	* Optional: Ruby 1.9.2 (http://www.ruby-lang.org)
+	* Optional: PHP 5 (http://www.php.net/)
     * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
 
+=== Building ADCH++
+To build ADCH++ from source you have to:
+
+* Install SWIG and ensure it's in your PATH
+* Install Python and ensure it's in your PATH
+* Install SCons and ensure it's in your PATH
+* Windows with MinGW: Install MinGW and ensure it's in your PATH
+* Linux: Install GCC and appropriate header files, in particular, these packages spring to mind:
+	** gcc-c++
+	** libstdc++-devel
+	** redhat: readline-devel, debian: libreadline-dev
+	   sys-libs/readline
+* To compile with support for secure connections, you need OpenSSL:
+	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory. append a 'd' to debug libs and put x64 / ia64 libs into openssl/lib/x64 / openssl/lib/ia64 respectively.
+	** Linux: if you don't have it already, get the openssl-devel/libssl-dev package
+* In the source folder, type "scons -h" to see additional compile options
+* Type "scons" to create a debug build. "scons mode=release" will create a
+  release build (see examples below).
+  
 Docs Build
 	to generate documentation use: scons docs=1
 	
@@ -337,7 +358,10 @@ MSVC Builds
 	to build a x86 release version use: scons tools=default mode=release
 	to build a x64 debug version use: scons tools=default arch=x64
 	to build a x64 release version use: scons tools=default mode=release arch=x64
-	
+
+=== Patches and contributions
+We do accept patches or contributions in general everything from graphics to helpguides to sourcecodes and scripts, but in order to avoid future licensing issues, we ask you to give us the copyright over any submitted code. Make sure that the code doesn't break support for any of the platforms supported and that it looks more or less like the rest of the code (indent, names etc). Patches should be sent to the https://sourceforge.net/mailarchive/forum.php?forum_name=dcplusplus-devel[dcplusplus-devel mailing list] or https://launchpad.net/adchpp[Launchpad]. Please use unified patches agains latest bzr trunk (i e bzr diff) and supply a description of what the patch does. Please use unified patches agains latest svn trunk (i e svn diff) and supply a description of what the patch does.	
+
 == Appendix
 footnote:[Appendix]
 indexterm:[Appendix]
