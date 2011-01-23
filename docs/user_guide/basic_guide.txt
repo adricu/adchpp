@@ -2,7 +2,7 @@
 Author: Toast <toast@adcportal.com>
 Document Version 0.3.0
 
-Additional Contributers: eMTee <n/a>, iceman50 <iceman50@adcportal.com> + 
+Additional Contributers: eMTee <emtee11@gmail.com>, iceman50 <iceman50@adcportal.com> + 
 This version of the basic user guide corresponds with ADCH++ version: *2.6*
 
 == Introduction
@@ -117,7 +117,7 @@ This part of the guide will focus on the configuration on the hub, how to manage
 === Basic configuration
 footnote:[Basic Configuration]
 indexterm:[Basic Configuration]
-Now that the install is done it's time to configure so lets get on with the part that shows you how to setup and operate a hub. All the settings for ADCH++ is stored in the configuration folder in ADCH++. 
+Now that the install is done it's time to configure so lets get on with the part that shows you how to setup and operate a hub. All the settings for ADCH\++ is stored in the configuration folder in ADCH++. 
 Open up adchpp.xml in a text editor (such as Notepad) and start changing values as you wish. 
 
 CAUTION: Editing values incorrectly can lead to the hub not working.
@@ -251,7 +251,7 @@ Now you can start your ADCH++ binary and enter your hub for the last part of the
 === Account Creation
 footnote:[Account Creation]
 indexterm:[Account Creation]
-Registered users information are stored in a file called users.txt in your ADCH++ configuration folder. Ensure that this file can be read/write accessed by ADCH++. 
+Registered users information are stored in a file called users.txt in your ADCH\++ configuration folder. Ensure that this file can be read/write accessed by ADCH++. 
 
 Now we explain you how to create a user account for yourself. Start up the hub, log in and enter:
 
