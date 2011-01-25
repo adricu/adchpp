@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <ADCHubPlusPlus>
+
+<!-- IMPORTANT: under Linux, you should use absolute paths in the various path settings 
+	of this configuration file -->
+
 	<Settings>
 
 <!-- Hub name and message of the day -->
