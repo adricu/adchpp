@@ -2,18 +2,18 @@
 Author: Toast <toast@adcportal.com>
 Document Version 0.3.1
 
-Additional Contributors: eMTee, iceman50 <iceman50@adcportal.com> + 
+Additional contributors: eMTee, iceman50 <iceman50@adcportal.com> + 
 This version of the basic user guide corresponds with ADCH++ version: *2.7.0*
 
 == Introduction
 
-ADCH++ is a hub software for the ADC network. It implements the ADC protocol. The core application is very simple, but extensible using plugins. 
+ADCH++ is a hub software for the ADC network. It implements the http://dcplusplus.sf.net/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins. 
 Among the standard plugins there is a scripting plugin that allows hub owners to further customize the hub using the Lua scripting language. 
 The core is also exposed as a Python and a Ruby module, thus it is possible to use it within a Python or Ruby application.
 
 == Preface
 
-This guide shows you how to do the basic configuration, setup and administration of an ADCH++ hub. It contains the basic information required for newbies.
+This basic guide shows you how to do the minimum configuration, setup and administration of an ADCH++ hub. It contains the basic information required for newbies.
 
 == Installing ADCH++ on your Operating System
 
@@ -22,7 +22,9 @@ The first part of the guide describes the installation procedure of ADCH++ under
 === Installing on Windows
 footnote:[Windows Installation]
 indexterm:[Windows Installation]
-First of all you have to decide whether to run a debug or a release build of ADCH\+\+. For normal usage choose release builds, they are available for download in the official ADCH++ home page (links below).
+ADCH++ needs Windows 2000 or later to run (XP SP3 or newer is recommended). 
+
+Before you install, you have to decide whether to run a debug or a release build of ADCH\+\+. For normal usage choose release builds, they are available for download in the official ADCH++ home page (links below).
 
 The difference between a debug and release build is the following:  
 
@@ -53,7 +55,7 @@ If you choose the installer, you'll go through the following installation steps:
 
 CAUTION: on Windows Vista and Windows 7 you should not install ADCH\++ to the Program files / Program files(x86) directory if you don't know how to workaround UAC Data Redirection and how to store configuration files in the user profile path's specified by the http://vistaonwindows.com/environment_variables.html[windows environment variables]. If you feel this too hard for you then just install/unpack ADCH++ to another folder outside of Program Files, where UAC rules don't apply. A good alternative path is: _c:\Users\<Your Account>\_
 
-At last you'll be asked if you want to install ADCH\++ as a service or not. The difference between installing ADCH\++ as a program or as a service is that if it runs in program mode you'll always see it's console window. Program mode can be an advantage as you always able to ensure the hub is there, up and running. On the contrary, as the console window cannot be closed (only minimized) it will be always there in your taskbar what could be annoying for some users.If ADCH\++ is running in service mode then there's no any opened window and it only outputs to it's log file only. You'll find detailed information about running ADCH++ in service mode later in this guide.
+At last you'll be asked if you want to install ADCH\++ as a service or not. The difference between installing ADCH\++ as an applciation or as a service is that when it runs in program mode, its console window will be always visible. Program mode can be an advantage as you always able to ensure the hub is there, up and running. On the contrary, as the console window cannot be closed (only minimized) it will always reside on your taskbar which could be annoying for you. If ADCH\++ is running in service mode then you won't see any opened console window and outputs will go to the log file only. You'll find detailed information about running ADCH++ in service mode in the expert guide.
 
 === Installing on Linux
 footnote:[Linux Installation]
@@ -67,7 +69,7 @@ Nightly builds: http://builds.adcportal.com/index.php?folder=YWRjaHBwL3NvdXJjZQ
 
 Launchpad repository: https://code.launchpad.net/adchpp
 
-Here are the tools that needed to compile and install ADCH++ on a Linux/Unix machine.
+You need Linux distribution with a 2.6-based kernel to run ADCH\+\+. The following tools needed to compile and install ADCH++ on a Linux/Unix machine.
 
 .Installation tools
 [width="60%",options="header"]
@@ -108,13 +110,13 @@ cp -rf etc/ build/release-default/bin/config
 
 == Setting up your hub
 
-This part of the guide will focus on the configuration on the hub, it tells how to manage and set it up for operational use.
+This part of the guide will focus on the configuration on the hub, it describes how to manage and setup ADCH++ for operational use.
 
 === Basic configuration
 footnote:[Basic Configuration]
 indexterm:[Basic Configuration]
-All ADCH\++ settings are stored in a file called adchpp.xml in the configuration folder named _Config_. It should reside in the ADCH++ program folder. 
-Open up adchpp.xml in a text editor (such as Notepad under Windows) and start changing values as you wish. 
+ADCH\++ is configured using an XML file, as are the standard plugins. In Linux, the default location for configuration files is "/etc/adchpp/". In Windows, it's a directory named "config" under the installation directory.
+All ADCH++ settings are stored in a file called adchpp.xml. By default it contains lots of comments to help you get started. Open up adchpp.xml in a text editor (such as Notepad under Windows) and start changing values as you wish. 
 
 CAUTION: Editing values incorrectly can lead to serious problems so be careful what you modify.
 
@@ -138,7 +140,7 @@ indexterm:[Server Ports]
 
 Add a new <Server/> entry to adchpp.xml with the port you wish you to run your hub on. You must put this line into the Servers part between the <Servers> and </Servers> nodes.
 
-Example:
+.Example:
 ---------------------------------------------------------------------
 [source,xml]
 	<Servers>
@@ -153,7 +155,7 @@ IMPORTANT: Linux users should always use _absolute_ path's in this setting.
 
 An example encrypted server setting:
 
-Example: insert this to the Server line in adchpp.xml:
+.Example: insert this to the Server line in adchpp.xml:
 ---------------------------------------------------------------------
 [source,xml]
 	<Servers>
@@ -357,7 +359,7 @@ footnote:[FAQ]
 indexterm:[FAQ]
 This part of the guide will help you setup your hub by asnwering the most frequent questions. For additional FAQs visit: https://answers.launchpad.net/adchpp/+faqs
 
-How you set up your hub to private so only registered users can log in:
+==== How you set up your hub to private so only registered users can log in:
 
 --------------------------------------
   +cfg maxusers 0
@@ -374,7 +376,7 @@ When the hub is set to registered users only the connecting unregistered users w
 [09-10-02][22:07:09] <ADCH++> Only registered users are allowed in here
 --------------------------------------
 
-Setting the hub to register to chat/search/download
+==== Setting the hub to register to chat/search/download
 
 Its possible to restrict guest (unregistered) users to be able to chat/search/download until they get registered by an operator or by using the self registraton command:
 
@@ -396,16 +398,28 @@ Since ADCH++ version 2.5.1 setting up download/chat/search rules is pretty easy.
 * mindownloadlevel - current value: 1 - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
 * minsearchlevel - current value: 1 - minimum level to search - hub restart recommended
 
+== More information
+
+If you want to know more about ADCH++
+
+. There is an expert guide for advanced/expert users who interested in scripting, compiling or contributing to ADCH\+\+, available at
+http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revision of this documentation is also available in the ADCH++
+repository at http://code.launchpad.net/adchpp/
+. You can get support for ADCH++ at the official Answers tracker at http://answers.launchpad.net/adchpp/[Launchpad].
+. You can get more information or ask questions about ADCH++ at the http://adcportal.com[ADC community portal].
+
 == Appendix
 footnote:[Appendix]
 indexterm:[Appendix]
 This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
 
-Copyright (C) 2010 Toast
+Copyright (c) 2010-2011 Jacek Sieka
+
+
 Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at http://www.gnu.org/copyleft/fdl.html 
 
 == Index
-Here is the index to help you go the section you want to read
+Quick list of main sections of this document
 
 ////////////////////////////////////////////////////////////////
 Changelog: 
