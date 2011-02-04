@@ -1,4 +1,4 @@
-= ADCH++  Novice User Guide
+= ADCH++  Expert User Guide
 Author: Toast <toast@adcportal.com>
 Document Version 0.2.0
 

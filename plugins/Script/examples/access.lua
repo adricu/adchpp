@@ -305,7 +305,7 @@ settings.passinlist = {
 settings.sendversion = {
 	alias = { displayversion = true },
 
-	help = "send hub version information at login, 1 = alllow, 0 = disallow",
+	help = "show hub version information at login and in info, 1 = allow, 0 = disallow",
 
 	value = 1
 }
@@ -1173,6 +1173,9 @@ commands.info = {
 			local hubtime = cm:getUpTime()
 
 			str = "\n"
+			if settings.sendversion.value > 0 then
+				str = str .. "Hub version: " .. adchpp.versionString .. "\n"
+			end
 			str = str .. "Hub uptime: " .. format_seconds(hubtime) .. "\n"
 			str = str .. "Script uptime: " .. format_seconds(scripttime) .. "\n"
 

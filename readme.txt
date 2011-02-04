@@ -29,8 +29,9 @@ available at http://adchpp.sourceforge.net/user_guide/basic_guide.html
 or contributing to ADCH++, available at
 http://adchpp.sourceforge.net/user_guide/expert_guide.html
 
-The latest revision of these documentation is also available in the ADCH++
-repository at http://code.launchpad.net/adchpp/
+The latest revision of these documentation is available under the "docs" 
+folder in the ADCH++ release packages as well as in the ADCH++ repository at
+http://code.launchpad.net/adchpp/
 
 == Donations
 
