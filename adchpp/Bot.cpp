@@ -28,12 +28,14 @@ namespace adchpp {
 
 // TODO replace with lambda
 struct BotRemover {
-	BotRemover(Bot* bot_) : bot(bot_) { }
+	BotRemover(Bot* bot_,Util::Reason reason, const std::string &info) : bot(bot_), reason(reason), info(info) { }
 	void operator()() {
-		bot->die();
+		bot->die(reason, info);
 	}
 
 	Bot* bot;
+	Util::Reason reason;
+	std::string info;
 };
 
 Bot::Bot(ClientManager &cm, uint32_t sid, const Bot::SendHandler& handler_) : Entity(cm, sid), handler(handler_), disconnecting(false) {
@@ -43,17 +45,17 @@ Bot::Bot(ClientManager &cm, uint32_t sid, const Bot::SendHandler& handler_) : En
 	setCID(CID::generate());
 }
 
-void Bot::disconnect(Util::Reason reason) throw() {
+void Bot::disconnect(Util::Reason reason, const std::string &info) throw() {
 	if(!disconnecting) {
 		disconnecting = true;
 
 		handler = SendHandler();
-		cm.getCore().addJob(BotRemover(this));
+		cm.getCore().addJob(BotRemover(this, reason, info));
 	}
 }
 
-void Bot::die() {
-	cm.removeEntity(*this);
+void Bot::die(Util::Reason reason, const std::string &info) {
+	cm.removeEntity(*this, reason, info);
 	delete this;
 }
 

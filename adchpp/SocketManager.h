@@ -29,6 +29,17 @@
 
 namespace adchpp {
 
+struct SocketStats {
+	SocketStats() : queueCalls(0), queueBytes(0), sendCalls(0), sendBytes(0), recvCalls(0), recvBytes(0) { }
+
+	size_t queueCalls;
+	int64_t queueBytes;
+	size_t sendCalls;
+	int64_t sendBytes;
+	int64_t recvCalls;
+	int64_t recvBytes;
+};
+
 class SocketManager {
 public:
 	typedef std::function<void()> Callback;
@@ -61,18 +72,10 @@ public:
 	typedef std::function<void (const ManagedSocketPtr&)> IncomingHandler;
 	void setIncomingHandler(const IncomingHandler& handler) { incomingHandler = handler; }
 
-	// Temporary location for socket stats...
-	// TODO These should go somewhere else - plugin?
-	size_t queueCalls;
-	int64_t queueBytes;
-	size_t sendCalls;
-	int64_t sendBytes;
-	int64_t recvCalls;
-	int64_t recvBytes;
-
-	std::map<std::string, int> errors;
-
 	int run();
+
+	SocketStats &getStats() { return stats; }
+	std::map<std::string, size_t> &getErrors() { return errors; }
 
 	Core &getCore() { return core; }
 private:
@@ -86,6 +89,9 @@ private:
 
 	boost::asio::io_service io;
 	std::unique_ptr<boost::asio::io_service::work> work;
+
+	SocketStats stats;
+	std::map<std::string, size_t> errors;
 
 	ServerInfoList servers;
 	std::vector<SocketFactoryPtr> factories;

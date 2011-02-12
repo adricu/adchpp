@@ -49,7 +49,6 @@ string Util::appPath;
 
 string Util::emptyString;
 wstring Util::emptyStringW;
-size_t Util::reasons[REASON_LAST];
 
 static void sgenrand(unsigned long seed);
 

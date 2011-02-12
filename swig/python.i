@@ -44,6 +44,9 @@
 %typemap(in) std::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
+%typemap(in) std::function<void (adchpp::Entity&, Util::Reason, const std::string&)> {
+	$1 = PyHandle($input, false);
+}
 %typemap(in) std::function<void (adchpp::Bot&, const adchpp::BufferPtr&)> {
 	$1 = PyHandle($input, false);
 }

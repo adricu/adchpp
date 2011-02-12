@@ -41,7 +41,7 @@ public:
 	virtual void send(const BufferPtr& command) { socket->write(command); }
 
 	/** @param reason The statistic to update */
-	ADCHPP_DLL virtual void disconnect(Util::Reason reason) throw();
+	ADCHPP_DLL virtual void disconnect(Util::Reason reason, const std::string &info = Util::emptyString) throw();
 	const std::string& getIp() const throw() { return socket->getIp(); }
 
 	/**
@@ -78,7 +78,7 @@ private:
 
 	void onConnected() throw();
 	void onData(const BufferPtr&) throw();
-	void onFailed(const boost::system::error_code& ec) throw();
+	void onFailed(Util::Reason reason, const std::string &info) throw();
 
 };
 

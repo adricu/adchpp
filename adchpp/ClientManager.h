@@ -144,7 +144,7 @@ public:
 	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
 	typedef SignalTraits<void (Entity&, int)> SignalState;
-	typedef SignalTraits<void (Entity&)> SignalDisconnected;
+	typedef SignalTraits<void (Entity&, Util::Reason, const std::string&)> SignalDisconnected;
 
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
 	SignalReceive::Signal& signalReceive() { return signalReceive_; }
@@ -189,7 +189,7 @@ private:
 	void maybeSend(Entity& c, const AdcCommand& cmd);
 
 	void removeLogins(Entity& c) throw();
-	void removeEntity(Entity& c) throw();
+	void removeEntity(Entity& c, Util::Reason reason, const std::string &info) throw();
 
 	bool handle(AdcCommand::SUP, Entity& c, AdcCommand& cmd) throw();
 	bool handle(AdcCommand::INF, Entity& c, AdcCommand& cmd) throw();
@@ -202,7 +202,7 @@ private:
 	void onConnected(Client&) throw();
 	void onReceive(Entity&, AdcCommand&) throw();
 	void onBadLine(Client&, const std::string&) throw();
-	void onFailed(Client&, const boost::system::error_code& e) throw();
+	void onFailed(Client&, Util::Reason reason, const std::string &info) throw();
 
 	void badState(Entity& c, const AdcCommand& cmd) throw();
 

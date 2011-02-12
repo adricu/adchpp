@@ -44,16 +44,18 @@ public:
 	ADCHPP_DLL size_t getQueuedBytes() const;
 
 	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
-	ADCHPP_DLL void disconnect(size_t timeout, Util::Reason reason) throw();
+	ADCHPP_DLL void disconnect(size_t timeout, Util::Reason reason, const std::string &info = Util::emptyString) throw();
 
 	const std::string& getIp() const { return ip; }
 	void setIp(const std::string& ip_) { ip = ip_; }
 
 	typedef std::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
+
 	typedef std::function<void(const BufferPtr&)> DataHandler;
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
-	typedef std::function<void(const boost::system::error_code&)> FailedHandler;
+
+	typedef std::function<void(Util::Reason, const std::string &)> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
 	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
@@ -83,7 +85,10 @@ private:
 	void prepareRead2(const boost::system::error_code& ec, size_t bytes) throw();
 	void completeRead(const boost::system::error_code& ec, size_t bytes) throw();
 
-	void failSocket(const boost::system::error_code& error) throw();
+	void fail(Util::Reason reason, const std::string &info) throw();
+
+	bool disconnecting() const;
+	bool writing() const;
 
 	AsyncStreamPtr sock;
 

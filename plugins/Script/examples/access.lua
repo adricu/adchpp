@@ -89,6 +89,8 @@ users.nicks = {}
 users.cids = {}
 
 local stats = {}
+local reasons = {}
+local socketErrors = {}
 local dispatch_stats = false
 
 -- cache for +cfg min*level
@@ -1185,30 +1187,25 @@ commands.info = {
 			end
 
 			str = str .. "\nDisconnect reasons: \n"
-			for k, v in base.pairs(adchpp) do
-				if k:sub(1, 12) == "Util_REASON_" and k ~= "Util_REASON_LAST" then
-					str = str .. adchpp.size_t_getitem(adchpp.Util_reasons, adchpp[k]) .. "\t" .. k:sub(6) .. "\n"
-				end
+			for k, v in base.pairs(reasons) do
+				str = str .. k .. "\t" .. v .. "\n"
 			end
 			
 			str = str .. "\nSocket errors: \n"
 			
-			local keys = sm.errors:keys()
-			local size = keys:size()
+			for k,v in base.pairs(socketErrors) do
+				str = str .. k .. "\t" .. v .. "\n"
+			end		
+		
+			local stats = sm:getStats()
 			
-			for i = 0, size - 1 do
-				local k = keys[i]
-				str = str .. k .. "\t" .. sm.errors:get(k) .. "\n"
-			end
-			
-
 			local queued = cm:getQueuedBytes()
-			local queueBytes = sm.queueBytes
-			local queueCalls = sm.queueCalls
-			local sendBytes = sm.sendBytes
-			local sendCalls = sm.sendCalls
-			local recvBytes = sm.recvBytes
-			local recvCalls = sm.recvCalls
+			local queueBytes = stats.queueBytes
+			local queueCalls = stats.queueCalls
+			local sendBytes = stats.sendBytes
+			local sendCalls = stats.sendCalls
+			local recvBytes = stats.recvBytes
+			local recvCalls = stats.recvCalls
 
 			str = str .. "\nBandwidth stats: \n"
 			str = str .. adchpp.Util_formatBytes(queued) .. "\tBytes queued (" .. adchpp.Util_formatBytes(queued / cm:getEntities():size()) .. "/user)\n"
@@ -1580,4 +1577,13 @@ end)
 
 access_4 = pm:getCommandSignal("stats"):connect(function()
 	return dispatch_stats
+end)
+
+access_5 = cm:signalDisconnected():connect(function(entity, reason, info)
+	base.print ("getting " .. reason .. info)
+	if reason == adchpp.Util_REASON_SOCKET_ERROR then
+		if socketErrors[info] then socketErrors[info] = socketErrors[info] + 1 else socketErrors[info] = 1 end
+	else
+		if reasons[reason] then reasons[reason] = reasons[reason] + 1 else reaons[reason] = 1 end
+	end
 end)

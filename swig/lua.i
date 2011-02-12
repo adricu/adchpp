@@ -135,14 +135,21 @@ public:
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_std__vectorT_std__string_t, 0);
 		lua_pushboolean(L, i);
 
-		if(docall(3, 1) != 0) {
+		if(docall(3, 0) != 0) {
 			return;
 		}
+	}
 
-		if(lua_isboolean(L, -1)) {
-			i &= lua_toboolean(L, -1) == 1;
+	void operator()(adchpp::Entity& c, Util::Reason reason, const std::string& info) {
+		pushFunction();
+
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
+		lua_pushnumber(L, reason);
+		lua_pushstring(L, info.c_str());
+
+		if(docall(3, 0) != 0) {
+			return;
 		}
-		lua_pop(L, 1);
 	}
 
 	void operator()(adchpp::Bot& bot, const adchpp::BufferPtr& buf) {
@@ -246,6 +253,10 @@ uint32_t, const uint32_t&
 }
 
 %typemap(in) std::function<void (adchpp::Entity &, const adchpp::StringList&, bool&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::function<void (adchpp::Entity&, adchpp::Util::Reason, const std::string&) > {
 	$1 = LuaFunction(L);
 }
 

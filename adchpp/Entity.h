@@ -128,7 +128,7 @@ public:
 	ADCHPP_DLL void setFlag(size_t aFlag);
 	ADCHPP_DLL void unsetFlag(size_t aFlag);
 
-	ADCHPP_DLL virtual void disconnect(Util::Reason reason) = 0;
+	ADCHPP_DLL virtual void disconnect(Util::Reason reason, const std::string &info = Util::emptyString) = 0;
 
 	/** The number of bytes in the write buffer */
 	ADCHPP_DLL virtual size_t getQueuedBytes() const;

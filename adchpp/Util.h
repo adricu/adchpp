@@ -101,10 +101,9 @@ public:
 		REASON_NO_BANDWIDTH,
 		REASON_INVALID_DESCRIPTION,
 		REASON_WRITE_TIMEOUT,
+		REASON_SOCKET_ERROR,
 		REASON_LAST,
 	};
-
-	ADCHPP_DLL static size_t reasons[REASON_LAST];
 
 	ADCHPP_DLL static std::string emptyString;
 	static std::wstring emptyStringW;

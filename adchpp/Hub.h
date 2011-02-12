@@ -30,7 +30,7 @@ public:
 	ADCHPP_DLL Hub(ClientManager &cm);
 
 	virtual void send(const BufferPtr& cmd) { }
-	virtual void disconnect(Util::Reason reason) throw() { }
+	virtual void disconnect(Util::Reason reason, const std::string &) throw() { }
 private:
 };
 

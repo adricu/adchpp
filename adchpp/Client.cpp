@@ -55,17 +55,17 @@ namespace {
 		Client* c;
 	};
 
-	template<void (Client::*F)(const boost::system::error_code&)>
-	struct Handler0x {
-		Handler0x(Client* c_) : c(c_) { }
-		void operator()() { (c->*F)(boost::system::error_code(boost::system::errc::timed_out, boost::system::get_generic_category())); }
-		Client* c;
-	};
-
 	template<typename T, void (Client::*F)(const T&)>
 	struct Handler1 {
 		Handler1(Client* c_) : c(c_) { }
 		void operator()(const T& bv) { (c->*F)(bv); }
+		Client* c;
+	};
+
+	template<typename T, typename T2, void (Client::*F)(T, const T2&)>
+	struct Handler2 {
+		Handler2(Client* c_) : c(c_) { }
+		void operator()(const T& t, const T2& t2) { (c->*F)(t, t2); }
 		Client* c;
 	};
 }
@@ -75,7 +75,7 @@ void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 	socket = aSocket;
 	socket->setConnectedHandler(Handler0<&Client::onConnected>(this));
 	socket->setDataHandler(Handler1<BufferPtr, &Client::onData>(this));
-	socket->setFailedHandler(Handler1<boost::system::error_code, &Client::onFailed>(this));
+	socket->setFailedHandler(Handler2<Util::Reason, std::string, &Client::onFailed>(this));
 }
 
 void Client::onConnected() throw() {
@@ -145,31 +145,23 @@ void Client::onData(const BufferPtr& buf) throw() {
 			} catch(const ParseException&) {
 				cm.onBadLine(*this, string((char*)buffer->data(), buffer->size()));
 			}
+
 			buffer.reset();
 		}
 	}
 }
 
-void Client::disconnect(Util::Reason reason) throw() {
+void Client::disconnect(Util::Reason reason, const std::string &info) throw() {
 	dcassert(socket);
 	if(!disconnecting) {
 		dcdebug("%s disconnecting because %d\n", AdcCommand::fromSID(getSID()).c_str(), reason);
 		disconnecting = true;
-
-		socket->setConnectedHandler(ManagedSocket::ConnectedHandler());
-		socket->setDataHandler(ManagedSocket::DataHandler());
-		socket->setFailedHandler(ManagedSocket::FailedHandler());
-
-		/// @todo fix timeout
-		socket->disconnect(5000, reason);
-
-		// We fail the client ASAP to release nicks etc used...
-		cm.getCore().addJob(Handler0x<&Client::onFailed>(this));
+		socket->disconnect(5000, reason, info);
 	}
 }
 
-void Client::onFailed(const boost::system::error_code& ec) throw() {
-	cm.onFailed(*this, ec);
+void Client::onFailed(Util::Reason reason, const std::string &info) throw() {
+	cm.onFailed(*this, reason, info);
 	delete this;
 }
 

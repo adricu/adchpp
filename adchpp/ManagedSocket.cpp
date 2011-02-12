@@ -49,6 +49,7 @@ static size_t sum(const BufferList& l) {
 	for(BufferList::const_iterator i = l.begin(); i != l.end(); ++i) {
 		bytes += (*i)->size();
 	}
+
 	return bytes;
 }
 
@@ -57,7 +58,7 @@ size_t ManagedSocket::getQueuedBytes() const {
 }
 
 void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) throw() {
-	if((buf->size() == 0) || !disc.is_not_a_date_time())
+	if(buf->size() == 0 || disconnecting())
 		return;
 
 	size_t queued = getQueuedBytes();
@@ -73,8 +74,8 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 		}
 	}
 
-	sm.queueBytes += buf->size();
-	sm.queueCalls++;
+	sm.getStats().queueBytes += buf->size();
+	sm.getStats().queueCalls++;
 
 	outBuf.push_back(buf);
 
@@ -95,7 +96,7 @@ struct Handler {
 }
 
 void ManagedSocket::prepareWrite() throw() {
-	if(lastWrite.is_not_a_date_time()) {	// Not writing
+	if(!writing()) {	// Not writing
 		if(!outBuf.empty()) {
 			lastWrite = time::now();
 			sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(shared_from_this()));
@@ -109,8 +110,8 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 	lastWrite = time::not_a_date_time;
 
 	if(!ec) {
-		sm.sendBytes += bytes;
-		sm.sendCalls++;
+		sm.getStats().sendBytes += bytes;
+		sm.getStats().sendCalls++;
 
 		while(bytes > 0) {
 			BufferPtr& p = *outBuf.begin();
@@ -130,13 +131,13 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 			}
 		}
 
-		if(!disc.is_not_a_date_time() && outBuf.empty()) {
+		if(disconnecting() && outBuf.empty()) {
 			sock->close();
 		} else {
 			prepareWrite();
 		}
 	} else {
-		failSocket(ec);
+		fail(Util::REASON_SOCKET_ERROR, ec.message());
 	}
 }
 
@@ -161,29 +162,30 @@ void ManagedSocket::prepareRead2(const boost::system::error_code& ec, size_t) th
 
 		sock->prepareRead(inBuf, Handler<&ManagedSocket::completeRead>(shared_from_this()));
 	} else {
-		failSocket(ec);
+		fail(Util::REASON_SOCKET_ERROR, ec.message());
 	}
 }
 
 void ManagedSocket::completeRead(const boost::system::error_code& ec, size_t bytes) throw() {
 	if(!ec) {
 		try {
-			sm.recvBytes += bytes;
-			sm.recvCalls++;
+			sm.getStats().recvBytes += bytes;
+			sm.getStats().recvCalls++;
 
 			inBuf->resize(bytes);
 
 			if(dataHandler) {
 				dataHandler(inBuf);
 			}
+
 			inBuf.reset();
 			prepareRead();
 		} catch(const boost::system::system_error& e) {
-			failSocket(e.code());
+			fail(Util::REASON_SOCKET_ERROR, e.code().message());
 		}
 	} else {
 		inBuf.reset();
-		failSocket(ec);
+		fail(Util::REASON_SOCKET_ERROR, ec.message());
 	}
 }
 
@@ -193,14 +195,13 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 			connectedHandler();
 		prepareRead();
 	} else {
-		failSocket(ec);
+		fail(Util::REASON_SOCKET_ERROR, ec.message());
 	}
 }
 
-void ManagedSocket::failSocket(const boost::system::error_code& code) throw() {
-	sm.errors[code.message()]++;
+void ManagedSocket::fail(Util::Reason reason, const std::string &info) throw() {
 	if(failedHandler) {
-		failedHandler(code);
+		failedHandler(reason, info);
 		failedHandler = FailedHandler();
 		dataHandler = DataHandler();
 		connectedHandler = ConnectedHandler();
@@ -213,17 +214,40 @@ struct Disconnector {
 	AsyncStreamPtr stream;
 };
 
-void ManagedSocket::disconnect(size_t timeout, Util::Reason reason) throw() {
-	if(disc.is_not_a_date_time()) {
-		disc = time::now() + time::millisec(timeout);
+struct Reporter {
+	Reporter(ManagedSocketPtr ms, void (ManagedSocket::*f)(Util::Reason reason, const std::string &info), Util::Reason reason, const std::string &info) :
+		ms(ms), f(f), reason(reason), info(info) { }
 
-		Util::reasons[reason]++;
-		if(lastWrite.is_not_a_date_time()) {	// Not writing
-			sock->close();
-		} else {
-			sm.addJob(timeout, Disconnector(sock));
-		}
+	void operator()() { (ms.get()->*f)(reason, info); }
+
+	ManagedSocketPtr ms;
+	void (ManagedSocket::*f)(Util::Reason reason, const std::string &info);
+
+	Util::Reason reason;
+	std::string info;
+};
+
+void ManagedSocket::disconnect(size_t timeout, Util::Reason reason, const std::string &info) throw() {
+	if(disconnecting()) {
+		return;
+	}
+
+	disc = time::now() + time::millisec(timeout);
+
+	sm.addJob(Reporter(shared_from_this(), &ManagedSocket::fail, reason, info));
+
+	if(writing()) {	// Not writing
+		sm.addJob(timeout, Disconnector(sock));
+	} else {
+		sock->close();
 	}
 }
 
+bool ManagedSocket::disconnecting() const {
+	return !disc.is_not_a_date_time();
+}
+
+bool ManagedSocket::writing() const {
+	return !lastWrite.is_not_a_date_time();
+}
 }

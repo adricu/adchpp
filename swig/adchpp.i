@@ -82,7 +82,6 @@ namespace adchpp {
 %template(TStringList) std::vector<std::string>;
 %template(TByteVector) std::vector<uint8_t>;
 %template(TServerInfoList) std::vector<shared_ptr<adchpp::ServerInfo> >;
-%template(TIntIntMap) std::map<std::string, int>;
 
 %inline%{
 	namespace adchpp {
@@ -134,6 +133,17 @@ struct ServerInfo {
 typedef shared_ptr<ServerInfo> ServerInfoPtr;
 typedef std::vector<ServerInfoPtr> ServerInfoList;
 
+struct SocketStats {
+	SocketStats() : queueCalls(0), queueBytes(0), sendCalls(0), sendBytes(0), recvCalls(0), recvBytes(0) { }
+
+	size_t queueCalls;
+	int64_t queueBytes;
+	size_t sendCalls;
+	int64_t sendBytes;
+	int64_t recvCalls;
+	int64_t recvBytes;
+};
+
 class SocketManager {
 public:
 	typedef std::function<void()> Callback;
@@ -158,16 +168,7 @@ public:
 
 	void setServers(const ServerInfoList& servers_);
 
-	// Temporary location for socket stats...
-	// TODO These should go somewhere else - plugin?
-	size_t queueCalls;
-	int64_t queueBytes;
-	size_t sendCalls;
-	int64_t sendBytes;
-	int64_t recvCalls;
-	int64_t recvBytes;
-
-	std::map<std::string, int> errors;
+	SocketStats &getStats();
 };
 
 template<typename F>
@@ -235,10 +236,9 @@ public:
 		REASON_NO_BANDWIDTH,
 		REASON_INVALID_DESCRIPTION,
 		REASON_WRITE_TIMEOUT,
+		REASON_SOCKET_ERROR,
 		REASON_LAST,
 	};
-
-	static size_t reasons[REASON_LAST];
 
 	static std::string emptyString;
 
@@ -261,7 +261,6 @@ public:
 	static void tokenize(StringList& lst, const std::string& str, char sep, std::string::size_type j = 0);
 
 	static std::string formatSeconds(int64_t aSec);
-
 
 	/** Avoid this! Use the one of a connected socket instead... */
 	static std::string getLocalIp();
@@ -566,7 +565,7 @@ public:
 	size_t getQueuedBytes() throw();
 
 	/** @param reason The statistic to update */
-	void disconnect(Util::Reason reason) throw();
+	void disconnect(Util::Reason reason, const std::string &) throw();
 	const std::string& getIp() const throw();
 
 	/**
@@ -574,7 +573,13 @@ public:
 	 * May only be called from on(ClientListener::Command...).
 	 */
 	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
-	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
+	void setDataMode(const DataFunction& handler, int64_t aBytes);
+
+	%extend{
+		void disconnect(Util::Reason reason) {
+			self->disconnect(reason, Util::emptyString);
+		}
+	}
 };
 
 class Bot : public Entity {
@@ -584,7 +589,12 @@ public:
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
 	
-	virtual void disconnect(Util::Reason reason);
+	virtual void disconnect(Util::Reason reason, const std::string &);
+	%extend{
+		void disconnect(Util::Reason reason) {
+			self->disconnect(reason, Util::emptyString);
+		}
+	}
 };
 
 class Hub : public Entity {
@@ -593,8 +603,6 @@ public:
 
 private:
 };
-
-
 
 %template(SignalE) Signal<void (Entity&)>;
 %template(SignalTraitsE) SignalTraits<void (Entity&)>;
@@ -610,6 +618,9 @@ private:
 
 %template(SignalEI) Signal<void (Entity&, int)>;
 %template(SignalTraitsEI) SignalTraits<void (Entity&, int)>;
+
+%template(SignalERS) Signal<void (Entity&, adchpp::Util::Reason, const std::string &)>;
+%template(SignalTraitsERS) SignalTraits<void (Entity&, adchpp::Util::Reason, const std::string &)>;
 
 %template(SignalESB) Signal<void (Entity&, const StringList&, bool&)>;
 %template(SignalTraitsESB) SignalTraits<void (Entity&, const StringList&, bool&)>;
@@ -692,7 +703,7 @@ public:
 	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
 	typedef SignalTraits<void (Entity&, int)> SignalState;
-	typedef SignalTraits<void (Entity&)> SignalDisconnected;
+	typedef SignalTraits<void (Entity&, Util::Reason, const std::string &)> SignalDisconnected;
 
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
 	SignalReceive::Signal& signalReceive() { return signalReceive_; }
