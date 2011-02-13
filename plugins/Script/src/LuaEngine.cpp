@@ -125,7 +125,10 @@ bool LuaEngine::call(const string& f, const string& arg) {
 
 	lua_pushstring(l, arg.c_str());
 
-	lua_call(l, 1, 1);
+	if(lua_pcall(l, 1, 1, 0) != 0) {
+		lua_pop(l, 1);
+		return false;
+	}
 
 	bool ret = lua_toboolean(l, -1);
 	lua_pop(l, 1);
