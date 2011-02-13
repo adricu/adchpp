@@ -1187,9 +1187,15 @@ commands.info = {
 			end
 
 			str = str .. "\nDisconnect reasons: \n"
-			for k, v in base.pairs(reasons) do
-				str = str .. k .. "\t" .. v .. "\n"
+			for k, v in base.pairs(adchpp) do
+				if k:sub(1, 12) == "Util_REASON_" and k ~= "Util_REASON_LAST" and reasons[adchpp[k]] then
+					str = str .. reasons[adchpp[k]] .. "\t" .. k:sub(6) .. "\n"
+				end
 			end
+			
+			--for k, v in base.pairs(reasons) do
+			--	str = str .. k .. "\t" .. v .. "\n"
+			--end
 			
 			str = str .. "\nSocket errors: \n"
 			
@@ -1584,6 +1590,6 @@ access_5 = cm:signalDisconnected():connect(function(entity, reason, info)
 	if reason == adchpp.Util_REASON_SOCKET_ERROR then
 		if socketErrors[info] then socketErrors[info] = socketErrors[info] + 1 else socketErrors[info] = 1 end
 	else
-		if reasons[reason] then reasons[reason] = reasons[reason] + 1 else reaons[reason] = 1 end
+		if reasons[reason] then reasons[reason] = reasons[reason] + 1 else reasons[reason] = 1 end
 	end
 end)
