@@ -15,6 +15,7 @@
 * [L#609435] Fix bloom race condition
 * Add basic rules (sharesize, slots, etc...)
 * Update user guide
+* [L#521681] Pass reason in disconnect signal
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support

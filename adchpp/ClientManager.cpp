@@ -156,6 +156,10 @@ void ClientManager::onConnected(Client& c) throw() {
 }
 
 void ClientManager::onReceive(Entity& c, AdcCommand& cmd) throw() {
+	if(c.isSet(Entity::FLAG_GHOST)) {
+		return;
+	}
+
 	if(!(cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_DIRECT || cmd.getType()
 		== AdcCommand::TYPE_ECHO || cmd.getType() == AdcCommand::TYPE_FEATURE || cmd.getType() == AdcCommand::TYPE_HUB)) {
 		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid command type"));
@@ -176,6 +180,10 @@ void ClientManager::onReceive(Entity& c, AdcCommand& cmd) throw() {
 }
 
 void ClientManager::onBadLine(Client& c, const string& aLine) throw() {
+	if(c.isSet(Entity::FLAG_GHOST)) {
+		return;
+	}
+
 	signalBadLine_(c, aLine);
 }
 
@@ -371,7 +379,6 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 		if(other) {
 			// disconnect the ghost
 			removeEntity(*other, Util::REASON_CID_TAKEN, Util::emptyString);
-			other->setFlag(Entity::FLAG_GHOST);
 			other->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
 			other->disconnect(Util::REASON_CID_TAKEN);
 		}
@@ -498,6 +505,8 @@ void ClientManager::removeEntity(Entity& c, Util::Reason reason, const std::stri
 		return;
 
 	signalDisconnected_(c, reason, info);
+	c.setFlag(Entity::FLAG_GHOST);
+
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Entity::STATE_NORMAL) {
 		entities.erase(c.getSID());

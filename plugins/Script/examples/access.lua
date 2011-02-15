@@ -1193,10 +1193,6 @@ commands.info = {
 				end
 			end
 			
-			--for k, v in base.pairs(reasons) do
-			--	str = str .. k .. "\t" .. v .. "\n"
-			--end
-			
 			str = str .. "\nSocket errors: \n"
 			
 			for k,v in base.pairs(socketErrors) do

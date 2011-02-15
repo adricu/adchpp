@@ -75,7 +75,6 @@ public:
 	int run();
 
 	SocketStats &getStats() { return stats; }
-	std::map<std::string, size_t> &getErrors() { return errors; }
 
 	Core &getCore() { return core; }
 private:
@@ -91,7 +90,6 @@ private:
 	std::unique_ptr<boost::asio::io_service::work> work;
 
 	SocketStats stats;
-	std::map<std::string, size_t> errors;
 
 	ServerInfoList servers;
 	std::vector<SocketFactoryPtr> factories;

@@ -222,6 +222,8 @@ public:
 			C(SND);
 			C(SID);
 			C(CMD);
+			C(NAT);
+			C(RMT);
 			default:
 				dcdebug("Unknown ADC command: %.50s\n", cmd.toString().c_str());
 				return true;
