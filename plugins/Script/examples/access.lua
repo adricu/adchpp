@@ -677,16 +677,16 @@ remove_user_commands = function(c)
 end
 
 verify_info = function(c, cid, nick)
-	if cid and #cid > 0 then
-		c:setCID(adchpp.CID(cid))
-	else
-		cid = c:getCID():toBase32()
+	if not cid or #cid == 0 then
+		if not c:getCID():isZero() then
+			cid = c:getCID():toBase32()
+		end
 	end
-	if nick and #nick > 0 then
-		c:setField("NI", nick)
-	else
+	
+	if not nick or #nick == 0 then
 		nick = c:getField("NI")
 	end
+	
 	if #nick == 0 or #cid == 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
 		return false
@@ -781,11 +781,12 @@ local function onINF(c, cmd)
 
 	local cid = cmd:getParam("ID", 0)
 	local nick = cmd:getParam("NI", 0)
-	if c:getState() == adchpp.Entity_STATE_NORMAL then
-		return verify_info(c, cid, nick)
-	end
 	if not verify_info(c, cid, nick) then
 		return false
+	end
+
+	if c:getState() == adchpp.Entity_STATE_NORMAL then
+		return true
 	end
 
 	if settings.sendversion.value == 1 then
@@ -809,6 +810,7 @@ local function onINF(c, cmd)
 	if user.level >= level_op then
 		c:setFlag(adchpp.Entity_FLAG_OP)
 	end
+	
 	cmd:addParam("CT", c:getField("CT"))
 
 	if not cm:verifyINF(c, cmd) then

@@ -384,6 +384,7 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 		}
 
 		c.setCID(cid);
+		dcdebug("%s setting CID to %s\n", AdcCommand::fromSID(c.getSID()).c_str(), c.getCID().toBase32().c_str());
 		cids.insert(make_pair(c.getCID(), &c));
 		cmd.delParam("PD", 0);
 	}
@@ -516,6 +517,9 @@ void ClientManager::removeEntity(Entity& c, Util::Reason reason, const std::stri
 	}
 
 	nicks.erase(c.getField("NI"));
+
+	dcdebug("%s removing CID %s\n", AdcCommand::fromSID(c.getSID()).c_str(), c.getCID().toBase32().c_str());
+
 	cids.erase(c.getCID());
 }
 
