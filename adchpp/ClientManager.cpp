@@ -351,21 +351,29 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 			return false;
 		}
 
-		string spid;
-		if(!cmd.getParam("PD", 0, spid)) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INF_MISSING, "PID missing").addParam("FLPD"));
-			c.disconnect(Util::REASON_PID_MISSING);
-			return false;
-		}
-
-		if(strtmp.size() != CID::BASE32_SIZE || spid.size() != CID::BASE32_SIZE) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid CID/PID length"));
+		if(strtmp.size() != CID::BASE32_SIZE) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid CID length"));
 			c.disconnect(Util::REASON_PID_CID_LENGTH);
 			return false;
 		}
 
 		CID cid(strtmp);
-		CID pid(spid);
+
+		strtmp.clear();
+
+		if(!cmd.getParam("PD", 0, strtmp)) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INF_MISSING, "PID missing").addParam("FLPD"));
+			c.disconnect(Util::REASON_PID_MISSING);
+			return false;
+		}
+
+		if(strtmp.size() != CID::BASE32_SIZE) {
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid PID length"));
+			c.disconnect(Util::REASON_PID_CID_LENGTH);
+			return false;
+		}
+
+		CID pid(strtmp);
 
 		TigerHash th;
 		th.update(pid.data(), CID::SIZE);
@@ -375,16 +383,16 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 			return false;
 		}
 
-		Entity* other = getEntity(getSID(cid));
-		if(other) {
+		auto other = cids.find(cid);
+		if(other != cids.end()) {
 			// disconnect the ghost
-			removeEntity(*other, Util::REASON_CID_TAKEN, Util::emptyString);
-			other->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
-			other->disconnect(Util::REASON_CID_TAKEN);
+			removeEntity(*other->second, Util::REASON_CID_TAKEN, Util::emptyString);
+			other->second->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
+			other->second->disconnect(Util::REASON_CID_TAKEN);
 		}
 
 		c.setCID(cid);
-		dcdebug("%s setting CID to %s\n", AdcCommand::fromSID(c.getSID()).c_str(), c.getCID().toBase32().c_str());
+
 		cids.insert(make_pair(c.getCID(), &c));
 		cmd.delParam("PD", 0);
 	}
@@ -505,8 +513,9 @@ void ClientManager::removeEntity(Entity& c, Util::Reason reason, const std::stri
 	if(c.isSet(Entity::FLAG_GHOST))
 		return;
 
-	signalDisconnected_(c, reason, info);
 	c.setFlag(Entity::FLAG_GHOST);
+
+	signalDisconnected_(c, reason, info);
 
 	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Entity::STATE_NORMAL) {
