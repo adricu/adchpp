@@ -186,7 +186,7 @@ access.add_setting('minslots', {
 access.add_setting('rulesredirect', {
 	alias = { redirect = true },
 
-	help = "redirect address for the sharing rules like slots/hubs/sharesize, '  ' = users are just disconnected",
+	help = "redirect address when rules like slots/hubs/sharesize aren't obeyed, empty = users will be disconnected only",
 
 	value = nil
 })

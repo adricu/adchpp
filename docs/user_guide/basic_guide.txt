@@ -349,7 +349,8 @@ A simple way to find out what commands are available and how they work is to typ
 | network					| Name of your network (for hublist pingers)
 | owner						| Hubowners name (for hublist pingers)
 | passinlist 				| Show passwords of users with a lower level (enable only if you have trust in your operators)
-| sendversion				| Print hub version information at login
+| rulesredirect				| Redirect address when rules like slots/hubs/sharesize aren't obeyed
+| sendversion				| Print hub version information at login and in the stats
 | topic 					| Sets hubtopic
 | website					| Sets website for your hubnetwork or hub(for hublist pingers)
 |==============================================
