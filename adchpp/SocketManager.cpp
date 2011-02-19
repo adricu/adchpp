@@ -54,8 +54,7 @@ public:
 	SocketStream(X& x) : sock(x) { }
 
 	template<typename X, typename Y>
-	SocketStream(X& x, Y& y) : sock(x, y) {
-	}
+	SocketStream(X& x, Y& y) : sock(x, y) { }
 
 	virtual size_t available() {
 		return sock.lowest_layer().available();
@@ -94,22 +93,47 @@ public:
 		}
 	}
 
+	T sock;
+};
+
+class SimpleSocketStream : public SocketStream<ip::tcp::socket> {
+public:
+	SimpleSocketStream(boost::asio::io_service& x) : SocketStream(x) { }
+
+	virtual void shutdown() {
+		sock.shutdown(ip::tcp::socket::shutdown_send);
+	}
+
+	virtual void close() {
+		// Abortive close, just go away...
+		if(sock.is_open()) {
+			boost::system::error_code ec;
+			sock.close(ec); // Ignore errors
+		}
+	}
+};
+
+#ifdef HAVE_OPENSSL
+
+static void shutdownHandler(const boost::system::error_code&) { }
+
+class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
+public:
+	TLSSocketStream(io_service& x, ssl::basic_context<boost::asio::ssl::context_service>& y) : SocketStream(x, y) { }
+
+	virtual void shutdown() {
+		sock.async_shutdown(&shutdownHandler);
+	}
+
 	virtual void close() {
 		// Abortive close, just go away...
 		if(sock.lowest_layer().is_open()) {
 			boost::system::error_code ec;
-			sock.lowest_layer().set_option(socket_base::linger(true, 10), ec); // Ignore errors
 			sock.lowest_layer().close(ec); // Ignore errors
 		}
 	}
-
-	T sock;
 };
 
-typedef SocketStream<ip::tcp::socket> SimpleSocketStream;
-
-#ifdef HAVE_OPENSSL
-typedef SocketStream<ssl::stream<ip::tcp::socket> > TLSSocketStream;
 #endif
 
 // Default buffer size used for SO_RCVBUF/SO_SNDBUF
@@ -166,9 +190,6 @@ public:
 	void prepareHandshake(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			TLSSocketStream* tls = static_cast<TLSSocketStream*>(socket->sock.get());
-			// By default, we linger for 30 seconds (this will happen when the stream
-			// is deallocated without calling close first)
-			tls->sock.lowest_layer().set_option(socket_base::linger(true, 30));
 			tls->sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(SOCKET_BUFFER_SIZE));
 			tls->sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(SOCKET_BUFFER_SIZE));
 			try {
@@ -184,9 +205,6 @@ public:
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
 			shared_ptr<SimpleSocketStream> s = static_pointer_cast<SimpleSocketStream>(socket->sock);
-			// By default, we linger for 30 seconds (this will happen when the stream
-			// is deallocated without calling close first)
-			s->sock.lowest_layer().set_option(socket_base::linger(true, 30));
 			s->sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(SOCKET_BUFFER_SIZE));
 			s->sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(SOCKET_BUFFER_SIZE));
 			try {

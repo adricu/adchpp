@@ -318,7 +318,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 
 	std::string ip;
 	if(cmd.getParam("I4", 0, ip)) {
-		dcdebug("%s verifying ip\n", AdcCommand::fromSID(c.getSID()).c_str());
+		dcdebug("%s verifying IP %s\n", AdcCommand::fromSID(c.getSID()).c_str(), ip.c_str());
 		if(ip.empty() || ip == "0.0.0.0") {
 			cmd.delParam("I4", 0);
 			cmd.resetBuffer();
@@ -344,7 +344,7 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 
 bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	if(cmd.getParam("ID", 0, strtmp)) {
-		dcdebug("%s verifying CID\n", AdcCommand::fromSID(c.getSID()).c_str());
+		dcdebug("%s verifying CID %s\n", AdcCommand::fromSID(c.getSID()).c_str(), strtmp.c_str());
 		if(c.getState() != Entity::STATE_IDENTIFY) {
 			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID changes not allowed"));
 			c.disconnect(Util::REASON_CID_CHANGE);
@@ -409,13 +409,12 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 
 bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	if(cmd.getParam("NI", 0, strtmp)) {
-		dcdebug("%s verifying nick\n", AdcCommand::fromSID(c.getSID()).c_str());
-
+		dcdebug("%s verifying nick %s\n", AdcCommand::fromSID(c.getSID()).c_str(), strtmp.c_str());
 		
 		if (!Util::validateCharset(strtmp, 33)){
-				c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, "Invalid character in nick"));
-				c.disconnect(Util::REASON_NICK_INVALID);
-				return false;
+			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, "Invalid character in nick"));
+			c.disconnect(Util::REASON_NICK_INVALID);
+			return false;
 		}
 
 		const string& oldNick = c.getField("NI");
@@ -513,11 +512,11 @@ void ClientManager::removeEntity(Entity& c, Util::Reason reason, const std::stri
 	if(c.isSet(Entity::FLAG_GHOST))
 		return;
 
+	dcdebug("Removing %s - %s\n", AdcCommand::fromSID(c.getSID()).c_str(), c.getCID().toBase32().c_str());
 	c.setFlag(Entity::FLAG_GHOST);
 
 	signalDisconnected_(c, reason, info);
 
-	dcdebug("Removing %s\n", AdcCommand::fromSID(c.getSID()).c_str());
 	if(c.getState() == Entity::STATE_NORMAL) {
 		entities.erase(c.getSID());
 		sendToAll(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID())).addParam("DI", "1").getBuffer());
@@ -526,9 +525,6 @@ void ClientManager::removeEntity(Entity& c, Util::Reason reason, const std::stri
 	}
 
 	nicks.erase(c.getField("NI"));
-
-	dcdebug("%s removing CID %s\n", AdcCommand::fromSID(c.getSID()).c_str(), c.getCID().toBase32().c_str());
-
 	cids.erase(c.getCID());
 }
 

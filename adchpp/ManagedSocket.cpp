@@ -106,6 +106,12 @@ void ManagedSocket::prepareWrite() throw() {
 	}
 }
 
+struct Disconnector {
+	Disconnector(const AsyncStreamPtr& stream_) : stream(stream_) { }
+	void operator()() { stream->close(); }
+	AsyncStreamPtr stream;
+};
+
 void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t bytes) throw() {
 	lastWrite = time::not_a_date_time;
 
@@ -132,7 +138,8 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 		}
 
 		if(disconnecting() && outBuf.empty()) {
-			sock->close();
+			sock->shutdown();
+			sm.addJob(disc - time::now(), Disconnector(sock));
 		} else {
 			prepareWrite();
 		}
@@ -208,12 +215,6 @@ void ManagedSocket::fail(Util::Reason reason, const std::string &info) throw() {
 	}
 }
 
-struct Disconnector {
-	Disconnector(const AsyncStreamPtr& stream_) : stream(stream_) { }
-	void operator()() { stream->close(); }
-	AsyncStreamPtr stream;
-};
-
 struct Reporter {
 	Reporter(ManagedSocketPtr ms, void (ManagedSocket::*f)(Util::Reason reason, const std::string &info), Util::Reason reason, const std::string &info) :
 		ms(ms), f(f), reason(reason), info(info) { }
@@ -236,10 +237,10 @@ void ManagedSocket::disconnect(size_t timeout, Util::Reason reason, const std::s
 
 	sm.addJob(Reporter(shared_from_this(), &ManagedSocket::fail, reason, info));
 
-	if(writing()) {	// Not writing
+	if(writing()) {
 		sm.addJob(timeout, Disconnector(sock));
 	} else {
-		sock->close();
+		sock->shutdown();
 	}
 }
 
