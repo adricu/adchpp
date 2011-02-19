@@ -114,7 +114,6 @@ public:
 			return;
 		}
 
-
 		if(lua_isboolean(L, -1)) {
 			i &= lua_toboolean(L, -1) == 1;
 		}
@@ -135,9 +134,14 @@ public:
 		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_std__vectorT_std__string_t, 0);
 		lua_pushboolean(L, i);
 
-		if(docall(3, 0) != 0) {
+		if(docall(3, 1) != 0) {
 			return;
 		}
+
+        if(lua_isboolean(L, -1)) {
+			i &= lua_toboolean(L, -1) == 1;
+		}
+        lua_pop(L, 1);
 	}
 
 	void operator()(adchpp::Entity& c, Util::Reason reason, const std::string& info) {
