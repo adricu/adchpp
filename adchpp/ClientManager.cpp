@@ -386,9 +386,9 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 		auto other = cids.find(cid);
 		if(other != cids.end()) {
 			// disconnect the ghost
-			removeEntity(*other->second, Util::REASON_CID_TAKEN, Util::emptyString);
 			other->second->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
 			other->second->disconnect(Util::REASON_CID_TAKEN);
+			removeEntity(*other->second, Util::REASON_CID_TAKEN, Util::emptyString);
 		}
 
 		c.setCID(cid);
