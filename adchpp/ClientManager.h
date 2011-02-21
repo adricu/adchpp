@@ -205,6 +205,9 @@ private:
 	void onFailed(Client&, Util::Reason reason, const std::string &info) throw();
 
 	void badState(Entity& c, const AdcCommand& cmd) throw();
+	/** send a fatal STA, a QUI with TL-1, then disconnect. */
+	void disconnect(Entity& c, Util::Reason reason, const std::string& info,
+		AdcCommand::Error error = AdcCommand::ERROR_PROTOCOL_GENERIC, const std::string& staParam = Util::emptyString);
 
 	SignalConnected::Signal signalConnected_;
 	SignalReceive::Signal signalReceive_;

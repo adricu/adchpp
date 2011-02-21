@@ -17,6 +17,7 @@
 * Update user guide
 * [L#521681] Pass reason in disconnect signal
 * [L#491951] Fix messages not being sent
+* Send a QUI with TL-1 during fatal STA disconnects
 
 -- 2.5.2 2010-07-23 --
 * Compiled with C++0x support

@@ -161,9 +161,9 @@ void ClientManager::onReceive(Entity& c, AdcCommand& cmd) throw() {
 	}
 
 	if(!(cmd.getType() == AdcCommand::TYPE_BROADCAST || cmd.getType() == AdcCommand::TYPE_DIRECT || cmd.getType()
-		== AdcCommand::TYPE_ECHO || cmd.getType() == AdcCommand::TYPE_FEATURE || cmd.getType() == AdcCommand::TYPE_HUB)) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid command type"));
-		c.disconnect(Util::REASON_INVALID_COMMAND_TYPE);
+		== AdcCommand::TYPE_ECHO || cmd.getType() == AdcCommand::TYPE_FEATURE || cmd.getType() == AdcCommand::TYPE_HUB))
+	{
+		disconnect(c, Util::REASON_INVALID_COMMAND_TYPE, "Invalid command type");
 		return;
 	}
 
@@ -188,9 +188,7 @@ void ClientManager::onBadLine(Client& c, const string& aLine) throw() {
 }
 
 void ClientManager::badState(Entity& c, const AdcCommand& cmd) throw() {
-	c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_STATE, "Invalid state for command").addParam("FC",
-		cmd.getFourCC()));
-	c.disconnect(Util::REASON_BAD_STATE);
+	disconnect(c, Util::REASON_BAD_STATE, "Invalid state for command", AdcCommand::ERROR_BAD_STATE, "FC" + cmd.getFourCC());
 }
 
 bool ClientManager::handleDefault(Entity& c, AdcCommand& cmd) throw() {
@@ -219,16 +217,12 @@ bool ClientManager::verifySUP(Entity& c, AdcCommand& cmd) throw() {
 	c.updateSupports(cmd);
 
 	if(!c.hasSupport(AdcCommand::toFourCC("BASE"))) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC,
-			"This hub requires BASE support"));
-		c.disconnect(Util::REASON_NO_BASE_SUPPORT);
+		disconnect(c, Util::REASON_NO_BASE_SUPPORT, "This hub requires BASE support");
 		return false;
 	}
 
 	if(!c.hasSupport(AdcCommand::toFourCC("TIGR"))) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC,
-			"This hub requires TIGR support"));
-		c.disconnect(Util::REASON_NO_TIGR_SUPPORT);
+		disconnect(c, Util::REASON_NO_TIGR_SUPPORT, "This hub requires TIGR support");
 		return false;
 	}
 
@@ -250,9 +244,8 @@ bool ClientManager::verifyINF(Entity& c, AdcCommand& cmd) throw() {
 		return false;
 	
 	if(cmd.getParam("DE", 0, strtmp)) {
-		if (!Util::validateCharset(strtmp, 32)){
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid character in description"));
-			c.disconnect(Util::REASON_INVALID_DESCRIPTION);
+		if(!Util::validateCharset(strtmp, 32)) {
+			disconnect(c, Util::REASON_INVALID_DESCRIPTION, "Invalid character in description");
 			return false;
 		}
 	}
@@ -283,8 +276,7 @@ bool ClientManager::verifyOverflow(Entity& c) {
 	}
 
 	if(overflowing > 3 && overflowing > (entities.size() / 4)) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_HUB_FULL, "Not enough bandwidth available, please try again later"));
-		c.disconnect(Util::REASON_NO_BANDWIDTH);
+		disconnect(c, Util::REASON_NO_BANDWIDTH, "Not enough bandwidth available, please try again later", AdcCommand::ERROR_HUB_FULL);
 		return false;
 	}
 
@@ -323,9 +315,8 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 			cmd.delParam("I4", 0);
 			cmd.resetBuffer();
 		} else if(ip != c.getIp() && !Util::isPrivateIp(c.getIp())) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_BAD_IP, "Your ip is " + c.getIp()).addParam(
-				"IP", c.getIp()));
-			c.disconnect(Util::REASON_INVALID_IP);
+			disconnect(c, Util::REASON_INVALID_IP, "Your IP is " + c.getIp() + ", reconfigure your client settings",
+				AdcCommand::ERROR_BAD_IP, "IP" + c.getIp());
 			return false;
 		} else
 			return true;
@@ -346,14 +337,12 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	if(cmd.getParam("ID", 0, strtmp)) {
 		dcdebug("%s verifying CID %s\n", AdcCommand::fromSID(c.getSID()).c_str(), strtmp.c_str());
 		if(c.getState() != Entity::STATE_IDENTIFY) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID changes not allowed"));
-			c.disconnect(Util::REASON_CID_CHANGE);
+			disconnect(c, Util::REASON_CID_CHANGE, "CID changes not allowed");
 			return false;
 		}
 
 		if(strtmp.size() != CID::BASE32_SIZE) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid CID length"));
-			c.disconnect(Util::REASON_PID_CID_LENGTH);
+			disconnect(c, Util::REASON_PID_CID_LENGTH, "Invalid CID length");
 			return false;
 		}
 
@@ -362,14 +351,12 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 		strtmp.clear();
 
 		if(!cmd.getParam("PD", 0, strtmp)) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INF_MISSING, "PID missing").addParam("FLPD"));
-			c.disconnect(Util::REASON_PID_MISSING);
+			disconnect(c, Util::REASON_PID_MISSING, "PID missing", AdcCommand::ERROR_INF_MISSING, "FLPD");
 			return false;
 		}
 
 		if(strtmp.size() != CID::BASE32_SIZE) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Invalid PID length"));
-			c.disconnect(Util::REASON_PID_CID_LENGTH);
+			disconnect(c, Util::REASON_PID_CID_LENGTH, "Invalid PID length");
 			return false;
 		}
 
@@ -378,16 +365,14 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 		TigerHash th;
 		th.update(pid.data(), CID::SIZE);
 		if(!(CID(th.finalize()) == cid)) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_INVALID_PID, "PID does not correspond to CID"));
-			c.disconnect(Util::REASON_PID_CID_MISMATCH);
+			disconnect(c, Util::REASON_PID_CID_MISMATCH, "PID does not correspond to CID", AdcCommand::ERROR_INVALID_PID);
 			return false;
 		}
 
 		auto other = cids.find(cid);
 		if(other != cids.end()) {
 			// disconnect the ghost
-			other->second->send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_CID_TAKEN, "CID taken"));
-			other->second->disconnect(Util::REASON_CID_TAKEN);
+			disconnect(*other->second, Util::REASON_CID_TAKEN, "CID taken", AdcCommand::ERROR_CID_TAKEN);
 			removeEntity(*other->second, Util::REASON_CID_TAKEN, Util::emptyString);
 		}
 
@@ -398,8 +383,7 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	}
 
 	if(cmd.getParam("PD", 0, strtmp)) {
-		c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "CID required when sending PID"));
-		c.disconnect(Util::REASON_PID_WITHOUT_CID);
+		disconnect(c, Util::REASON_PID_WITHOUT_CID, "CID required when sending PID");
 		return false;
 	}
 
@@ -411,9 +395,8 @@ bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	if(cmd.getParam("NI", 0, strtmp)) {
 		dcdebug("%s verifying nick %s\n", AdcCommand::fromSID(c.getSID()).c_str(), strtmp.c_str());
 		
-		if (!Util::validateCharset(strtmp, 33)){
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_INVALID, "Invalid character in nick"));
-			c.disconnect(Util::REASON_NICK_INVALID);
+		if(!Util::validateCharset(strtmp, 33)) {
+			disconnect(c, Util::REASON_NICK_INVALID, "Invalid character in nick", AdcCommand::ERROR_NICK_INVALID);
 			return false;
 		}
 
@@ -422,9 +405,7 @@ bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 			nicks.erase(oldNick);
 
 		if(nicks.find(strtmp) != nicks.end()) {
-			c.send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_NICK_TAKEN,
-				"Nick taken, please pick another one"));
-			c.disconnect(Util::REASON_NICK_TAKEN);
+			disconnect(c, Util::REASON_NICK_TAKEN, "Nick taken, please pick another one", AdcCommand::ERROR_NICK_TAKEN);
 			return false;
 		}
 
@@ -438,6 +419,20 @@ void ClientManager::setState(Entity& c, Entity::State newState) throw() {
 	Entity::State oldState = c.getState();
 	c.setState(newState);
 	signalState_(c, oldState);
+}
+
+void ClientManager::disconnect(Entity& c, Util::Reason reason, const std::string& info, AdcCommand::Error error, const std::string& staParam) {
+	// send a fatal STA
+	AdcCommand sta(AdcCommand::SEV_FATAL, error, info);
+	if(!staParam.empty())
+		sta.addParam(staParam);
+	c.send(sta);
+
+	// send a QUI
+	c.send(AdcCommand(AdcCommand::CMD_QUI).addParam(AdcCommand::fromSID(c.getSID()))
+		.addParam("DI", "1").addParam("MS", info).addParam("TL", "-1"));
+
+	c.disconnect(reason);
 }
 
 void ClientManager::enterIdentify(Entity& c, bool sendData) throw() {
