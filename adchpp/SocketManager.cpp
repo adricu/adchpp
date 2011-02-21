@@ -97,8 +97,10 @@ public:
 };
 
 class SimpleSocketStream : public SocketStream<ip::tcp::socket> {
+	typedef SocketStream<ip::tcp::socket> Stream;
+
 public:
-	SimpleSocketStream(boost::asio::io_service& x) : SocketStream(x) { }
+	SimpleSocketStream(boost::asio::io_service& x) : Stream(x) { }
 
 	virtual void shutdown() {
 		sock.shutdown(ip::tcp::socket::shutdown_send);
@@ -118,8 +120,10 @@ public:
 static void shutdownHandler(const boost::system::error_code&) { }
 
 class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
+	typedef SocketStream<ssl::stream<ip::tcp::socket> > Stream;
+
 public:
-	TLSSocketStream(io_service& x, ssl::basic_context<boost::asio::ssl::context_service>& y) : SocketStream(x, y) { }
+	TLSSocketStream(io_service& x, ssl::basic_context<boost::asio::ssl::context_service>& y) : Stream(x, y) { }
 
 	virtual void shutdown() {
 		sock.async_shutdown(&shutdownHandler);
