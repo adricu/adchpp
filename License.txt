@@ -1,5 +1,5 @@
 adchpp
-Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
+Copyright (C) 2006-2011 Jacek Sieka, arnetheduck on gmail point com
 
 Here follows the full text of the GPL-2:
 

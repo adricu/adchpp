@@ -27,8 +27,8 @@ SetCompressor lzma
 
 ; MUI Settings
 !define MUI_ABORTWARNING
-!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+!define MUI_ICON "adchppd.ico"
+!define MUI_UNICON "adchppd.ico"
 
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
@@ -85,13 +85,26 @@ Section "MainSection" SEC01
   CreateShortCut "$SMPROGRAMS\ADCH++\Remove ADCH++ windows service.lnk" "$INSTDIR\adchppd.exe" "-u adchppd"
   SetOutPath "$INSTDIR\Scripts"
   File "Scripts\access.lua"
+  File "Scripts\access.bans.lua"
+  File "Scripts\access.bot.lua"
+  File "Scripts\access.limits.lua"
+  File "Scripts\access.op.lua"
   File "Scripts\autil.lua"
   File "Scripts\example.lua"
   File "Scripts\history.lua"
   File "Scripts\json.lua"
   File "Scripts\motd.lua"
+  SetOutPath "$INSTDIR\Docs"
+  File "Docs\*.conf"
+  File "Docs\*.html"
+  File "Docs\*.txt"
+  SetOutPath "$INSTDIR\Docs\images"
+  File "Docs\images\*.png"
+  SetOutPath "$INSTDIR\Docs\images\icons"
+  File "Docs\images\icons\*.png"
   SetOverwrite off
   SetOutPath "$INSTDIR\config"
+  File "config\motd.txt"
   File "config\adchpp.xml"
   File "config\Script.xml"
 SectionEnd
@@ -172,11 +185,18 @@ Section Uninstall
   Delete "$INSTDIR\Script.dll"
   Delete "$INSTDIR\readme.txt"
   Delete "$INSTDIR\Scripts\access.lua"
+  Delete "$INSTDIR\Scripts\access.bans.lua"
+  Delete "$INSTDIR\Scripts\access.bot.lua"
+  Delete "$INSTDIR\Scripts\access.limits.lua"
+  Delete "$INSTDIR\Scripts\access.op.lua"
   Delete "$INSTDIR\Scripts\autil.lua"
   Delete "$INSTDIR\Scripts\example.lua"
   Delete "$INSTDIR\Scripts\history.lua"
   Delete "$INSTDIR\Scripts\json.lua"
   Delete "$INSTDIR\Scripts\motd.lua"
+  Delete "$INSTDIR\Docs\images\icons\*.*"
+  Delete "$INSTDIR\Docs\images\*.*"
+  Delete "$INSTDIR\Docs\*.*"
   Delete "$INSTDIR\uninst.exe"
 
   Delete "$SMPROGRAMS\ADCH++\Uninstall.lnk"
@@ -190,6 +210,9 @@ Section Uninstall
   RMDir "$SMPROGRAMS\ADCH++"
   RMDir "$INSTDIR\Scripts"
   RMDir "$INSTDIR\config"
+  RMDir "$INSTDIR\Docs\images\icons"
+  RMDir "$INSTDIR\Docs\images"
+  RMDir "$INSTDIR\Docs"
   RMDir "$INSTDIR"
 
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
