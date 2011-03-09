@@ -67,6 +67,8 @@ local command_contexts = {
 	[adchpp.AdcCommand_CMD_RES] = context_direct,
 	[adchpp.AdcCommand_CMD_CTM] = context_direct,
 	[adchpp.AdcCommand_CMD_RCM] = context_direct,
+	[adchpp.AdcCommand_CMD_NAT] = context_direct,
+	[adchpp.AdcCommand_CMD_RNT] = context_direct,
 	[adchpp.AdcCommand_CMD_GPA] = context_hub,
 	[adchpp.AdcCommand_CMD_PAS] = context_hub,
 	[adchpp.AdcCommand_CMD_QUI] = context_hub,
@@ -92,6 +94,7 @@ local stats = {}
 local reasons = {}
 local socketErrors = {}
 local dispatch_stats = false
+local users_saved = true
 
 -- cache for +cfg min*level
 local restricted_commands = {}
@@ -392,6 +395,13 @@ local function save_users()
 
 	file:write(json.encode(registered_users()))
 	file:close()
+	users_saved = true
+end
+
+local function to_save_users()
+	if not users_saved then
+		base.pcall(save_users)
+	end
 end
 
 function add_setting(name, options)
@@ -467,8 +477,8 @@ local function add_stats(stat)
 	end
 end
 
-local function make_user(cid, nick, password, level)
-	local user = { cid = cid, nick = nick, password = password, level = level }
+local function make_user(cid, nick, password, level, regby)
+	local user = { cid = cid, nick = nick, password = password, level = level, regby = regby, regtime = os.time(), lasttime = os.time() }
 	return user
 end
 
@@ -547,6 +557,7 @@ local function update_user(user, cid, nick)
 		end
 
 		user.nick = nick
+		user.lasttime = os.time()
 		users.nicks[user.nick] = user
 		base.pcall(save_users)
 		return true, "Registration data updated (new nick)"
@@ -563,16 +574,21 @@ local function update_user(user, cid, nick)
 		end
 
 		user.cid = cid
+		user.lasttime = os.time()
 		users.cids[user.cid] = user
 		base.pcall(save_users)
 		return true, "Registration data updated (new CID)"
 	end
 
+	user.lasttime = os.time()
+	users.cids[user.cid] = user
+	users_saved = false
+
 	return true
 end
 
-function register_user(cid, nick, password, level)
-	local user = make_user(cid, nick, password, level)
+function register_user(cid, nick, password, level, regby)
+	local user = make_user(cid, nick, password, level, regby)
 	if nick then
 		users.nicks[nick] = user
 	end
@@ -881,6 +897,20 @@ function format_seconds(t)
 	local t_s = t % 60
 
 	return string.format("%d days, %d hours, %d minutes and %d seconds", t_d, t_h, t_m, t_s)
+end
+
+function format_minutes(t)
+	local t_d = math.floor(t / (60*60*24))
+	local t_h = math.floor(t / (60*60)) % 24
+	local t_m = math.floor(t / 60) % 60
+
+	return string.format("%d days, %d hours and %d minutes", t_d, t_h, t_m)
+end
+
+function time_diff(t)
+	local diff = os.difftime(os.time(), t)
+	local time = format_minutes(diff)
+	return time
 end
 
 cut_str = function(str, max)
@@ -1244,20 +1274,30 @@ commands.listregs = {
 			if v.level <= user.level then
 				local fields = {}
 				if v.nick then
-					table.insert(fields, "Nick: " .. v.nick)
+					table.insert(fields, "\tNick: " .. v.nick)
 				end
 				if v.cid then
-					table.insert(fields, "CID: " .. v.cid)
+					table.insert(fields, "\n\tCID: " .. v.cid)
 				end
 				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
 					table.insert(fields, "Pass: " .. v.password)
 				end
-				table.insert(list, table.concat(fields, "\t"))
+				if v.regtime then
+					table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
+				end
+				if v.lasttime then
+					table.insert(fields, "Last on: " .. time_diff(v.lasttime) .. " ago")
+				end
+				if v.regby then
+					table.insert(fields, "\n\tRegged By: " .. v.regby)
+				end
+
+				table.insert(list, table.concat(fields, "\t\t"))
 			end
 		end
 		table.sort(list)
 
-		autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level):\n" .. table.concat(list, "\n"))
+		autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level):\n\n" .. table.concat(list, "\n\n") .. "\n")
 	end,
 
 	protected = function(c) return not get_user_c(c).is_default end,
@@ -1291,7 +1331,7 @@ commands.mypass = {
 			base.pcall(save_users)
 			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 		elseif settings.allowreg.value ~= 0 then
-			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1)
+			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1, c:getField("NI"))
 			autil.reply(c, "You're now registered with the password \"" .. parameters .. "\"")
 		else
 			autil.reply(c, "You are not allowed to register by yourself; ask an operator to do it for you")
@@ -1392,7 +1432,7 @@ commands.regnick = {
 			return
 		end
 
-		register_user(cid, nick, password, level)
+		register_user(cid, nick, password, level, c:getField("NI"))
 
 		autil.reply(c, "\"" .. nick .. "\" has been registered")
 
@@ -1591,3 +1631,6 @@ access_5 = cm:signalDisconnected():connect(function(entity, reason, info)
 		if reasons[reason] then reasons[reason] = reasons[reason] + 1 else reasons[reason] = 1 end
 	end
 end)
+
+save_users_timer = sm:addTimedJob(900000, to_save_users)
+autil.on_unloading(_NAME, save_users_timer)

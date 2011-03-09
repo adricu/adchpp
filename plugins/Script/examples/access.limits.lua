@@ -188,7 +188,7 @@ access.add_setting('rulesredirect', {
 
 	help = "redirect address when rules like slots/hubs/sharesize aren't obeyed, empty = users will be disconnected only",
 
-	value = nil
+	value = ""
 })
 
 access.register_handler(adchpp.AdcCommand_CMD_INF, onINF)
