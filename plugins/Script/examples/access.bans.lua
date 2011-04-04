@@ -14,8 +14,7 @@ local string = base.require("string")
 
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
-
-local bans = {}
+bans = {}
 bans.cids = {}
 bans.ips = {}
 bans.nicks = {}
@@ -84,7 +83,7 @@ local function load_bans()
 	end
 end
 
-local function save_bans()
+function save_bans()
 	local file = io.open(bans_file, "w")
 	if not file then
 		log("Unable to open " .. bans_file .. ", bans not saved")
@@ -212,12 +211,22 @@ commands.ban = {
 			return
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		bans.cids[victim_cid] = ban
-		base.pcall(save_bans)
+		if base.tonumber(minutes) ~= 0 then
+			local ban = make_ban(level, reason, minutes)
+			bans.cids[victim_cid] = ban
+			base.pcall(save_bans)
+			dump_banned(victim, ban)
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned")
+			return
+		end
 
-		dump_banned(victim, ban)
-		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned")
+		if bans.cids[victim_cid] then
+			bans.cids[victim_cid] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now un-banned")
+		else
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is not in the banlist")
+		end
 	end,
 
 	help = "nick [reason] [minutes] - ban an online user (set minutes to 0 to un-ban)",
@@ -260,10 +269,20 @@ commands.bancid = {
 			return
 		end
 
-		bans.cids[cid] = make_ban(level, reason, minutes)
-		base.pcall(save_bans)
-	
-		autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
+		if base.tonumber(minutes) ~= 0 then
+			bans.cids[cid] = make_ban(level, reason, minutes)
+			base.pcall(save_bans)
+			autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
+			return
+		end
+
+		if bans.cids[cid] then
+			bans.cids[cid] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "The CID \"" .. cid .. "\" is now un-banned")
+		else
+			autil.reply(c, "The CID \"" .. cid .. "\" is not in the banlist")
+		end
 	end,
 
 	help = "CID [reason] [minutes] (set minutes to 0 to un-ban)",
@@ -306,10 +325,20 @@ commands.banip = {
 			return
 		end
 
-		bans.ips[ip] = make_ban(level, reason, minutes)
-		base.pcall(save_bans)
+		if base.tonumber(minutes) ~= 0 then
+			bans.ips[ip] = make_ban(level, reason, minutes)
+			base.pcall(save_bans)
+			autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
+			return
+		end
 
-		autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
+		if bans.ips[ip] then
+			bans.ips[ip] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "The IP address \"" .. ip .. "\" is now un-banned")
+		else
+			autil.reply(c, "The IP address \"" .. ip .. "\" is not found in the banlist")
+		end
 	end,
 
 	help = "IP [reason] [minutes] (set minutes to 0 to un-ban)",
@@ -352,10 +381,20 @@ commands.bannick = {
 			return
 		end
 
-		bans.nicks[nick] = make_ban(level, reason, minutes)
-		base.pcall(save_bans)
+		if base.tonumber(minutes) ~= 0 then
+			bans.nicks[nick] = make_ban(level, reason, minutes)
+			base.pcall(save_bans)
+			autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
+			return
+		end
 
-		autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
+		if bans.nicks[nick] then
+			bans.nicks[nick] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "The nick \"" .. nick .. "\" is now un-banned")
+		else
+			autil.reply(c, "The nick \"" .. nick .. "\" is not found in the banlist")
+		end
 	end,
 
 	help = "nick [reason] [minutes] (set minutes to 0 to un-ban)",
@@ -398,10 +437,20 @@ commands.bannickre = {
 			return
 		end
 
-		bans.nicksre[re] = make_ban(level, reason, minutes)
-		base.pcall(save_bans)
+		if base.tonumber(minutes) ~= 0 then
+			bans.nicksre[re] = make_ban(level, reason, minutes)
+			base.pcall(save_bans)
+			autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
+			return
+		end
 
-		autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
+		if bans.nicksre[re] then
+			bans.nicksre[re] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "Nicks that match \"" .. re .. "\" are now removed from the banlist")
+		else
+			autil.reply(c, "Nicks that match \"" .. re .. "\" are not found in the banlist")
+		end
 	end,
 
 	help = "<nick-reg-exp> [reason] [minutes] - ban nicks that match the given reg exp (must be within '<' and '>' brackets) (set minutes to 0 to un-ban)",
@@ -439,10 +488,20 @@ commands.banmsgre = {
 			return
 		end
 
-		bans.msgsre[re] = make_ban(level, reason, minutes)
-		base.pcall(save_bans)
+		if base.tonumber(minutes) ~= 0 then
+			bans.msgsre[re] = make_ban(level, reason, minutes)
+			base.pcall(save_bans)
+			autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
+			return
+		end
 
-		autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
+		if bans.msgsre[re] then
+			bans.msgsre[re] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "Messages that match \"" .. re .. "\" are now removed from the banlist")
+		else
+			autil.reply(c, "Messages that match \"" .. re .. "\" are not found in the banlist")
+		end
 	end,
 
 	help = "msg-reg-exp [reason] [minutes] - ban originators of messages that match the given reg exp (must be within '<' and '>' brackets) (set minutes to 0 to un-ban)",
@@ -566,11 +625,21 @@ commands.mute = {
 			return
 		end
 
-		local ban = make_ban(level, reason, minutes)
-		bans.muted[victim_cid] = ban
-		base.pcall(save_bans)
+		if base.tonumber(minutes) ~= 0 then
+			local ban = make_ban(level, reason, minutes)
+			bans.muted[victim_cid] = ban
+			base.pcall(save_bans)
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted")
+			return
+		end
 
-		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted")
+		if bans.muted[victim_cid] then
+			bans.muted[victim_cid] = nil
+			base.pcall(save_bans)
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now removed from the mutelist")
+		else
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is not found in the mutelist")
+		end
 	end,
 
 	help = "nick [reason] [minutes] - mute an online user (set minutes to 0 to un-mute)",
@@ -592,7 +661,6 @@ commands.mute = {
 	}
 }
 
-
 local function onMSG(c, cmd)
 	local muted = bans.muted[c:getCID():toBase32()]
 	if muted then
@@ -604,7 +672,7 @@ local function onMSG(c, cmd)
 	local msg = cmd:getParam(0)
 
 	for re, reban in base.pairs(bans.msgsre) do
-		if reban.level >= level and msg:match(re) then
+		if reban.level > level and msg:match(re) then
 			local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
 			bans.cids[c:getCID():toBase32()] = ban
 			base.pcall(save_bans)
@@ -617,8 +685,15 @@ local function onMSG(c, cmd)
 end
 
 local function onINF(c, cmd)
-	local cid = c:getCID():toBase32()
-	local nick = c:getField("NI")
+	local cid, nick
+
+	if c:getState() == adchpp.Entity_STATE_NORMAL then
+		cid = c:getCID():toBase32()
+		nick = c:getField("NI")
+	else
+		cid = cmd:getParam("ID", 0)
+		nick = cmd:getParam("NI", 0)
+	end
 
 	local ban = nil
 	if bans.cids[cid] then

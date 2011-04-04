@@ -85,6 +85,7 @@ local table = base.require('table')
 local math = base.require('math')
 
 local start_time = os.time()
+local users_saved = true
 
 users = {}
 users.nicks = {}
@@ -94,7 +95,6 @@ local stats = {}
 local reasons = {}
 local socketErrors = {}
 local dispatch_stats = false
-local users_saved = true
 
 -- cache for +cfg min*level
 local restricted_commands = {}
@@ -1282,14 +1282,17 @@ commands.listregs = {
 				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
 					table.insert(fields, "Pass: " .. v.password)
 				end
+				if v.lastofftime then
+					table.insert(fields, "\n\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
+				end
+				if v.lasttime then
+					table.insert(fields, "Last logon: " .. time_diff(v.lasttime) .. " ago")
+				end
 				if v.regtime then
 					table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
 				end
-				if v.lasttime then
-					table.insert(fields, "Last on: " .. time_diff(v.lasttime) .. " ago")
-				end
 				if v.regby then
-					table.insert(fields, "\n\tRegged By: " .. v.regby)
+					table.insert(fields, "Regged By: " .. v.regby)
 				end
 
 				table.insert(list, table.concat(fields, "\t\t"))
@@ -1624,12 +1627,23 @@ access_4 = pm:getCommandSignal("stats"):connect(function()
 end)
 
 access_5 = cm:signalDisconnected():connect(function(entity, reason, info)
-	base.print ("getting " .. reason .. info)
 	if reason == adchpp.Util_REASON_SOCKET_ERROR then
 		if socketErrors[info] then socketErrors[info] = socketErrors[info] + 1 else socketErrors[info] = 1 end
 	else
 		if reasons[reason] then reasons[reason] = reasons[reason] + 1 else reasons[reason] = 1 end
 	end
+
+	if entity:getState() == adchpp.Entity_STATE_NORMAL then
+		local c = entity:asClient()
+		if c then
+			local user = get_user_c(c)
+			if user then
+				user.lastofftime = os.time()
+				users_saved = false
+			end
+		end
+	end
+
 end)
 
 save_users_timer = sm:addTimedJob(900000, to_save_users)

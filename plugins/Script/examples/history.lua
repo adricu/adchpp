@@ -20,8 +20,13 @@ local os = base.require('os')
 local json = base.require('json')
 local string = base.require('string')
 local autil = base.require('autil')
+local table = base.require('table')
+local json = base.require('json')
 
-local pos = 0
+local sm = adchpp.getSM()
+
+local pos = 1
+local messages_saved = true
 
 local messages = {}
 
@@ -49,36 +54,58 @@ access.add_setting('history_prefix', {
 	value = "[%Y-%m-%d %H:%M:%S] "
 })
 
-local function idx(p)
-	return (p % access.settings.history_max.value) + 1
+local function get_items(c)
+	local items = 1
+	local user = access.get_user_c(c)
+	local from = user.lastofftime
+	if from then
+		for hist, data in base.pairs(messages) do
+			if data.htime > from then
+				items = items + 1
+			end
+		end
+	end
+	return items
 end
 
 access.commands.history = {
 	alias = { hist = true },
 
 	command = function(c, parameters)
-		local items = access.settings.history_default.value
+		local items
 		if #parameters > 0 then
-			items = base.tonumber(parameters)
+			items = base.tonumber(parameters) + 1
 			if not items then
 				return
 			end
-			if items > access.settings.history_max.value then
-				items = access.settings.history_max.value
+		else
+			if access.get_level(c) > 0 then
+				items = get_items(c)
 			end
 		end
+		if not items then
+			items = access.settings.history_default.value + 1
+		end
+		if items > access.settings.history_max.value then
+			items = access.settings.history_max.value + 1
+		end
 
-		local s = 0
+		local s = 1
+
+		if table.getn(messages) > access.settings.history_max.value then
+			s = pos - access.settings.history_max.value + 1
+		end
 
 		if items < pos then
-			s = pos - items
+			s = pos - items + 1
 		end
 
 		local e = pos
+
 		local msg = "Displaying the last " .. (e - s) .. " messages"
 
-		while s ~= e and messages[idx(s)] do
-			msg = msg .. "\r\n" .. messages[idx(s)]
+		while s <= e and messages[s] do
+			msg = msg .. "\r\n" .. messages[s].message
 			s = s + 1
 		end
 
@@ -89,7 +116,7 @@ access.commands.history = {
 
 	user_command = {
 		name = "Chat history",
-		params = { autil.ucmd_line("Number of lines to display (facultative)") }
+		params = { autil.ucmd_line("Number of msg's to display (' ' means default or hist since last logoff for a regged user)") }
 	}
 }
 
@@ -98,21 +125,26 @@ local function save_messages()
 		return
 	end
 
-	local s = 0
+	local s = 1
 	local e = pos
-
-	if pos >= access.settings.history_max.value then
-		s = pos + 1
-		e = pos + access.settings.history_max.value
+	
+	if table.getn(messages) >= access.settings.history_max.value then
+		s = pos - access.settings.history_max.value
+		e = table.getn(messages)
 	end
 
 	local f = io.open(history_file, "w")
 
-	while s ~= e and messages[idx(s)] do
-		f:write(messages[idx(s)] .. "\n")
+	local list = {}
+	while s <= e and messages[s] do
+		table.insert(list, messages[s])
 		s = s + 1
 	end
+	f:write(json.encode(list))
 	f:close()
+	messages = list
+	pos = table.getn(messages) + 1
+	messages_saved = true
 end
 
 local function load_messages()
@@ -120,9 +152,31 @@ local function load_messages()
 		return
 	end
 
-	for line in io.lines(history_file) do
-		messages[idx(pos)] = line
+	local f = io.open(history_file, "r")
+
+	local str = f:read("*a")
+	f:close()
+
+	if #str == 0 then
+		return false
+	end
+
+	local ok, list = base.pcall(json.decode, str)
+	if not ok then
+		log("Unable to decode history file: " .. list)
+		return false
+	end
+
+	for k, v in base.pairs(list) do
+		messages[k] = v
 		pos = pos + 1
+	end
+
+end
+
+local function to_save_messages()
+	if not messages_saved then
+		base.pcall(save_messages)
 	end
 end
 
@@ -143,10 +197,10 @@ local function parse(cmd)
 
 	local now = os.date(access.settings.history_prefix.value)
 	local message = now .. '<' .. nick .. '> ' .. cmd:getParam(0)
-	messages[idx(pos)] = message
+	messages[pos] = { message = message, htime = os.time() }
 	pos = pos + 1
 
-	base.pcall(save_messages)
+	messages_saved = false
 end
 
 base.pcall(load_messages)
@@ -176,3 +230,6 @@ else
 		hidden_bot:disconnect(adchpp.Util_REASON_PLUGIN)
 	end)
 end
+
+save_messages_timer = sm:addTimedJob(900000, to_save_messages)
+autil.on_unloading(_NAME, save_messages_timer)
