@@ -556,9 +556,14 @@ local function update_user(user, cid, nick)
 			users.nicks[user.nick] = nil
 		end
 
+		if user.cid then
+			users.cids[user.cid] = nil
+		end
+
 		user.nick = nick
 		user.lasttime = os.time()
 		users.nicks[user.nick] = user
+		users.cids[user.cid] = user
 		base.pcall(save_users)
 		return true, "Registration data updated (new nick)"
 	end
@@ -573,15 +578,21 @@ local function update_user(user, cid, nick)
 			users.cids[user.cid] = nil
 		end
 
+		if user.nick then
+			users.nicks[user.nick] = nil
+		end
+
 		user.cid = cid
 		user.lasttime = os.time()
 		users.cids[user.cid] = user
+		users.nicks[user.nick] = user
 		base.pcall(save_users)
 		return true, "Registration data updated (new CID)"
 	end
 
 	user.lasttime = os.time()
 	users.cids[user.cid] = user
+	users.nicks[user.nick] = user
 	users_saved = false
 
 	return true
