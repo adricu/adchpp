@@ -16,9 +16,6 @@ local users_file = adchpp.Util_getCfgPath() .. "users.txt"
 -- Where to read/write settings
 local settings_file = adchpp.Util_getCfgPath() .. "settings.txt"
 
--- Users with a level equal to or above the one specified here are operators
-level_op = 2
-
 -- ADC extensions this script adds support for
 local extensions = { "PING" }
 
@@ -241,12 +238,24 @@ settings.menuname = {
 	value = "ADCH++"
 }
 
+settings.oplevel = {
+	alias = { levelop = true },
+
+	help = "level for OP users all users with level >= will have OP rights",
+
+	level = true,
+
+	value = 3
+}
+
 settings.minchatlevel = {
 	change = function()
 		restricted_commands[adchpp.AdcCommand_CMD_MSG] = { level = settings.minchatlevel.value, str = "chat" }
 	end,
 
 	help = "minimum level to chat - hub restart recommended",
+
+	level = true,
 
 	value = 0
 }
@@ -261,6 +270,8 @@ settings.mindownloadlevel = {
 
 	help = "minimum level to download - hub restart recommended",
 
+	level = true,
+
 	value = 0
 }
 
@@ -270,6 +281,8 @@ settings.minsearchlevel = {
 	end,
 
 	help = "minimum level to search - hub restart recommended",
+
+	level = true,
 
 	value = 0
 }
@@ -332,6 +345,8 @@ settings.website = {
 
 	value = ""
 }
+
+level_op = settings.oplevel.value
 
 function registered_users()
 	local ret = {}
@@ -536,7 +551,7 @@ function has_level(c, level)
 end
 
 function is_op(c)
-	return has_level(c, level_op)
+	return has_level(c, settings.oplevel.value)
 end
 
 local function update_user(user, cid, nick)
@@ -834,7 +849,7 @@ local function onINF(c, cmd)
 	end
 
 	c:setFlag(adchpp.Entity_FLAG_REGISTERED)
-	if user.level >= level_op then
+	if user.level >= settings.oplevel.value then
 		c:setFlag(adchpp.Entity_FLAG_OP)
 	end
 	
@@ -1019,6 +1034,11 @@ commands.cfg = {
 				return
 			end
 		end
+
+		if setting.level and value > get_level(c) then
+			autil.reply(c, "You can not change the variable ( " .. name .. " ) to a value thats higher then your own level ( " .. get_level(c) .. " )")
+			return
+		end	
 
 		setting.value = value
 		if setting.change then
@@ -1280,43 +1300,86 @@ commands.listregs = {
 			return
 		end
 
-		local list = {}
-		for _, v in base.ipairs(registered_users()) do
-			if v.level <= user.level then
-				local fields = {}
-				if v.nick then
-					table.insert(fields, "\tNick: " .. v.nick)
-				end
-				if v.cid then
-					table.insert(fields, "\n\tCID: " .. v.cid)
-				end
-				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
-					table.insert(fields, "Pass: " .. v.password)
-				end
-				if v.lastofftime then
-					table.insert(fields, "\n\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
-				end
-				if v.lasttime then
-					table.insert(fields, "Last logon: " .. time_diff(v.lasttime) .. " ago")
-				end
-				if v.regtime then
-					table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
-				end
-				if v.regby then
-					table.insert(fields, "Regged By: " .. v.regby)
-				end
+		local param = string.lower(parameters)
 
-				table.insert(list, table.concat(fields, "\t\t"))
+		local list = {}
+		if #param == 0 then
+			for _, v in base.ipairs(registered_users()) do
+				local fields = {}
+				if v.level <= user.level then
+					if v.nick then
+						table.insert(fields, "\tNick: " .. v.nick)
+					end
+					if v.cid then
+						table.insert(fields, "\n\tCID: " .. v.cid)
+					end
+					if settings.passinlist.value ~=0 and v.level < user.level and v.password then
+						table.insert(fields, "Pass: " .. v.password)
+					end
+					if v.lastofftime then
+						table.insert(fields, "\n\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
+					end
+					if v.lasttime then
+						table.insert(fields, "Last logon: " .. time_diff(v.lasttime) .. " ago")
+					end
+					if v.regtime then
+						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
+					end
+					if v.regby then
+						table.insert(fields, "Regged By: " .. v.regby)
+					end
+					table.insert(list, table.concat(fields, "\t\t"))
+				end
+			end
+			if table.getn(list) > 0 then
+				table.sort(list)
+				autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level) :\n\n" .. table.concat(list, "\n\n") .. "\n")
+			else
+				autil.reply(c, "There are no registered users with a level <= " .. user.level .. " (your level) :\n\n")
+			end
+		else
+			for _, v in base.ipairs(registered_users()) do
+				local fields = {}
+				if v.nick and string.match(string.lower(v.nick), param, 1) and v.level <= user.level then
+					table.insert(fields, "\tNick: " .. v.nick)
+					if v.cid then
+						table.insert(fields, "\n\tCID: " .. v.cid)
+					end
+					if settings.passinlist.value ~=0 and v.level < user.level and v.password then
+						table.insert(fields, "Pass: " .. v.password)
+					end
+					if v.lastofftime then
+						table.insert(fields, "\n\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
+					end
+					if v.lasttime then
+						table.insert(fields, "Last logon: " .. time_diff(v.lasttime) .. " ago")
+					end
+					if v.regtime then
+						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
+					end
+					if v.regby then
+						table.insert(fields, "Regged By: " .. v.regby)
+					end
+					table.insert(list, table.concat(fields, "\t\t"))
+				end
+			end
+			if table.getn(list) > 0 then
+				table.sort(list)
+				autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level) and a nick containing ( " .. param .. " ) :\n\n" .. table.concat(list, "\n\n") .. "\n")
+			else
+				autil.reply(c, "There are no registered users with a level <= " .. user.level .. " (your level) and a nick containing ( " .. param .. " ) :\n\n")
 			end
 		end
-		table.sort(list)
-
-		autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level):\n\n" .. table.concat(list, "\n\n") .. "\n")
 	end,
+
+	help = "lists the hubs registered users, optional a nick searchstring parameter",
 
 	protected = function(c) return not get_user_c(c).is_default end,
 
-	user_command = { name = "List regs" }
+	user_command = {
+		name = "List regs",
+		params = { autil.ucmd_line("Search string facultative; defaults to al regged users") }
+	}
 }
 
 commands.myip = {
