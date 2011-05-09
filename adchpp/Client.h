@@ -51,17 +51,10 @@ public:
 	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
 	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
 
-	static void setDefaultMaxCommandSize(size_t newSize) { defaultMaxCommandSize = newSize; }
-	static size_t getDefaultMaxCommandSize() { return defaultMaxCommandSize; }
-
-	void setMaxCommandSize(size_t newSize) { maxCommandSize = newSize; }
-	size_t getMaxCommandSize() { return maxCommandSize; }
-
 	virtual size_t getQueuedBytes() const { return socket->getQueuedBytes(); }
 	virtual time::ptime getOverflow() const { return socket->getOverflow(); }
-private:
-	static size_t defaultMaxCommandSize;
 
+private:
 	Client(ClientManager &cm, uint32_t sid_) throw();
 	virtual ~Client();
 
@@ -70,8 +63,6 @@ private:
 	BufferPtr buffer;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;
-
-	size_t maxCommandSize;
 
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();

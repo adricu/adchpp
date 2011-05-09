@@ -30,16 +30,17 @@ namespace adchpp {
 using namespace std;
 using namespace std::placeholders;
 
-size_t Client::defaultMaxCommandSize = 16 * 1024;
-
 Client* Client::create(ClientManager &cm, const ManagedSocketPtr& ms, uint32_t sid) throw() {
 	Client* c = new Client(cm, sid);
 	c->setSocket(ms);
 	return c;
 }
 
-Client::Client(ClientManager &cm, uint32_t sid_) throw() : Entity(cm, sid_), disconnecting(false),
-	dataBytes(0), maxCommandSize(getDefaultMaxCommandSize()) {
+Client::Client(ClientManager &cm, uint32_t sid_) throw() :
+Entity(cm, sid_),
+disconnecting(false),
+dataBytes(0)
+{
 }
 
 Client::~Client() {
@@ -120,7 +121,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 
 			done = j + 1;
 
-			if(getMaxCommandSize() > 0 && buffer->size() > getMaxCommandSize()) {
+			if(cm.getMaxCommandSize() > 0 && buffer->size() > cm.getMaxCommandSize()) {
 				send(AdcCommand(AdcCommand::SEV_FATAL, AdcCommand::ERROR_PROTOCOL_GENERIC, "Command too long"));
 				disconnect(Util::REASON_MAX_COMMAND_SIZE);
 				return;

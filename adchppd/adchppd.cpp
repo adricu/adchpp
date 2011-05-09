@@ -23,6 +23,7 @@
 
 #include <adchpp/Util.h>
 #include <adchpp/ClientManager.h>
+#include <adchpp/LogManager.h>
 #include <adchpp/SocketManager.h>
 #include <adchpp/PluginManager.h>
 #include <adchpp/Entity.h>
@@ -56,6 +57,19 @@ void loadXML(Core &core, const string& aFileName)
 					} else if(xml.getChildName() == "Description") {
 						core.getClientManager().getEntity(AdcCommand::HUB_SID)->setField("DE", xml.getChildData());
 					} else if(xml.getChildName() == "Log") {
+						core.getLogManager().setEnabled(xml.getChildData() == "1");
+					} else if(xml.getChildName() == "LogFile") {
+						core.getLogManager().setLogFile(xml.getChildData());
+					} else if(xml.getChildName() == "MaxCommandSize") {
+						core.getClientManager().setMaxCommandSize(Util::toInt(xml.getChildData()));
+					} else if(xml.getChildName() == "BufferSize") {
+						core.getSocketManager().setBufferSize(Util::toInt(xml.getChildData()));
+					} else if(xml.getChildName() == "MaxBufferSize") {
+						core.getSocketManager().setMaxBufferSize(Util::toInt(xml.getChildData()));
+					} else if(xml.getChildName() == "OverflowTimeout") {
+						core.getSocketManager().setOverflowTimeout(Util::toInt(xml.getChildData()));
+					} else if(xml.getChildName() == "LogTimeout") {
+						core.getClientManager().setLogTimeout(Util::toInt(xml.getChildData()));
 					}
 				}
 

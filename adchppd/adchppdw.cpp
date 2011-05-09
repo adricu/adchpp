@@ -36,17 +36,6 @@ static const string modName = "adchpp";
 #define LOGERROR(func) LOG(modName, func " failed: " + Util::translateError(GetLastError()))
 #define PRINTERROR(func) fprintf(stderr, func " failed: code %lu: %s\n", GetLastError(), Util::translateError(GetLastError()).c_str())
 
-#ifdef __MINGW32__
-struct ExceptionHandler
-{
-	ExceptionHandler() {
-		LoadLibrary("exchndl.dll");
-	}
-};
-
-static ExceptionHandler eh;	//  global instance of class
-#endif
-
 bool asService = true;
 static const TCHAR* serviceName = _T("adchpp");
 static adchpp::shared_ptr<Core> core;

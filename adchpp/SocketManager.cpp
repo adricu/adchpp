@@ -41,8 +41,12 @@ using namespace boost::asio;
 using boost::system::error_code;
 using boost::system::system_error;
 
-SocketManager::SocketManager(Core &core) : core(core)  {
-
+SocketManager::SocketManager(Core &core) :
+core(core),
+bufferSize(1024),
+maxBufferSize(16 * 1024),
+overflowTimeout(60 * 1000)
+{
 }
 
 const string SocketManager::className = "SocketManager";
@@ -58,6 +62,16 @@ public:
 
 	virtual size_t available() {
 		return sock.lowest_layer().available();
+	}
+
+	virtual void setOptions(size_t bufferSize) {
+		sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(bufferSize));
+		sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(bufferSize));
+	}
+
+	virtual std::string getIp() {
+		try { return sock.lowest_layer().remote_endpoint().address().to_string(); }
+		catch(const system_error&) { return Util::emptyString; }
 	}
 
 	virtual void prepareRead(const BufferPtr& buf, const Handler& handler) {
@@ -102,6 +116,10 @@ class SimpleSocketStream : public SocketStream<ip::tcp::socket> {
 public:
 	SimpleSocketStream(boost::asio::io_service& x) : Stream(x) { }
 
+	virtual void init(const std::function<void ()>& readF) {
+		readF();
+	}
+
 	virtual void shutdown() {
 		sock.shutdown(ip::tcp::socket::shutdown_send);
 	}
@@ -125,6 +143,10 @@ class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
 public:
 	TLSSocketStream(io_service& x, ssl::basic_context<boost::asio::ssl::context_service>& y) : Stream(x, y) { }
 
+	virtual void init(const std::function<void ()>& readF) {
+		sock.async_handshake(ssl::stream_base::server, std::bind(&TLSSocketStream::handleHandshake, this, std::placeholders::_1, readF));
+	}
+
 	virtual void shutdown() {
 		sock.async_shutdown(&shutdownHandler);
 	}
@@ -136,13 +158,16 @@ public:
 			sock.lowest_layer().close(ec); // Ignore errors
 		}
 	}
+
+private:
+	void handleHandshake(const error_code& ec, const std::function<void ()>& readF) {
+		if(!ec) {
+			readF();
+		}
+	}
 };
 
 #endif
-
-// Default buffer size used for SO_RCVBUF/SO_SNDBUF
-// We don't need a large one since we generally deal with very short messages
-static const int SOCKET_BUFFER_SIZE = 1024;
 
 class SocketFactory : public enable_shared_from_this<SocketFactory>, boost::noncopyable {
 public:
@@ -177,43 +202,23 @@ public:
 		}
 #ifdef HAVE_OPENSSL
 		if(serverInfo->secure()) {
-			shared_ptr<TLSSocketStream> s = make_shared<TLSSocketStream>(sm.io, *context);
-			ManagedSocketPtr socket = make_shared<ManagedSocket>(sm, s);
-			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::prepareHandshake, shared_from_this(), std::placeholders::_1, socket));
+			auto s = make_shared<TLSSocketStream>(sm.io, *context);
+			auto socket = make_shared<ManagedSocket>(sm, s);
+			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
 		} else {
 #endif
-			shared_ptr<SimpleSocketStream> s = make_shared<SimpleSocketStream>(sm.io);
-			ManagedSocketPtr socket = make_shared<ManagedSocket>(sm, s);
+			auto s = make_shared<SimpleSocketStream>(sm.io);
+			auto socket = make_shared<ManagedSocket>(sm, s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
 #ifdef HAVE_OPENSSL
 		}
 #endif
 	}
 
-#ifdef HAVE_OPENSSL
-	void prepareHandshake(const error_code& ec, const ManagedSocketPtr& socket) {
-		if(!ec) {
-			TLSSocketStream* tls = static_cast<TLSSocketStream*>(socket->sock.get());
-			tls->sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(SOCKET_BUFFER_SIZE));
-			tls->sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(SOCKET_BUFFER_SIZE));
-			try {
-				socket->setIp(tls->sock.lowest_layer().remote_endpoint().address().to_string());
-			} catch(const system_error&) { }
-			tls->sock.async_handshake(ssl::stream_base::server, std::bind(&SocketFactory::completeAccept, shared_from_this(), std::placeholders::_1, socket));
-		}
-
-		prepareAccept();
-	}
-#endif
-
 	void handleAccept(const error_code& ec, const ManagedSocketPtr& socket) {
 		if(!ec) {
-			shared_ptr<SimpleSocketStream> s = static_pointer_cast<SimpleSocketStream>(socket->sock);
-			s->sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(SOCKET_BUFFER_SIZE));
-			s->sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(SOCKET_BUFFER_SIZE));
-			try {
-				socket->setIp(s->sock.lowest_layer().remote_endpoint().address().to_string());
-			} catch(const system_error&) { }
+			socket->sock->setOptions(sm.getBufferSize());
+			socket->setIp(socket->sock->getIp());
 		}
 
 		completeAccept(ec, socket);

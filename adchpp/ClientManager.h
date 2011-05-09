@@ -153,8 +153,11 @@ public:
 	SignalState::Signal& signalState() { return signalState_; }
 	SignalDisconnected::Signal& signalDisconnected() { return signalDisconnected_; }
 
-	void setLoginTimeout(size_t millis) { loginTimeout = millis; }
-	size_t getLoginTimeout() { return loginTimeout; }
+	void setMaxCommandSize(size_t newSize) { maxCommandSize = newSize; }
+	size_t getMaxCommandSize() const { return maxCommandSize; }
+
+	void setLogTimeout(size_t millis) { logTimeout = millis; }
+	size_t getLogTimeout() const { return logTimeout; }
 
 	Core &getCore() const { return core; }
 private:
@@ -175,7 +178,8 @@ private:
 
 	Hub hub;
 
-	size_t loginTimeout;
+	size_t maxCommandSize;
+	size_t logTimeout;
 
 	// Temporary string to use whenever a temporary string is needed (to avoid (de)allocating memory all the time...)
 	std::string strtmp;

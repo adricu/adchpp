@@ -74,6 +74,15 @@ public:
 
 	int run();
 
+	void setBufferSize(size_t newSize) { bufferSize = newSize; }
+	size_t getBufferSize() const { return bufferSize; }
+
+	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
+	size_t getMaxBufferSize() const { return maxBufferSize; }
+
+	void setOverflowTimeout(size_t timeout) { overflowTimeout = timeout; }
+	size_t getOverflowTimeout() const { return overflowTimeout; }
+
 	SocketStats &getStats() { return stats; }
 
 	Core &getCore() { return core; }
@@ -95,6 +104,10 @@ private:
 	std::vector<SocketFactoryPtr> factories;
 
 	IncomingHandler incomingHandler;
+
+	size_t bufferSize; /// Default buffer size used for SO_RCVBUF/SO_SNDBUF
+	size_t maxBufferSize; /// Max allowed write buffer size for each socket
+	size_t overflowTimeout;
 
 	static const std::string className;
 
