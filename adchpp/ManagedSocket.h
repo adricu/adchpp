@@ -58,23 +58,13 @@ public:
 	typedef std::function<void(Util::Reason, const std::string &)> FailedHandler;
 	void setFailedHandler(const FailedHandler& handler) { failedHandler = handler; }
 
-	void setMaxBufferSize(size_t newSize) { maxBufferSize = newSize; }
-	size_t getMaxBufferSize() { return maxBufferSize; }
-
 	time::ptime getOverflow() { return overflow; }
 
 	time::ptime getLastWrite() { return lastWrite; }
 
-	static void setDefaultMaxBufferSize(size_t newSize) { defaultMaxBufferSize = newSize; }
-	static size_t getDefaultMaxBufferSize() { return defaultMaxBufferSize; }
-
-	static time_t getOverflowTimeout() { return overflowTimeout; }
 	~ManagedSocket() throw();
 
 private:
-	static size_t defaultMaxBufferSize;
-	static time_t overflowTimeout;
-
 	friend class SocketManager;
 	friend class SocketFactory;
 
@@ -103,9 +93,6 @@ private:
 
 	/** Time when this socket will be disconnected regardless of buffers */
 	time::ptime disc;
-
-	/** Max allowed write buffer size for this socket */
-	size_t maxBufferSize;
 
 	/** Last time that a write started, 0 if no active write */
 	time::ptime lastWrite;

@@ -34,7 +34,12 @@ using namespace std;
 
 const string ClientManager::className = "ClientManager";
 
-ClientManager::ClientManager(Core &core) throw() : core(core), hub(*this), loginTimeout(30 * 1000) {
+ClientManager::ClientManager(Core &core) throw() :
+core(core),
+hub(*this),
+maxCommandSize(16 * 1024),
+logTimeout(30 * 1000)
+{
 	hub.addSupports(AdcCommand::toFourCC("BASE"));
 	hub.addSupports(AdcCommand::toFourCC("TIGR"));
 }
@@ -140,7 +145,7 @@ uint32_t ClientManager::makeSID() {
 void ClientManager::onConnected(Client& c) throw() {
 	dcdebug("%s connected\n", AdcCommand::fromSID(c.getSID()).c_str());
 	// First let's check if any clients have passed the login timeout...
-	auto timeout = time::now() - time::millisec(getLoginTimeout());
+	auto timeout = time::now() - time::millisec(getLogTimeout());
 
 	while(!logins.empty() && (timeout > logins.front().second)) {
 		Client* cc = logins.front().first;

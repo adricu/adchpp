@@ -28,14 +28,10 @@ using namespace std;
 
 using namespace boost::asio;
 
-size_t ManagedSocket::defaultMaxBufferSize = 16 * 1024;
-time_t ManagedSocket::overflowTimeout = 60;
-
 ManagedSocket::ManagedSocket(SocketManager &sm, const AsyncStreamPtr &sock_) :
 	sock(sock_),
 	overflow(time::not_a_date_time),
 	disc(time::not_a_date_time),
-	maxBufferSize(getDefaultMaxBufferSize()),
 	lastWrite(time::not_a_date_time),
 	sm(sm)
 { }
@@ -63,10 +59,10 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 
 	size_t queued = getQueuedBytes();
 
-	if(getMaxBufferSize() > 0 && queued + buf->size() > getMaxBufferSize()) {
+	if(sm.getMaxBufferSize() > 0 && queued + buf->size() > sm.getMaxBufferSize()) {
 		if(lowPrio) {
 			return;
-		} else if(!overflow.is_not_a_date_time() && overflow + time::seconds(getOverflowTimeout()) < time::now()) {
+		} else if(!overflow.is_not_a_date_time() && overflow + time::millisec(sm.getOverflowTimeout()) < time::now()) {
 			disconnect(5000, Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
@@ -132,7 +128,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 		if(!overflow.is_not_a_date_time()) {
 			size_t left = getQueuedBytes();
-			if(left < getMaxBufferSize()) {
+			if(left < sm.getMaxBufferSize()) {
 				overflow = time::not_a_date_time;
 			}
 		}
@@ -200,7 +196,7 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 	if(!ec) {
 		if(connectedHandler)
 			connectedHandler();
-		prepareRead();
+		sock->init(std::bind(&ManagedSocket::prepareRead, shared_from_this()));
 	} else {
 		fail(Util::REASON_SOCKET_ERROR, ec.message());
 	}
@@ -240,7 +236,7 @@ void ManagedSocket::disconnect(size_t timeout, Util::Reason reason, const std::s
 	if(writing()) {
 		sm.addJob(timeout, Disconnector(sock));
 	} else {
-		sock->shutdown();
+		sock->close();
 	}
 }
 
