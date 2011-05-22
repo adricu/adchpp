@@ -25,7 +25,6 @@ bans.muted = {}
 local settings = access.settings
 local commands = access.commands
 local is_op = access.is_op
-local level_op = access.level_op
 
 local cm = adchpp.getCM()
 local sm = adchpp.getSM()
@@ -177,7 +176,7 @@ commands.ban = {
 
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -216,7 +215,14 @@ commands.ban = {
 			bans.cids[victim_cid] = ban
 			base.pcall(save_bans)
 			dump_banned(victim, ban)
-			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned")
+			local time
+			base.print("min", minutes)
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned for: ( " .. time .. " )")
 			return
 		end
 
@@ -251,7 +257,7 @@ commands.ban = {
 commands.bancid = {
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -272,7 +278,13 @@ commands.bancid = {
 		if base.tonumber(minutes) ~= 0 then
 			bans.cids[cid] = make_ban(level, reason, minutes)
 			base.pcall(save_bans)
-			autil.reply(c, "The CID \"" .. cid .. "\" is now banned")
+			local time
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "The CID \"" .. cid .. "\" is now banned for: ( " .. time .. " )")
 			return
 		end
 
@@ -307,7 +319,7 @@ commands.bancid = {
 commands.banip = {
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -328,7 +340,13 @@ commands.banip = {
 		if base.tonumber(minutes) ~= 0 then
 			bans.ips[ip] = make_ban(level, reason, minutes)
 			base.pcall(save_bans)
-			autil.reply(c, "The IP address \"" .. ip .. "\" is now banned")
+			local time
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "The IP address \"" .. ip .. "\" is now banned for: ( " .. time .. " )")
 			return
 		end
 
@@ -363,7 +381,7 @@ commands.banip = {
 commands.bannick = {
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -384,7 +402,13 @@ commands.bannick = {
 		if base.tonumber(minutes) ~= 0 then
 			bans.nicks[nick] = make_ban(level, reason, minutes)
 			base.pcall(save_bans)
-			autil.reply(c, "The nick \"" .. nick .. "\" is now banned")
+			local time
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "The nick \"" .. nick .. "\" is now banned for: ( " .. time .. " )")
 			return
 		end
 
@@ -419,7 +443,7 @@ commands.bannick = {
 commands.bannickre = {
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -440,7 +464,13 @@ commands.bannickre = {
 		if base.tonumber(minutes) ~= 0 then
 			bans.nicksre[re] = make_ban(level, reason, minutes)
 			base.pcall(save_bans)
-			autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned")
+			local time
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned for: ( " .. time .. " )")
 			return
 		end
 
@@ -470,7 +500,7 @@ commands.bannickre = {
 commands.banmsgre = {
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -491,7 +521,13 @@ commands.banmsgre = {
 		if base.tonumber(minutes) ~= 0 then
 			bans.msgsre[re] = make_ban(level, reason, minutes)
 			base.pcall(save_bans)
-			autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned")
+			local time
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned for: ( " .. time .. " )")
 			return
 		end
 
@@ -523,7 +559,7 @@ commands.listbans = {
 
 	command = function(c)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -570,7 +606,7 @@ commands.loadbans = {
 
 	command = function(c)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -591,7 +627,7 @@ commands.mute = {
 
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -629,7 +665,12 @@ commands.mute = {
 			local ban = make_ban(level, reason, minutes)
 			bans.muted[victim_cid] = ban
 			base.pcall(save_bans)
-			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted")
+			if minutes and #base.tostring(minutes) > 0 then
+				time = access.format_minutes(minutes * 60)
+			else
+				time = "Ever !!!"
+			end
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted for: ( " .. time .. " )")
 			return
 		end
 

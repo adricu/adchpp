@@ -10,9 +10,9 @@ local autil = base.require("autil")
 local string = base.require("string")
 
 local commands = access.commands
+local settings = access.settings
 local get_user = access.get_user
 local is_op = access.is_op
-local level_op = access.level_op
 
 local cm = adchpp.getCM()
 
@@ -21,7 +21,7 @@ commands.kick = {
 
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 
@@ -145,7 +145,7 @@ commands.redirect = {
 
 	command = function(c, parameters)
 		local level = access.get_level(c)
-		if level < level_op then
+		if level < settings.oplevel.value then
 			return
 		end
 

@@ -112,12 +112,12 @@ access.commands.history = {
 		autil.reply(c, msg)
 	end,
 
-	help = "[lines] - display main chat messages logged by the hub",
+	help = "[lines] - display main chat messages logged by the hub (no lines=default / since last logoff)",
 
 	user_command = {
 		name = "Chat history",
-		params = { autil.ucmd_line("Number of msg's to display (' ' means default or hist since last logoff for a regged user)") }
-	}
+		params = { autil.ucmd_line("Number of msg's to display (empty=default / since last logoff)") }
+		}
 }
 
 local function save_messages()

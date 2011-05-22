@@ -12,7 +12,6 @@ local string = base.require("string")
 
 local settings = access.settings
 local commands = access.commands
-local level_op = access.level_op
 
 local function log(message)
 	lm:log(_NAME, message)
@@ -36,7 +35,7 @@ local function dump_user(c, msg)
 end
 
 local function onINF(c, cmd)
-	if access.get_level(c) >= level_op then
+	if access.get_level(c) >= settings.oplevel.value then
 		return true
 	end
 

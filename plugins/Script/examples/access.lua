@@ -20,12 +20,12 @@ local settings_file = adchpp.Util_getCfgPath() .. "settings.txt"
 local extensions = { "PING" }
 
 -- Regexes for the various fields. 
-local cid_regex = "^" .. string.rep("[A-Z2-7]", 39) .. "$" -- No way of expressing exactly 39 chars without being explicit it seems
-local pid_regex = cid_regex
-local sid_regex = "^" .. string.rep("[A-Z2-7]", 4) .. "$"
-local integer_regex = "^%d+$"
+cid_regex = "^" .. string.rep("[A-Z2-7]", 39) .. "$" -- No way of expressing exactly 39 chars without being explicit it seems
+pid_regex = cid_regex
+sid_regex = "^" .. string.rep("[A-Z2-7]", 4) .. "$"
+integer_regex = "^%d+$"
 
-local inf_fields = {
+inf_fields = {
 	["ID"] = cid_regex,
 	["PD"] = pid_regex,
 	["I4"] = "^%d+%.%d+%.%d+%.%d+$",
@@ -48,13 +48,13 @@ local inf_fields = {
 	["SU"] = "[A-Z,]+"
 }
 
-local context_hub = "[H]"
-local context_bcast = "[BF]"
-local context_direct = "[DE]"
-local context_send = "[BDEFH]"
-local context_hubdirect = "[HDE]"
+context_hub = "[H]"
+context_bcast = "[BF]"
+context_direct = "[DE]"
+context_send = "[BDEFH]"
+context_hubdirect = "[HDE]"
 
-local command_contexts = {
+command_contexts = {
 	[adchpp.AdcCommand_CMD_STA] = context_hubdirect,
 	[adchpp.AdcCommand_CMD_SUP] = context_hub,
 	[adchpp.AdcCommand_CMD_SID] = context_hub,
@@ -241,7 +241,7 @@ settings.menuname = {
 settings.oplevel = {
 	alias = { levelop = true },
 
-	help = "level for OP users all users with level >= will have OP rights",
+	help = "minimum level for OP users, all users >= this level will have OP rights",
 
 	level = true,
 
@@ -345,8 +345,6 @@ settings.website = {
 
 	value = ""
 }
-
-level_op = settings.oplevel.value
 
 function registered_users()
 	local ret = {}
@@ -1036,7 +1034,7 @@ commands.cfg = {
 		end
 
 		if setting.level and value > get_level(c) then
-			autil.reply(c, "You can not change the variable ( " .. name .. " ) to a value thats higher then your own level ( " .. get_level(c) .. " )")
+			autil.reply(c, "You can not change the variable ( " .. name .. " ) to a value higher than your own level ( " .. get_level(c) .. " )")
 			return
 		end	
 
