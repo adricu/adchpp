@@ -127,13 +127,24 @@ local function ban_expiration_string(ban)
 	end
 end
 
-local function ban_info_string(ban)
-	local str = "\tLevel: " .. ban.level
-	if ban.reason then
-		str = str .. "\tReason: " .. ban.reason
+local function ban_info_string(ban, sep)
+	if not sep then
+		sep = "\t"
 	end
-	str = str .. "\tExpires: " .. ban_expiration_string(ban)
+
+	local str = "Level: " .. ban.level
+
+	if ban.reason then
+		str = str .. sep .. "Reason: " .. ban.reason
+	end
+
+	str = str .. sep .. "Expires: " .. ban_expiration_string(ban)
+
 	return str
+end
+
+local function ban_added_string(ban)
+	return ban_info_string(ban, ") (")
 end
 
 local function ban_return_info(ban)
@@ -215,14 +226,7 @@ commands.ban = {
 			bans.cids[victim_cid] = ban
 			base.pcall(save_bans)
 			dump_banned(victim, ban)
-			local time
-			base.print("min", minutes)
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned for: ( " .. time .. " )")
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
@@ -276,15 +280,10 @@ commands.bancid = {
 		end
 
 		if base.tonumber(minutes) ~= 0 then
-			bans.cids[cid] = make_ban(level, reason, minutes)
+			local ban = make_ban(level, reason, minutes)
+			bans.cids[cid] = ban
 			base.pcall(save_bans)
-			local time
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "The CID \"" .. cid .. "\" is now banned for: ( " .. time .. " )")
+			autil.reply(c, "The CID \"" .. cid .. "\" is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
@@ -338,15 +337,10 @@ commands.banip = {
 		end
 
 		if base.tonumber(minutes) ~= 0 then
-			bans.ips[ip] = make_ban(level, reason, minutes)
+			local ban = make_ban(level, reason, minutes)
+			bans.ips[ip] = ban
 			base.pcall(save_bans)
-			local time
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "The IP address \"" .. ip .. "\" is now banned for: ( " .. time .. " )")
+			autil.reply(c, "The IP address \"" .. ip .. "\" is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
@@ -400,15 +394,10 @@ commands.bannick = {
 		end
 
 		if base.tonumber(minutes) ~= 0 then
-			bans.nicks[nick] = make_ban(level, reason, minutes)
+			local ban = make_ban(level, reason, minutes)
+			bans.nicks[nick] = ban
 			base.pcall(save_bans)
-			local time
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "The nick \"" .. nick .. "\" is now banned for: ( " .. time .. " )")
+			autil.reply(c, "The nick \"" .. nick .. "\" is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
@@ -462,15 +451,10 @@ commands.bannickre = {
 		end
 
 		if base.tonumber(minutes) ~= 0 then
-			bans.nicksre[re] = make_ban(level, reason, minutes)
+			local ban = make_ban(level, reason, minutes)
+			bans.nicksre[re] = ban
 			base.pcall(save_bans)
-			local time
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned for: ( " .. time .. " )")
+			autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
@@ -519,15 +503,10 @@ commands.banmsgre = {
 		end
 
 		if base.tonumber(minutes) ~= 0 then
-			bans.msgsre[re] = make_ban(level, reason, minutes)
+			local ban = make_ban(level, reason, minutes)
+			bans.msgsre[re] = ban
 			base.pcall(save_bans)
-			local time
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned for: ( " .. time .. " )")
+			autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
@@ -565,32 +544,32 @@ commands.listbans = {
 
 		local str = "\nCID bans:"
 		for cid, ban in base.pairs(bans.cids) do
-			str = str .. "\n\tCID: " .. cid .. ban_info_string(ban)
+			str = str .. "\n\tCID: " .. cid .. "\t" .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nIP bans:"
 		for ip, ban in base.pairs(bans.ips) do
-			str = str .. "\n\tIP: " .. ip .. ban_info_string(ban)
+			str = str .. "\n\tIP: " .. ip .. "\t" .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nNick bans:"
 		for nick, ban in base.pairs(bans.nicks) do
-			str = str .. "\n\tNick: " .. nick .. ban_info_string(ban)
+			str = str .. "\n\tNick: " .. nick .. "\t" .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nNick bans (reg exp):"
 		for nickre, ban in base.pairs(bans.nicksre) do
-			str = str .. "\n\tReg exp: " .. nickre .. ban_info_string(ban)
+			str = str .. "\n\tReg exp: " .. nickre .. "\t" .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nMessage bans (reg exp):"
 		for msgre, ban in base.pairs(bans.msgsre) do
-			str = str .. "\n\tReg exp: " .. msgre .. ban_info_string(ban)
+			str = str .. "\n\tReg exp: " .. msgre .. "\t" .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nMuted:"
 		for cid, ban in base.pairs(bans.muted) do
-			str = str .. "\n\tCID: " .. cid .. ban_info_string(ban)
+			str = str .. "\n\tCID: " .. cid .. "\t" .. ban_info_string(ban)
 		end
 
 		autil.reply(c, str)
@@ -665,12 +644,7 @@ commands.mute = {
 			local ban = make_ban(level, reason, minutes)
 			bans.muted[victim_cid] = ban
 			base.pcall(save_bans)
-			if minutes and #base.tostring(minutes) > 0 then
-				time = access.format_minutes(minutes * 60)
-			else
-				time = "Ever !!!"
-			end
-			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted for: ( " .. time .. " )")
+			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted (" .. ban_added_string(ban) .. ")")
 			return
 		end
 

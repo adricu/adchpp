@@ -74,6 +74,8 @@ command_contexts = {
 	[adchpp.AdcCommand_CMD_SND] = context_hub,
 }
 
+level_op = 3 -- kept in sync with settings.oplevel
+
 local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
@@ -240,6 +242,10 @@ settings.menuname = {
 
 settings.oplevel = {
 	alias = { levelop = true },
+
+	change = function()
+		level_op = settings.oplevel.value
+	end,
 
 	help = "minimum level for OP users, all users >= this level will have OP rights",
 
