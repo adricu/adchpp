@@ -135,7 +135,6 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 
 		if(disconnecting() && outBuf.empty()) {
 			sock->shutdown();
-			sm.addJob(disc - time::now(), Disconnector(sock));
 		} else {
 			prepareWrite();
 		}
@@ -233,11 +232,10 @@ void ManagedSocket::disconnect(size_t timeout, Util::Reason reason, const std::s
 
 	sm.addJob(Reporter(shared_from_this(), &ManagedSocket::fail, reason, info));
 
-	if(writing()) {
-		sm.addJob(timeout, Disconnector(sock));
-	} else {
-		sock->close();
+	if(!writing()) {
+		sock->shutdown();
 	}
+	sm.addJob(timeout, Disconnector(sock));
 }
 
 bool ManagedSocket::disconnecting() const {
