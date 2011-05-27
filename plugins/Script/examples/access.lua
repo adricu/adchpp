@@ -145,6 +145,14 @@ local function description_change()
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("DE", description):getBuffer())
 end
 
+local function failover_change()
+	if #settings.failover.value > 0 then
+		local failover = settings.failover.value
+		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("FO", failover)
+		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("FO", failover):getBuffer())
+	end
+end
+
 local function validate_ni(new)
 	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
 		if char <= 32 then
@@ -157,6 +165,14 @@ local function validate_de(new)
 	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
 		if char < 32 then
 			return "the description can't contain any new line nor tabulation"
+		end
+	end
+end
+
+local function validate_fo(new)
+	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+		if char < 33 then
+			return "the failover addresses can't contain any new line, tabulation nor spaces"
 		end
 	end
 end
@@ -191,7 +207,7 @@ settings.allownickchange = {
 settings.allowreg = {
 	alias = { allowregistration = true },
 
-	help = "authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = alllow, 0 = disallow",
+	help = "authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = allow, 0 = disallow",
 
 	value = 1
 }
@@ -206,6 +222,18 @@ settings.description = {
 	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE"),
 
 	validate = validate_de
+}
+
+settings.failover = {
+	alias = { failoveraddress = true },
+
+	change = failover_change,
+
+	help = "comma separated failover address(es) for the hub in adc(s)://address:port,... format, empty = disabled",
+
+	value = '',
+
+	validate = validate_fo
 }
 
 settings.maxmsglength = {

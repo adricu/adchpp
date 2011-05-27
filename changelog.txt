@@ -2,6 +2,7 @@
 * Process most settings again
 * [L#717858] Fix disconnection of users taking too long to log in
 * [L#717858] Consider users as connected before they start the TLS handshake
+* Add FO extention to hub INF
 
 -- 2.7.0 2011-02-23 --
 * Export PluginManager::attention to scripts
