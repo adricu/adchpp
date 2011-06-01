@@ -232,4 +232,9 @@ else
 end
 
 save_messages_timer = sm:addTimedJob(900000, to_save_messages)
+
 autil.on_unloading(_NAME, save_messages_timer)
+
+autil.on_unloading(_NAME, function()
+	base.pcall(to_save_messages)
+end)

@@ -146,11 +146,9 @@ local function description_change()
 end
 
 local function failover_change()
-	if #settings.failover.value > 0 then
-		local failover = settings.failover.value
-		cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("FO", failover)
-		cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("FO", failover):getBuffer())
-	end
+	local failover = settings.failover.value
+	cm:getEntity(adchpp.AdcCommand_HUB_SID):setField("FO", failover)
+	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("FO", failover):getBuffer())
 end
 
 local function validate_ni(new)
@@ -1753,4 +1751,9 @@ access_5 = cm:signalDisconnected():connect(function(entity, reason, info)
 end)
 
 save_users_timer = sm:addTimedJob(900000, to_save_users)
+
 autil.on_unloading(_NAME, save_users_timer)
+
+autil.on_unloading(_NAME, function()
+	base.pcall(to_save_users)
+end)
