@@ -66,6 +66,12 @@ public:
   {
     switch (m)
     {
+		/* Debian has disabled SSLv2 support in their OpenSSL distro; as a result, the following
+		 * doesn't compile. Added a guard on June 2nd 2011 to work around this.
+		 * <https://svn.boost.org/trac/boost/ticket/5453>
+		 * <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=589706>
+		 */
+#ifndef OPENSSL_NO_SSL2
     case context_base::sslv2:
       impl = ::SSL_CTX_new(::SSLv2_method());
       break;
@@ -75,6 +81,7 @@ public:
     case context_base::sslv2_server:
       impl = ::SSL_CTX_new(::SSLv2_server_method());
       break;
+#endif
     case context_base::sslv3:
       impl = ::SSL_CTX_new(::SSLv3_method());
       break;
