@@ -107,7 +107,16 @@ extern std::string appName;
 extern std::string versionString;
 extern float versionFloat;
 
-class BufferPtr;
+class Buffer {
+public:
+	%extend {
+		static shared_ptr<Buffer> create(const std::string& s) {
+			return make_shared<Buffer>(s);
+		}
+	}
+};
+
+typedef shared_ptr<Buffer> BufferPtr;
 
 struct ManagedConnection {
 	void disconnect();
@@ -683,7 +692,6 @@ public:
 	void send(const AdcCommand& cmd) throw();
 	void sendToAll(const BufferPtr& buffer) throw();
 	void sendTo(const BufferPtr& buffer, uint32_t to);
-	%extend { void sendRaw(const string& str, uint32_t to) { self->sendTo(make_shared<Buffer>(str), to); } }
 
 	void enterIdentify(Entity& c, bool sendData) throw();
 

@@ -78,7 +78,7 @@ public:
 
 	void operator()(adchpp::Bot& bot, const adchpp::BufferPtr& buf) {
 		auto v0 = SWIG_NewPointerObj(&bot, SWIGTYPE_p_adchpp__Bot, 0);
-		auto v1 = SWIG_NewPointerObj((void*)&buf, SWIGTYPE_p_adchpp__BufferPtr, 0);
+		auto v1 = SWIG_NewPointerObj((void*)&buf, SWIGTYPE_p_shared_ptrT_adchpp__Buffer_t, 0);
 
 		call(v0, v1);
 	}

@@ -350,7 +350,7 @@ private:
 		PyHandle args(PyTuple_New(2), true);
 
 		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Bot, 0 |  0 ));
-		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&ptr), SWIGTYPE_p_adchpp__BufferPtr, 0 |  0 ));
+		PyTuple_SetItem(args, 1, SWIG_NewPointerObj(SWIG_as_voidptr(&ptr), SWIGTYPE_p_shared_ptrT_adchpp__Buffer_t, 0 |  0 ));
 
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}

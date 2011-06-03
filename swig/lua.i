@@ -160,7 +160,7 @@ public:
 		pushFunction();
 
 		SWIG_NewPointerObj(L, &bot, SWIGTYPE_p_adchpp__Bot, 0);
-		SWIG_NewPointerObj(L, &buf, SWIGTYPE_p_adchpp__BufferPtr, 0);
+		SWIG_NewPointerObj(L, &buf, SWIGTYPE_p_shared_ptrT_adchpp__Buffer_t, 0);
 
 		docall(2, 0);
 	}
