@@ -683,6 +683,7 @@ public:
 	void send(const AdcCommand& cmd) throw();
 	void sendToAll(const BufferPtr& buffer) throw();
 	void sendTo(const BufferPtr& buffer, uint32_t to);
+	%extend { void sendRaw(const string& str, uint32_t to) { self->sendTo(make_shared<Buffer>(str), to); } }
 
 	void enterIdentify(Entity& c, bool sendData) throw();
 
