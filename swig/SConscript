@@ -194,6 +194,6 @@ buildPyModule()
 
 buildLuaModule()
 
-buildPHPModule()
+# TODO buildPHPModule()
 
 Return('targets')

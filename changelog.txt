@@ -4,6 +4,7 @@
 * [L#717858] Consider users as connected before they start the TLS handshake
 * Add FO extension to hub INF
 * Remove the license page from the installer
+* [L#804024] Separate application and version in INF
 
 -- 2.7.0 2011-02-23 --
 * Export PluginManager::attention to scripts

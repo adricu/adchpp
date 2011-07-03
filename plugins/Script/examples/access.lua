@@ -862,7 +862,7 @@ local function onINF(c, cmd)
 	end
 
 	if settings.sendversion.value == 1 then
-		autil.reply(c, "This hub is running " .. adchpp.versionString)
+		autil.reply(c, "This hub is running " .. adchpp.appName .. " " .. adchpp.versionString)
 	end
 
 	local user = get_user(cid, nick)
@@ -1220,7 +1220,8 @@ commands.info = {
 				field_function("DE", "Description")
 				field_function("SS", "Share size (bytes)")
 				field_function("SF", "Number of shared files")
-				field_function("VE", "Client identification")
+				field_function("AP", "Application")
+				field_function("VE", "Application version")
 				field_function("US", "Max upload speed (bytes/s)")
 				field_function("DS", "Max download speed (bytes/s)")
 				field_function("SL", "Max slots")

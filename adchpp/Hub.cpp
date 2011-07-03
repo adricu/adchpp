@@ -27,7 +27,8 @@ namespace adchpp {
 Hub::Hub(ClientManager &cm) : Entity(cm, AdcCommand::HUB_SID) {
 	setField("NI", "adchpp");
 	setField("HI", "1");
-	setField("DE", versionString);
+	setField("DE", appName + ' ' + versionString);
+	setField("AP", appName);
 	setField("VE", versionString);
 	setFlag(FLAG_HUB);
 }
