@@ -23,7 +23,7 @@ namespace adchpp {
 
 struct ServerInfo {
 	std::string ip;
-	unsigned short port;
+	std::string port;
 
 	struct TLSInfo {
 		std::string cert;

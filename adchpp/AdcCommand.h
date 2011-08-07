@@ -144,6 +144,7 @@ public:
 
 	AdcCommand& addParam(const std::string& param) {
 		parameters.push_back(param);
+		resetBuffer();
 		return *this;
 	}
 

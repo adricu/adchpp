@@ -173,10 +173,20 @@ class SocketFactory : public enable_shared_from_this<SocketFactory>, boost::nonc
 public:
 	SocketFactory(SocketManager& sm, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
 		sm(sm),
-		acceptor(sm.io, ip::tcp::endpoint(boost::asio::ip::tcp::v4(), info->port)),
+		acceptor(sm.io),
 		serverInfo(info),
 		handler(handler_)
 	{
+		ip::tcp::resolver r(sm.io);
+		auto local = r.resolve(ip::tcp::resolver::query(info->ip, info->port));
+		if(local == ip::tcp::resolver::iterator()) {
+			throw std::runtime_error("Unable to resolve " + info->ip + ":" + info->port);
+		}
+
+		acceptor.open(local->endpoint().protocol());
+		acceptor.bind(local->endpoint());
+		acceptor.listen(ip::tcp::socket::max_connections);
+
 		LOGC(sm.getCore(), SocketManager::className,
 			"Listening on port " + Util::toString(info->port) +
 			" (Encrypted: " + (info->secure() ? "Yes)" : "No)"));
@@ -249,7 +259,7 @@ int SocketManager::run() {
 
 	work.reset(new io_service::work(io));
 
-	for(std::vector<ServerInfoPtr>::iterator i = servers.begin(), iend = servers.end(); i != iend; ++i) {
+	for(auto i = servers.begin(), iend = servers.end(); i != iend; ++i) {
 		const ServerInfoPtr& si = *i;
 
 		try {
@@ -257,7 +267,7 @@ int SocketManager::run() {
 			factory->prepareAccept();
 			factories.push_back(factory);
 		} catch(const system_error& se) {
-			LOG(SocketManager::className, "Error while loading server on port " + Util::toString(si->port) +": " + se.what());
+			LOG(SocketManager::className, "Error while loading server on port " + si->port +": " + se.what());
 		}
 	}
 
@@ -269,7 +279,7 @@ int SocketManager::run() {
 }
 
 void SocketManager::closeFactories() {
-	for(std::vector<SocketFactoryPtr>::iterator i = factories.begin(), iend = factories.end(); i != iend; ++i) {
+	for(auto i = factories.begin(), iend = factories.end(); i != iend; ++i) {
 		(*i)->close();
 	}
 	factories.clear();

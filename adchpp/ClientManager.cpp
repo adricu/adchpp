@@ -28,6 +28,10 @@
 #include "Encoder.h"
 #include "version.h"
 
+#include <boost/asio/ip/address.hpp>
+#include <boost/asio/ip/address_v4.hpp>
+#include <boost/asio/ip/address_v6.hpp>
+
 namespace adchpp {
 
 using namespace std;
@@ -313,26 +317,59 @@ bool ClientManager::verifyIp(Client& c, AdcCommand& cmd) throw() {
 	if(c.isSet(Entity::FLAG_OK_IP))
 		return true;
 
-	std::string ip;
-	if(cmd.getParam("I4", 0, ip)) {
-		dcdebug("%s verifying IP %s\n", AdcCommand::fromSID(c.getSID()).c_str(), ip.c_str());
-		if(ip.empty() || ip == "0.0.0.0") {
-			cmd.delParam("I4", 0);
-			cmd.resetBuffer();
-		} else if(ip != c.getIp() && !Util::isPrivateIp(c.getIp())) {
-			disconnect(c, Util::REASON_INVALID_IP, "Your IP is " + c.getIp() + ", reconfigure your client settings",
-				AdcCommand::ERROR_BAD_IP, "IP" + c.getIp());
-			return false;
-		} else
-			return true;
-	}
+	using namespace boost::asio::ip;
 
-	if(!c.hasField("I4")) {
-		c.setField("I4", c.getIp());
-	}
-	if(c.getState() != Entity::STATE_NORMAL) {
-		cmd.addParam("I4", c.getIp());
-		cmd.resetBuffer();
+	auto remote = address::from_string(c.getIp());
+	std::string ip;
+
+	if(remote.is_v4() || (remote.is_v6() && remote.to_v6().is_v4_mapped())) {
+		auto v4 = remote.is_v4() ? remote.to_v4() : remote.to_v6().to_v4();
+
+		if(cmd.getParam("I4", 0, ip)) {
+			dcdebug("%s verifying IP %s\n", AdcCommand::fromSID(c.getSID()).c_str(), ip.c_str());
+			if(ip.empty() || address_v4::from_string(ip) == address_v4::any()) {
+				cmd.delParam("I4", 0);
+			} else if(address_v4::from_string(ip) != v4 && !Util::isPrivateIp(c.getIp())) {
+				disconnect(c, Util::REASON_INVALID_IP, "Your IP is " + c.getIp() +
+					", reconfigure your client settings", AdcCommand::ERROR_BAD_IP, "IP" + c.getIp());
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+		if(!c.hasField("I4")) {
+			c.setField("I4", v4.to_string());
+		}
+
+		if(c.getState() != Entity::STATE_NORMAL) {
+			cmd.addParam("I4", v4.to_string());
+		}
+
+		cmd.delParam("I6", 0); // We can't check this so we remove it instead...fix?
+	} else if(remote.is_v6()) {
+		if(cmd.getParam("I6", 0, ip)) {
+			dcdebug("%s verifying IPv6 %s\n", AdcCommand::fromSID(c.getSID()).c_str(), ip.c_str());
+			if(ip.empty() || address_v6::from_string(ip) == address_v6::any()) {
+				cmd.delParam("I6", 0);
+			} else if(address_v6::from_string(ip) != remote.to_v6() && !Util::isPrivateIp(c.getIp())) {
+				disconnect(c, Util::REASON_INVALID_IP, "Your IP is " + c.getIp() +
+					", reconfigure your client settings", AdcCommand::ERROR_BAD_IP, "IP" + c.getIp());
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+		if(!c.hasField("I6")) {
+			c.setField("I6", c.getIp());
+		}
+
+		if(c.getState() != Entity::STATE_NORMAL) {
+			cmd.addParam("I6", c.getIp());
+		}
+
+		cmd.delParam("I4", 0); // We can't check this so we remove it instead...fix?
 	}
 
 	return true;

@@ -127,7 +127,7 @@ typedef shared_ptr<ManagedConnection> ManagedConnectionPtr;
 
 struct ServerInfo {
 	std::string ip;
-	unsigned short port;
+	std::string port;
 
 	TLSInfo TLSParams;
 	bool secure() const;

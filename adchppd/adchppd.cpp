@@ -81,7 +81,7 @@ void loadXML(Core &core, const string& aFileName)
 
 				while(xml.findChild("Server")) {
 					ServerInfoPtr server = make_shared<ServerInfo>();
-					server->port = Util::toInt(xml.getChildAttrib("Port", Util::emptyString));
+					server->port = xml.getChildAttrib("Port", Util::emptyString);
 
 					if(xml.getBoolChildAttrib("TLS")) {
 						server->TLSParams.cert = File::makeAbsolutePath(xml.getChildAttrib("Certificate"));
