@@ -65,8 +65,8 @@ public:
 	}
 
 	virtual void setOptions(size_t bufferSize) {
-		sock.lowest_layer().set_option(boost::asio::socket_base::receive_buffer_size(bufferSize));
-		sock.lowest_layer().set_option(boost::asio::socket_base::send_buffer_size(bufferSize));
+		sock.lowest_layer().set_option(socket_base::receive_buffer_size(bufferSize));
+		sock.lowest_layer().set_option(socket_base::send_buffer_size(bufferSize));
 	}
 
 	virtual std::string getIp() {
@@ -76,22 +76,22 @@ public:
 
 	virtual void prepareRead(const BufferPtr& buf, const Handler& handler) {
 		if(buf) {
-			sock.async_read_some(boost::asio::buffer(buf->data(), buf->size()), handler);
+			sock.async_read_some(buffer(buf->data(), buf->size()), handler);
 		} else {
-			sock.async_read_some(boost::asio::null_buffers(), handler);
+			sock.async_read_some(null_buffers(), handler);
 		}
 	}
 
 	virtual size_t read(const BufferPtr& buf) {
-		return sock.read_some(boost::asio::buffer(buf->data(), buf->size()));
+		return sock.read_some(buffer(buf->data(), buf->size()));
 	}
 
 	virtual void write(const BufferList& bufs, const Handler& handler) {
 		if(bufs.size() == 1) {
-			sock.async_write_some(boost::asio::buffer(bufs[0]->data(), bufs[0]->size()), handler);
+			sock.async_write_some(buffer(bufs[0]->data(), bufs[0]->size()), handler);
 		} else {
 			size_t n = std::min(bufs.size(), static_cast<size_t>(64));
-			std::vector<boost::asio::const_buffer> buffers;
+			std::vector<const_buffer> buffers;
 			buffers.reserve(n);
 
 			const size_t maxBytes = 1024;
@@ -99,7 +99,7 @@ public:
 			for(size_t i = 0, total = 0; i < n && total < maxBytes; ++i) {
 				size_t left = maxBytes - total;
 				size_t bytes = min(bufs[i]->size(), left);
-				buffers.push_back(boost::asio::const_buffer(bufs[i]->data(), bytes));
+				buffers.push_back(const_buffer(bufs[i]->data(), bytes));
 				total += bytes;
 			}
 
@@ -135,16 +135,17 @@ public:
 
 #ifdef HAVE_OPENSSL
 
-static void shutdownHandler(const boost::system::error_code&) { }
+static void shutdownHandler(const error_code&) { }
 
 class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
 	typedef SocketStream<ssl::stream<ip::tcp::socket> > Stream;
 
 public:
-	TLSSocketStream(io_service& x, ssl::basic_context<boost::asio::ssl::context_service>& y) : Stream(x, y) { }
+	TLSSocketStream(io_service& x, ssl::basic_context<ssl::context_service>& y) : Stream(x, y) { }
 
 	virtual void init(const std::function<void ()>& readF) {
-		sock.async_handshake(ssl::stream_base::server, std::bind(&TLSSocketStream::handleHandshake, this, std::placeholders::_1, readF));
+		sock.async_handshake(ssl::stream_base::server, std::bind(&TLSSocketStream::handleHandshake,
+			this, std::placeholders::_1, readF));
 	}
 
 	virtual void shutdown() {
@@ -154,7 +155,7 @@ public:
 	virtual void close() {
 		// Abortive close, just go away...
 		if(sock.lowest_layer().is_open()) {
-			boost::system::error_code ec;
+			error_code ec;
 			sock.lowest_layer().close(ec); // Ignore errors
 		}
 	}
@@ -169,39 +170,30 @@ private:
 
 #endif
 
+static string formatEndpoint(const ip::tcp::endpoint& ep) {
+	return (ep.address().is_v4() ? ep.address().to_string() + ':' : '[' + ep.address().to_string() + "]:")
+		+ Util::toString(ep.port());
+}
+
 class SocketFactory : public enable_shared_from_this<SocketFactory>, boost::noncopyable {
 public:
-	SocketFactory(SocketManager& sm, const SocketManager::IncomingHandler& handler_, const ServerInfoPtr& info) :
+	SocketFactory(SocketManager& sm, const SocketManager::IncomingHandler& handler_, const ServerInfo& info, const ip::tcp::endpoint& endpoint) :
 		sm(sm),
-		acceptor(sm.io),
-		serverInfo(info),
+		acceptor(sm.io, endpoint),
 		handler(handler_)
 	{
-		ip::tcp::resolver r(sm.io);
-		auto local = r.resolve(ip::tcp::resolver::query(info->ip, info->port));
-		if(local == ip::tcp::resolver::iterator()) {
-			throw std::runtime_error("Unable to resolve " + info->ip + ":" + info->port);
-		}
-
-		acceptor.open(local->endpoint().protocol());
-		acceptor.bind(local->endpoint());
-		acceptor.listen(ip::tcp::socket::max_connections);
-
 		LOGC(sm.getCore(), SocketManager::className,
-			"Listening on port " + Util::toString(info->port) +
-			" (Encrypted: " + (info->secure() ? "Yes)" : "No)"));
+			"Listening on " + formatEndpoint(endpoint) +
+			" (Encrypted: " + (info.secure() ? "Yes)" : "No)"));
 
 #ifdef HAVE_OPENSSL
-		if(info->secure()) {
-			context.reset(new boost::asio::ssl::context(sm.io, ssl::context::tlsv1_server));
-		    context->set_options(
-		        boost::asio::ssl::context::no_sslv2
-		        | boost::asio::ssl::context::no_sslv3
-		        | boost::asio::ssl::context::single_dh_use);
+		if(info.secure()) {
+			context.reset(new ssl::context(sm.io, ssl::context::tlsv1_server));
+		    context->set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3 | ssl::context::single_dh_use);
 		    //context->set_password_callback(boost::bind(&server::get_password, this));
-		    context->use_certificate_chain_file(info->TLSParams.cert);
-		    context->use_private_key_file(info->TLSParams.pkey, boost::asio::ssl::context::pem);
-		    context->use_tmp_dh_file(info->TLSParams.dh);
+		    context->use_certificate_chain_file(info.TLSParams.cert);
+		    context->use_private_key_file(info.TLSParams.pkey, ssl::context::pem);
+		    context->use_tmp_dh_file(info.TLSParams.dh);
 		}
 #endif
 	}
@@ -210,8 +202,9 @@ public:
 		if(!sm.work.get()) {
 			return;
 		}
+
 #ifdef HAVE_OPENSSL
-		if(serverInfo->secure()) {
+		if(context) {
 			auto s = make_shared<TLSSocketStream>(sm.io, *context);
 			auto socket = make_shared<ManagedSocket>(sm, s);
 			acceptor.async_accept(s->sock.lowest_layer(), std::bind(&SocketFactory::handleAccept, shared_from_this(), std::placeholders::_1, socket));
@@ -245,11 +238,10 @@ public:
 
 	SocketManager &sm;
 	ip::tcp::acceptor acceptor;
-	ServerInfoPtr serverInfo;
 	SocketManager::IncomingHandler handler;
 
 #ifdef HAVE_OPENSSL
-	unique_ptr<boost::asio::ssl::context> context;
+	unique_ptr<ssl::context> context;
 #endif
 
 };
@@ -260,14 +252,21 @@ int SocketManager::run() {
 	work.reset(new io_service::work(io));
 
 	for(auto i = servers.begin(), iend = servers.end(); i != iend; ++i) {
-		const ServerInfoPtr& si = *i;
+		auto& si = *i;
 
 		try {
-			SocketFactoryPtr factory = make_shared<SocketFactory>(*this, incomingHandler, si);
-			factory->prepareAccept();
-			factories.push_back(factory);
-		} catch(const system_error& se) {
-			LOG(SocketManager::className, "Error while loading server on port " + si->port +": " + se.what());
+			using ip::tcp;
+			tcp::resolver r(io);
+			auto local = r.resolve(tcp::resolver::query(si->ip, si->port,
+				tcp::resolver::query::address_configured | tcp::resolver::query::passive));
+
+			for(auto i = local; i != tcp::resolver::iterator(); ++i) {
+				SocketFactoryPtr factory = make_shared<SocketFactory>(*this, incomingHandler, *si, *i);
+				factory->prepareAccept();
+				factories.push_back(factory);
+			}
+		} catch(const std::exception& e) {
+			LOG(SocketManager::className, "Error while loading server on port " + si->port +": " + e.what());
 		}
 	}
 
