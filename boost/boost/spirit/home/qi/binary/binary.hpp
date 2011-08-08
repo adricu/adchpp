@@ -1,6 +1,6 @@
 /*=============================================================================
-    Copyright (c) 2001-2010 Hartmut Kaiser
-    Copyright (c) 2001-2010 Joel de Guzman
+    Copyright (c) 2001-2011 Hartmut Kaiser
+    Copyright (c) 2001-2011 Joel de Guzman
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -65,26 +65,31 @@ namespace boost { namespace spirit
 
 namespace boost { namespace spirit { namespace qi
 {
+#ifndef BOOST_SPIRIT_NO_PREDEFINED_TERMINALS
     using boost::spirit::byte_;
-    using boost::spirit::byte__type;
     using boost::spirit::word;
-    using boost::spirit::word_type;
     using boost::spirit::big_word;
-    using boost::spirit::big_word_type;
     using boost::spirit::little_word;
-    using boost::spirit::little_word_type;
     using boost::spirit::dword;
-    using boost::spirit::dword_type;
     using boost::spirit::big_dword;
-    using boost::spirit::big_dword_type;
     using boost::spirit::little_dword;
-    using boost::spirit::little_dword_type;
 #ifdef BOOST_HAS_LONG_LONG
     using boost::spirit::qword;
-    using boost::spirit::qword_type;
     using boost::spirit::big_qword;
-    using boost::spirit::big_qword_type;
     using boost::spirit::little_qword;
+#endif
+#endif
+
+    using boost::spirit::byte_type;
+    using boost::spirit::word_type;
+    using boost::spirit::big_word_type;
+    using boost::spirit::little_word_type;
+    using boost::spirit::dword_type;
+    using boost::spirit::big_dword_type;
+    using boost::spirit::little_dword_type;
+#ifdef BOOST_HAS_LONG_LONG
+    using boost::spirit::qword_type;
+    using boost::spirit::big_qword_type;
     using boost::spirit::little_qword_type;
 #endif
 

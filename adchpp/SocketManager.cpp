@@ -141,7 +141,7 @@ class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
 	typedef SocketStream<ssl::stream<ip::tcp::socket> > Stream;
 
 public:
-	TLSSocketStream(io_service& x, ssl::basic_context<ssl::context_service>& y) : Stream(x, y) { }
+	TLSSocketStream(io_service& x, ssl::context& y) : Stream(x, y) { }
 
 	virtual void init(const std::function<void ()>& readF) {
 		sock.async_handshake(ssl::stream_base::server, std::bind(&TLSSocketStream::handleHandshake,

@@ -2,7 +2,7 @@
 // detail/service_registry.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2011 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -57,6 +57,9 @@ public:
 
   // Destructor.
   BOOST_ASIO_DECL ~service_registry();
+
+  // Notify all services of a fork event.
+  BOOST_ASIO_DECL void notify_fork(boost::asio::io_service::fork_event fork_ev);
 
   // Get the service object corresponding to the specified service type. Will
   // create a new service object automatically if no such object already

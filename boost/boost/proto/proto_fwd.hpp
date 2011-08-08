@@ -24,13 +24,14 @@
 #include <boost/mpl/long.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/type_traits/remove_reference.hpp>
+#include <boost/mpl/aux_/config/ttp.hpp>
 
 #ifndef BOOST_PROTO_MAX_ARITY
-# define BOOST_PROTO_MAX_ARITY 5
+# define BOOST_PROTO_MAX_ARITY 10
 #endif
 
 #ifndef BOOST_PROTO_MAX_LOGICAL_ARITY
-# define BOOST_PROTO_MAX_LOGICAL_ARITY 8
+# define BOOST_PROTO_MAX_LOGICAL_ARITY 10
 #endif
 
 #ifndef BOOST_PROTO_MAX_FUNCTION_CALL_ARITY
@@ -43,6 +44,14 @@
 
 #if BOOST_PROTO_MAX_FUNCTION_CALL_ARITY > BOOST_PROTO_MAX_ARITY
 # error BOOST_PROTO_MAX_FUNCTION_CALL_ARITY cannot be larger than BOOST_PROTO_MAX_ARITY
+#endif
+
+#ifndef BOOST_PROTO_DONT_USE_PREPROCESSED_FILES
+  #if 10 < BOOST_PROTO_MAX_ARITY ||                                                                 \
+      10 < BOOST_PROTO_MAX_LOGICAL_ARITY ||                                                         \
+      10 < BOOST_PROTO_MAX_FUNCTION_CALL_ARITY
+    #define BOOST_PROTO_DONT_USE_PREPROCESSED_FILES
+  #endif
 #endif
 
 #ifndef BOOST_PROTO_BROKEN_CONST_OVERLOADS
@@ -83,12 +92,28 @@
 # endif
 #endif
 
+#ifdef BOOST_PROTO_USE_NORMAL_RESULT_OF
+# define BOOST_PROTO_RESULT_OF boost::result_of
+#else
+# define BOOST_PROTO_RESULT_OF boost::tr1_result_of
+#endif
+
+#ifdef BOOST_MPL_CFG_EXTENDED_TEMPLATE_PARAMETERS_MATCHING
+# define BOOST_PROTO_EXTENDED_TEMPLATE_PARAMETERS_MATCHING 
+#endif
+
 namespace boost { namespace proto
 {
     namespace detail
     {
         typedef char yes_type;
         typedef char (&no_type)[2];
+
+        template<int N>
+        struct sized_type
+        {
+            typedef char (&type)[N];
+        };
 
         struct dont_care;
         struct undefined; // leave this undefined
@@ -154,8 +179,8 @@ namespace boost { namespace proto
         /// INTERNAL ONLY
         ///
         #define BOOST_PROTO_UNCVREF(X)                                                              \
-			typename boost::proto::detail::uncvref<X>::type											\
-			/**/
+            typename boost::proto::detail::uncvref<X>::type                                         \
+            /**/
 
         struct _default;
 
@@ -245,6 +270,8 @@ namespace boost { namespace proto
     ////////////////////////////////////////////////////////////////////////////////////////////////
     struct default_generator;
 
+    struct basic_default_generator;
+
     template<template<typename> class Extends>
     struct generator;
 
@@ -275,6 +302,8 @@ namespace boost { namespace proto
         struct domain;
 
         struct default_domain;
+
+        struct basic_default_domain;
 
         struct deduce_domain;
 
@@ -424,6 +453,9 @@ namespace boost { namespace proto
     template<typename T, typename Void = void>
     struct is_domain;
 
+    template<typename SubDomain, typename SuperDomain>
+    struct is_sub_domain_of;
+
     template<typename Expr>
     struct tag_of;
 
@@ -525,12 +557,6 @@ namespace boost { namespace proto
         template<typename Tag, typename Domain = deduce_domain>
         struct unpack_expr;
 
-        template<typename Tag, typename Domain = deduce_domain>
-        struct unfused_expr_fun;
-
-        template<typename Tag, typename Domain = deduce_domain>
-        struct unfused_expr;
-
         typedef make_expr<tag::terminal>            make_terminal;
         typedef make_expr<tag::unary_plus>          make_unary_plus;
         typedef make_expr<tag::negate>              make_negate;
@@ -578,12 +604,26 @@ namespace boost { namespace proto
         typedef make_expr<tag::function>            make_function;
 
         struct flatten;
+        struct make_pair;
+        struct first;
+        struct second;
+        struct at;
         struct pop_front;
+        struct push_front;
+        struct pop_back;
+        struct push_back;
         struct reverse;
     }
 
     typedef functional::flatten     _flatten;
+    typedef functional::make_pair   _make_pair;
+    typedef functional::first       _first;
+    typedef functional::second      _second;
+    typedef functional::pop_front   _at;
     typedef functional::pop_front   _pop_front;
+    typedef functional::push_front  _push_front;
+    typedef functional::pop_back    _pop_back;
+    typedef functional::push_back   _push_back;
     typedef functional::reverse     _reverse;
     typedef functional::eval        _eval;
     struct _deep_copy;
@@ -638,10 +678,10 @@ namespace boost { namespace proto
     struct is_callable;
 
     template<typename T, typename Void = void>
-    struct is_aggregate;
+    struct is_transform;
 
     template<typename T, typename Void = void>
-    struct is_transform;
+    struct is_aggregate;
 
     #define BOOST_PROTO_UNEXPR() typedef int proto_is_expr_;
     #define BOOST_PROTO_CALLABLE() typedef void proto_is_callable_;
@@ -653,7 +693,9 @@ namespace boost { namespace proto
         BOOST_PROTO_CALLABLE()
     };
 
-    template<typename PrimitiveTransform, typename X = void>
+    struct external_transform;
+
+    template<typename PrimitiveTransform = void, typename X = void>
     struct transform;
 
     template<typename Grammar, typename Fun = Grammar>
@@ -705,6 +747,21 @@ namespace boost { namespace proto
 
     struct _void;
 
+    template<typename T, T I>
+    struct integral_c;
+
+    template<char I>
+    struct char_;
+
+    template<int I>
+    struct int_;
+
+    template<long I>
+    struct long_;
+
+    template<std::size_t I>
+    struct size_t;
+
     template<int I>
     struct _child_c;
 
@@ -733,7 +790,7 @@ namespace boost { namespace proto
     //namespace exops
     //{}
 
-	namespace exops = exprns_;
+    namespace exops = exprns_;
 
 }} // namespace boost::proto
 
