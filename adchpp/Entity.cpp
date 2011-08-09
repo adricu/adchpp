@@ -201,7 +201,7 @@ void Entity::setFlag(size_t flag) {
 }
 
 void Entity::unsetFlag(size_t flag) {
-	flags.setFlag(flag);
+	flags.unsetFlag(flag);
 	if(flag & MASK_CLIENT_TYPE) {
 		setField("CT", Util::toString(flags.getFlags() & MASK_CLIENT_TYPE));
 	}
