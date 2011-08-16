@@ -402,16 +402,19 @@ local function load_users()
 	users.cids = {}
 	users.nicks = {}
 
-	local file = io.open(users_file, "r")
-	if not file then
+	local ok, file = base.pcall(io.open, users_file, "r")
+	if not ok or not file then
 		log("Unable to open " .. users_file .. ", users not loaded")
 		return
 	end
 
-	local str = file:read("*a")
-	file:close()
+	local str
+	base.pcall(function()
+		str = file:read("*a")
+		file:close()
+	end)
 
-	if #str == 0 then
+	if not str or #str == 0 then
 		return
 	end
 
@@ -432,20 +435,32 @@ local function load_users()
 end
 
 local function save_users()
-	local file = io.open(users_file, "w")
-	if not file then
-		log("Unable to open " .. users_file .. ", users not saved")
-		return
-	end
+	base.pcall(function()
+		local file = io.open(users_file, "w")
+		if not file then
+			log("Unable to open " .. users_file .. ", users not saved")
+			return
+		end
 
-	file:write(json.encode(registered_users()))
-	file:close()
+		file:write(json.encode(registered_users()))
+		file:close()
+	end)
 	users_saved = true
 end
 
-local function to_save_users()
+local function maybe_save_users()
 	if not users_saved then
-		base.pcall(save_users)
+
+		-- first save a backup as this could run while the program is closing.
+		base.pcall(function()
+			local f = io.open(users_file, 'r')
+			local tmp = io.open(users_file .. '.tmp', 'w')
+			tmp:write(f:read('*a'))
+			tmp:close()
+			f:close()
+		end)
+
+		save_users()
 	end
 end
 
@@ -609,7 +624,7 @@ local function update_user(user, cid, nick)
 		user.lasttime = os.time()
 		users.nicks[user.nick] = user
 		users.cids[user.cid] = user
-		base.pcall(save_users)
+		save_users()
 		return true, "Registration data updated (new nick)"
 	end
 
@@ -631,7 +646,7 @@ local function update_user(user, cid, nick)
 		user.lasttime = os.time()
 		users.cids[user.cid] = user
 		users.nicks[user.nick] = user
-		base.pcall(save_users)
+		save_users()
 		return true, "Registration data updated (new CID)"
 	end
 
@@ -652,7 +667,7 @@ function register_user(cid, nick, password, level, regby)
 		users.cids[cid] = user
 	end
 
-	base.pcall(save_users)
+	save_users()
 	
 	return user
 end
@@ -1436,7 +1451,7 @@ commands.mypass = {
 		if not user.is_default then
 			-- already regged
 			user.password = parameters
-			base.pcall(save_users)
+			save_users()
 			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
 		elseif settings.allowreg.value ~= 0 then
 			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1, c:getField("NI"))
@@ -1530,7 +1545,7 @@ commands.regnick = {
 			if other_user.cid then
 				users.cids[other_user.cid] = nil
 			end
-			base.pcall(save_users)
+			save_users()
 
 			autil.reply(c, "\"" .. nick .. "\" has been un-registered")
 
@@ -1693,7 +1708,7 @@ local function onReceive(entity, cmd, ok)
 	return ret
 end
 
-base.pcall(load_users)
+load_users()
 
 if not base.pcall(load_settings) then
 	base.pcall(save_settings) -- save initial settings
@@ -1751,10 +1766,7 @@ access_5 = cm:signalDisconnected():connect(function(entity, reason, info)
 
 end)
 
-save_users_timer = sm:addTimedJob(900000, to_save_users)
-
+save_users_timer = sm:addTimedJob(900000, maybe_save_users)
 autil.on_unloading(_NAME, save_users_timer)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(to_save_users)
-end)
+autil.on_unloading(_NAME, maybe_save_users)
