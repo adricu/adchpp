@@ -1,37 +1,32 @@
 = ADCH++  Expert User Guide
-Author: Toast <toast@adcportal.com>
-Document Version 0.2.0
-
-Additional contributor: eMTee
-
-This version of the expert user guide corresponds with ADCH++ version: *2.7.0*
+Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>
+Document Version 0.3.3
+:toc:
+This version of the guide corresponds with ADCH++ version: *2.7.1*
 
 == Introduction
-footnote:[Introduction]
-indexterm:[Introduction]
-ADCH++ is a hub software for the ADC network. It implements the http://dcplusplus.sf.net/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins. 
+
+ADCH++ is a hub server software for the ADC network. It implements the http://dcplusplus.sf.net/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins.
 Among the standard plugins there is a scripting plugin that allows hub owners to further customize the hub using the Lua scripting language. 
 The core is also exposed as a Python and a Ruby module, thus it is possible to use it within a Python or Ruby application.
 
 == Preface
-footnote:[Preface]
-indexterm:[Preface]
+
 This guide is intended for novice or expert users. It focuses on various scripting interfaces, compiling and running ADCH++ in service mode, as well as troubleshooting and bug reporting.
 
 == Scripting Interface and examples
-footnote:[Scripting Interfaces and examples]
-indexterm:[Scripting Interfaces and examples]
 
 ADCH++ core is exposed to various scripting languages that either has direct access to the core or can use it as a plugin.
 
 === LUA Interface
+
 By default ADCH\++ comes with prepackaged LUA scripts to handle the basic hub functions. These scripts themselves are very good examples of how to use the ADCH++ LUA API. You can also use following examlpe file to learn the basics:
 ---------------------------------------------------------------------
 [source,lua]
 include::..\..\plugins\Script\examples\example.lua[]
 ---------------------------------------------------------------------
 
-The complete list of of the ADCH\++ LUA API functions are available either in the Docs folder of the repository or at the http://adchpp.sourceforge.net/doc/lua_api.html[ADCH++ home page].
+The complete list of of the ADCH\++ LUA API functions are available both in the Docs folder in the ADCH\++ repository or at the http://adchpp.sourceforge.net/doc/lua_api.html[ADCH++ home page].
 
 === Ruby Interface
 
@@ -50,13 +45,12 @@ include::..\..\pyutil\adchpp.py[]
 ---------------------------------------------------------------------
  
 == PtokaX API2 bridge for ADCH++
-footnote:[PtokaX API2 for ADCH+\+]
-indexterm:[PtokaX API2 for ADCH+\+]
-Its possible to create or use existing PtokaX API2 LUA scripts in your hub using the ADCHPP-PtokaX bridge script. Its available at https://launchpad.net/adchpp-ptokax 
+
+It's possible to create or use existing PtokaX API2 LUA scripts in your hub using the ADCHPP-PtokaX bridge script. The bridge is separately maintained and available to download at https://launchpad.net/adchpp-ptokax[its home page]. Before you go on make sure you read the documentation provided in the ADCHPP-PtokaX package.
 
 CAUTION: To avoid problems make sure you use the revision of PtokaX bridge script corresponding to the ADCH++ version you run.
 
-An example of how the folder structure should look on a Px bridge installation:
+An example folder structure of a correctly installed ADCHPP-PtokaX bridge script and some native PtokaX scripts:
 --------------------------------------
 
 Directory of c:\users\username\adchpp\Scripts
@@ -89,8 +83,9 @@ Directory of c:\users\username\adchpp\Scripts
                5 File(s)         62 491 bytes
 --------------------------------------
 
-You can load PtokaX scripts using the user commands provided by bridge script (right-click menu). You will be asked where to load the scripts from. The default location is the Scripts folder so if you have the scripts in a subdirectory like in the example above then you can simply load them by specifying their relative path like (px/example_script.lua).
-The bridge script will create a file named adchpp-ptokax.txt in the Config directory of ADCH++. This file lists the path of the currently added PtokaX scripts. You can edit the file to load multiple scripts in one go like in the following example (your structure may differ):
+You can configure the PtokaX scripts using the user commands provided by the bridge script (ADCH++-PtokaX submenu in the hub context menu of your ADC client). The usage is pretty straightforward eg. when you select 'Add a script' you will be asked where to load the scripts from. The default location is the Scripts folder so if you have the scripts in a subdirectory like in the example above then you can simply load them by specifying their relative path like (px/example_script.lua).
+
+The bridge script will create a file named adchpp-ptokax.txt in the Config directory of the ADCH++ installation. This file lists the path of the currently added PtokaX scripts. You can edit the file to add multiple scripts in one go like in the following example (your structure may differ):
 
 --------------------------------------
 px\px_banner.lua
@@ -110,7 +105,7 @@ px\px_clock.lua
 px\px_badsearch.lua
 --------------------------------------
 
-Some of the PtokaX scripts (like FreshStuff or Feedwatch) may require LUA filesystem or socket library. In case of any of these libraries are needed they can be configured in the following way under Windows:
+Some of the PtokaX scripts (like FreshStuff or Feedwatch) may require LUA filesystem or socket library. In case of any of these libraries needed they can be configured in the following way under Windows:
 
 The Adchpp-PtokaX package contains the required libraries as precompiled .dll binaries. You should extract the libs to the directories indicated by each script (it could be the normal ADCH\++ dir or their own sub-dir). In general, where there should have been a px\*\*\*.dll file in an original PtokaX configuration, you want to put the corresponding \***.dll file instead. When a script asks you to put the files to "scripts/libs", you want to actually put them in the ADCH++ directory itself (next to the other binary files).
 
@@ -197,8 +192,7 @@ Directory of c:\users\username\adchpp\Scripts\px
 --------------------------------------
 
 == Automatic spam protection: working with banmsgre
-footnote:[Automatic spam protection]
-indexterm:[Automatic spam protection]
+
 Banmsgre is a very powerful tool for getting rid of unwanted spam. It uses regular expressions for detecting unwanted chat content in your hub. It requires the knowledge of how to write a regular expression string.
 
   +banmsgre <regexp> <reason> <time>
@@ -211,22 +205,23 @@ Banmsgre is a very powerful tool for getting rid of unwanted spam. It uses regul
 For more information about regular expressions go to: http://www.regular-expressions.info/
 
 == Running ADCH++ with parameters
-footnote:[Running ADCH\++ with parameters]
-indexterm:[Running ADCH+\+ with parameters]
+
 This part is a quick run through of how to install ADCH++ as a service module instead of an application.
 
+The following command line parameters are available:
 
 .Example: Command usage
 --------------------------------------
 Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 --------------------------------------
 	
-* -c specifies a path to configuration directory
-* -d deamon service _(Linux only)_
-* -p <pid-file> Write process pid to <pid-file> _(Linux only)_
-* -i service mode _(Windows only)_
-* -v version number
-* -h help message
+* -c Specifies the path of configuration directory (default: .\config)
+* -d Deamon service _(Linux only)_
+* -p <pid-file> Writes process pid to <pid-file> _(Linux only)_
+* -i <service name> Installs a service instance. The name specifies the name the instance will have in the services list _(Windows only)_
+* -u <service name> Uninstalls a service instance. _(Windows only)_
+* -v Prints version number
+* -h Shows the usage help message
 
 .Varible example
 [width="60%",]
@@ -238,41 +233,81 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 |(Windows)	|adchppd.exe -i adchpp
 |==============================================
 
-Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. You elevate adchpp.exe in Windows 7/Vista in the following way:
+Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. 
 
-How it looks in case of problems:
+This is how it looks in case of problems:
 
 image:images/img_adch_elevated_fail.png["ADCH++ elevation fails"]
 
-* Right click on the application
-* Choose properties
-* Go to compatibility tab
+You elevate adchpp.exe in Windows 7/Vista in the following way:
+
+* Right click on the application's icon
+* Choose 'Properties'
+* Go to 'Compatibility' tab
 
 image:images/img_adch_elevated_howto.png["ADCH++ elevation howto"]
 
+* Check the 'Run this program as an administrator' box. Click OK.
 * Now execute the command adchpp - i <servicename> (example: adchpp.exe -i myserver) in your adchpp folder
 * Grant the application access if you have UAC enabled
 
-
-To verify that the installation of the service was successful you can check what services are installed via Control Panel\System and Security\Administrative Tools (or you simply run services.msc command from a Windows prompt).
+To verify that your ADCH\++ service is correctly installed under the name you specified go to Control Panel\System and Security\Administrative Tools or simply run the services.msc command from a Windows prompt.
 
 image:images/img_adch_service_location.png["ADCH++ Services"]
 
-To check if adchpp service is running start the "services" application in administrative tools:
+To check if your adchpp service is running start the "services" application in administrative tools:
 
 image:images/img_adch_service_verify.png["ADCH++ verify service"]
 	
 == Issues and problems
-footnote:[Issues and problems]
-indexterm:[Issues and problems]
-There's no perfect software at all. They always have some flaws, can preform wierd or have unwanted features. Its often important to make the developers aware of such problems. If you want to help improving ADCH\++ you can give feedback to the developers about found bugs, helping them to recreate and fix the problems. 
-Many times, to be able to help solving issues, you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from http://builds.adcportal.com/index.php?folder=YWRjaHBw[ADCPortal Builds]
 
-=== Hub crash (core dumps)
+Like any other software ADCH\++ can have flaws or bugs, can preform wierd or contain unwanted features. It's important to make the developers aware of such problems. If you want to help improving ADCH\++ you can give feedback to the developers about found bugs, helping them to recreate and fix the problems. 
+Many times, to be able to help solving issues, you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from the http://builds.adcportal.com[ADCPortal Builds Archive].
 
-In the case of a crash you can help the developmet by reporting the bug to the https://bugs.launchpad.net/adchpp[official bug tracker] _including_ the backtrace information provided by the debug build of the application.
+=== Crashes and getting backtrace logs
 
-==== If you run an MSVC compiled debug build
+In the case of a crash bug you can help the development by reporting the bug to the https://bugs.launchpad.net/adchpp[official bug tracker] 
+
+To be able to analyze and solve a crash problem the developers need the following information:
+
+- As many details as you can provide about your system including the version of ADCH++ used, OS version, etc.
+- If you know how to reproduce the bug, specify a procedure that developers can follow to re-create the same bug.
+- Provide a crash/backtrace log and attach it to your bug report.
+
+==== Getting backtrace log from a GCC/MinGW compiled debug build
+
+For getting the crash log you need to use a debugger software called GDB (GNU Debugger). GDB.exe is downloadable directly from <ftp://ftp.equation.com/gdb/32/gdb.exe>
+
+- Copy the debugger program (GDB.exe) to your ADCH++ program folder
+- Open a Windows Command prompt in the ADCH++ program folder (Start Menu, Run..., type 'cmd' and navigate to the program folder). You will get the debugging output to this command window.
+- In the Command prompt type :
+
+--------------------------------------
+ gdb adchppd.exe
+--------------------------------------
+
+- When you get the debugger prompt type : r (then press <enter>).
+- This will start ADCH++, now wait for the crash (or force the crash if you know the steps how to do so)
+- When it crashes get the backtrace information by typing to the debugger prompt :
+
+--------------------------------------
+ bt full
+--------------------------------------
+
+- Press <enter> so the backtrace will be generated and printed to the debug console.
+- Mark and copy the output from the command window (easiest way : right-click to the window header, from the menu choose Edit, Select All).
+- Paste the output to a new text file.
+- Then type : q (and press <enter>) to exit the debugger, this will close ADCH++ as well.
+
+TIP: It's the backtrace itself what may contain the most useful information so you can remove the best part of the large debug printout from the beginning of the text file. The important part is in the end, starting 10-15 lines >before< the issued 'bt full' command and onwards. Also its wise to check if the text file you about to attach doesn't contain any information that breaks yours or other's privacy (IP addresses, nicks, etc...)
+
+- Please report the problem at https://bugs.launchpad.net/adchpp including the backtrace log as an _attachment_.
+
+TIP: The above procedure is for Windows but you must be able to get backtraces under Linux in a similar way
+
+////
+
+==== If you run a debug build compiled with MSVC 
 
 The hubsoftware generates a file called adchppd.RPT in the folder where the executable binary resideds. Here is an example of how the contents of a generated adchppd.RPT file may look like:
 
@@ -302,17 +337,11 @@ The hubsoftware generates a file called adchppd.RPT in the folder where the exec
 
 TIP: If you want to report a crash problem make sure you always _attach_ the generated adchppd.RPT file to your bug report.
 
-==== If you run MinGW compiled debug build
-
-Follow the DC++ backtrace reporting procedure at 
-
-https://answers.launchpad.net/dcplusplus/+faq/337
-
-You can get the backtrace log for ADCH++ crashes in the very similar way. Please report the problem at https://bugs.launchpad.net/adchpp including the backtrace log as an _attachment_.
+////
 
 === LUA errors
 
-Sometimes you can get errors from running LUA scripts. They will show up in the console window of ADCH++ while its running. Example:
+It's possible that you get errors from the running LUA scripts as well. They will show up in the console window of ADCH++ while its running. Example:
 
 	access.lua:491: attempt to concatenate global 'reason' (a nil value)
 	stack traceback:
@@ -321,11 +350,11 @@ Sometimes you can get errors from running LUA scripts. They will show up in the 
 	(tail call): ?
 	access.lua:1652: in function <access.lua:1651>
 
-TIP: If you get errors from the core LUA scripts provided with ADCH++, please report them to the official bug tracker at Launchpad: https://bugs.launchpad.net/adchpp In case of other scripts, its best to report the errors to their respective authors.
+If you get errors from the core LUA scripts packaged with ADCH++, please report them to the official bug tracker at Launchpad: https://bugs.launchpad.net/adchpp 
+
+TIP: In case of other scripts, its best to report the errors to their respective authors if they're indentifyable
 
 == Extension Support
-footnote:[Extension Support]
-indexterm:[Extension Support]
 
 The current version of ADCH++ supports the following http://adc.sourceforge.net/ADC-EXT.html[ADC protocol extensions]:
 
@@ -333,10 +362,9 @@ The current version of ADCH++ supports the following http://adc.sourceforge.net/
 *UCMD* - User commands are used to send hub-specific commands to the client which provide useful shortcuts for the user. +
 *ADCS* - ADCS is an extension that has the goal of adding the TLS/SSL layer just over the TCP layer and beneath the application layer (where ADC runs). This way, the ADC protocol remains unchanged while the connections are encrypted. +
 *PING* - This extension can be supported by both clients and hubs, and when present, if hub supports it, it must send additional information to the client. +
+*FO* - If a hub goes down, the client's only option is to keep re-trying the last known hub address. This extension will add a list of failover hub addresses, field FO, that the client can try to connect to, if the main hub address fail. +
 
 == Compiling ADCH++
-footnote:[Compiling ADCH\++]
-indexterm:[Compiling ADCH+\+]
 
 These are the minimum versions of tools required to compile ADCH++:
     
@@ -389,26 +417,21 @@ To build a x64 release version use: +scons tools=default mode=release arch=x64+
 To generate html documentation use: +scons docs=1+
 
 == Patches and contributions
-footnote:[Patches and contributions]
-indexterm:[Patches and contributions]
 
 The author do accept patches in general for every part of the application, but in order to avoid future licensing issues, you're asked to give the author the copyright over any submitted code. Make sure that the code doesn't break support for any of the platforms supported and that it looks more or less like the rest of the code (indent, names etc). Patches should be sent to the https://sourceforge.net/mailarchive/forum.php?forum_name=dcplusplus-devel[dcplusplus-devel mailing list] or to https://bugs.launchpad.net/adchpp[the official bug tracker at Launchpad]. Please use unified patches against latest bzr trunk (ie. bzr diff) and supply a description of what the patch does.
 
 == Appendix
-footnote:[Appendix]
-indexterm:[Appendix]
+
 This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
 
 Copyright (C) 2010-2011 Jacek Sieka
 
 Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at http://www.gnu.org/copyleft/fdl.html 
 
-== Index
-Quick list of main sections of this document
-
 ////////////////////////////////////////////////////////////////
 Changelog: 
 0.1.0: Initial Documentation
 0.2.0: Updated corresponding to ADCH++ version 2.7.0 (emtee)
+0.3.0: Improvements, added MinGW crash report guide, updated corresponding to ADCH++ version 2.7.1 (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

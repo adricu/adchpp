@@ -15,7 +15,7 @@ goto end
 :found
 echo *** !!!BEWARE!!! ***
 echo 1. Proceeding will result in all of the existing user registrations being DELETED!!
-echo    This script will (re)create the file %CD%\users.txt !!
+echo    This script will (re)create the file %CD%\config\users.txt !!
 echo 2. The ADCH++ process can NOT be running in order for changes to take effect.
 echo.
 set /p userinp=Are you sure you want to continue? Press 'Y' to proceed, press any other key to exit : 
@@ -36,7 +36,7 @@ echo Account successfully created.
 goto end
 
 :err
-echo Error while trying to modify %CD%\users.txt
+echo Error while trying to modify %CD%\config\users.txt
 
 :end
 pause

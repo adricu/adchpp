@@ -228,7 +228,12 @@ static void runConsole() {
 }
 
 static void printUsage() {
-	printf("Usage: adchpp [[-c <configdir>] [-i <servicename> | -u <servicename>]] | [-v] | [-h]\n");
+	printf("Usage: adchpp [[-c <configdir>] [-i <servicename> | -u <servicename>]] | [-v] | [-h]\n\n");
+	printf("-c Specify the path of the configuration directory (default: .\\config)\n");
+	printf("-i <service name> Install a service instance (name defaults to 'adchpp')\n");
+	printf("-u <service name> Uninstall a service instance\n");
+	printf("-v Print version number\n");
+	printf("-h Show this help message\n");
 }
 
 int CDECL main(int argc, char* argv[]) {
@@ -279,6 +284,9 @@ int CDECL main(int argc, char* argv[]) {
 			task = 3;
 		} else if(_tcscmp(argv[i], _T("-v")) == 0) {
 			printf("%s compiled on " __DATE__ " " __TIME__ "\n", versionString.c_str());
+			return 0;
+		} else if(_tcscmp(argv[i], _T("-h")) == 0) {
+			printUsage();
 			return 0;
 		} else {
 			printf("Invalid parameter: %s\n", argv[i]);
