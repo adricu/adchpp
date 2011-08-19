@@ -78,17 +78,32 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 	prepareWrite();
 }
 
-// Simplified handler to avoid bind complexity
+// Simplified handlers to avoid bind complexity
 namespace {
-template<void (ManagedSocket::*F)(const boost::system::error_code&, size_t)>
-struct Handler {
-	Handler(const ManagedSocketPtr& ms_) : ms(ms_) { }
+
+/** Keeper keeps a reference to the managed socket */
+struct Keeper {
+	Keeper(const ManagedSocketPtr& ms_) : ms(ms_) { }
 	ManagedSocketPtr ms;
+
+	void operator()(const boost::system::error_code& ec, size_t bytes) { }
+};
+
+template<void (ManagedSocket::*F)(const boost::system::error_code&, size_t)>
+struct Handler : Keeper {
+	Handler(const ManagedSocketPtr& ms) : Keeper(ms) { }
 
 	void operator()(const boost::system::error_code& ec, size_t bytes) {
 		(ms.get()->*F)(ec, bytes);
 	}
 };
+
+struct Disconnector {
+	Disconnector(const AsyncStreamPtr& stream_) : stream(stream_) { }
+	void operator()() { stream->close(); }
+	AsyncStreamPtr stream;
+};
+
 }
 
 void ManagedSocket::prepareWrite() throw() {
@@ -101,12 +116,6 @@ void ManagedSocket::prepareWrite() throw() {
 		disconnect(5000, Util::REASON_WRITE_TIMEOUT);
 	}
 }
-
-struct Disconnector {
-	Disconnector(const AsyncStreamPtr& stream_) : stream(stream_) { }
-	void operator()() { stream->close(); }
-	AsyncStreamPtr stream;
-};
 
 void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t bytes) throw() {
 	lastWrite = time::not_a_date_time;
@@ -134,7 +143,7 @@ void ManagedSocket::completeWrite(const boost::system::error_code& ec, size_t by
 		}
 
 		if(disconnecting() && outBuf.empty()) {
-			sock->shutdown();
+			sock->shutdown(Keeper(shared_from_this()));
 		} else {
 			prepareWrite();
 		}
@@ -233,7 +242,7 @@ void ManagedSocket::disconnect(size_t timeout, Util::Reason reason, const std::s
 	sm.addJob(Reporter(shared_from_this(), &ManagedSocket::fail, reason, info));
 
 	if(!writing()) {
-		sock->shutdown();
+		sock->shutdown(Keeper(shared_from_this()));
 	}
 	sm.addJob(timeout, Disconnector(sock));
 }

@@ -113,6 +113,12 @@ public:
 class SimpleSocketStream : public SocketStream<ip::tcp::socket> {
 	typedef SocketStream<ip::tcp::socket> Stream;
 
+	struct ShutdownHandler {
+		ShutdownHandler(const Handler& h) : h(h) { }
+		void operator()() { error_code ec; h(ec, 0); }
+		Handler h;
+	};
+
 public:
 	SimpleSocketStream(boost::asio::io_service& x) : Stream(x) { }
 
@@ -120,14 +126,15 @@ public:
 		readF();
 	}
 
-	virtual void shutdown() {
+	virtual void shutdown(const Handler& handler) {
 		sock.shutdown(ip::tcp::socket::shutdown_send);
+		sock.get_io_service().post(ShutdownHandler(handler));
 	}
 
 	virtual void close() {
 		// Abortive close, just go away...
 		if(sock.is_open()) {
-			boost::system::error_code ec;
+			error_code ec;
 			sock.close(ec); // Ignore errors
 		}
 	}
@@ -135,10 +142,14 @@ public:
 
 #ifdef HAVE_OPENSSL
 
-static void shutdownHandler(const error_code&) { }
-
 class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
 	typedef SocketStream<ssl::stream<ip::tcp::socket> > Stream;
+
+	struct ShutdownHandler {
+		ShutdownHandler(const Handler& h) : h(h) { }
+		void operator()(const error_code &ec) { h(ec, 0); }
+		Handler h;
+	};
 
 public:
 	TLSSocketStream(io_service& x, ssl::context& y) : Stream(x, y) { }
@@ -148,8 +159,8 @@ public:
 			this, std::placeholders::_1, readF));
 	}
 
-	virtual void shutdown() {
-		sock.async_shutdown(&shutdownHandler);
+	virtual void shutdown(const Handler& handler) {
+		sock.async_shutdown(ShutdownHandler(handler));
 	}
 
 	virtual void close() {
