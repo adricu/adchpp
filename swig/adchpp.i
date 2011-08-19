@@ -741,6 +741,7 @@ public:
 	void resetCurrentChild() const throw();
 	bool findChild(const std::string& aName) const throw();
 
+	const std::string& getChildName() const throw(SimpleXMLException);
 	const std::string& getChildData() const throw(SimpleXMLException);
 
 	const std::string& getChildAttrib(const std::string& aName, const std::string& aDefault = Util::emptyString) const throw(SimpleXMLException);

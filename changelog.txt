@@ -8,6 +8,7 @@
 * Improve Lua scripts
 * Update user guide
 * [L#309402] Rudimentary IPv6 support
+* [L#829179] Expose SimpleXML::getChildName to scripts
 
 -- 2.7.0 2011-02-23 --
 * Export PluginManager::attention to scripts
