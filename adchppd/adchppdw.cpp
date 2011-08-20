@@ -228,12 +228,15 @@ static void runConsole() {
 }
 
 static void printUsage() {
-	printf("Usage: adchpp [[-c <configdir>] [-i <servicename> | -u <servicename>]] | [-v] | [-h]\n\n");
-	printf("-c Specify the path of the configuration directory (default: .\\config)\n");
-	printf("-i <service name> Install a service instance (name defaults to 'adchpp')\n");
-	printf("-u <service name> Uninstall a service instance\n");
-	printf("-v Print version number\n");
-	printf("-h Show this help message\n");
+	const char* text =
+		"Usage: adchpp [[-c <configdir>] [-i <servicename> | -u <servicename>]] | [-v] | [-h]\n\n"
+		"-c Specify the path of the configuration directory (default: .\\config)\n"
+		"-i <service name> Install a service instance (name defaults to 'adchpp')\n"
+		"-u <service name> Uninstall a service instance\n"
+		"-v Print version number\n"
+		"-h Show this help message\n";
+
+	printf(text);
 }
 
 int CDECL main(int argc, char* argv[]) {

@@ -2,7 +2,7 @@
 Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, iceman50 <iceman50@adcportal.com>
 Document Version 0.3.2
 :toc:
-This version of the guide corresponds with ADCH++ version: *2.7.1*
+This version of the guide corresponds with ADCH++ version: *2.8.0*
 
 == Introduction
 
@@ -489,6 +489,6 @@ Changelog:
 0.2.9: Additional information added
 0.3.0: Major updates to format of the guide broke it down to a novice and a newbie parts.
 0.3.1: Updated corresponding to ADCH++ version 2.7.0 (emtee)
-0.3.2: Improved details, readability, added a commands list table and a new FAQ item, revised the settings list and features updated to correspond ADCH++ version 2.7.1 (emtee)
+0.3.2: Improved details, readability, added a commands list table and a new FAQ item, revised the settings list and features updated to correspond ADCH++ version 2.8.0 (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
