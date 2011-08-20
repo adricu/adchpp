@@ -79,6 +79,7 @@ level_op = 3 -- kept in sync with settings.oplevel
 local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
+local aio = base.require('aio')
 local autil = base.require('autil')
 local table = base.require('table')
 local math = base.require('math')
@@ -402,29 +403,16 @@ local function load_users()
 	users.cids = {}
 	users.nicks = {}
 
-	local ok, file = base.pcall(io.open, users_file, "r")
-	if not ok or not file then
-		log("Unable to open " .. users_file .. ", users not loaded")
+	local ok, list, err = aio.load_file(users_file, aio.json_loader)
+
+	if err then
+		log('User loading: ' .. err)
+	end
+	if not ok then
 		return
 	end
 
-	local str
-	base.pcall(function()
-		str = file:read("*a")
-		file:close()
-	end)
-
-	if not str or #str == 0 then
-		return
-	end
-
-	local userok, userlist = base.pcall(json.decode, str)
-	if not userok then
-		log("Unable to decode users file: " .. userlist)
-		return
-	end
-
-	for _, user in base.pairs(userlist) do
+	for _, user in base.pairs(list) do
 		if user.cid then
 			users.cids[user.cid] = user
 		end
@@ -435,31 +423,16 @@ local function load_users()
 end
 
 local function save_users()
-	base.pcall(function()
-		local file = io.open(users_file, "w")
-		if not file then
-			log("Unable to open " .. users_file .. ", users not saved")
-			return
-		end
-
-		file:write(json.encode(registered_users()))
-		file:close()
-	end)
-	users_saved = true
+	local err = aio.save_file(users_file, json.encode(registered_users()))
+	if err then
+		log('Users not saved: ' .. err)
+	else
+		users_saved = true
+	end
 end
 
 local function maybe_save_users()
 	if not users_saved then
-
-		-- first save a backup as this could run while the program is closing.
-		base.pcall(function()
-			local f = io.open(users_file, 'r')
-			local tmp = io.open(users_file .. '.tmp', 'w')
-			tmp:write(f:read('*a'))
-			tmp:close()
-			f:close()
-		end)
-
 		save_users()
 	end
 end
@@ -479,22 +452,12 @@ function add_setting(name, options)
 end
 
 local function load_settings()
-	local file = io.open(settings_file, "r")
-	if not file then
-		log("Unable to open " .. settings_file .. ", settings not loaded")
-		return false
+	local ok, list, err = aio.load_file(settings_file, aio.json_loader)
+
+	if err then
+		log('Settings loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return false
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode settings file: " .. list)
 		return false
 	end
 
@@ -515,18 +478,14 @@ local function load_settings()
 end
 
 local function save_settings()
-	local file = io.open(settings_file, "w")
-	if not file then
-		log("Unable to open " .. settings_file .. ", settings not saved")
-		return
-	end
-
 	local list = {}
 	for k, v in base.pairs(settings) do
 		list[k] = v.value
 	end
-	file:write(json.encode(list))
-	file:close()
+	local err = aio.save_file(settings_file, json.encode(list))
+	if err then
+		log('Settings not saved: ' .. err)
+	end
 end
 
 local function add_stats(stat)
@@ -1089,7 +1048,7 @@ commands.cfg = {
 		if setting.change then
 			setting.change()
 		end
-		base.pcall(save_settings)
+		save_settings()
 
 		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
 		log(message)
@@ -1710,8 +1669,8 @@ end
 
 load_users()
 
-if not base.pcall(load_settings) then
-	base.pcall(save_settings) -- save initial settings
+if not load_settings() then
+	save_settings() -- save initial settings
 end
 
 table.foreach(extensions, function(_, extension)

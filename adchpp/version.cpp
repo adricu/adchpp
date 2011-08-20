@@ -28,8 +28,8 @@
 
 // don't forget to also update the .rc file of adchppd!
 #define APPNAME "ADCH++"
-#define VERSIONSTRING "2.7.0 (r" xstrver(ADCHPP_REVISION) ")"
-#define VERSIONFLOAT 2.70
+#define VERSIONSTRING "2.8.0 (r" xstrver(ADCHPP_REVISION) ")"
+#define VERSIONFLOAT 2.80
 
 #ifndef NDEBUG
 #define BUILDSTRING "Debug"

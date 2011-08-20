@@ -11,21 +11,25 @@ local file = adchpp.Util_getCfgPath() .. "motd.txt"
 
 local io = base.require('io')
 local string = base.require('string')
+local aio = base.require('aio')
 local autil = base.require('autil')
 
 local motd
 
 local function load_motd()
-	local fp = io.open(file, "r")
-	if not fp then
-		adchpp.getLM():log(_NAME, "Unable to open " .. file .. ", MOTD not loaded")
+	local ok, str, err = aio.load_file(file)
+
+	if err then
+		adchpp.getLM():log(_NAME, 'MOTD loading: ' .. err)
+	end
+	if not ok then
 		return
 	end
-	motd = fp:read("*a")
-	fp:close()
+
+	motd = str
 end
 
-base.pcall(load_motd)
+load_motd()
 
 motd_1 = adchpp.getCM():signalState():connect(function(entity)
 	if motd and entity:getState() == adchpp.Entity_STATE_NORMAL then

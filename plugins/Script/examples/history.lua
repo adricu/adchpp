@@ -19,6 +19,7 @@ local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
 local string = base.require('string')
+local aio = base.require('aio')
 local autil = base.require('autil')
 local table = base.require('table')
 local json = base.require('json')
@@ -127,24 +128,25 @@ local function save_messages()
 
 	local s = 1
 	local e = pos
-	
 	if table.getn(messages) >= access.settings.history_max.value then
 		s = pos - access.settings.history_max.value
 		e = table.getn(messages)
 	end
-
-	local f = io.open(history_file, "w")
 
 	local list = {}
 	while s <= e and messages[s] do
 		table.insert(list, messages[s])
 		s = s + 1
 	end
-	f:write(json.encode(list))
-	f:close()
 	messages = list
 	pos = table.getn(messages) + 1
-	messages_saved = true
+
+	local err = aio.save_file(history_file, json.encode(list))
+	if err then
+		log('History not saved: ' .. err)
+	else
+		messages_saved = true
+	end
 end
 
 local function load_messages()
@@ -152,31 +154,24 @@ local function load_messages()
 		return
 	end
 
-	local f = io.open(history_file, "r")
+	local ok, list, err = aio.load_file(history_file, aio.json_loader)
 
-	local str = f:read("*a")
-	f:close()
-
-	if #str == 0 then
-		return false
+	if err then
+		log('History loading: ' .. err)
 	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode history file: " .. list)
-		return false
+		return
 	end
 
 	for k, v in base.pairs(list) do
 		messages[k] = v
 		pos = pos + 1
 	end
-
 end
 
-local function to_save_messages()
+local function maybe_save_messages()
 	if not messages_saved then
-		base.pcall(save_messages)
+		save_messages()
 	end
 end
 
@@ -203,7 +198,7 @@ local function parse(cmd)
 	messages_saved = false
 end
 
-base.pcall(load_messages)
+load_messages()
 
 if access.settings.history_method.value == 0 then
 	history_1 = cm:signalReceive():connect(function(entity, cmd, ok)
@@ -231,10 +226,7 @@ else
 	end)
 end
 
-save_messages_timer = sm:addTimedJob(900000, to_save_messages)
-
+save_messages_timer = sm:addTimedJob(900000, maybe_save_messages)
 autil.on_unloading(_NAME, save_messages_timer)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(to_save_messages)
-end)
+autil.on_unloading(_NAME, maybe_save_messages)

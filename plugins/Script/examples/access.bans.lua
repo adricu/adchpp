@@ -6,6 +6,7 @@ module("access.bans")
 base.require("luadchpp")
 local adchpp = base.luadchpp
 local access = base.require("access")
+local aio = base.require('aio')
 local autil = base.require("autil")
 local json = base.require("json")
 local io = base.require("io")
@@ -42,22 +43,12 @@ local function load_bans()
 	bans.msgsre = {}
 	bans.muted = {}
 
-	local file = io.open(bans_file, "r")
-	if not file then
-		log("Unable to open " .. bans_file .. ", bans not loaded")
-		return
+	local ok, list, err = aio.load_file(bans_file, aio.json_loader)
+
+	if err then
+		log('Ban loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode bans file: " .. list)
 		return
 	end
 
@@ -83,14 +74,10 @@ local function load_bans()
 end
 
 function save_bans()
-	local file = io.open(bans_file, "w")
-	if not file then
-		log("Unable to open " .. bans_file .. ", bans not saved")
-		return
+	local err = aio.save_file(bans_file, json.encode(bans))
+	if err then
+		log('Bans not saved: ' .. err)
 	end
-
-	file:write(json.encode(bans))
-	file:close()
 end
 
 local function ban_expiration_diff(ban)
@@ -110,7 +97,7 @@ local function clear_expired_bans()
 	end
 
 	if save then
-		base.pcall(save_bans)
+		save_bans()
 	end
 end
 
@@ -224,7 +211,7 @@ commands.ban = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.cids[victim_cid] = ban
-			base.pcall(save_bans)
+			save_bans()
 			dump_banned(victim, ban)
 			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now banned (" .. ban_added_string(ban) .. ")")
 			return
@@ -232,7 +219,7 @@ commands.ban = {
 
 		if bans.cids[victim_cid] then
 			bans.cids[victim_cid] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now un-banned")
 		else
 			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is not in the banlist")
@@ -282,14 +269,14 @@ commands.bancid = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.cids[cid] = ban
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "The CID \"" .. cid .. "\" is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
 		if bans.cids[cid] then
 			bans.cids[cid] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "The CID \"" .. cid .. "\" is now un-banned")
 		else
 			autil.reply(c, "The CID \"" .. cid .. "\" is not in the banlist")
@@ -339,14 +326,14 @@ commands.banip = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.ips[ip] = ban
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "The IP address \"" .. ip .. "\" is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
 		if bans.ips[ip] then
 			bans.ips[ip] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "The IP address \"" .. ip .. "\" is now un-banned")
 		else
 			autil.reply(c, "The IP address \"" .. ip .. "\" is not found in the banlist")
@@ -396,14 +383,14 @@ commands.bannick = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.nicks[nick] = ban
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "The nick \"" .. nick .. "\" is now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
 		if bans.nicks[nick] then
 			bans.nicks[nick] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "The nick \"" .. nick .. "\" is now un-banned")
 		else
 			autil.reply(c, "The nick \"" .. nick .. "\" is not found in the banlist")
@@ -453,14 +440,14 @@ commands.bannickre = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.nicksre[re] = ban
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "Nicks that match \"" .. re .. "\" are now banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
 		if bans.nicksre[re] then
 			bans.nicksre[re] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "Nicks that match \"" .. re .. "\" are now removed from the banlist")
 		else
 			autil.reply(c, "Nicks that match \"" .. re .. "\" are not found in the banlist")
@@ -505,14 +492,14 @@ commands.banmsgre = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.msgsre[re] = ban
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "Messages that match \"" .. re .. "\" will get the user banned (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
 		if bans.msgsre[re] then
 			bans.msgsre[re] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "Messages that match \"" .. re .. "\" are now removed from the banlist")
 		else
 			autil.reply(c, "Messages that match \"" .. re .. "\" are not found in the banlist")
@@ -589,7 +576,7 @@ commands.loadbans = {
 			return
 		end
 
-		base.pcall(load_bans)
+		load_bans()
 
 		autil.reply(c, "Ban list reloaded")
 	end,
@@ -643,14 +630,14 @@ commands.mute = {
 		if base.tonumber(minutes) ~= 0 then
 			local ban = make_ban(level, reason, minutes)
 			bans.muted[victim_cid] = ban
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now muted (" .. ban_added_string(ban) .. ")")
 			return
 		end
 
 		if bans.muted[victim_cid] then
 			bans.muted[victim_cid] = nil
-			base.pcall(save_bans)
+			save_bans()
 			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is now removed from the mutelist")
 		else
 			autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") is not found in the mutelist")
@@ -690,7 +677,7 @@ local function onMSG(c, cmd)
 		if reban.level > level and msg:match(re) then
 			local ban = { level = reban.level, reason = reban.reason, expires = reban.expires }
 			bans.cids[c:getCID():toBase32()] = ban
-			base.pcall(save_bans)
+			save_bans()
 			dump_banned(c, ban)
 			return false
 		end
@@ -733,7 +720,7 @@ local function onINF(c, cmd)
 	return true
 end
 
-base.pcall(load_bans)
+load_bans()
 
 access.register_handler(adchpp.AdcCommand_CMD_MSG, onMSG, true)
 access.register_handler(adchpp.AdcCommand_CMD_INF, onINF)
