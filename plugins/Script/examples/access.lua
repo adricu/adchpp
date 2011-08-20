@@ -1108,6 +1108,8 @@ commands.help = {
 		end
 
 		if #parameters > 0 then
+			parameters = string.lower(parameters)
+
 			local command = nil
 			for k, v in base.pairs(commands) do
 				if k == parameters or (v.alias and v.alias[parameters]) then
@@ -1571,6 +1573,7 @@ commands.topic = {
 function handle_plus_command(c, msg)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 	if command then
+		command = string.lower(command)
 		for k, v in base.pairs(commands) do
 			if k == command or (v.alias and v.alias[command]) then
 				add_stats('+' .. command)
@@ -1579,7 +1582,7 @@ function handle_plus_command(c, msg)
 			end
 		end
 	end
-	
+
 	return false
 end
 
