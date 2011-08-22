@@ -1111,15 +1111,37 @@ commands.help = {
 			parameters = string.lower(parameters)
 
 			local command = nil
+			local partials = {}
 			for k, v in base.pairs(commands) do
 				if k == parameters or (v.alias and v.alias[parameters]) then
 					command = { k = k, v = v }
 					break
+				else
+					-- not a match, test if partial (main and aliases)
+					if k:find(parameters) then
+						table.insert(partials, "+" .. k)
+					end
+					if v.alias then
+						for a,_ in base.pairs(v.alias) do
+							if a:find (parameters) then
+								table.insert(partials, "+" .. a)
+							end
+						end
+					end
 				end
 			end
 
 			if not command then
 				autil.reply(c, "The command +" .. parameters .. " doesn't exist")
+				
+				-- Display partial matches
+				if #partials > 0 then
+					table.sort(partials)
+					autil.reply(c, "Partial matches: " .. table.concat(partials, ", "))
+				else
+					autil.reply(c, "No partial matches found")
+				end
+				
 				return
 			end
 
