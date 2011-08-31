@@ -1118,13 +1118,15 @@ commands.help = {
 					break
 				else
 					-- not a match, test if partial (main and aliases)
-					if k:find(parameters) then
-						table.insert(partials, "+" .. k)
-					end
-					if v.alias then
-						for a,_ in base.pairs(v.alias) do
-							if a:find (parameters) then
-								table.insert(partials, "+" .. a)
+					if not v.protected or (v.protected and v.protected(c)) then
+						if k:find(parameters) then
+							table.insert(partials, "+" .. k)
+						end
+						if v.alias then
+							for a,_ in base.pairs(v.alias) do
+								if a:find (parameters) then
+									table.insert(partials, "+" .. a)
+								end
 							end
 						end
 					end
