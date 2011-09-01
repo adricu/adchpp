@@ -13,8 +13,6 @@ local access = base.access
 -- Where to read/write history file - set to nil to disable persistent history
 local history_file = adchpp.Util_getCfgPath() .. "history.txt"
 
-local cm = adchpp.getCM()
-
 local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
@@ -24,6 +22,7 @@ local autil = base.require('autil')
 local table = base.require('table')
 local json = base.require('json')
 
+local cm = adchpp.getCM()
 local sm = adchpp.getSM()
 local lm = adchpp.getLM()
 
@@ -42,6 +41,12 @@ access.add_setting('history_default', {
 	help = "number of messages to display in +history if the user doesn't select anything else",
 
 	value = 50
+})
+
+access.add_setting('history_connect', {
+	help = "number of messages to display to the users on connect",
+	
+	value = 10
 })
 
 access.add_setting('history_method', {
@@ -74,6 +79,33 @@ local function get_items(c)
 	return items
 end
 
+local function get_lines(num)
+	if num > access.settings.history_max.value then
+		num = access.settings.history_max.value + 1
+	end
+
+	local s = 1
+
+	if table.getn(messages) > access.settings.history_max.value then
+		s = pos - access.settings.history_max.value + 1
+	end
+
+	if num < pos then
+		s = pos - num + 1
+	end
+
+	local e = pos
+
+	local lines = "Displaying the last " .. (e - s) .. " messages"
+
+	while s <= e and messages[s] do
+		lines = lines .. "\r\n" .. messages[s].message
+		s = s + 1
+	end
+	
+	return lines
+end
+
 access.commands.history = {
 	alias = { hist = true },
 
@@ -92,30 +124,8 @@ access.commands.history = {
 		if not items then
 			items = access.settings.history_default.value + 1
 		end
-		if items > access.settings.history_max.value then
-			items = access.settings.history_max.value + 1
-		end
-
-		local s = 1
-
-		if table.getn(messages) > access.settings.history_max.value then
-			s = pos - access.settings.history_max.value + 1
-		end
-
-		if items < pos then
-			s = pos - items + 1
-		end
-
-		local e = pos
-
-		local msg = "Displaying the last " .. (e - s) .. " messages"
-
-		while s <= e and messages[s] do
-			msg = msg .. "\r\n" .. messages[s].message
-			s = s + 1
-		end
-
-		autil.reply(c, msg)
+		
+		autil.reply(c, get_lines(items))
 	end,
 
 	help = "[lines] - display main chat messages logged by the hub (no lines=default / since last logoff)",
@@ -196,12 +206,25 @@ local function parse(cmd)
 	end
 
 	local now = os.date(access.settings.history_prefix.value)
-	local message = now .. '<' .. nick .. '> ' .. cmd:getParam(0)
+	local message
+	
+	if cmd:getParam("ME", 1) == "1" then
+		message = now .. '* ' .. nick .. ' ' .. cmd:getParam(0)
+	else
+		message = now .. '<' .. nick .. '> ' .. cmd:getParam(0)
+	end
+
 	messages[pos] = { message = message, htime = os.time() }
 	pos = pos + 1
 
 	messages_saved = false
 end
+
+history_1 = cm:signalState():connect(function(entity)
+	if access.settings.history_connect.value > 0 and entity:getState() == adchpp.Entity_STATE_NORMAL then
+		autil.reply(entity, get_lines(access.settings.history_connect.value + 1))
+	end
+end)
 
 load_messages()
 
