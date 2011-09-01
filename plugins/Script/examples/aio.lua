@@ -60,10 +60,10 @@ end
 -- wrapper around a json decoder, suitable for use as the post_load param of load_file.
 function json_loader(str)
 	local ok, ret = base.pcall(json.decode, str)
-	if not ok then
-		return false, 'Corrupted file, unable to decode (' .. ret .. ')'
+	if ok then
+		return true, ret
 	end
-	return true, ret
+	return false, 'Corrupted file, unable to decode the JSON data'
 end
 
 -- utility function that reads a file.
