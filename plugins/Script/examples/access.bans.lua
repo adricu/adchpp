@@ -29,6 +29,7 @@ local is_op = access.is_op
 
 local cm = adchpp.getCM()
 local sm = adchpp.getSM()
+local lm = adchpp.getLM()
 
 local function log(message)
 	lm:log(_NAME, message)

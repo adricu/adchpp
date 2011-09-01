@@ -13,6 +13,8 @@ local string = base.require("string")
 local settings = access.settings
 local commands = access.commands
 
+local lm = adchpp.getLM()
+
 local function log(message)
 	lm:log(_NAME, message)
 end

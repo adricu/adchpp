@@ -25,6 +25,7 @@ local table = base.require('table')
 local json = base.require('json')
 
 local sm = adchpp.getSM()
+local lm = adchpp.getLM()
 
 local pos = 1
 local messages_saved = true
@@ -54,6 +55,10 @@ access.add_setting('history_prefix', {
 
 	value = "[%Y-%m-%d %H:%M:%S] "
 })
+
+local function log(message)
+	lm:log(_NAME, message)
+end
 
 local function get_items(c)
 	local items = 1
