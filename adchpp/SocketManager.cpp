@@ -32,6 +32,7 @@
 
 #include <boost/date_time/posix_time/time_parsers.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ip/v6_only.hpp>
 
 namespace adchpp {
 
@@ -59,6 +60,8 @@ public:
 
 	template<typename X, typename Y>
 	SocketStream(X& x, Y& y) : sock(x, y) { }
+
+	~SocketStream() { dcdebug("SocketStream deleted\n"); }
 
 	virtual size_t available() {
 		return sock.lowest_layer().available();
@@ -190,9 +193,18 @@ class SocketFactory : public enable_shared_from_this<SocketFactory>, boost::nonc
 public:
 	SocketFactory(SocketManager& sm, const SocketManager::IncomingHandler& handler_, const ServerInfo& info, const ip::tcp::endpoint& endpoint) :
 		sm(sm),
-		acceptor(sm.io, endpoint),
+		acceptor(sm.io),
 		handler(handler_)
 	{
+		acceptor.open(endpoint.protocol());
+		acceptor.set_option(socket_base::reuse_address(true));
+		if(endpoint.protocol() == ip::tcp::v6()) {
+			acceptor.set_option(ip::v6_only(true));
+		}
+
+		acceptor.bind(endpoint);
+		acceptor.listen(socket_base::max_connections);
+
 		LOGC(sm.getCore(), SocketManager::className,
 			"Listening on " + formatEndpoint(endpoint) +
 			" (Encrypted: " + (info.secure() ? "Yes)" : "No)"));
