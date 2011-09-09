@@ -164,6 +164,11 @@ void ClientManager::onConnected(Client& c) throw() {
 	signalConnected_(c);
 }
 
+void ClientManager::onReady(Client& c) throw() {
+	dcdebug("%s ready\n", AdcCommand::fromSID(c.getSID()).c_str());
+	signalReady_(c);
+}
+
 void ClientManager::onReceive(Entity& c, AdcCommand& cmd) throw() {
 	if(c.isSet(Entity::FLAG_GHOST)) {
 		return;

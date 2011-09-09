@@ -204,18 +204,29 @@ void ManagedSocket::completeAccept(const boost::system::error_code& ec) throw() 
 	if(!ec) {
 		if(connectedHandler)
 			connectedHandler();
-		sock->init(std::bind(&ManagedSocket::prepareRead, shared_from_this()));
+
+		sock->init(std::bind(&ManagedSocket::ready, shared_from_this()));
+
 	} else {
 		fail(Util::REASON_SOCKET_ERROR, ec.message());
 	}
 }
 
+void ManagedSocket::ready() throw() {
+	if(readyHandler)
+		readyHandler();
+
+	prepareRead();
+}
+
 void ManagedSocket::fail(Util::Reason reason, const std::string &info) throw() {
 	if(failedHandler) {
 		failedHandler(reason, info);
-		failedHandler = FailedHandler();
-		dataHandler = DataHandler();
-		connectedHandler = ConnectedHandler();
+
+		connectedHandler = 0;
+		readyHandler = 0;
+		dataHandler = 0;
+		failedHandler = 0;
 	}
 }
 

@@ -8,17 +8,15 @@
 -- Generally, to reach member "bar" of the class "foo" of ADCH++, one has to use: adchpp.foo_bar.
 -- Examples: adchpp.Util_getCfgPath(), adchpp.AdcCommand_CMD_MSG, adchpp.Entity_STATE_NORMAL...
 
--- When manipulating Entity objects, it can be useful to convert them to Client objects (which
--- are aware of socket features such as a send method) by using:
--- local client = entity:asClient()
-
 -- Feel free to use <https://answers.launchpad.net/adchpp> or <www.adcportal.com> if you need help.
 
--- The global functions of Lua are privately imported into "base"; therefore, be sure to always
--- reference it when calling these functions; eg base.print("blah"), base.pcall(protected_func)...
+-- When multiple scripts are loaded within the same global Lua engine, they can access each other's
+-- public exports. It is therefore a convention to run each script in its own module.
+-- Global Lua functions can still be accessed via _G, but we alias it to "base" for conveniance.
+-- Global functions can then be called as such: base.print('blah'), base.pcall(protected_func)...
 local base = _G
 
-module("example") -- Give each module a unique name so they don't clash.
+module('example') -- Give each module a unique name so they don't clash.
 
 -- Import the ADCH++ Lua DLL (luadchpp.dll).
 base.require('luadchpp')
@@ -44,13 +42,19 @@ local pm = adchpp.getPM() -- PluginManager
 -- them example_1, example_2 and so on) to make sure the variable holding the listener doesn't get
 -- collected by Lua's garbage collector until the program is over.
 
--- ClientManager::signalConnected: called after an Entity entity has connected.
+-- ClientManager::signalConnected: called when an Entity entity has just connected.
 example_1 = cm:signalConnected():connect(function(entity)
 	-- Process signalConnected here.
 end)
 
+-- ClientManager::signalReady: called when an Entity entity is now ready for read / write
+-- operations (TLS handshake completed).
+example_2 = cm:signalReady():connect(function(entity)
+	-- Process signalReady here.
+end)
+
 -- ClientManager::signalReceive: called when an AdcCommand cmd is received from Entity entity.
-example_2 = cm:signalReceive():connect(function(entity, cmd, ok)
+example_3 = cm:signalReceive():connect(function(entity, cmd, ok)
 	local res = (function(entity, cmd, ok)
 		-- Skip messages that have been handled and deemed as discardable by others.
 		if not ok then
@@ -66,18 +70,18 @@ example_2 = cm:signalReceive():connect(function(entity, cmd, ok)
 end)
 
 -- ClientManager::signalState: called after the state of an online Entity entity has changed.
-example_3 = cm:signalState():connect(function(entity)
+example_4 = cm:signalState():connect(function(entity)
 	-- Process signalState here.
 end)
 
 -- ClientManager::signalDisconnected: called after an Entity entity has disconnected.
-example_4 = cm:signalDisconnected():connect(function(entity)
+example_5 = cm:signalDisconnected():connect(function(entity)
 	-- Process signalDisconnected here.
 end)
 
 -- PluginManager::getCommandSignal(string): called when a +command managed by another plugin is
 -- being executed.
-example_5 = pm:getCommandSignal("blah"):connect(function(entity, list, ok)
+example_6 = pm:getCommandSignal("blah"):connect(function(entity, list, ok)
 	-- Skip messages that have been handled and deemed as discardable by others.
 	if not ok then
 		return ok

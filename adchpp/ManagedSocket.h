@@ -52,6 +52,9 @@ public:
 	typedef std::function<void()> ConnectedHandler;
 	void setConnectedHandler(const ConnectedHandler& handler) { connectedHandler = handler; }
 
+	typedef std::function<void()> ReadyHandler;
+	void setReadyHandler(const ReadyHandler& handler) { readyHandler = handler; }
+
 	typedef std::function<void(const BufferPtr&)> DataHandler;
 	void setDataHandler(const DataHandler& handler) { dataHandler = handler; }
 
@@ -69,6 +72,7 @@ private:
 	friend class SocketFactory;
 
 	void completeAccept(const boost::system::error_code&) throw();
+	void ready() throw();
 	void prepareWrite() throw();
 	void completeWrite(const boost::system::error_code& ec, size_t bytes) throw();
 	void prepareRead() throw();
@@ -100,6 +104,7 @@ private:
 	std::string ip;
 
 	ConnectedHandler connectedHandler;
+	ReadyHandler readyHandler;
 	DataHandler dataHandler;
 	FailedHandler failedHandler;
 

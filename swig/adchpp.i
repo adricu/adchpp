@@ -708,6 +708,7 @@ public:
 	size_t getQueuedBytes() throw();
 
 	typedef SignalTraits<void (Entity&)> SignalConnected;
+	typedef SignalTraits<void (Entity&)> SignalReady;
 	typedef SignalTraits<void (Entity&, AdcCommand&, bool&)> SignalReceive;
 	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
@@ -715,6 +716,7 @@ public:
 	typedef SignalTraits<void (Entity&, Util::Reason, const std::string &)> SignalDisconnected;
 
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
+	SignalReady::Signal& signalReady() { return signalReady_; }
 	SignalReceive::Signal& signalReceive() { return signalReceive_; }
 	SignalBadLine::Signal& signalBadLine() { return signalBadLine_; }
 	SignalSend::Signal& signalSend() { return signalSend_; }

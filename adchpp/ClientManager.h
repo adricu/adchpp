@@ -140,13 +140,17 @@ public:
 	ADCHPP_DLL size_t getQueuedBytes() throw();
 
 	typedef SignalTraits<void (Entity&)> SignalConnected;
+	typedef SignalTraits<void (Entity&)> SignalReady;
 	typedef SignalTraits<void (Entity&, AdcCommand&, bool&)> SignalReceive;
 	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
 	typedef SignalTraits<void (Entity&, int)> SignalState;
 	typedef SignalTraits<void (Entity&, Util::Reason, const std::string&)> SignalDisconnected;
 
+	/** A client has just connected. */
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
+	/** A client is now ready for read / write operations (TLS handshake completed). */
+	SignalConnected::Signal& signalReady() { return signalReady_; }
 	SignalReceive::Signal& signalReceive() { return signalReceive_; }
 	SignalBadLine::Signal& signalBadLine() { return signalBadLine_; }
 	SignalSend::Signal& signalSend() { return signalSend_; }
@@ -204,6 +208,7 @@ private:
 	void handleIncoming(const ManagedSocketPtr& sock) throw();
 
 	void onConnected(Client&) throw();
+	void onReady(Client&) throw();
 	void onReceive(Entity&, AdcCommand&) throw();
 	void onBadLine(Client&, const std::string&) throw();
 	void onFailed(Client&, Util::Reason reason, const std::string &info) throw();
@@ -214,6 +219,7 @@ private:
 		AdcCommand::Error error = AdcCommand::ERROR_PROTOCOL_GENERIC, const std::string& staParam = Util::emptyString);
 
 	SignalConnected::Signal signalConnected_;
+	SignalReady::Signal signalReady_;
 	SignalReceive::Signal signalReceive_;
 	SignalBadLine::Signal signalBadLine_;
 	SignalSend::Signal signalSend_;

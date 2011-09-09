@@ -75,12 +75,17 @@ void Client::setSocket(const ManagedSocketPtr& aSocket) throw() {
 	dcassert(!socket);
 	socket = aSocket;
 	socket->setConnectedHandler(Handler0<&Client::onConnected>(this));
+	socket->setReadyHandler(Handler0<&Client::onReady>(this));
 	socket->setDataHandler(Handler1<BufferPtr, &Client::onData>(this));
 	socket->setFailedHandler(Handler2<Util::Reason, std::string, &Client::onFailed>(this));
 }
 
 void Client::onConnected() throw() {
 	cm.onConnected(*this);
+}
+
+void Client::onReady() throw() {
+	cm.onReady(*this);
 }
 
 void Client::onData(const BufferPtr& buf) throw() {

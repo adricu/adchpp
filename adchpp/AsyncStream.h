@@ -26,7 +26,7 @@ public:
 	typedef std::function<void (const boost::system::error_code& ec, size_t)> Handler;
 
 	virtual size_t available() = 0;
-	virtual void init(const std::function<void ()>& readF) = 0;
+	virtual void init(const std::function<void ()>& postInit) = 0;
 	virtual void setOptions(size_t bufferSize) = 0;
 	virtual std::string getIp() = 0;
 	virtual void prepareRead(const BufferPtr& buf, const Handler& handler) = 0;

@@ -125,8 +125,8 @@ class SimpleSocketStream : public SocketStream<ip::tcp::socket> {
 public:
 	SimpleSocketStream(boost::asio::io_service& x) : Stream(x) { }
 
-	virtual void init(const std::function<void ()>& readF) {
-		readF();
+	virtual void init(const std::function<void ()>& postInit) {
+		postInit();
 	}
 
 	virtual void shutdown(const Handler& handler) {
@@ -157,9 +157,9 @@ class TLSSocketStream : public SocketStream<ssl::stream<ip::tcp::socket> > {
 public:
 	TLSSocketStream(io_service& x, ssl::context& y) : Stream(x, y) { }
 
-	virtual void init(const std::function<void ()>& readF) {
+	virtual void init(const std::function<void ()>& postInit) {
 		sock.async_handshake(ssl::stream_base::server, std::bind(&TLSSocketStream::handleHandshake,
-			this, std::placeholders::_1, readF));
+			this, std::placeholders::_1, postInit));
 	}
 
 	virtual void shutdown(const Handler& handler) {
@@ -175,9 +175,9 @@ public:
 	}
 
 private:
-	void handleHandshake(const error_code& ec, const std::function<void ()>& readF) {
+	void handleHandshake(const error_code& ec, const std::function<void ()>& postInit) {
 		if(!ec) {
-			readF();
+			postInit();
 		}
 	}
 };

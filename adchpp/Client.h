@@ -68,6 +68,7 @@ private:
 	void setSocket(const ManagedSocketPtr& aSocket) throw();
 
 	void onConnected() throw();
+	void onReady() throw();
 	void onData(const BufferPtr&) throw();
 	void onFailed(Util::Reason reason, const std::string &info) throw();
 
