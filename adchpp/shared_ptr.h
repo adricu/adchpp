@@ -24,7 +24,8 @@
 /* the shared_ptr implementation provided by MinGW / GCC 4.5's libstdc++ consumes too many
 semaphores, so we prefer boost's one. see <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46455>. */
 
-#define _SHARED_PTR_H 1 // skip libstdc++'s bits/shared_ptr.h
+#define BOOST_ASIO_DISABLE_STD_SHARED_PTR 1
+
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
