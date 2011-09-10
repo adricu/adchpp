@@ -45,12 +45,8 @@ function save_file(path, contents)
 
 	-- start by saving a backup, in case writing fails.
 	local ok, str = read_file(path)
-	if not ok then
-		return str
-	end
-	str = write_file(path .. '.tmp', str)
-	if str then
-		return str
+	if ok then
+		write_file(path .. '.tmp', str)
 	end
 
 	-- the file has been backed up; now write to it.
