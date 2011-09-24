@@ -2,6 +2,7 @@
 * Process most settings again
 * [L#717858] Fix disconnection of users taking too long to log in
 * [L#717858] Consider users as connected before they start the TLS handshake
+* Adding access.guard.lua and removing duplicated functions
 * Add FO extension to hub INF
 * Remove the license page from the installer
 * [L#804024] Separate application and version in INF

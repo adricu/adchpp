@@ -192,7 +192,7 @@ end
 settings.address = {
 	alias = { host = true, dns = true },
 
-	help = "host address (DNS or IP)",
+	help = "host address (DNS or IP) followed by :portnumber",
 
 	value = adchpp.Util_getLocalIp()
 }
@@ -233,22 +233,6 @@ settings.failover = {
 	value = '',
 
 	validate = validate_fo
-}
-
-settings.maxmsglength = {
-	alias = { maxmessagelength = true },
-
-	help = "maximum number of characters allowed per chat message, 0 = no limit",
-
-	value = 0
-}
-
-settings.maxnicklength = {
-	change = recheck_info,
-
-	help = "maximum number of characters allowed per nick, 0 = no limit",
-
-	value = 50
 }
 
 settings.maxusers = {
@@ -735,11 +719,6 @@ verify_info = function(c, cid, nick)
 	
 	if #nick == 0 or #cid == 0 then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "No valid nick/CID supplied")
-		return false
-	end
-
-	if settings.maxnicklength.value > 0 and #nick > settings.maxnicklength.value then
-		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "Your nick (" .. nick .. ") is too long, it must contain " .. base.tostring(settings.maxnicklength.value) .. " characters max")
 		return false
 	end
 
@@ -1619,11 +1598,6 @@ local function onMSG(c, cmd)
 		end
 	end
 
-	if settings.maxmsglength.value > 0 and string.len(msg) > settings.maxmsglength.value then
-		autil.reply(c, "Your message contained too many characters, max allowed is " .. settings.maxmsglength.value)
-		return false
-	end
-
 	return true
 end
 
@@ -1656,14 +1630,6 @@ local function onReceive(entity, cmd, ok)
 	local c = entity:asClient()
 	if not c then
 		return false
-	end
-
-	local allowed_type = command_contexts[cmd:getCommand()]
-	if allowed_type then
-		if not cmd:getType():match(allowed_type) then
-			autil.reply(c, "Invalid context for " .. cmd:getCommandString())
-			return false
-		end
 	end
 
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
