@@ -19,10 +19,13 @@
 #ifndef ADCHPP_ADCHPP_SHARED_PTR_H_
 #define ADCHPP_ADCHPP_SHARED_PTR_H_
 
-#if __MINGW32__ && __GNUC__ == 4 && __GNUC_MINOR__ <= 5
+#ifdef __MINGW32__
 
 /* the shared_ptr implementation provided by MinGW / GCC 4.5's libstdc++ consumes too many
 semaphores, so we prefer boost's one. see <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46455>. */
+
+// enabling this on newer GCC versions as well as handle leaks still appear when running scripts.
+/// @todo hopefully remove this someday...
 
 #define BOOST_ASIO_DISABLE_STD_SHARED_PTR 1
 
