@@ -1,6 +1,6 @@
 = ADCH++ Basic User Guide
 Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, iceman50 <iceman50@adcportal.com>
-Document Version 0.3.2
+Document Version 0.3.3
 :toc:
 This version of the guide corresponds with ADCH++ version: *2.8.0*
 
@@ -59,7 +59,7 @@ The source code is available via Sourceforge (official releases) or from our Baz
 
 Source code download: https://sourceforge.net/projects/adchpp/files/
 
-Nightly builds : http://builds.adcportal.com/index.php?folder=YWRjaHBwL3NvdXJjZQ
+Nightly builds : http://builds.adcportal.com
 
 Launchpad repository: https://code.launchpad.net/adchpp
 
@@ -71,7 +71,7 @@ You need a Linux distribution with at least 2.6-based kernel to run ADCH\+\+. Th
 | Application		| Notes
 | swig 				| 
 | ruby (optional)	|(needs to be version 1.9.2 or higher)
-| python (optional)	|(version 2.4.x ... 2.7.x)
+| python (optional)	|(version 2.4.x ... 2.7.x, 32 bit versions - even on 64 bit systems)
 | scons				|(version 1.2.0 or higher)
 | gcc-c++			|(version 4.4.x or higher)
 | libstdc++-devel	|(redhat resource)
@@ -173,13 +173,11 @@ openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 openssl dhparam -outform PEM -out dhparam.pem 1024
 ---------------------------------------------------------------------
 
-Alternatively, you can use the certificate files generator script (generate_certs.cmd/sh) available in the repository and the release packages as well as at the following links:
-
-http://launchpadlibrarian.net/31960965/Cert_Generator.7z
-
-http://builds.adcportal.com/adchpp/cert_generator/adchpp_cert_generator.7z
+Alternatively, you can use the certificate files generator script (generate_certs.cmd/sh) available in the release packages as well as at the following link: http://launchpadlibrarian.net/31960965/Cert_Generator.7z
 
 The script will create and automatically place the generated certificate files to a folder named 'certs' under the ADCH++ program folder.
+
+IMPORTANT: If you run the certificate files generator script under Windows its recommended to install OpenSSL to its default folder (into Program Files) and run the script in elevated mode (as Administrator) on Vista and later.
 
 TIP: Remember if you have specified TLS=1 in the server configuration, all users must connect to your hub using the prefix adcs:// added to the hub address (adcs://yourdomain:port). You can open more than one ports for your hub by adding more <Server/> entries. You can even mix secure and unsecure (non-TLS) port connections by adding TLS=1 parameter to a particular <Server/> entry only.
 
@@ -196,7 +194,7 @@ The LUA scripts shipped with ADCH++ are configured to run by default. Locate the
 	<Engine language="lua" scriptPath="Scripts/">
 		<Script>access.lua</Script>
 		<Script>access.bans.lua</Script>
-		<Script>access.limits.lua</Script>
+		<Script>access.guard.lua</Script>
 		<Script>access.op.lua</Script>
 		<Script>access.bot.lua</Script>
 		<Script>history.lua</Script>
@@ -215,7 +213,7 @@ Here's how to disable a script in scripts.xml using the xml comment syntax:
 	<Engine language="lua" scriptPath="Scripts/">
 		<Script>access.lua</Script>
 		<Script>access.bans.lua</Script>
-		<Script>access.limits.lua</Script>
+		<Script>access.guard.lua</Script>
 		<Script>access.op.lua</Script>
 		<Script>access.bot.lua</Script>
 		<Script>adchpp-ptokax.lua</Script>
@@ -233,7 +231,7 @@ Change to :
 	<Engine language="lua" scriptPath="Scripts/">
 		<Script>access.lua</Script>
 		<Script>access.bans.lua</Script>
-		<Script>access.limits.lua</Script>
+		<Script>access.guard.lua</Script>
 		<Script>access.op.lua</Script>
 		<Script>access.bot.lua</Script>
 		<Script>adchpp-ptokax.lua</Script>
@@ -262,9 +260,9 @@ There are two possible ways to create the first administrator account:
 
 ==== Create the admin account using the FirstReg.cmd shell script (Windows only)
 
-You can use a small shell script to create your first admin account easily. Its called FirstReg.cmd and its available in the repository and in the release packages. Stop the hub, open up a Windows command prompt, navigate to and run the script from the ADCH++ program folder and follow the onscreen instructions.
+You can use a small shell script to easily create your first admin account. The script called FirstReg.cmd and its provided in the release packages. To use it you must stop the hub before, then open up a Windows command prompt, navigate to and run the script from the ADCH++ program folder. Follow the onscreen instructions.
 
-IMPORTANT: The script is for creating the initial admin account ONLY. Its not usable to create subsequent accounts as it deletes all existing registrations before creating the initial account!
+IMPORTANT: The FirstReg script is for creating the initial admin account ONLY. Its not usable to create subsequent accounts as it deletes all existing registrations before creating the initial account!
 
 If your account successfully created with the script you can skip the next chapter.
 
@@ -315,13 +313,14 @@ You can create registrations / get information only for accounts with lower user
 
 This chapter shows you how to administer your hub using hub commands and settings.
 
-==== Hub commands
+==== Basic hub commands
 
 A simple way to find out what commands are available and how they work is to use the +help command. To get information for a specific command use
 --------------------------------------
 +help <command>
 --------------------------------------
-Most commands are also available in the user menu of your ADC client propagated as user commands. Here's the list of commands, those where mentioned are available for all users, the rest are for operators only.
+For <command> you can use partial names or abbreviations to get a list of available commands contaning the specified string in their names.
+Most commands are also available in the user menu of your ADC client propagated as user commands. Here's the list of the basic hub commands, those where mentioned are available for all users, the rest are for operators only.
 
 .List of all commands
 [width="100%",options="header"]
@@ -352,20 +351,22 @@ Most commands are also available in the user menu of your ADC client propagated 
 |+topic topic										| Change the hub topic (shortcut to +cfg topic).
 |==============================================
 
-==== Hub settings
-To see what configuration parameters are available and what are their current values you should enter:
+Some commands not listed here belong to advanced hub security and discussed in the http://adchpp.sourceforge.net/user_guide/expert_guide.html[Expert guide] in detail.
+
+==== Basic hub settings
+To see what basic configuration parameters are available for your hub and what are their current values you should enter:
 
 --------------------------------------
 +help cfg
 --------------------------------------
 
-To change a setting you must use:
+To change a basic hub setting you must use:
 
 --------------------------------------
 +cfg [setting] [value]
 --------------------------------------
 
-.List of all settings variables
+.List of all basic hub setting variables
 [width="100%",options="header"]
 |==============================================
 | Setting					| Purpose
@@ -377,24 +378,16 @@ To change a setting you must use:
 | botemail					| Description that shows in the userlist in the E-mail coloumn for the hub bot
 | botname					| The hub bot's nickname
 | description				| Your hub's description (for hublist pingers)
+| history_connect			| How much lines of the main chat history the hub displays to the user on connect, 0 = disabled
 | history_default			| How much lines of the main chat history the hub displays for the +history command
 | history_max				| Maximum amount of last main chat history lines that the hub saves
 | history_method			| Strategy used by the \+history command to record messages, restart the hub after the change, 1 = use a hidden bot, 0 = direct ADCH++ interface
 | history_prefix			| Format of the timestamp to put before every message in the history. For the avaliable formatting parameters check the General time format variables in the Logs part of the DC++ help file or the same document online at http://dcplusplus.sourceforge.net/webhelp/settings_logs.html
-| maxhubscount 				| Maximum number of hubs allowed, 0 = disabled
-| maxhubslotratio			| Maximum hub/slots ratio allowed, 0 = disabled
-| maxmsglength				| Maximum number of characters allowed per chat message, 0 = no limit
-| maxnicklength				| Maximum nickname length allowed, 0 = no limit
-| maxsharesize				| Maximum share size allowed, 0 = disabled
-| maxslots 					| Maximum amount of opened upload slots allowed, 0 = disabled
 | maxusers 					| Maximum number of non-registered users to log in, -1 = no limit, 0 = no unregistered users allowed (private hub)
 | menuname					| Name of the main user menu for the hub's user commands (displayed in the clients)
 | minchatlevel 				| Minimum user level to be able to chat, 0 = disabled (hub restart recommended after change)
 | mindownloadlevel			| Minimum user level to be able download, 0 = disabled (hub restart recommended after change)
-| minhubslotratio 			| Maximum hub/slots ratio required, 0 = disabled 
 | minsearchlevel			| Minimum user level to be able to search, 0 = disabled (hub restart recommended after change)
-| minsharesize				| Maximum share size required, 0 = disabled
-| minslots 					| Maximum amount of opened upload slots required, 0 = disabled
 | name 						| Name of the hub (for hublist pingers)
 | network					| Name of the network the hub belongs to (for hublist pingers)
 | oplevel					| Minimum user level for operators, all users >= this level will have OP rights (hub restart recommended after change)
@@ -462,9 +455,9 @@ You simply re-register the user with the new password and user level. You must s
 
 If you want to know more about ADCH++
 
-. There is an expert guide for advanced/expert users who interested in advanced scripting, compiling, testing, bug reporting or contributing to ADCH\+\+. Its available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revision of this documentation is also available in the ADCH++ repository at http://code.launchpad.net/adchpp/
-. You can get support for ADCH++ at the official Answers tracker at http://answers.launchpad.net/adchpp/[Launchpad].
-. You can get more information or ask questions about ADCH++ at the http://adcportal.com[ADC community portal].
+. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\+\+ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at http://code.launchpad.net/adchpp/
+. You can get support for ADCH++ at the project's official Answers tracker at http://answers.launchpad.net/adchpp/[Launchpad].
+. You can get more information or discuss topics about ADCH++ at the http://adcportal.com[ADC community portal] forums.
 
 == Appendix
 This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
@@ -476,19 +469,20 @@ Permission is granted to copy, distribute and/or modify this document under the 
 
 ////////////////////////////////////////////////////////////////
 Changelog: 
-0.1: Initial Documentation
-0.2: Changed Image, Added Examples
-0.2.1: Removed manual TOC for generated TOC, removed logo and some unnecessary pictures of the installer, rewrote lua script and installation part.
-0.2.2: Added more documentation over new features, added more detailed information about how to add it as a Windows service.
-0.2.3: Updated corresponding to 2.5.1
+0.1: Initial Documentation (toast)
+0.2: Changed Image, Added Examples (toast)
+0.2.1: Removed manual TOC for generated TOC, removed logo and some unnecessary pictures of the installer, rewrote lua script and installation part. (toast)
+0.2.2: Added more documentation over new features, added more detailed information about how to add it as a Windows service. (toast)
+0.2.3: Updated corresponding to 2.5.1 (toast)
 0.2.4: Added icons for specific OS parts, Fixed a miss for ptokax api, various updates to sections thats outdated or needs a touch up
-0.2.5: Spell checked document
-0.2.6: Updated compile requirements
+0.2.5: Spell checked document (toast)
+0.2.6: Updated compile requirements (toast)
 0.2.7: Updated corresponding to 2.5.5 (emtee), Fixed typos, clear up some things (emtee)
-0.2.8: additional linux information
-0.2.9: Additional information added
-0.3.0: Major updates to format of the guide broke it down to a novice and a newbie parts.
+0.2.8: additional linux information (toast)
+0.2.9: Additional information added (toast)
+0.3.0: Major updates to format of the guide broke it down to a novice and a newbie parts. (toast)
 0.3.1: Updated corresponding to ADCH++ version 2.7.0 (emtee)
 0.3.2: Improved details, readability, added a commands list table and a new FAQ item, revised the settings list and features updated to correspond ADCH++ version 2.8.0 (emtee)
+0.3.3: Updated according the changes of the guard script addition (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

@@ -1,6 +1,6 @@
 = ADCH++  Expert User Guide
 Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>
-Document Version 0.3.0
+Document Version 0.4.0
 :toc:
 This version of the guide corresponds with ADCH++ version: *2.8.0*
 
@@ -12,7 +12,24 @@ The core is also exposed as a Python and a Ruby module, thus it is possible to u
 
 == Preface
 
-This guide is intended for novice or expert users. It focuses on various scripting interfaces, compiling and running ADCH++ in service mode, as well as troubleshooting and bug reporting.
+This guide is intended for novice or expert users. It focuses on various scripting interfaces, advanced hub security, compiling and running ADCH++ in service mode, as well as troubleshooting and bug reporting.
+
+== Advanced hub security
+
+.List of limits setting variables
+[width="100%",options="header"]
+|==============================================
+| Setting					| Purpose
+| maxhubscount 				| Maximum number of hubs allowed, 0 = disabled
+| maxhubslotratio			| Maximum hub/slots ratio allowed, 0 = disabled
+| maxmsglength				| Maximum number of characters allowed per chat message, 0 = no limit
+| maxnicklength				| Maximum nickname length allowed, 0 = no limit
+| maxsharesize				| Maximum share size allowed, 0 = disabled
+| maxslots 					| Maximum amount of opened upload slots allowed, 0 = disabled
+| minhubslotratio 			| Maximum hub/slots ratio required, 0 = disabled 
+| minsharesize				| Maximum share size required, 0 = disabled
+| minslots 					| Maximum amount of opened upload slots required, 0 = disabled
+|==============================================
 
 == Scripting Interface and examples
 
@@ -60,7 +77,7 @@ Directory of c:\users\username\adchpp\Scripts
 2010-05-03  22:58            58 383 access.lua
 2010-05-03  22:58            18 483 access.bans.lua
 2010-05-03  22:58             8 242 access.bot.lua
-2010-05-03  22:58             9 385 access.limits.lua
+2010-05-03  22:58             9 385 access.guard.lua
 2010-05-03  22:58            18 343 access.op.lua
 2010-05-26  17:26            33 141 adchpp-ptokax.lua
 2010-05-03  22:58             2 653 autil.lua
@@ -343,7 +360,7 @@ These are the minimum versions of tools required to compile ADCH++:
 	* GCC 4.4.x (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
     * SCons 1.2.0 or later http://www.scons.org
     * SWIG 1.3.40 or later http://www.swig.org
-    * Optional: Python 2.4.x or later http://www.python.org
+    * Optional: Python 2.4.x or later (32 bit version only) http://www.python.org
 	* Optional: Ruby 1.9.2 (http://www.ruby-lang.org)
 	* Optional: PHP 5 (http://www.php.net/)
     * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
@@ -402,8 +419,9 @@ Permission is granted to copy, distribute and/or modify this document under the 
 
 ////////////////////////////////////////////////////////////////
 Changelog: 
-0.1.0: Initial Documentation
+0.1.0: Initial Documentation (toast, iceman50)
 0.2.0: Updated corresponding to ADCH++ version 2.7.0 (emtee)
 0.3.0: Improvements, added MinGW crash report guide, updated corresponding to ADCH++ version 2.8.0 (emtee)
+0.4.0: Added the Advanced hub security (guard) section (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
