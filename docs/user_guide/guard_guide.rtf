@@ -11,35 +11,21 @@ The intention was to make on 1 side a "hubs users friendly" anti flood and guard
 \par
 It also gathers entity's (users) info and asigns a unique ID for each one of them based on CID and keeps history records based on NI / IP if that setting is enabled ( +cfgen entitylog ), these records can be used to find a user by Nick/IP/CID and all changes that the user made. Also these tables are auto cleaning based on your +cfgen entitylogexpiretime setting.\par
 \par
-\b ***************************************************************************************************************************\b0\par
-\b IMPORTANT:\b0\par
-\par
-It uses the bans table from the hub but therefore the table and the save function must be made accessible !!!!!!!\par
-So in access.bans on line 18 and 86 the " local " need to be removed @ the start of the line so it reads like\par
-" bans = \{\} "\par
-" function save_bans() "\par
-\par
-It replaces the access.limit.lua so you need to addapt your Script.xml and replace the line\par
-" <Script>access.limit.lua</Script "\par
-with\par
-" <Script>access.guard.lua</Script "\par
-also the limit settings wil need to be set again using the +cfgli "limitname" command.\par
-\par
-\b ***************************************************************************************************************************\b0\par
-\par
 This script is never tested on a real 100+ users hub but speed looks great and resource use seems minimal so ......\par
 \par
-It gathers you statistic info like count, rate, and differential rate regarding the use of normal ADC commands (and the non existing ones or the ones with a bad context) and some specific limit rules where you have for each a maximum rate setting and a expire time so the tables remain very small and are self cleaning.\par
+It gathers you statistic info like count, rate, and differential rate regarding the use of normal ADC commands (and the non existing ones or the ones with a bad context), some specific limit rules where you have for each a maximum rate setting and a expire time so the tables remain very small and are self cleaning.\par
+\par
+The part "entity" let you keep statistics regarding the users, both normal and regged.\par
 \par
 The differential rate is a last minute snapshot rate that uses a aging factor to lower its value very quick.\par
 \par
-If the specific stats maxrate is set to 0 it will use the default setting specified with +cfgfl fl_maxratecmd same counts for the expire time, to disable a stats rate you just need to set it -1 what is the default when you first use this.\par
+If the specific stats maxrate is set to 0 it will use the default setting specified with +cfgfl fl_maxratecmd same counts for the expire time, to disable a stats rate you just need to set it -1\par
 \par
 On the limit rules  there is also a count function that will react on the li_maxcount setting and kick the user if needed.\par
 \par
 Each specific stats uses its own table with the users CID or IP as the index so if you create a new one you will also have to create the table for it, the rest should  be a simple copy paste of a simular stats , create the settings for it and addapt the paramaters that it should watch.\par
 \par
-By default all stats rate and limit rules are disabled, to enable them you need to set the either the default rate for them to or a specific value you see fit for a certain cmd or limit and you need to specify the values for the special rules like \par
+By default all cmd stats rate are enabled with either specific cmd values or are using the default fl_maxrate value, limit rules and entity loging are disabled, to enable them you need to set the either the default rate for them to or a specific value you see fit for a certain limit and you need to specify the values for the special rules like, the entity loging can be enabled by it's setting.\par
 \par
 example for the cmd's\par
 +cfgfl maxrate 30\tab\tab enables all cmd rates with a max of 30 / minute\par
@@ -47,7 +33,7 @@ or you can specify a specific cmd\par
 +cfgfl cmdschtth 12\tab\tab that will allow a max rate of 12 / minute for the automatic TTH search\par
 \par
 example for the limits\par
-+cfgli li_maxrate 120\tab\tab enables all limit rates with a max of 30 / minute\par
++cfgli li_maxrate 240\tab\tab enables all limit rates with a max of  240 / hour (4 / minute)\par
 +cfgli maxmsglenght 800\tab sets the maxmsg length to 800\par
 +cfgli maxcount\tab 40\tab\tab will kick a user after been warned 40 times for all limit rules\par
 \par
@@ -55,9 +41,13 @@ example for the limits\par
 Enjoy and be carefull with your settings as it will send warnings, kicks and temp bans to a user that breaks those rules (if you enable that), my advise is to run it a few days with all settings like they come and use the +listcmdstats and +listlimstats commands to get a feeling of what exactely is going on in your hub.\par
 \par
 \par
-The commands itself are in the hubs help menu and each of the settings can be seen both in its own stats and either +help cfgfl , +help cfgli or +help cfgen\par
+The commands itself are in the hubs help menu and each of the settings can be seen both in its own stats and either +help cfgfl \par
 \par
-First of all the script as posted has all flood protection and entity logs disabled, each hubowner should decide what he wants protected / loged and what not.\par
+,help = +help cfgfl , +help cfgli and +help cfgen\par
+\par
+stats = +listcmdstats , +listlimstats\par
+\par
+First of all the script as posted has most limits and entity all logs disabled, each hubowner should decide what he wants limited / loged and what not.\par
 \par
 Giving advice about "golden" rate values is almost impossible as it depends on the resources that the hub has available, like upload band, cpu power etc.\par
 \par
@@ -67,7 +57,7 @@ In your thinking you must make a difference between:\par
 1: a real "flood" with bad intentions where something sends ADC commands with high rate and only one goal, kill the hub.\par
 2: a client "flood" that's just misconfigured or does not respect its settings .\par
 \par
-To get protected against nr 1 cases is very straight forward , as you can see the default rate setting is 0 / m changing that to lets say 30 a min means that all stats where the maxrate is 0 will have that 30 / m as maxrate , its safe to do this for most of the stats beside 3 of them,   the RES : returned search results, and CTM / NAT connect to me commands, both can be triggerd by other clients doing searches or sending a RCM command to the "victim" this will be solved in future versions if it will not become a to big resource hugh , testing that @ the moment.(these 3 commands are set to -1 default for now)\par
+To get protected against nr 1 cases is very straight forward , as you can see the default rate setting is 30 / m changing that to lets say 20 a min means that all stats where the maxrate is 0 will have that 30 / m as maxrate , its safe to do this for most of the stats beside 3 of them,   the RES : returned search results, and CTM / NAT connect to me commands, both can be triggerd by other clients doing searches or sending a RCM command to the "victim" this will be solved in future versions if it will not become a to big resource hugh , testing that @ the moment.(these 3 commands are set to -1 default for now)\par
 So with above settings your hub has a basic flood protection against script kiddy's attacks.\par
 And same count for the limit stats.\par
 \par

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <!--Ensure that you load the scripts in this order so that they work correctly.-->
 <ScriptPlugin>
-  <Engine language="lua" scriptPath="Scripts/">
-    <Script>access.lua</Script>
-    <Script>access.bans.lua</Script>
-    <Script>access.guard.lua</Script>
-    <Script>access.op.lua</Script>
-    <Script>access.bot.lua</Script>
-    <Script>motd.lua</Script>
-    <Script>history.lua</Script>
-  </Engine>
+	<Engine language="lua" scriptPath="Scripts/">
+		<Script>access.lua</Script>
+		<Script>access.bans.lua</Script>
+		<Script>access.guard.lua</Script>
+		<Script>access.op.lua</Script>
+		<Script>access.bot.lua</Script>
+		<Script>motd.lua</Script>
+		<Script>history.lua</Script>
+	</Engine>
 </ScriptPlugin>

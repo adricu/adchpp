@@ -1,27 +1,7 @@
 --[[
-This script is made for ADCH++ and based on snippets and methods used in access and bans lua (thx dcdev team)  and fals under the ADCH++ project copyright, its a basic flood protection for ADC commands and some specific rules/limits and above all it can be made a lot better and smaller as it has some "doubles" , its alpha so .... lol.
-
-The final intention is to base the rate rules on a "severnes" factor meaning taking into account what the context of the command is and the size of the strings it will generate but so far it's only rate based so if somebody feels like ? lol (cologic thx for that idea, it's the only way to do it right)
-
-It uses also idea's i got from using the Leviathan script so also a thx to those people. 
+The final intention of this script is to base the rate rules on a "severnes" factor meaning taking into account what the context of the command is and the size of the strings it will generate but so far it's only rate based so if somebody feels like ? lol (cologic thx for that idea, it's the only way to do it right)
 
 The intention was to make on 1 side a "hubs users friendly" anti flood and guard system, so if one by "accident" spams he will receive warnings and his action will be stopped, after some time, in most cases less then 15 seconds, he can use the command again like any other user and on the other side prevent the hammering of users that do not comply to the limit rules.
-
-***************************************************************************************************************************
-IMPORTANT:
-
-It uses the bans table from the hub but therefore the table and the save function must be made accessible !!!!!!!
-So in access.bans on line 18 and 86 the " local " need to be removed @ the start of the line so it reads like
-" bans = {} "
-" function save_bans() "
-
-It replaces the access.limit.lua so you need to addapt your Script.xml and replace the line
-" <Script>access.limit.lua</Script "
-with
-" <Script>access.guard.lua</Script "
-also the limit settings wil need to be set again using the +cfgli "limitname" command.
-
-***************************************************************************************************************************
 
 Read the Guard-HowTo.rtf it will give you a nice idea of whats possible and what not ...
 ]]
@@ -91,12 +71,12 @@ local kickstats_file = fldb_path .. "kickstats.txt"
 local entitystats_file = fldb_path .. "entitystats.txt"
 
 -- Setting the level for administrating commands, viewing the stats and script's bans
-local level_admin = 10
-local level_stats = 4
-local level_script = 3
+local level_admin = 9
+local level_stats = access.settings.oplevel.value
+local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.27"
+guardrev = "1.0.28"
 
 -- Tmp tables
 local data = {}
@@ -3167,7 +3147,7 @@ fl_settings.cmdinf_rate = {
 
 	help = "max rate in counts/min that a client can send his inf updates, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 15
 }
 
 fl_settings.cmdschman_rate = {
@@ -3175,7 +3155,7 @@ fl_settings.cmdschman_rate = {
 
 	help = "max rate in counts/min that a client can send searches, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdschtth_rate = {
@@ -3183,7 +3163,7 @@ fl_settings.cmdschtth_rate = {
 
 	help = "max rate in counts/min that a client can send TTH searches, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 6
 }
 
 fl_settings.cmdmsg_rate = {
@@ -3287,7 +3267,7 @@ fl_settings.cmdrcm_rate = {
 
 	help = "max rate in counts/min that a client can send reverse connect's, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 20
 }
 
 fl_settings.cmdnat_rate = {
@@ -3303,7 +3283,7 @@ fl_settings.cmdrnt_rate = {
 
 	help = "max rate in counts/min that a client can send reverse nat connect's, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 20
 }
 
 fl_settings.cmdpsr_rate = {
@@ -3335,7 +3315,7 @@ fl_settings.cmdinf_exp = {
 
 	help = "minutes before the inf commandstats are removed, 0 = default",
 
-	value = 0
+	value = 15
 }
 
 fl_settings.cmdmsg_exp = {
@@ -3367,7 +3347,7 @@ fl_settings.cmdsup_exp = {
 
 	help = "minutes before the sup commandstats are removed, 0 = default",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdsid_exp = {
@@ -3383,7 +3363,7 @@ fl_settings.cmdcon_exp = {
 
 	help = "minutes before the connect attempts are removed, 0 = default",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdsoc_exp = {
@@ -3391,7 +3371,7 @@ fl_settings.cmdsoc_exp = {
 
 	help = "minutes before the open sockets stats that are pending to connect are removed, 0 = default",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdurx_exp = {
@@ -3399,7 +3379,7 @@ fl_settings.cmdurx_exp = {
 
 	help = "minutes before the unknown adc commandstats are removed, 0 = default",
 
-	value = 0
+	value = 360
 }
 
 fl_settings.cmdcrx_exp = {
@@ -3407,7 +3387,7 @@ fl_settings.cmdcrx_exp = {
 
 	help = "minutes before the bad context adc commandstats are removed, 0 = default",
 
-	value = 0
+	value = 360
 }
 
 fl_settings.cmdsta_exp = {
@@ -3423,7 +3403,7 @@ fl_settings.cmdpas_exp = {
 
 	help = "minutes before the pas commandstats are removed, 0 = default",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdcmd_exp = {
@@ -4060,7 +4040,7 @@ en_settings.entitylogregexptime = {
 	end
 	return res
 end
-]] 
+]]
 local cfgfl_list_done = false
 local function gen_cfgfl_list()
 	if cfgfl_list_done then

@@ -12,6 +12,7 @@ local json = base.require("json")
 local io = base.require("io")
 local os = base.require("os")
 local string = base.require("string")
+local table = base.require("table")
 
 -- Where to read/write ban database
 local bans_file = adchpp.Util_getCfgPath() .. "bans.txt"
@@ -21,6 +22,7 @@ bans.ips = {}
 bans.nicks = {}
 bans.nicksre = {}
 bans.msgsre = {}
+bans.schsre = {}
 bans.muted = {}
 
 local settings = access.settings
@@ -42,6 +44,7 @@ local function load_bans()
 	bans.nicks = {}
 	bans.nicksre = {}
 	bans.msgsre = {}
+	bans.schsre = {}
 	bans.muted = {}
 
 	local ok, list, err = aio.load_file(bans_file, aio.json_loader)
@@ -68,6 +71,9 @@ local function load_bans()
 	end
 	if not bans.msgsre then
 		bans.msgsre = {}
+	end
+	if not bans.schsre then
+		bans.schsre = {}
 	end
 	if not bans.muted then
 		bans.muted = {}
@@ -442,7 +448,7 @@ commands.bannickre = {
 			end
 		end
 
-		local action_pos, _, action = parameters:find("^(%d*) ")
+                local action_pos, _, action = parameters:find("^(-?%d*) ")
 		if action_pos then
 			parameters = parameters:sub(action_pos + 2)
 			if #parameters <= 0 then
@@ -477,7 +483,7 @@ commands.bannickre = {
 		end
 	end,
 
-	help = "[action] <nick-reg-exp> [reason] [expiration] - block nicks that match the given reg exp (must be within '<' and '>' brackets); set action to -1 to ban forever or >= 0 to set how many minutes to ban for; expiration defines when this rule expires (in minutes), set to 0 to un-ban",
+	help = "[action] <nick-reg-exp> [reason] [expiration] - block nicks that match the given reg exp (must be within '<' and '>' brackets); action is optional, skip for simple block, set to -1 to ban forever or >= 0 to set how many minutes to ban for; expiration is also optional, defines when this rule expires (in minutes), skip for permanent rule, set to 0 to remove banre",
 
 	protected = is_op,
 
@@ -508,7 +514,7 @@ commands.banmsgre = {
 			end
 		end
 
-		local action_pos, _, action = parameters:find("^(%d*) ")
+                local action_pos, _, action = parameters:find("^(-?%d*) ")
 		if action_pos then
 			parameters = parameters:sub(action_pos + 2)
 			if #parameters <= 0 then
@@ -528,6 +534,7 @@ commands.banmsgre = {
 			if action_pos then
 				ban.action = base.tonumber(action)
 			end
+			re = string.lower(re)
 			bans.msgsre[re] = ban
 			save_bans()
 			autil.reply(c, "Messages that match \"" .. re .. "\" will be blocked (" .. ban_added_string(ban) .. ")")
@@ -543,8 +550,7 @@ commands.banmsgre = {
 		end
 	end,
 
-	help = "[action] <nick-reg-exp> [reason] [expiration] - block nicks that match the given reg exp (must be within '<' and '>' brackets); set action to -1 to ban forever or >= 0 to set how many minutes to ban for; expiration defines when this rule expires (in minutes), set to 0 to un-ban",
-	help = "[action] <msg-reg-exp> [reason] [minutes] - block chat messages that match the given reg exp (must be within '<' and '>' brackets); set action to -1 to ban forever or >= 0 to set how many minutes to ban for; expiration defines when this rule expires (in minutes), set to 0 to un-ban",
+	help = "[action] <chat-reg-exp> [reason] [expiration] - block chatmessages that match the given reg exp (must be within '<' and '>' brackets); action is optional, skip for simple block, set to -1 to ban forever or >= 0 to set how many minutes to ban for; expiration is also optional, defines when this rule expires (in minutes), skip for permanent rule, set to 0 to remove banre",
 
 	protected = is_op,
 
@@ -553,6 +559,72 @@ commands.banmsgre = {
 		params = {
 			autil.ucmd_line("Ban duration (facultative, in minutes; -1 = forever)"),
 			"<" .. autil.ucmd_line("Reg exp of chat messages to forbid") .. ">",
+			autil.ucmd_line("Reason (facultative)"),
+			autil.ucmd_line("Rule expiration (facultative, in minutes)")
+		}
+	}
+}
+
+commands.banschre = {
+	command = function(c, parameters)
+		local level = access.get_level(c)
+		if level < settings.oplevel.value then
+			return
+		end
+
+		local minutes_pos, _, minutes = parameters:find(" (%d*)$")
+		if minutes_pos then
+			parameters = parameters:sub(1, minutes_pos - 1)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
+		end
+
+                local action_pos, _, action = parameters:find("^(-?%d*) ")
+		if action_pos then
+			parameters = parameters:sub(action_pos + 2)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
+		end
+
+		local re, reason = parameters:match("<([^>]+)> ?(.*)")
+		if not re then
+			autil.reply(c, "You need to supply a reg exp (within '<' and '>' brackets)")
+			return
+		end
+
+		if base.tonumber(minutes) ~= 0 then
+			local ban = make_ban(level, reason, minutes)
+			if action_pos then
+				ban.action = base.tonumber(action)
+			end
+			bans.schsre[re] = ban
+			save_bans()
+			autil.reply(c, "Searches that match \"" .. re .. "\" will be blocked (" .. ban_added_string(ban) .. ")")
+			return
+		end
+
+		if bans.schsre[re] then
+			bans.msgsre[re] = nil
+			save_bans()
+			autil.reply(c, "Searches that match \"" .. re .. "\" won't be blocked anymore")
+		else
+			autil.reply(c, "Searches that match \"" .. re .. "\" are not being blocked")
+		end
+	end,
+
+	help = "[action] <search-reg-exp> [reason] [expiration] - block searches that match the given reg exp (must be within '<' and '>' brackets); action is optional, skip for simple block, set to -1 to ban forever or >= 0 to set how many minutes to ban for; expiration is also optional, defines when this rule expires (in minutes), skip for permanent rule, set to 0 to remove banre",
+
+	protected = is_op,
+
+	user_command = {
+		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Ban search (reg exp)",
+		params = {
+			autil.ucmd_line("Ban duration (facultative, in minutes; -1 = forever)"),
+			"<" .. autil.ucmd_line("Reg exp of search messages to forbid") .. ">",
 			autil.ucmd_line("Reason (facultative)"),
 			autil.ucmd_line("Rule expiration (facultative, in minutes)")
 		}
@@ -591,6 +663,11 @@ commands.listbans = {
 		str = str .. "\n\nMessage bans (reg exp):"
 		for msgre, ban in base.pairs(bans.msgsre) do
 			str = str .. "\n\tReg exp: " .. msgre .. "\t | " .. ban_info_string(ban)
+		end
+
+		str = str .. "\n\nSearch bans (reg exp):"
+		for schre, ban in base.pairs(bans.schsre) do
+			str = str .. "\n\tReg exp: " .. schre .. "\t | " .. ban_info_string(ban)
 		end
 
 		str = str .. "\n\nMuted:"
@@ -710,13 +787,19 @@ local function onMSG(c, cmd)
 	end
 
 	local level = access.get_level(c)
-	local msg = cmd:getParam(0)
+	local msg = string.lower(cmd:getParam(0))
 
 	for re, reban in base.pairs(bans.msgsre) do
 		if reban.level > level and msg:match(re) then
+			local str = "Message blocked"
+			if reban.reason then
+				str = str .. ": " .. reban.reason
+			end
 			if reban.action then
-				local ban = { level = reban.level, reason = reban.reason }
-				if reban.action ~= 0 then
+				local ban = { level = reban.level, reason = str }
+				if reban.action == 0 then
+					ban.expires = 0
+				else
 					if reban.action > 0 then
 						ban.expires = os.time() + reban.action * 60
 					end
@@ -725,10 +808,60 @@ local function onMSG(c, cmd)
 				end
 				dump_banned(c, ban)
 			else
-				local str = "Message blocked"
-				if reban.reason then
-					str = str .. ": " .. reban.reason
+				autil.reply(c, str)
+			end
+			return false
+		end
+	end
+
+	return true
+end
+
+local function onSCH(c, cmd)
+	local level = access.get_level(c)
+	local sch
+
+	local tr = cmd:getParam('TR', 0)
+	if #tr > 0 then
+		return true
+	else
+		local vars = {}
+		local params = cmd:getParameters()
+		local params_size = params:size()
+		if params_size > 0 then
+			for i = 0, params_size - 1 do
+				local param = params[i]
+				if #param > 2 then
+					local field = string.sub(param, 1, 2)
+					if field == 'AN' then
+						local var = string.sub(param, 3)
+						table.insert(vars, string.lower(var))
+					end
 				end
+			end
+		end
+		sch = table.concat(vars, ' ')
+	end
+
+	for re, reban in base.pairs(bans.schsre) do
+		if reban.level > level and sch:match(re) then
+			local str = "Search blocked"
+			if reban.reason then
+				str = str .. ": " .. reban.reason
+			end
+			if reban.action then
+				local ban = { level = reban.level, reason = str }
+				if reban.action == 0 then
+					ban.expires = 0
+				else
+					if reban.action > 0 then
+						ban.expires = os.time() + reban.action * 60
+					end
+					bans.cids[c:getCID():toBase32()] = ban
+					save_bans()
+				end
+				dump_banned(c, ban)
+			else
 				autil.reply(c, str)
 			end
 			return false
@@ -759,13 +892,19 @@ local function onINF(c, cmd)
 	else
 		for re, reban in base.pairs(bans.nicksre) do
 			if nick:match(re) and reban.level > access.get_level(c) then
-				ban = { level = reban.level, reason = reban.reason }
+			local str = "Nick blocked"
+			if reban.reason then
+				str = str .. ": " .. reban.reason
+			end
+				ban = { level = reban.level, reason = str }
 				if reban.action and reban.action ~= 0 then
 					if reban.action > 0 then
 						ban.expires = os.time() + reban.action * 60
 					end
 					bans.cids[c:getCID():toBase32()] = ban
 					save_bans()
+				else
+					ban.expires = 0
 				end
 				break
 			end
@@ -782,6 +921,7 @@ end
 load_bans()
 
 access.register_handler(adchpp.AdcCommand_CMD_MSG, onMSG, true)
+access.register_handler(adchpp.AdcCommand_CMD_SCH, onSCH, true)
 access.register_handler(adchpp.AdcCommand_CMD_INF, onINF)
 
 cancel_timer = sm:addTimedJob(1000, clear_expired_bans)
