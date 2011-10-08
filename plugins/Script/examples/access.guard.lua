@@ -57,8 +57,6 @@ end
 local fl_settings_file = adchpp.Util_getCfgPath() .. "fl_settings.txt"
 local li_settings_file = adchpp.Util_getCfgPath() .. "li_settings.txt"
 local en_settings_file = adchpp.Util_getCfgPath() .. "en_settings.txt"
-local about_file = adchpp.Util_getCfgPath() .. "about.txt"
-local rules_file = adchpp.Util_getCfgPath() .. "rules.txt"
 local fldb_folder = "FL_DataBase"
 local script_path = base.scriptPath .. '/'
 local fldb_path = script_path .. fldb_folder .. '/'
@@ -76,7 +74,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.28"
+guardrev = "1.0.29"
 
 -- Tmp tables
 local data = {}
@@ -148,50 +146,14 @@ limitstats.minhubslotratios = {}
 limitstats.maxhubslotratios = {}
 limitstats.maxhubcounts = {}
 limitstats.suadcs = {}
+limitstats.sunatts = {}
+limitstats.subloms = {}
 limitstats.maxsameips = {}
 
 -- Table for the entity's 
 local entitystats = {}
-entitystats.last_ids = {}
-entitystats.hist_ids = {}
-
-local function load_about()
-	local file = io.open(about_file, "r")
-	if not file then
-		log("Unable to open " .. about_file .. ", about txt not loaded")
-		abouttxt = "There is no specific about information available for this hub"
-		return
-	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		str = "There is no specific about information available for this hub"
-	end
-
-	abouttxt = str
-
-end
-
-local function load_rules()
-	local file = io.open(rules_file, "r")
-	if not file then
-		log("Unable to open " .. rules_file .. ", rules txt not loaded")
-		abouttxt = "There are no specific rules available for this hub"
-		return
-	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		str = "There are no specific rules available for this hub"
-	end
-
-	rulestxt = str
-
-end
+entitystats.last_cids = {}
+entitystats.hist_cids = {}
 
 local function load_tmpbanstats()
 	tmpbanstats = {}
@@ -405,6 +367,7 @@ local function load_limitstats()
 	limitstats.maxhubcounts = {}
 	limitstats.suadcs = {}
 	limitstats.sunatts = {}
+	limitstats.subloms = {}
 	limitstats.maxsameips = {}
 	local file = io.open(limitstats_file, "r")
 	if not file then
@@ -477,6 +440,9 @@ local function load_limitstats()
 	if not limitstats.sunatts then
 		limitstats.sunatts = {}
 	end
+	if not limitstats.subloms then
+		limitstats.subloms = {}
+	end
 	if not limitstats.maxsameips then
 		limitstats.maxsameips = {}
 	end
@@ -484,8 +450,8 @@ end
 
 local function load_entitystats()
 	entitystats = {}
-	entitystats.last_ids = {}
-	entitystats.hist_ids = {}
+	entitystats.last_cids = {}
+	entitystats.hist_cids = {}
 	local file = io.open(entitystats_file, "r")
 	if not file then
 		log("Unable to open " .. entitystats_file .. ", entitystats not loaded")
@@ -506,20 +472,12 @@ local function load_entitystats()
 	end
 
 	entitystats = list
-	if not entitystats.last_ids then
-		entitystats.last_ids = {}
+	if not entitystats.last_cids then
+		entitystats.last_cids = {}
 	end
-	if not entitystats.hist_ids then
-		entitystats.hist_ids = {}
+	if not entitystats.hist_cids then
+		entitystats.hist_cids = {}
 	end
-end
-
-local function gen_id(table)
-	local id = 1
-	while table[id] do
-		id = id + 1 
-	end
-	return id 
 end
 
 local function save_tmpbanstats()
@@ -871,11 +829,8 @@ local function data_info_string_log(info)
 end
 
 local function data_info_string_entity(info)
-	local str = "\n\tCID:\t\t\t\t\t" .. info.cid
 
-	if info.ip then
-		str = str .. "\n\tIP:\t\t\t\t\t" .. info.ip
-	end
+	local str = "\n\tIP:\t\t\t\t\t" .. info.ip
 
 	if info.ni then
 		str = str .. "\n\tNick:\t\t\t\t\t" .. info.ni
@@ -939,36 +894,33 @@ local function data_info_string_entity(info)
 end
 
 local function data_info_string_entity_hist(info)
-	local str = "\tEntity ID: " .. info.id
 
-	if info.cid then
-		str = str .. "\tCID: " .. info.cid
-	end
+	local str = "\tCID: " .. info.cid
 
 	if info.ip then
-		str = str .. "\tIP: " .. info.ip
+		str = str .. "\n\tIP: " .. info.ip
 	end
 
 	if info.ni then
-		str = str .. "\tNI: " .. info.ni
+		str = str .. "\t\tNI: " .. info.ni
+	end
+
+	if info.logins then
+		str = str .. "\n\tLogins: " .. info.logins
+	end
+
+	if info.changes then
+		str = str .. "\t\tTimes Changed: " .. info.changes
 	end
 
 	if info.ap then
 		if info.ve then
-			str = str .. " \t\t\tAP: " .. info.ap .. " " .. info.ve 
+			str = str .. " \t\tAP: " .. info.ap .. " " .. info.ve 
 		end
 	else
 		if info.ve then
-			str = str .. " \t\t\tAP: " .. info.ve
+			str = str .. " \t\tAP: " .. info.ve
 		end
-	end
-
-	if info.logins then
-		str = str .. "\tLogins: " .. info.logins
-	end
-
-	if info.changes then
-		str = str .. "\tTimes Changed: " .. info.changes
 	end
 
 	if info.updated then
@@ -988,8 +940,8 @@ local function get_rate(started, count)
 	local diff = os.difftime(os.time(), started)
 	local rawrate = count / diff * 60 
 	local rate = base.math.floor(rawrate * mult + 0.5) / mult
-	if base.tostring(rate) == "1.#INF" then
-		rate = 99999
+	if base.tostring(rate) == "1.#INF" or base.tostring(rate) == "inf" then
+		rate = 9999
 	end
 	return rate
 end
@@ -999,8 +951,8 @@ local function get_diffrate(fix, agefactor)
 	local mult = 10^(round or 0)
 	local rawrate = (fix - (fix * agefactor)) * 60
 	local diffrate = base.math.floor(rawrate * mult + 0.5) / mult
-	if base.tostring(diffrate) == "1.#INF" then
-		diffrate = 99999
+	if base.tostring(diffrate) == "1.#INF" or base.tostring(diffrate) == "inf" then
+		diffrate = 9999
 	end
 	return diffrate
 end
@@ -1455,15 +1407,13 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 	return update
 end
 
-local function make_entity(id, c, days)
-	local cid = c:getCID():toBase32()
+local function make_entity(c, days)
 	local ip = c:getIp()
 	local ni = c:getField("NI")
 	local ap = c:getField("AP")
 	local ve = c:getField("VE")
 	local level = get_level(c)
-	local data = { cid = cid }
-	data.ip = ip
+	local data = {ip = ip}
 	if ni and #ni > 0 then
 		data.ni = ni
 	end
@@ -1486,14 +1436,14 @@ local function make_entity(id, c, days)
 	return data
 end
 
-local function logon_entity(id, c, data, days)
+local function logon_entity(c, data, days)
+	local cid = c:getCID():toBase32()
 	local ip = c:getIp()
 	local ni = c:getField("NI")
 	local ap = c:getField("AP")
 	local ve = c:getField("VE")
 	local level = get_level(c)
-	local update = { cid = data.cid }
-	update.ip = ip
+	local update = { ip = data.ip }
 	if ni and #ni > 0 then
 		update.ni = ni
 	end
@@ -1526,13 +1476,13 @@ local function logon_entity(id, c, data, days)
 	if ip ~= data.ip or ni ~= data.ni or level ~= data.level then
 		update.changes = data.changes + 1
 		update.updated = os.time()
-		data.id = id
-		table.insert(entitystats.hist_ids, data) -- inserts {data} at the end of table hist_ids
+		data.cid = cid
+		table.insert(entitystats.hist_cids, data) -- inserts {data} at the end of table hist_cids
 	end
 	return update
 end
 
-local function online_entity(id, c, data, days)
+local function online_entity(c, data, days)
 	if data.timeon then
 		data.timeon = data.timeon + 900
 	else
@@ -1542,7 +1492,7 @@ local function online_entity(id, c, data, days)
 	return data
 end
 
-local function logoff_entity(id, c, data, days)
+local function logoff_entity(c, data, days)
 	data.leave = os.time()
 	if not data.join then
 		data.join = os.time() - 1
@@ -1559,11 +1509,6 @@ local function logoff_entity(id, c, data, days)
 	end
 	data.expires = os.time() + days * 86400
 	return data
-end
-
-local function get_mem()
-	base.collectgarbage("collect")
-	return string.format("%-.2f Kb.", base.collectgarbage("count"))
 end
 
 local default_user = { level = 0, is_default = true }
@@ -1802,15 +1747,14 @@ local function onCON(c) -- Stats verification for connects and building entitys 
 		else
 			days = en_settings.entitylogexptime.value
 		end
-		for id, data in base.pairs(entitystats.last_ids) do
-			if cid == data.cid then
+		for ent, data in base.pairs(entitystats.last_cids) do
+			if ent == cid then
 				match = true
-				entitystats.last_ids[id] = logon_entity(id, c, data, days)
+				entitystats.last_cids[cid] = logon_entity(c, data, days)
 			end
 		end
 		if not match then
-			local id = gen_id(entitystats.last_ids)
-			entitystats.last_ids[id] = make_entity(id, c, days)
+			entitystats.last_cids[cid] = make_entity(c, days)
 		end
 	end
 
@@ -1857,15 +1801,14 @@ local function onONL() -- Stats verification for online users and updating entit
 					else
 						days = en_settings.entitylogexptime.value
 					end
-					for id, data in base.pairs(entitystats.last_ids) do
-						if cid == data.cid then
+					for ent, data in base.pairs(entitystats.last_cids) do
+						if ent == cid then
 							match = true
-							entitystats.last_ids[id] = online_entity(id, c, data, days)
+							entitystats.last_cids[cid] = online_entity(c, data, days)
 						end
 					end
 					if not match then
-						local id = gen_id(entitystats.last_ids)
-						entitystats.last_ids[id] = make_entity(id, c, days)
+						entitystats.last_cids[cid] = make_entity(c, days)
 					end
 				end
 			end
@@ -1885,14 +1828,13 @@ local function onDIS(c) -- Stats verification for disconnects and updating entit
 		else
 			days = en_settings.entitylogexptime.value
 		end
-		for id, data in base.pairs(entitystats.last_ids) do
-			if cid == data.cid then
-				entitystats.last_ids[id] = logoff_entity(id, c, data, days)
+		for ent, data in base.pairs(entitystats.last_cids) do
+			if ent == cid then
+				entitystats.last_cids[cid] = logoff_entity(c, data, days)
 				return true
 			end
 		end
-		local id = gen_id(entitystats.last_ids)
-		entitystats.last_ids[id] = make_entity(id, c, days)
+		entitystats.last_cids[cid] = make_entity(c, days)
 	end
 	return true
 end
@@ -1992,6 +1934,35 @@ local function onCMD(c, cmd) -- Stats and rules verification for command strings
 end
 
 local function onSUP(c, cmd) -- Stats and rules verification for support strings
+
+	local blom = c:hasSupport(adchpp.AdcCommand_toFourCC("BLO0")) or c:hasSupport(adchpp.AdcCommand_toFourCC("BLOM")) or 
+c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers from this limitrule
+
+	if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not blom then
+		local ip = c:getIp()
+		local stat = "sublom"
+		local str = "This hub requires that your client supports the BLOM (TTH search filtering) extention !"
+		local type = "lim"
+		local factor = 60
+		local maxcount = 0
+		maxrate = li_settings.sublom_rate.value
+		local minutes = li_settings.sublom_exp.value
+		if limitstats.subloms[ip] then
+			for victim_ip, data in base.pairs(limitstats.subloms) do
+				if ip == victim_ip then
+					limitstats.subloms[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+					if limitstats.subloms[ip] and limitstats.subloms[ip].warning > 0 then
+						dump_redirected(c, str)
+						return false
+					end
+				end
+			end
+		else
+			limitstats.subloms[ip] = make_data(c, cmd, msg, type, minutes)
+		end
+		dump_redirected(c, str)
+		return false
+	end
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsup_rate.value > 0 then
 		local ip = c:getIp()
@@ -3112,7 +3083,7 @@ fl_settings.fl_maxrate = {
 
 	help = "default maximum rate in counts/min for all enabled command stats,  0 = disabled",
 
-	value = 30
+	value = 15
 }
 
 fl_settings.fl_level = {
@@ -3147,7 +3118,7 @@ fl_settings.cmdinf_rate = {
 
 	help = "max rate in counts/min that a client can send his inf updates, 0 = default, -1 = disabled",
 
-	value = 15
+	value = 10
 }
 
 fl_settings.cmdschman_rate = {
@@ -3155,7 +3126,7 @@ fl_settings.cmdschman_rate = {
 
 	help = "max rate in counts/min that a client can send searches, 0 = default, -1 = disabled",
 
-	value = 10
+	value = 6
 }
 
 fl_settings.cmdschtth_rate = {
@@ -3163,7 +3134,7 @@ fl_settings.cmdschtth_rate = {
 
 	help = "max rate in counts/min that a client can send TTH searches, 0 = default, -1 = disabled",
 
-	value = 6
+	value = 3
 }
 
 fl_settings.cmdmsg_rate = {
@@ -3203,7 +3174,7 @@ fl_settings.cmdsoc_rate = {
 
 	help = "maximum rate in counts/min that the same ip can open a new socket, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 15
 }
 
 fl_settings.cmdurx_rate = {
@@ -3243,7 +3214,7 @@ fl_settings.cmdcmd_rate = {
 
 	help = "max rate in counts/min that a client can send cmd strings, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 5
 }
 
 fl_settings.cmdres_rate = {
@@ -3259,7 +3230,7 @@ fl_settings.cmdctm_rate = {
 
 	help = "max rate in counts/min that a client can send connect request's, 0 = default, -1 = disabled",
 
-	value = -1
+	value = 120
 }
 
 fl_settings.cmdrcm_rate = {
@@ -3267,7 +3238,7 @@ fl_settings.cmdrcm_rate = {
 
 	help = "max rate in counts/min that a client can send reverse connect's, 0 = default, -1 = disabled",
 
-	value = 20
+	value = 8
 }
 
 fl_settings.cmdnat_rate = {
@@ -3275,7 +3246,7 @@ fl_settings.cmdnat_rate = {
 
 	help = "max rate in counts/min that a client can send nat connect request's, 0 = default, -1 = disabled",
 
-	value = -1
+	value = 120
 }
 
 fl_settings.cmdrnt_rate = {
@@ -3283,7 +3254,7 @@ fl_settings.cmdrnt_rate = {
 
 	help = "max rate in counts/min that a client can send reverse nat connect's, 0 = default, -1 = disabled",
 
-	value = 20
+	value = 8
 }
 
 fl_settings.cmdpsr_rate = {
@@ -3291,7 +3262,7 @@ fl_settings.cmdpsr_rate = {
 
 	help = "max rate in counts/min that a client can send partitial file sharing string's, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdget_rate = {
@@ -3307,7 +3278,7 @@ fl_settings.cmdsnd_rate = {
 
 	help = "max rate in counts/min that a client can send the send transfer command, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdinf_exp = {
@@ -3315,7 +3286,7 @@ fl_settings.cmdinf_exp = {
 
 	help = "minutes before the inf commandstats are removed, 0 = default",
 
-	value = 15
+	value = 0
 }
 
 fl_settings.cmdmsg_exp = {
@@ -3355,7 +3326,7 @@ fl_settings.cmdsid_exp = {
 
 	help = "minutes before the sid commandstats are removed, 0 = default",
 
-	value = 0
+	value = 10
 }
 
 fl_settings.cmdcon_exp = {
@@ -3758,6 +3729,22 @@ li_settings.sunatt_exp = {
 	value = 0
 }
 
+li_settings.sublom_rate = {
+	alias = { supportblom_rate = true },
+
+	help = "maximum rate in counts / hour that a user can try this, 0 = default, -1 = disabled",
+
+	value = 0
+}
+
+li_settings.sublom_exp = {
+	alias = { supportblom_exp = true },
+
+	help = "minutes before the support blom attempts are removed, 0 = default",
+
+	value = 0
+}
+
 li_settings.maxsameip_rate = {
 	alias = { maxsameips_rate = true },
 
@@ -3980,6 +3967,16 @@ li_settings.sunatt = {
 	value = 0
 }
 
+li_settings.sublom = {
+	alias = { supportblom = true },
+
+	change = recheck_info,
+
+	help = "disallow clients that don't have BLOM (TTH search filtering) support, 0 = disabled",
+
+	value = 0
+}
+
 li_settings.maxsameip = {
 	alias = { maxsameips = true },
 
@@ -4018,7 +4015,7 @@ en_settings.entitylogregexptime = {
 	value = 60
 }
 
---[[ local function verify_port(c, port)
+local function verify_port(c, port)
 	local socket = base.require "socket"
 	local cid = c:getCID():toBase32()
 	local ip = c:getIp()
@@ -4040,7 +4037,7 @@ en_settings.entitylogregexptime = {
 	end
 	return res
 end
-]]
+
 local cfgfl_list_done = false
 local function gen_cfgfl_list()
 	if cfgfl_list_done then
@@ -4758,6 +4755,14 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. sunatts .. data_info_string_cid(info)
 		end
 
+		str = str .. "\n\nSupport BLOM forced:"
+		str = str .. "\t\tMaximum Rate: " .. li_settings.sublom_rate.value .. " / h"
+		str = str .. "\t\t\tExpire Time: " .. li_settings.sublom_exp.value
+		str = str .. "\t\t\tValue: " .. li_settings.sublom.value .. "\n"
+		for subloms, info in base.pairs(limitstats.subloms) do
+			str = str .. "\n\tCID: " .. subloms .. data_info_string_ip(info)
+		end
+
 		str = str .. "\n\nMessage limits:\n\nMax Message length:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxmsglength_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxmsglength_exp.value
@@ -4868,18 +4873,18 @@ commands.showentity = {
 
 		local value = param
 
-		local entity = base.tonumber(value) or base.tostring(value) -- TODO IP validation
+		local entity = base.tostring(value) -- TODO IP validation
 		if not entity then
-			autil.reply(c, "This is not a valid ID , Nick , CID or IP ")
+			autil.reply(c, "This is not a valid Nick , CID or IP ")
 			return
 		end
 
 		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
 		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
 		str = str .. "\n\nAll current Entity records that match your search criteria: [ " .. entity .. " ]\n" 
-		for last_id, info in base.pairs(entitystats.last_ids) do
-			if (entity == base.tonumber(last_id) and entity ~= 0) or entity == info.ip or entity == info.cid or (info.ni and string.lower(info.ni) == string.lower(entity)) then
-				str = str .. "\n\tEntity\t\t\t\t\tID: " .. last_id .. data_info_string_entity(info) .. "\n"
+		for last_cid, info in base.pairs(entitystats.last_cids) do
+			if entity == last_cid or entity == info.ip or (info.ni and string.lower(info.ni) == string.lower(entity)) then
+				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
 
@@ -4887,80 +4892,12 @@ commands.showentity = {
 
 	end,
 
-	help = "shows full last info for all entity(s) that match either ID, Nick, IP or CID",
+	help = "shows full last info for all entity(s) that match either Nick, IP or CID",
 
 	protected = is_stats,
 
-	user_command = { name = "Guard management" .. autil.ucmd_sep .. "Entity Info Logs" .. autil.ucmd_sep .. "Show Entity Info", 			hub_params = { autil.ucmd_line("Entity ID, Nick, IP or CID") },
+	user_command = { name = "Guard management" .. autil.ucmd_sep .. "Entity Info Logs" .. autil.ucmd_sep .. "Show Entity Info", 			hub_params = { autil.ucmd_line("Entity Nick, IP or CID") },
 			user_params = { "%[userCID]" }
-	}
-}
-
-commands.traceid = {
-	alias = { tracebyid = true },
-
-	command = function(c, param)
-		if not commands.traceid.protected(c) then
-			return
-		end
-
-		local entip, entcid, entni = "", "", ""
-		local value = param
-
-		local id = base.tonumber(value)
-		if not id or id == 0 then
-			autil.reply(c, "This is not a valid entity ID")
-			return
-		end
-
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
-		str = str .. "\n\nEntity Last records:"
-		for last_id, info in base.pairs(entitystats.last_ids) do
-			if base.tonumber(last_id) == id then
-				entip = info.ip
-				entcid = info.cid
-				entni = info.ni
-				str = str .. "\n\tEntity\t\t\t\t\tID: " .. last_id .. data_info_string_entity(info)
-			end
-		end
-
-		str = str .. "\n\nHistory records for this ID:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.id == id then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
-			end
-		end
-
-		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ni and string.lower(info.ni) == string.lower(entni) then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
-			end
-		end
-
-		str = str .. "\n\nAll Hist records that used this IP:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ip and info.ip == entip then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
-			end
-		end
-
-		str = str .. "\n\nAll Hist records that used this CID:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.cid and info.cid == entcid then
-				str = str .. "\n" data_info_string_entity_hist(info)
-			end
-		end
-		autil.reply(c, str)
-
-	end,
-
-	help = "traces a entity last info and history using his entity ID",
-
-	protected = is_stats,
-
-	user_command = { name = "Guard management" .. autil.ucmd_sep .. "Entity Info Logs" .. autil.ucmd_sep .. "Trace Entity by ID", 			params = { autil.ucmd_line("Entity ID to find") }
 	}
 }
 
@@ -4972,7 +4909,7 @@ commands.traceip = {
 			return
 		end
 
-		local entni, entip, entcid = { }, { }, { }
+		local entni, entcid = { }, { }
 		local value = param
 		local ip = base.tostring(value)
 		if not ip then -- TODO make it poss to use a range and have a ip validation
@@ -4983,33 +4920,36 @@ commands.traceip = {
 		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
 		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
-		for last_id, info in base.pairs(entitystats.last_ids) do
+		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if info.ip and info.ip == ip then
-				table.insert(entni, last_id, info.ni)
-				table.insert(entip, last_id, info.ip)
-				table.insert(entcid, last_id, info.cid)
-				str = str .. "\n\tEntity\t\t\t\t\tID: " .. last_id .. data_info_string_entity(info)
+				table.insert(entni, info.ni)
+				table.insert(entcid, last_cid)
+				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ni and entni[info.id] and string.lower(info.ni) == string.lower(entni[info.id]) then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			for i,v in base.ipairs(entni) do
+				if info.ni and v == info.ni then	
+					str = str .. "\n" .. data_info_string_entity_hist(info)
+				end
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this IP:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ip and (entip[info.id] and info.ip == entip[info.id]) or (info.ip == ip) then
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			if info.ip and info.ip == ip then
 				str = str .. "\n" .. data_info_string_entity_hist(info)
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this CID:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.cid and info.cid == entcid[info.id] then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			for i,v in base.ipairs(entcid) do
+				if info.cid and v == info.cid then	
+					str = str .. "\n" .. data_info_string_entity_hist(info)
+				end
 			end
 		end
 		autil.reply(c, str)
@@ -5034,7 +4974,7 @@ commands.tracecid = {
 			return
 		end
 
-		local entni, entip, entcid = { }, { }, { }
+		local entni, entip = { }, { }
 		local value = param
 
 		local cid = base.tostring(value)
@@ -5046,32 +4986,35 @@ commands.tracecid = {
 		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
 		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
-		for last_id, info in base.pairs(entitystats.last_ids) do
-			if info.cid and info.cid == cid then
-				table.insert(entni, last_id, info.ni)
-				table.insert(entip, last_id, info.ip)
-				table.insert(entcid, last_id, info.cid)
-				str = str .. "\n\tEntity\t\t\t\t\tID: " .. last_id .. data_info_string_entity(info)
+		for last_cid, info in base.pairs(entitystats.last_cids) do
+			if last_cid == cid then
+				table.insert(entni, info.ni)
+				table.insert(entip, info.ip)
+				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ni and entni[info.id] and string.lower(info.ni) == string.lower(entni[info.id]) then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			for i,v in base.ipairs(entni) do
+				if info.ni and v == info.ni then	
+					str = str .. "\n" .. data_info_string_entity_hist(info)
+				end
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this IP:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ip and info.ip == entip[info.id] then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			for i,v in base.ipairs(entip) do
+				if info.ip and v == info.ip then	
+					str = str .. "\n" .. data_info_string_entity_hist(info)
+				end
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this CID:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.cid and (entcid[info.id] and info.cid == entcid[info.id]) or (info.cid == cid) then
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			if info.cid and info.cid == cid then	
 				str = str .. "\n" .. data_info_string_entity_hist(info)
 			end
 		end
@@ -5097,7 +5040,7 @@ commands.traceni = {
 			return
 		end
 
-		local entni, entip, entcid = { }, { }, { }
+		local entip, entcid = { }, { }
 		local value = param
 
 		local ni = base.tostring(value) -- TODO make it poss to use a regexp
@@ -5109,33 +5052,36 @@ commands.traceni = {
 		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
 		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
-		for last_id, info in base.pairs(entitystats.last_ids) do
+		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if info.ni and string.lower(info.ni) == string.lower(ni) then
-				table.insert(entni, last_id, info.ni)
-				table.insert(entip, last_id, info.ip)
-				table.insert(entcid, last_id, info.cid)
-				str = str .. "\n\tEntity\t\t\t\t\tID: " .. last_id .. data_info_string_entity(info)
+				table.insert(entip, info.ip)
+				table.insert(entcid, last_cid)
+				str = str .. "\n\tEntity\t\t\t\t\tCID: " .. last_cid .. data_info_string_entity(info)
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ni and (entni[info.id] and string.lower(info.ni) == string.lower(entni[info.id])) or (info.ni and string.lower(info.ni) == string.lower(ni)) then
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			if info.ni and string.lower(info.ni) == string.lower(ni) then
 				str = str .. "\n" .. data_info_string_entity_hist(info)
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this IP:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.ip and info.ip == entip[info.id] then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			for i,v in base.ipairs(entip) do
+				if info.ip and v == info.ip then	
+					str = str .. "\n" .. data_info_string_entity_hist(info)
+				end
 			end
 		end
 
 		str = str .. "\n\nAll Hist records that used this CID:"
-		for hist_id, info in base.pairs(entitystats.hist_ids) do
-			if info.cid and info.cid == entcid[info.id] then
-				str = str .. "\n" .. data_info_string_entity_hist(info)
+		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+			for i,v in base.ipairs(entcid) do
+				if info.cid and v == info.cid then	
+					str = str .. "\n" .. data_info_string_entity_hist(info)
+				end
 			end
 		end
 		autil.reply(c, str)
@@ -5152,125 +5098,11 @@ commands.traceni = {
 	}
 }
 
-commands.showabout = {
-	alias = { about = true },
-
-	command = function(c)
-
-		str = base.tostring(abouttxt)
-		autil.reply(c, str)
-	end,
-
-	help = "shows some specific information for this hub",
-
-	user_command = { name = "Guard utilities" .. autil.ucmd_sep .. "Show Hub's About" }
-}
-
-commands.showrules = {
-	alias = { rules = true },
-
-	command = function(c)
-
-		str = base.tostring(rulestxt)
-		autil.reply(c, str)
-	end,
-
-	help = "shows the specific hub rules",
-
-	user_command = { name = "Guard utilities" .. autil.ucmd_sep .. "Show Hub's Rules" }
-}
-
-commands.guardabout = {
-	alias = { aboutguard = true },
-
-	command = function(c)
-
-		if not commands.guardabout.protected(c) then
-			return
-		end
-
-		local memory = get_mem()
-		local now = os.time()
-		local scripttime = os.difftime(now, start_time)
-		local hubtime = cm:getUpTime()
-
-str = "\n"
-str = str .. "\n                                                                             ///,        //// "
-str = str .. "\n                                                                              \\  /,      /  >. "
-str = str .. "\n                                                                               \\  /,   _/  /. "
-str = str .. "\n                                                                                \\_  /_/   /. "
-str = str .. "\n                                                                                 \\__/_   <  ADCH++ " .. adchpp.versionString
-str = str .. "\n                                                                                 /<<< \\_\\_ "
-str = str .. "\n                                                                                /,)^>>_._ \\ "
-str = str .. "\n                                                                               (/   \\\\ /\\\\\\ "
-str = str .. "\n                                                                                    // ```` "
-str = str .. "\n                                                                       ======((`======="
-str = str .. "\n"
-str = str .. "\n			        Hub uptime: " .. access.format_seconds(hubtime)
-str = str .. "\n			        Script uptime: " .. access.format_seconds(scripttime)
-str = str .. "\n				      Running Guard script version: " .. guardrev
-str = str .. "\n					Script's used memory: " .. memory
-str = str .. "\n"
-
-		autil.reply(c, str)
-	end,
-
-	help = "shows the scripts uptime, version and memory usage",
-
-	protected = is_stats,
-
-	user_command = { name = "Guard management" .. autil.ucmd_sep .. "Show Scripts about" }
-}
-
---[[ commands.checkconnection = {
-	alias = { checkconnect = true, checkport = true },
-
-	command = function(c, param)
-
-		local value = param
-
-		local port = base.tonumber(value)
-		if not port then
-			autil.reply(c, "Only numbers are accepted for the port value")
-			return
-		end
-
-		local msg
-		local res = verify_port(c, port)
-
-		if res.socket then
-			if res.tcp then
-				msg = "Your clients TCP port seems reachable and answers, you should be able to use the active transfers method !"
-			else	
-				msg = "Your port seems reachable (test can not verify answer so can be a TLS or UDP port), you should be able to use the active mode normaly !"
-			end
-		else
-			msg = "Your client's ip / port could not be contacted, it seems that you should use passive mode !"
-		end
-
-		autil.reply(c, msg)
-	end,
-
-	help = "helps you verify accessebility for the ports used in your connection settings",
-
-	user_command = {
-		name = "Guard utilities" .. autil.ucmd_sep .. "Check connection settings",
-			params = { autil.ucmd_line("Port number to verify")
-		}
-	}
-}
-]]
-
-base.pcall(load_about)
-base.pcall(load_rules)
 base.pcall(load_limitstats)
 base.pcall(load_commandstats)
 base.pcall(load_tmpbanstats)
 base.pcall(load_kickstats)
 base.pcall(load_entitystats)
-
--- seems no other way to convince json that table is NOT a array TODO
-entitystats.last_ids[0] = { cid = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", ni = "HUB" , changes = 1 }
 
 fl_settings_loaded = load_fl_settings()
 li_settings_loaded = load_li_settings()
