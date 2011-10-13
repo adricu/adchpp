@@ -332,7 +332,7 @@ settings.owner = {
 }
 
 settings.passinlist = {
-	help = "show passwords of users with a lower level in +listregs, 1 = show, 0 = don't show",
+	help = "show passwords and levels of users with a lower level in +listregs, 1 = show, 0 = don't show",
 
 	value = 1
 }
@@ -550,18 +550,12 @@ local function update_user(user, cid, nick)
 			return false, "This hub doesn't allow registered users to change their nick; ask an operator to delete your current registration data if you really want a new nick. Please connect again with your current registered nick: " .. user.nick
 		end
 
-		if users.nicks[nick] then
+		if users.nicks[nick] and users.nicks[nick].level >= user.level then
 			-- new nick taken...
-			return false, "Nick taken by another registered user"
+			return false, "Nick taken by another registered user with same or higher level then yours"
 		end
 
-		if user.nick then
-			users.nicks[user.nick] = nil
-		end
-
-		if user.cid then
-			users.cids[user.cid] = nil
-		end
+		unregister_user(user.cid, nick)
 
 		user.nick = nick
 		user.lasttime = os.time()
@@ -572,18 +566,12 @@ local function update_user(user, cid, nick)
 	end
 
 	if user.cid ~= cid then
-		if users.cids[cid] then
+		if users.cids[cid] and users.cids[cid].level >= user.level then
 			-- new cid taken...
-			return false, "CID taken by another registered user"
+			return false, "CID taken by another registered user with same or higher level then yours"
 		end
 
-		if user.cid then
-			users.cids[user.cid] = nil
-		end
-
-		if user.nick then
-			users.nicks[user.nick] = nil
-		end
+		unregister_user(cid, user.nick)
 
 		user.cid = cid
 		user.lasttime = os.time()
@@ -613,6 +601,26 @@ function register_user(cid, nick, password, level, regby)
 	save_users()
 	
 	return user
+end
+
+function unregister_user(cid, nick)
+	if cid then
+		users.cids[cid] = nil
+		for k, v in base.pairs(users.nicks) do
+			if cid == v.cid then
+				users.nicks[k] = nil
+			end
+		end
+	end
+	if nick then
+		users.nicks[nick] = nil
+		for k, v in base.pairs(users.cids) do
+			if nick == v.nick then
+				users.cids[k] = nil
+			end
+		end
+	end
+	return
 end
 
 local function get_ucmd_name(k, v)
@@ -1029,9 +1037,9 @@ commands.cfg = {
 		end
 		save_settings()
 
-		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
-		log(message)
-		cm:sendToAll(autil.info(message):getBuffer())
+		local loging = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
+		log(loging)
+		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
 	end,
 
 	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
@@ -1320,23 +1328,27 @@ commands.listregs = {
 					if v.nick then
 						table.insert(fields, "\tNick: " .. v.nick)
 					end
-					if v.cid then
-						table.insert(fields, "\n\tCID: " .. v.cid)
-					end
 					if settings.passinlist.value ~=0 and v.level < user.level and v.password then
-						table.insert(fields, "Pass: " .. v.password)
+						table.insert(fields, "\n\tPassword: " .. v.password)
 					end
-					if v.lastofftime then
-						table.insert(fields, "\n\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
+					if v.cid then
+						table.insert(fields, "\n\tCID: " .. v.cid .. "  ")
 					end
-					if v.lasttime then
-						table.insert(fields, "Last logon: " .. time_diff(v.lasttime) .. " ago")
+					if settings.passinlist.value ~=0 and v.level < user.level then
+						table.insert(fields, "Level: " .. v.level)
 					end
+
 					if v.regtime then
-						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
+						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago   ")
 					end
 					if v.regby then
 						table.insert(fields, "Regged By: " .. v.regby)
+					end
+					if v.lasttime then
+						table.insert(fields, "\n\tLast logon: " .. time_diff(v.lasttime) .. " ago")
+					end
+					if v.lastofftime then
+						table.insert(fields, "\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
 					end
 					table.insert(list, table.concat(fields, "\t\t"))
 				end
@@ -1352,23 +1364,26 @@ commands.listregs = {
 				local fields = {}
 				if v.nick and string.match(string.lower(v.nick), param, 1) and v.level <= user.level then
 					table.insert(fields, "\tNick: " .. v.nick)
-					if v.cid then
-						table.insert(fields, "\n\tCID: " .. v.cid)
-					end
 					if settings.passinlist.value ~=0 and v.level < user.level and v.password then
-						table.insert(fields, "Pass: " .. v.password)
+						table.insert(fields, "\n\tPassword: " .. v.password)
 					end
-					if v.lastofftime then
-						table.insert(fields, "\n\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
+					if v.cid then
+						table.insert(fields, "\n\tCID: " .. v.cid .. "  ")
 					end
-					if v.lasttime then
-						table.insert(fields, "Last logon: " .. time_diff(v.lasttime) .. " ago")
+					if settings.passinlist.value ~=0 and v.level < user.level then
+						table.insert(fields, "Level: " .. v.level)
 					end
 					if v.regtime then
-						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
+						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago  ")
 					end
 					if v.regby then
 						table.insert(fields, "Regged By: " .. v.regby)
+					end
+					if v.lasttime then
+						table.insert(fields, "\n\tLast logon: " .. time_diff(v.lasttime) .. " ago")
+					end
+					if v.lastofftime then
+						table.insert(fields, "\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
 					end
 					table.insert(list, table.concat(fields, "\t\t"))
 				end
@@ -1416,10 +1431,10 @@ commands.mypass = {
 			-- already regged
 			user.password = parameters
 			save_users()
-			autil.reply(c, "Your password has been changed to \"" .. parameters .. "\"")
+			autil.reply(c, "Your password has been changed to:  " .. parameters)
 		elseif settings.allowreg.value ~= 0 then
 			register_user(c:getCID():toBase32(), c:getField("NI"), parameters, 1, c:getField("NI"))
-			autil.reply(c, "You're now registered with the password \"" .. parameters .. "\"")
+			autil.reply(c, "You're now successfuly registered with the Password:  " .. parameters)
 		else
 			autil.reply(c, "You are not allowed to register by yourself; ask an operator to do it for you")
 			return
@@ -1499,19 +1514,16 @@ commands.regnick = {
 
 		if #password == 0 then
 			-- un-reg
-			if not other_user then
-				autil.reply(c, "\"" .. nick .. "\" is not registered")
+			if not users.nicks[other_user.nick] then
+				autil.reply(c, "Usersname:  " .. nick .. "  is not a registered user")
 				return
 			end
-			if other_user.nick then
-				users.nicks[other_user.nick] = nil
-			end
-			if other_user.cid then
-				users.cids[other_user.cid] = nil
-			end
+
+			unregister_user(cid, nick)
+
 			save_users()
 
-			autil.reply(c, "\"" .. nick .. "\" has been un-registered")
+			autil.reply(c, "Usersname:  " .. nick .. "  has been un-registered")
 
 			if other then
 				autil.reply(other, "You've been un-registered")
@@ -1519,12 +1531,14 @@ commands.regnick = {
 			return
 		end
 
+		unregister_user(cid, nick) -- make sure that there exist no dual's in users.cids or users.nicks
+
 		register_user(cid, nick, password, level, c:getField("NI"))
 
-		autil.reply(c, "\"" .. nick .. "\" has been registered")
+		autil.reply(c, "\n\tYou successfully registered:\n\n\t\tUsersname:\t" .. nick .. "\n\t\tPassword:\t" .. password .. "\n")
 
 		if other then
-			autil.reply(other, "You've been registered with password \"" .. password .. "\"")
+			autil.reply(other, "You've been successfully registered with Password:  " .. password)
 		end
 	end,
 

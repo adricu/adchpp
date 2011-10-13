@@ -74,7 +74,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.29"
+guardrev = "1.0.30"
 
 -- Tmp tables
 local data = {}
@@ -792,7 +792,7 @@ local function data_info_string_ip(info)
 end
 
 local function data_info_string_log(info)
-	local str = "   \t\t\tCounter: " .. info.count
+	local str = "     \t\t\tCounter: " .. info.count
 	if info.rate then
 		str = str .. "\n\tAvg.Rate: " .. data_rate_string(info.rate) .. " / m"
 	end
@@ -810,20 +810,20 @@ local function data_info_string_log(info)
 	end
 
 	if info.reason then
-		str = str .. "\n\tReason: " .. info.reason
+		str = str .. "\n\tReason: " .. info.reason .. "\n"
 	end
 
 	if info.ap then
 		if info.ve then
-			str = str .. "\t\t\tClient: " .. info.ap .. " " .. info.ve
+			str = str .. "\tApplication: " .. info.ap .. " " .. info.ve .. "       \t"
 		end
 	else
 		if info.ve then
-			str = str .. "\t\t\tClient: " .. info.ve
+			str = str .. "\tApplication: " .. info.ve .. "       \t"
 		end
 	end
 
-	str = str .. "   \t\t\tExpires: " .. data_expiration_string(info) .. "\n"
+	str = str .. "\tExpires: " .. data_expiration_string(info) .. "\n"
 
 	return str
 end
@@ -838,11 +838,11 @@ local function data_info_string_entity(info)
 
 	if info.ap then
 		if info.ve then
-			str = str .. "\n\tClient:\t\t\t\t\t" .. info.ap .. " " .. info.ve
+			str = str .. "\n\tApplication:\t\t\t\t" .. info.ap .. " " .. info.ve
 		end
 	else
 		if info.ve then
-			str = str .. "\n\tClient:\t\t\t\t\t" .. info.ve
+			str = str .. "\n\tApplication:\t\t\t\t" .. info.ve
 		end
 	end
 
@@ -851,7 +851,7 @@ local function data_info_string_entity(info)
 	end
 
 	if info.changes then
-		str = str .. "\n\tChanged Nick, IP, CID or Level:\t\t" .. info.changes .. " times"
+		str = str .. "\n\tChanged Nick, IP, AP or Level:\t\t" .. info.changes .. " times"
 	end
 
 	if info.logins then
@@ -874,7 +874,7 @@ local function data_info_string_entity(info)
 	end
 
 	if info.updated then
-	str = str .. "\n\tLast Updated Nick, IP, CID or Level:\t" .. data_updated_string(info)
+	str = str .. "\n\tLast Updated Nick, IP, AP or Level:\t" .. data_updated_string(info)
 	end
 
 	if users.cids[info.cid] then
@@ -1443,7 +1443,7 @@ local function logon_entity(c, data, days)
 	local ap = c:getField("AP")
 	local ve = c:getField("VE")
 	local level = get_level(c)
-	local update = { ip = data.ip }
+	local update = { ip = ip }
 	if ni and #ni > 0 then
 		update.ni = ni
 	end
@@ -1473,7 +1473,7 @@ local function logon_entity(c, data, days)
 	update.updated = data.updated
 	update.expires = os.time() + days * 86400
 
-	if ip ~= data.ip or ni ~= data.ni or level ~= data.level then
+	if ip ~= data.ip or ni ~= data.ni or level ~= data.level or (ap and data.ap and ap ~= data.ap) or (ve and data.ve and ve ~= data.ve) then
 		update.changes = data.changes + 1
 		update.updated = os.time()
 		data.cid = cid
@@ -3178,7 +3178,7 @@ fl_settings.cmdsoc_rate = {
 }
 
 fl_settings.cmdurx_rate = {
-	alias = { brx_rate = true },
+	alias = { urx_rate = true },
 
 	help = "max rate in counts/min that a client can send unknown adc commands, 0 = default, -1 = disabled",
 
@@ -3186,7 +3186,7 @@ fl_settings.cmdurx_rate = {
 }
 
 fl_settings.cmdcrx_rate = {
-	alias = { trx_rate = true },
+	alias = { crx_rate = true },
 
 	help = "max rate in counts/min that a client can send adc commands with a bad context, 0 = default, -1 = disabled",
 
@@ -3314,7 +3314,7 @@ fl_settings.cmdschtth_exp = {
 }
 
 fl_settings.cmdsup_exp = {
-	alias = { sch_exp = true },
+	alias = { sup_exp = true },
 
 	help = "minutes before the sup commandstats are removed, 0 = default",
 
@@ -3346,7 +3346,7 @@ fl_settings.cmdsoc_exp = {
 }
 
 fl_settings.cmdurx_exp = {
-	alias = { brx_exp = true },
+	alias = { urx_exp = true },
 
 	help = "minutes before the unknown adc commandstats are removed, 0 = default",
 
@@ -3354,7 +3354,7 @@ fl_settings.cmdurx_exp = {
 }
 
 fl_settings.cmdcrx_exp = {
-	alias = { trx_exp = true },
+	alias = { crx_exp = true },
 
 	help = "minutes before the bad context adc commandstats are removed, 0 = default",
 
@@ -4817,7 +4817,7 @@ commands.showkicklog = {
 		str = str .. "\t\t\tExpire time: " .. fl_settings.fl_logexptime.value .. " day(s)"
 		str = str .. "\n\nKick IP records:"
 		for ipkick, info in base.pairs(kickstats.ips) do
-			str = str .. "\n\tIP: " .. ipkick .. "\t\t\t\t\t" .. data_info_string_log(info)
+			str = str .. "\n\tIP: " .. ipkick .. "  \t\t\t\t\t" .. data_info_string_log(info)
 		end
 
 		str = str .. "\n\nKick CID records:"
@@ -4884,6 +4884,7 @@ commands.showentity = {
 		str = str .. "\n\nAll current Entity records that match your search criteria: [ " .. entity .. " ]\n" 
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if entity == last_cid or entity == info.ip or (info.ni and string.lower(info.ni) == string.lower(entity)) then
+				info.cid = last_cid
 				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
@@ -4924,6 +4925,7 @@ commands.traceip = {
 			if info.ip and info.ip == ip then
 				table.insert(entni, info.ni)
 				table.insert(entcid, last_cid)
+				info.cid = last_cid
 				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
@@ -4990,6 +4992,7 @@ commands.tracecid = {
 			if last_cid == cid then
 				table.insert(entni, info.ni)
 				table.insert(entip, info.ip)
+				info.cid = last_cid
 				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
@@ -5056,7 +5059,8 @@ commands.traceni = {
 			if info.ni and string.lower(info.ni) == string.lower(ni) then
 				table.insert(entip, info.ip)
 				table.insert(entcid, last_cid)
-				str = str .. "\n\tEntity\t\t\t\t\tCID: " .. last_cid .. data_info_string_entity(info)
+				info.cid = last_cid
+				str = str .. "\n\tEntity CID: \t\t\t\t" .. last_cid .. data_info_string_entity(info)
 			end
 		end
 
