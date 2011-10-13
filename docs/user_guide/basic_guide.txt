@@ -1,5 +1,5 @@
 = ADCH++ Basic User Guide
-Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, iceman50 <iceman50@adcportal.com>
+Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, iceman50 <bdcdevel@gmail.com>
 Document Version 0.3.3
 :toc:
 This version of the guide corresponds with ADCH++ version: *2.8.0*
@@ -58,8 +58,6 @@ Installing on Linux/Unix operating systems requires the source code for ADCH++ s
 The source code is available via Sourceforge (official releases) or from our Bazaar repository at Launchpad.
 
 Source code download: https://sourceforge.net/projects/adchpp/files/
-
-Nightly builds : http://builds.adcportal.com
 
 Launchpad repository: https://code.launchpad.net/adchpp
 
@@ -184,7 +182,7 @@ TIP: Remember if you have specified TLS=1 in the server configuration, all users
 === Script Management
 Above the basic functions provided by the core ADCH\++ relies on scripts performing various extended functions and commands (like handling registered users, login procedure, etc...). The hub software comes with prepackaged LUA scripts for handling basic hub functions and more. These (and any other) scripts can be configured using the Script.xml file located in the configuration folder of ADCH++.
 
-The LUA scripts shipped with ADCH++ are configured to run by default. Locate the Script.xml file and ensure that the scripts that you want to run are properly added.
+The LUA scripts shipped with ADCH++ are configured to run by default. They should be always properly loaded to get the functionality described in the rest of this guide. If you want to use additional scripts then locate the Script.xml file and ensure that the scripts that you want to run are properly _added_ to the existing ones.
 
 .Example: Default Script.xml, it loads the core LUA scripts, a chat history script and a MOTD script.
 ---------------------------------------------------------------------
@@ -242,6 +240,8 @@ Change to :
 ---------------------------------------------------------------------
 
 IMPORTANT: Linux users should use absolute paths pointing to the script folder in every <Script> entries.
+
+You have to use the +reload command or restart the hub to changes take effect.
 
 === Setting up MOTD (Message of the day)
 
@@ -309,6 +309,8 @@ You can create registrations / get information only for accounts with lower user
 . registered as a basic op
 . ...
 
+You can list all (or a subset of) registered users with the +listregs command.
+
 === Administration Setup
 
 This chapter shows you how to administer your hub using hub commands and settings.
@@ -319,8 +321,8 @@ A simple way to find out what commands are available and how they work is to use
 --------------------------------------
 +help <command>
 --------------------------------------
-For <command> you can use partial names or abbreviations to get a list of available commands contaning the specified string in their names.
-Most commands are also available in the user menu of your ADC client propagated as user commands. Here's the list of the basic hub commands, those where mentioned are available for all users, the rest are for operators only.
+TIP:For <command> you can use partial names or abbreviations to get a list of available commands contaning the specified string in their names.
+Most commands are also available in the user menu of the connected ADC clients propagated as user commands. Here's the list of the basic hub commands, those where mentioned are available for all users, the rest are for operators only.
 
 .List of all commands
 [width="100%",options="header"]
@@ -329,9 +331,7 @@ Most commands are also available in the user menu of your ADC client propagated 
 |+ban nick [reason] [minutes] 						| Ban an online user. Use 0 for minutes to remove the ban.
 |+bancid CID [reason] [minutes] 					| Ban a CID. Use 0 for minutes to remove the ban.
 |+banip IP [reason] [minutes]						| Ban an IP. Use 0 for minutes to remove the ban.
-|+banmsgre msg-reg-exp [reason] [minutes]			| Ban originators of messages that match the given reg exp (must be within '<' and '>' brackets) Use 0 for minutes to remove the ban.
 |+bannick nick [reason] [minutes]					| Ban a nick. Use 0 for minutes to remove the ban.
-|+bannickre <nick-reg-exp> [reason] [minutes]		| Ban nicks that match the given reg exp (must be within '<' and '>' brackets). Use 0 for minutes to remove the ban.
 |+cfg name value									| Change hub configuration, use "+help cfg" to list all variables.
 |+help [command]									| List all available commands, or display detailed information about one specific command. This command is available for everyone.
 |+history [lines]									| Display main chat messages logged by the hub (empty lines means default / since last logoff) This command is available for everyone.
@@ -351,7 +351,7 @@ Most commands are also available in the user menu of your ADC client propagated 
 |+topic topic										| Change the hub topic (shortcut to +cfg topic).
 |==============================================
 
-Some commands not listed here belong to advanced hub security and discussed in the http://adchpp.sourceforge.net/user_guide/expert_guide.html[Expert guide] in detail.
+The above list contains the basic hub commands only. Many additional commands not listed here belong to the advanced hub security and discussed in the http://adchpp.sourceforge.net/user_guide/expert_guide.html[Expert guide] in detail.
 
 ==== Basic hub settings
 To see what basic configuration parameters are available for your hub and what are their current values you should enter:
@@ -457,7 +457,7 @@ If you want to know more about ADCH++
 
 . There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\+\+ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at http://code.launchpad.net/adchpp/
 . You can get support for ADCH++ at the project's official Answers tracker at http://answers.launchpad.net/adchpp/[Launchpad].
-. You can get more information or discuss topics about ADCH++ at the http://adcportal.com[ADC community portal] forums.
+. You can get more information or discuss topics about ADCH++ at the http://dcbase.org[DCBase.org community portal] forums.
 
 == Appendix
 This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]

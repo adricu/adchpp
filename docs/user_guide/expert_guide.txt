@@ -1,5 +1,5 @@
 = ADCH++  Expert User Guide
-Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>
+Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, Pirre <pierreparys@hotmail.com>
 Document Version 0.4.0
 :toc:
 This version of the guide corresponds with ADCH++ version: *2.8.0*
@@ -16,51 +16,180 @@ This guide is intended for novice or expert users. It focuses on various scripti
 
 == Advanced hub security
 
-.List of limits setting variables
+This part shows how to achieve spam, badword or badsearch protection as well as how to protect the hub's normal operation from malicious or accidental flooding or misuse.
+
+IMPORTANT: The prepackaged LUA scripts should be properly loaded to get the functionality described in this chapter.
+
+=== Automatic spam, badword and badsearch protection: working with the banre commands
+
++banxxxre commands are very powerful tools for getting rid of unwanted text showing in mainchat or private message as well as for blocking searches containing keywords which treated malicious. These commands use regular expressions to detect the unwanted content so their usage requires knowledge of how to construct a regular expression filter.
+
+TIP: For more information about regular expressions visit: http://www.regular-expressions.info
+
+.List of +banre commands
+[width="100%",options="header"]
+|==============================================
+| Command													| Purpose
+|+banmsgre [action] <chat-reg-exp> [reason] [expiration]	| Block chatmessages that match the given regular expression
+|+bannickre [action] <nick-reg-exp> [reason] [expiration]	| Block nicks that match the given regular expression
+|+banschre [action] <search-reg-exp> [reason] [expiration]	| Block searches that match the given regular expression
+|==============================================
+
+Using the +banre commands the regular expression must be specified within '<' and '>' brackets. The action parameter is optional, you can skip it to achieve a simple block or set it to -1 to permanetly ban the user; any other positive number means how many minutes you want to tempban the user for. The expiration parameter is also optional, it defines when this particular rule expires (in minutes). Skipping [expiraton] results a permanent rule while specifying 0 allows you to remove this banre rule.
+
+IMPORTANT: Removing a banre rule does NOT automatically remove the already (temp)banned users!
+
+.Example: Banre Command Example
+--------------------------------------
++banmsgre 100 <http://www\.spam\.com> unwanted spam
+--------------------------------------
+
+=== Setting up limits rules
+
+Using basic rules you can specify a few parameters the hub members should meet to use your hub. These rules provided by the clients with their periodic info data.
+
+.List of basic limits setting variables
 [width="100%",options="header"]
 |==============================================
 | Setting					| Purpose
-| maxhubscount 				| Maximum number of hubs allowed, 0 = disabled
+| maxhubcount 				| Maximum number of hubs allowed, 0 = disabled
 | maxhubslotratio			| Maximum hub/slots ratio allowed, 0 = disabled
 | maxmsglength				| Maximum number of characters allowed per chat message, 0 = no limit
 | maxnicklength				| Maximum nickname length allowed, 0 = no limit
-| maxsharesize				| Maximum share size allowed, 0 = disabled
+| maxsharesize				| Maximum share size allowed in bytes, 0 = disabled
+| maxsharefiles				| Maximum number of shared files allowed in bytes, 0 = disabled
 | maxslots 					| Maximum amount of opened upload slots allowed, 0 = disabled
-| minhubslotratio 			| Maximum hub/slots ratio required, 0 = disabled 
-| minsharesize				| Maximum share size required, 0 = disabled
-| minslots 					| Maximum amount of opened upload slots required, 0 = disabled
+| minhubslotratio 			| Minimum hub/slots ratio required, 0 = disabled 
+| minsharesize				| Minimum share size required in bytes, 0 = disabled
+| minsharefiles				| Minimum number of shared files required in bytes, 0 = disabled
+| minslots 					| Minimum amount of opened upload slots required, 0 = disabled
 |==============================================
 
-== Scripting Interface and examples
+You can set the limiting rules using the +cfgli command:
 
-ADCH++ core is exposed to various scripting languages that either has direct access to the core or can use it as a plugin.
+.Example: setting minimum share size to 1Mb
+--------------------------------------
++cfgli minsharesize 1000000
+--------------------------------------
 
-=== LUA Interface
+There are more advanced limiting possibilities, using those you can regulate user parameters like nick length, maximum length of search strings or require special ADC client features. You can get all the available limit rules settings, their description and current values using the
+--------------------------------------
++help cfgli
+--------------------------------------
+command.
 
-By default ADCH\++ comes with prepackaged LUA scripts to handle the basic hub functions. These scripts themselves are very good examples of how to use the ADCH++ LUA API. You can also use following examlpe file to learn the basics:
----------------------------------------------------------------------
-[source,lua]
-include::..\..\plugins\Script\examples\example.lua[]
----------------------------------------------------------------------
+If a user tries to breach any set rule (_either_ when he/she is logged in or at login time) an action will be taken. For most kind of rules you can specify the action (disconnect or redirect) and also the maximum count or count/interval to be reached to make the re-attempts treated as flooding. In this case the user will be punished according the flood protection settings (described later).
 
-The complete list of of the ADCH\++ LUA API functions are available both in the Docs folder in the ADCH\++ repository or at the http://adchpp.sourceforge.net/doc/lua_api.html[ADCH++ home page].
+You can use the following commands to specify the action and counts:
 
-=== Ruby Interface
+.List of limit counts and action settings
+[width="100%",options="header"]
+|==============================================
+| Setting					| Purpose
+|li_exptime					| Global expire time for all enabled limit rules in minutes, it must be greater than zero. This time specifies how long the count of limit breaches will be kept for an user. If no more problems occour within the specified time interval the counts will be reset.
+|li_maxcount				| Global maximum count of attempts allowed for all limit rules, 0 = disabled. If the number of attempts reach this value within li_exptime then action will be taken.
+|li_maxrate					| Global maximum rate in counts/hour for all enabled limit rules,  0 = disabled. If the number of attempts reach this value then action will be taken immediately.
+|li_minlevel				| Minimum user level to apply the sharing limit rules like slots/hubs/sharesize, 0 means all users will be checked. You can use this setting in conjunction with minsearchlevel and mindownloadlevel settings to allow restricted user levels to login without complying the rules.
+|li_redirect				| Specifies the action when the sharing limit rules like slots/hubs/sharesize is breached. Set a redirect address for redirecting, if you want the user simply disconnected then leave this setting blank. This setting does not effect some of the limits counts (like maxnicklength or search related limits), those are immediately added to the flood protection counts.
+|==============================================
 
-Example file using the Ruby interface:
----------------------------------------------------------------------
-[source,ruby]
-include::..\..\rbutil\adchpp.rb[]
----------------------------------------------------------------------
+TIP: You can use both li_maxcount and li_maxrate at the same time: the specified action (li_redirect) will happen whatever value reached first.
 
-=== Python Interface
+Every single limit setting has its own expiration and rate setting to be able to fine tune the action behaviour of the individual rules. Expiration or rate settings for an individual limit rule will always override the global settings (li_exptime and li_maxrate). The syntax of the name of the settings follows a pattern: you add _exp and _rate to the name of each limit rule setting to get the name of their corresponding individual expiration and rate settings:
 
-Example file using the Python interface:
----------------------------------------------------------------------
-[source,python]
-include::..\..\pyutil\adchpp.py[]
----------------------------------------------------------------------
- 
+.Example: alter individual limits rate and expiration settings
+--------------------------------------
++cfgli maxslots 10
++cfgli maxslots_exp 60
++cfgli maxslots_rate 5
+
++cfgli minschlength 3
++cfgli minschlength_exp 30
++cfgli minschlength_rate 10
+--------------------------------------
+
+To see all the current limits rules settings values in a grouped table format use the
+--------------------------------------
++listlimitstats
+--------------------------------------
+command.
+
+=== Flood protection
+
+The access.guard.lua script provides an advanced flood protection for your hub. Its enabled by default with optimal parameters. If you want to fine tune the flooding protection you can do so as every parameter is highly confgurable. You can list the available flood protection settings using the
+--------------------------------------
++help cfgfl
+--------------------------------------
+command.
+
+IMPORTANT: Be careful with the settings as wrong values can easily render your hub unusable.
+
+Flooding attempts can be punished with widely configurable automatic response actions with step by step severity. Besides classic flooding methods, these actions can also be triggered by the repeatedly breached limit rules (see the previous chapter). The available actions are _disconnect_, _temporary ban_ and _full ban_. These actions can happen only in this order, step by step, starting with warning(s) sent to the user and so on.
+The step by step manner means that a flooder will always be warned (at least once) then kicked, time banned and at last - if the flooding attepmts don't stop - the final solution is the permanent ban. This way of action steps from warning to severe punishment allows the accidental flooder to "cool down" and retry the command/operation in an acceptable normal way.
+You can configure how many punishment actions should occour from one kind to step over the next one. If you set one flood protection action type's count to zero then neither that action nor the following one in the row will ever happen. You can use the following +cfgfl settings to configure them:
+
+.List of flood action control settings
+[width="100%",options="header"]
+|==============================================
+| Setting					| Purpose
+|fl_exptime					| Global expire time for all flood settings in minutes, it must be greater than zero. This time specifies how long the count of detected flood attempts will be kept for a particualr user. If no more problems occour within the specified time interval the counts will be reset.
+|fl_level					| All users with level greater of this setting will be affected by the flood and limit rules, -1 = disabled
+|fl_maxrate 				| Global maximum rate in counts/minute for all enabled flood protection rules, 0 = disabled. If the number of attempts reach this value then the next punishing action in a row will be taken immediately.
+|fl_maxwarns				| Maximum amount of hammering warnings before the user is disconnected, 0 = disabled
+|fl_maxkicks				| Maximum amount of kicks occoured before the user is tempbanned, 0 = disabled
+|fl_maxtmpbans				| Maximum amount of tempbans before user is permanently banned, 0 = disabled
+|fl_tmpban					| Sets how many minutes a user will be tempbanned after reaching the maxkicks value, 0 = disabled
+|==============================================
+
+The reaction for the different kind of flooding attempts can be fine tuned with tons of parameters available in +help cfgfl. Similar to the limits settings, every flood type can have its own individual expiration and rate settings to provide maximum flexibility.
+
+=== Tracing users
+
+Above the basic current information the core provides about an online user (+info <nick/CID> command) it's possible to keep track of registered and unregistered users' activity in the hub for a given period of time (last n days). You can identify users logging on with different clients, using different nicks or arriving from various IP addresses.
+You can specify how long you want to trace different type of users. To see what configuration options available for enable/disable tracing users (entities) use the
+--------------------------------------
++help cfgen
+--------------------------------------
+command.
+
+You can get the trace information for any stored entity (user) by one of its three possible indentifiers using the following commands:
+
+.List of entity tracing commands
+[width="100%",options="header"]
+|==============================================
+| Command	| Purpose
+|+tracecid	|traces the entity's last info and history by CID (aliases: +tracebycid)
+|+traceip	|traces the entity's last info and history by IP address (aliases: +tracebyip)
+|+traceni	|traces the entity's last info and history by nick (aliases: +tracebyni)
+|==============================================
+
+.Example trace
+--------------------------------------
+	Entity					CID: NMEW4RRISS2RUQPU3XMK5WNGJLXSPNKSVSMPEKY
+	IP:					180.196.324.211
+	Nick:					user
+	Client:					StrgDC++ 2.42
+	User Level:				2
+	Changed Nick, IP, AP or Level:		0 times
+	Logins:					16 times
+	Last Logon:				0 days, 12 hours, 26 minutes and 30 seconds ago
+	Total Time Online:			4 days, 4 hours, 0 minutes and 45 seconds
+	Last Updated Nick, IP, AP or Level:	8 days, 23 hours, 51 minutes and 12 seconds ago
+	Entity Regged by:			Admin
+	Entity Created:				8 days, 23 hours, 51 minutes and 12 seconds ago
+	Entity Expires:				in 59 days, 23 hours, 53 minutes and 48 seconds
+--------------------------------------
+
+=== Displaying extended hub statistics
+
+If the acces.guard script is running it's possible to obtain highly detailed statistics about the ADC commands used in the hub. This is an useful addition to the basic information the hub core provides with the +info command. 
+To see the extended hub commands usage statistics use the
+--------------------------------------
++listlimitstats
+--------------------------------------
+command.
+
+
 == PtokaX API2 bridge for ADCH++
 
 It's possible to create or use existing PtokaX API2 LUA scripts in your hub using the ADCHPP-PtokaX bridge script. The bridge is separately maintained and available to download at https://launchpad.net/adchpp-ptokax[its home page]. Before you go on make sure you read the documentation provided in the ADCHPP-PtokaX package.
@@ -208,22 +337,37 @@ Directory of c:\users\username\adchpp\Scripts\px
                4 File(s)        414 824 bytes
 --------------------------------------
 
-== Automatic spam protection: working with banmsgre
+== Scripting Interface and examples
 
-Banmsgre is a very powerful tool for getting rid of unwanted spam. It uses regular expressions for detecting unwanted chat content in your hub. It requires the knowledge of how to write a regular expression string.
+ADCH++ core is exposed to various scripting languages that either has direct access to the core or can use it as a plugin.
 
-  +banmsgre <regexp> <reason> <time>
- 
-.Example: Command Example
---------------------------------------
-+banmsgre <http://www\.spam\.com> unwanted spam 99
---------------------------------------
+=== LUA Interface
 
-For more information about regular expressions go to: http://www.regular-expressions.info/
+By default ADCH\++ comes with prepackaged LUA scripts to handle the basic hub functions. These scripts themselves are very good examples of how to use the ADCH++ LUA API. You can also use following examlpe file to learn the basics:
+---------------------------------------------------------------------
+[source,lua]
+include::..\..\plugins\Script\examples\example.lua[]
+---------------------------------------------------------------------
 
-== Running ADCH++ with parameters
+The complete list of of the ADCH\++ LUA API functions are available both in the Docs folder in the ADCH\++ repository or at the http://adchpp.sourceforge.net/doc/lua_api.html[ADCH++ home page].
 
-This part is a quick run through of how to install ADCH++ as a service module instead of an application.
+=== Ruby Interface
+
+Example file using the Ruby interface:
+---------------------------------------------------------------------
+[source,ruby]
+include::..\..\rbutil\adchpp.rb[]
+---------------------------------------------------------------------
+
+=== Python Interface
+
+Example file using the Python interface:
+---------------------------------------------------------------------
+[source,python]
+include::..\..\pyutil\adchpp.py[]
+---------------------------------------------------------------------
+
+== ADCH++ command line parameters
 
 The following command line parameters are available:
 
@@ -240,7 +384,7 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 * -v Prints version number
 * -h Shows the usage help message
 
-.Varible example
+.Examples
 [width="60%",]
 |==============================================
 |(Linux)	|adchppd -c /home/test/adchpp/bin/config/
@@ -249,6 +393,8 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 |(Windows)	|adchppd.exe -c c:/users/test/adchpp/bin/config/
 |(Windows)	|adchppd.exe -i adchpp
 |==============================================
+
+== Running ADCH++ as a service module
 
 Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. 
 
@@ -265,10 +411,10 @@ You elevate adchpp.exe in Windows 7/Vista in the following way:
 image:images/img_adch_elevated_howto.png["ADCH++ elevation howto"]
 
 * Check the 'Run this program as an administrator' box. Click OK.
-* Now execute the command adchpp - i <servicename> (example: adchpp.exe -i myserver) in your adchpp folder
+* Now execute the command adchpp -i <servicename> (example: adchpp.exe -i myserver) in your adchpp folder. If you omit the service name it will use "adchpp" as the service name by default.
 * Grant the application access if you have UAC enabled
 
-To verify that your ADCH\++ service is correctly installed under the name you specified go to Control Panel\System and Security\Administrative Tools or simply run the services.msc command from a Windows prompt.
+To verify that your ADCH++ service is correctly installed under the name you specified go to Control Panel\System and Security\Administrative Tools or simply run the services.msc command from a Windows prompt.
 
 image:images/img_adch_service_location.png["ADCH++ Services"]
 
@@ -279,11 +425,11 @@ image:images/img_adch_service_verify.png["ADCH++ verify service"]
 == Issues and problems
 
 Like any other software ADCH\++ can have flaws or bugs, can preform weird or contain unwanted features. It's important to make the developers aware of such problems. If you want to help improving ADCH\++ you can give feedback to the developers about found bugs, helping them to recreate and fix the problems. 
-Many times, to be able to help solving issues, you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from the http://builds.adcportal.com[ADCPortal Builds Archive].
+Many times, to be able to help solving issues, you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from the http://builds.dcbase.org/?dir=adchpp/[DCBase Builds Archive].
 
 === Crashes and getting backtrace logs
 
-In the case of a crash bug you can help the development by reporting the bug to the https://bugs.launchpad.net/adchpp[official bug tracker] 
+In the case of a crash you can help the development by reporting the bug to the https://bugs.launchpad.net/adchpp[official bug tracker].
 
 To be able to analyze and solve a crash problem the developers need the following information:
 
@@ -422,6 +568,6 @@ Changelog:
 0.1.0: Initial Documentation (toast, iceman50)
 0.2.0: Updated corresponding to ADCH++ version 2.7.0 (emtee)
 0.3.0: Improvements, added MinGW crash report guide, updated corresponding to ADCH++ version 2.8.0 (emtee)
-0.4.0: Added the Advanced hub security (guard) section (emtee)
+0.4.0: Added the Advanced hub security (guard) section (emtee, pirre)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
