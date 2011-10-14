@@ -74,7 +74,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.30"
+guardrev = "1.0.31"
 
 -- Tmp tables
 local data = {}
@@ -3812,6 +3812,8 @@ li_settings.minsharefiles = {
 
 	help = "minimum number of shared files, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3821,6 +3823,8 @@ li_settings.maxsharefiles = {
 	change = recheck_info,
 
 	help = "maximum number of shared files, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -3832,6 +3836,8 @@ li_settings.minsharesize = {
 
 	help = "minimum share size allowed in bytes, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3841,6 +3847,8 @@ li_settings.maxsharesize = {
 	change = recheck_info,
 
 	help = "maximum share size allowed in bytes, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -3852,6 +3860,8 @@ li_settings.minslots = {
 
 	help = "minimum number of opened upload slots allowed, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3861,6 +3871,8 @@ li_settings.maxslots = {
 	change = recheck_info,
 
 	help = "maximum number of opened upload slots allowed, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -3872,6 +3884,8 @@ li_settings.minhubslotratio = {
 
 	help = "minimum hub/slot ratio allowed, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3881,6 +3895,8 @@ li_settings.maxhubslotratio = {
 	change = recheck_info,
 
 	help = "maximum hub/slot ratio allowed, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -3892,6 +3908,8 @@ li_settings.maxhubcount = {
 
 	help = "maximum number of connected hubs allowed, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3899,6 +3917,8 @@ li_settings.maxmsglength = {
 	alias = { maxmessagelength = true },
 
 	help = "maximum number of characters allowed per chat message, 0 = no limit",
+
+	announce = true,
 
 	value = 0
 }
@@ -3908,6 +3928,8 @@ li_settings.maxschparam = {
 
 	help = "maximum number of search parameters allowed, 0 = disabled",
 
+	announce = true,
+
 	value = 100
 }
 
@@ -3916,6 +3938,8 @@ li_settings.minschlength = {
 
 	help = "minimum length of search string allowed, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3923,6 +3947,8 @@ li_settings.maxschlength = {
 	alias = { maxsearchlength = true },
 
 	help = "maximum length of search string allowed, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -3934,6 +3960,8 @@ li_settings.minnicklength = {
 
 	help = "minimum number of characters allowed for the nick, 0 = no limit",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3943,6 +3971,8 @@ li_settings.maxnicklength = {
 	change = recheck_info,
 
 	help = "maximum number of characters allowed for the nick, 0 = no limit",
+
+	announce = true,
 
 	value = 0
 }
@@ -3954,6 +3984,8 @@ li_settings.suadcs = {
 
 	help = "disallow users that have disabled ADCS (TLS) support for file transfers, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3963,6 +3995,8 @@ li_settings.sunatt = {
 	change = recheck_info,
 
 	help = "disallow passive users that have disabled NAT-T (passive-passive) support for file transfers, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -3974,6 +4008,8 @@ li_settings.sublom = {
 
 	help = "disallow clients that don't have BLOM (TTH search filtering) support, 0 = disabled",
 
+	announce = true,
+
 	value = 0
 }
 
@@ -3983,6 +4019,8 @@ li_settings.maxsameip = {
 	change = recheck_info,
 
 	help = "maximum number of connected users with the same ip address, 0 = disabled",
+
+	announce = true,
 
 	value = 0
 }
@@ -4131,8 +4169,15 @@ commands.cfgfl = {
 		if setting.change then
 			setting.change()
 		end
-		base.pcall(save_fl_settings)
-		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		save_fl_settings()
+
+		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
+		log(message)
+		if setting.announce and access.settings.announcecfg.value ~= 0 then
+			cm:sendToAll(autil.info(message):getBuffer())
+		else
+			autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		end
 	end,
 
 	help = "name value - change flood configuration, use \"+help cfgfl\" to list all variables",
@@ -4262,8 +4307,15 @@ commands.cfgli = {
 		if setting.change then
 			setting.change()
 		end
-		base.pcall(save_li_settings)
-		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		save_li_settings()
+
+		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
+		log(message)
+		if setting.announce and access.settings.announcecfg.value ~= 0 then
+			cm:sendToAll(autil.info(message):getBuffer())
+		else
+			autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		end
 	end,
 
 	help = "name value - change limits configuration, use \"+help cfgli\" to list all variables",
@@ -4393,8 +4445,15 @@ commands.cfgen = {
 		if setting.change then
 			setting.change()
 		end
-		base.pcall(save_en_settings)
-		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		save_en_settings()
+
+		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
+		log(message)
+		if setting.announce and access.settings.announcecfg.value ~= 0 then
+			cm:sendToAll(autil.info(message):getBuffer())
+		else
+			autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		end
 	end,
 
 	help = "name value - change entity configuration, use \"+help cfgen\" to list all variables",

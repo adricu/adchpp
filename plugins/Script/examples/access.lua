@@ -218,9 +218,19 @@ settings.description = {
 
 	help = "hub description",
 
+	announce = true,
+
 	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("DE"),
 
 	validate = validate_de
+}
+
+settings.announcecfg =  {
+	alias = { announce = true },
+
+	help = "annouce changes to hubname, description, topic, owner, website, network and limit settings in mainchat, 1 = enabled, 0 = disabled",
+
+	value = 1
 }
 
 settings.failover = {
@@ -314,19 +324,25 @@ settings.name = {
 
 	help = "hub name",
 
+	announce = true,
+
 	value = cm:getEntity(adchpp.AdcCommand_HUB_SID):getField("NI"),
 
 	validate = validate_ni
 }
 
 settings.network = {
-	value = ""
+	value = "",
+
+	announce = true
 }
 
 settings.owner = {
 	alias = { ownername = true },
 
 	help = "owner name",
+
+	announce = true,
 
 	value = ""
 }
@@ -352,6 +368,8 @@ settings.topic = {
 
 	help = "hub topic: if set, overrides the description for normal users; the description is then only for use by hub-lists",
 
+	announce = true,
+
 	value = "",
 
 	validate = validate_de
@@ -359,6 +377,8 @@ settings.topic = {
 
 settings.website = {
 	alias = { url = true },
+
+	announce = true,
 
 	value = ""
 }
@@ -1037,9 +1057,13 @@ commands.cfg = {
 		end
 		save_settings()
 
-		local loging = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
-		log(loging)
-		autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		local message = c:getField('NI') .. ' has changed "' .. name .. '" from "' .. base.tostring(old) .. '" to "' .. base.tostring(setting.value) .. '"'
+		log(message)
+		if setting.announce and settings.announcecfg.value ~= 0 then
+			cm:sendToAll(autil.info(message):getBuffer())
+		else
+			autil.reply(c, "Variable " .. name .. " changed from " .. base.tostring(old) .. " to " .. base.tostring(setting.value))
+		end
 	end,
 
 	help = "name value - change hub configuration, use \"+help cfg\" to list all variables",
