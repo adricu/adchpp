@@ -143,6 +143,18 @@ You can configure how many punishment actions should occour from one kind to ste
 
 The reaction for the different kind of flooding attempts can be fine tuned with tons of parameters available in +help cfgfl. Similar to the limits settings, every flood type can have its own individual expiration and rate settings to provide maximum flexibility.
 
+It's possible to check how the punishing actions hit the users. There's a log of kick and tempban events that kept for several days and can be displayed with the following commands:
+--------------------------------------
++showkicklog 
++showtmpbanlog
+--------------------------------------
+
+You can configure how long do you want to keep the log of the kick and tempban events with the
+--------------------------------------
++cfg fl_logexptime n
+--------------------------------------
+setting where n is the log expire time in days for both logs.
+
 === Tracing users
 
 Above the basic current information the core provides about an online user (+info <nick/CID> command) it's possible to keep track of registered and unregistered users' activity in the hub for a given period of time (last n days). You can identify users logging on with different clients, using different nicks or arriving from various IP addresses.
@@ -161,6 +173,7 @@ You can get the trace information for any stored entity (user) by one of its thr
 |+tracecid	|traces the entity's last info and history by CID (aliases: +tracebycid)
 |+traceip	|traces the entity's last info and history by IP address (aliases: +tracebyip)
 |+traceni	|traces the entity's last info and history by nick (aliases: +tracebyni)
+|+showentity|shows the current info for all entities that match either Nick, IP or CID
 |==============================================
 
 .Example trace
@@ -188,6 +201,8 @@ To see the extended hub commands usage statistics use the
 +listlimitstats
 --------------------------------------
 command.
+
+TIP: All statistics, traces and logs are saved so in case of a clean hub restart, shutdown or scripts reload these data is kept between sessions.
 
 
 == PtokaX API2 bridge for ADCH++
@@ -421,6 +436,9 @@ image:images/img_adch_service_location.png["ADCH++ Services"]
 To check if your adchpp service is running start the "services" application in administrative tools:
 
 image:images/img_adch_service_verify.png["ADCH++ verify service"]
+
+TIP: You can set up to automatically restart the hub service in case of a crash using the Recovery settings in the service properties.
+
 	
 == Issues and problems
 
