@@ -14,6 +14,7 @@ base.require("luadchpp")
 local adchpp = base.luadchpp
 local autil = base.require("autil")
 local json = base.require("json")
+local aio = base.require('aio')
 local io = base.require("io")
 local os = base.require("os")
 local string = base.require("string")
@@ -74,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.31"
+guardrev = "1.0.32"
 
 -- Tmp tables
 local data = {}
@@ -155,27 +156,28 @@ local entitystats = {}
 entitystats.last_cids = {}
 entitystats.hist_cids = {}
 
+local function verify_fldb_folder()
+	local fldb_folder_exist = 1
+	local file = io.open(tmpbanstats_file, "r")
+	if not file then
+		log('The folder '.. fldb_path .. ' was not found, creating it ...')
+		fldb_folder_exist = os.execute("mkdir ".. fldb_folder)
+	else
+		file:close()
+	end
+	return fldb_folder_exist
+end
+
 local function load_tmpbanstats()
 	tmpbanstats = {}
 	tmpbanstats.ips = {}
 	tmpbanstats.cids = {}
-	local file = io.open(tmpbanstats_file, "r")
-	if not file then
-		os.execute("mkdir ".. fldb_folder)
-		log("Unable to open " .. tmpbanstats_file .. ", tmpbanstats not loaded")
-		return
+
+	local ok, list, err = aio.load_file(tmpbanstats_file, aio.json_loader)
+	if err then
+		log('Tmpbanstats loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode tmpbanstats file: " .. list)
 		return
 	end
 
@@ -194,22 +196,11 @@ local function load_kickstats()
 	kickstats.ips = {}
 	kickstats.cids = {}
 
-	local file = io.open(kickstats_file, "r")
-	if not file then
-		log("Unable to open " .. kickstats_file .. ", kickstats not loaded")
-		return
+	local ok, list, err = aio.load_file(kickstats_file, aio.json_loader)
+	if err then
+		log('Kickstats loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode kickstats file: " .. list)
 		return
 	end
 
@@ -250,23 +241,11 @@ local function load_commandstats()
 	commandstats.getcmds = {}
 	commandstats.sndcmds = {}
 
-	local file = io.open(commandstats_file, "r")
-	if not file then
-		log("Unable to open " .. commandstats_file .. ", commandstats not loaded")
-		
-		return
+	local ok, list, err = aio.load_file(commandstats_file, aio.json_loader)
+	if err then
+		log('Commandstats loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode commandstats file: " .. list)
 		return
 	end
 
@@ -369,22 +348,12 @@ local function load_limitstats()
 	limitstats.sunatts = {}
 	limitstats.subloms = {}
 	limitstats.maxsameips = {}
-	local file = io.open(limitstats_file, "r")
-	if not file then
-		log("Unable to open " .. limitstats_file .. ", limitstats not loaded")
-		return
+
+	local ok, list, err = aio.load_file(limitstats_file, aio.json_loader)
+	if err then
+		log('Limitstats loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode limitstats file: " .. list)
 		return
 	end
 
@@ -452,22 +421,12 @@ local function load_entitystats()
 	entitystats = {}
 	entitystats.last_cids = {}
 	entitystats.hist_cids = {}
-	local file = io.open(entitystats_file, "r")
-	if not file then
-		log("Unable to open " .. entitystats_file .. ", entitystats not loaded")
-		return
+
+	local ok, list, err = aio.load_file(entitystats_file, aio.json_loader)
+	if err then
+		log('Entitystats loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode entitystats file: " .. list)
 		return
 	end
 
@@ -481,53 +440,38 @@ local function load_entitystats()
 end
 
 local function save_tmpbanstats()
-	local file = io.open(tmpbanstats_file, "w")
-	if not file then
-		log("Unable to open " .. tmpbanstats_file .. ", tmpbanstats not saved")
-		return
+	local err = aio.save_file(tmpbanstats_file, json.encode(tmpbanstats))
+	if err then
+		log('Tmpbanstats not saved: ' .. err)
 	end
-	file:write(json.encode(tmpbanstats))
-	file:close()
 end
 
 local function save_kickstats()
-	local file = io.open(kickstats_file, "w")
-	if not file then
-		log("Unable to open " .. kickstats_file .. ", kickstats not saved")
-		return
+	local err = aio.save_file(kickstats_file, json.encode(kickstats))
+	if err then
+		log('kickstats not saved: ' .. err)
 	end
-	file:write(json.encode(kickstats))
-	file:close()
 end
 
 local function save_limitstats()
-	local file = io.open(limitstats_file, "w")
-	if not file then
-		log("Unable to open " .. limitstats_file .. ", limitstats not saved")
-		return
+	local err = aio.save_file(limitstats_file, json.encode(limitstats))
+	if err then
+		log('Limitstats not saved: ' .. err)
 	end
-	file:write(json.encode(limitstats))
-	file:close()
 end
 
 local function save_commandstats()
-	local file = io.open(commandstats_file, "w")
-	if not file then
-		log("Unable to open " .. commandstats_file .. ", commandstats not saved")
-		return
+	local err = aio.save_file(commandstats_file, json.encode(commandstats))
+	if err then
+		log('Commandstats not saved: ' .. err)
 	end
-	file:write(json.encode(commandstats))
-	file:close()
 end
 
 local function save_entitystats()
-	local file = io.open(entitystats_file, "w")
-	if not file then
-		log("Unable to open " .. entitystats_file .. ", entitystats not saved")
-		return
+	local err = aio.save_file(entitystats_file, json.encode(entitystats))
+	if err then
+		log('Entitystats not saved: ' .. err)
 	end
-	file:write(json.encode(entitystats))
-	file:close()
 end
 
 local function handle_plus_command(c, msg)
@@ -1061,6 +1005,7 @@ local function dump_banned(c, cmd, update, msg, minutes)
 			bans.ips[ip] = { level = level_script, reason = msg, expires = expire }
 		end
 	end
+	save_bans()
 	local str = "You are banned: "
 	str = str .. "Reason: " .. msg
 	if minutes then
@@ -1556,22 +1501,12 @@ local function is_stats(c)
 end
 
 local function load_fl_settings()
-	local file = io.open(fl_settings_file, "r")
-	if not file then
-		log("Unable to open " .. fl_settings_file .. ", fl_settings not loaded")
-		return false
+	local ok, list, err = aio.load_file(fl_settings_file, aio.json_loader)
+
+	if err then
+		log('Flood settings loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return false
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode fl_settings file: " .. list)
 		return false
 	end
 
@@ -1592,22 +1527,12 @@ local function load_fl_settings()
 end
 
 local function load_li_settings()
-	local file = io.open(li_settings_file, "r")
-	if not file then
-		log("Unable to open " .. li_settings_file .. ", li_settings not loaded")
-		return false
+	local ok, list, err = aio.load_file(li_settings_file, aio.json_loader)
+
+	if err then
+		log('Limit settings loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return false
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode li_settings file: " .. list)
 		return false
 	end
 
@@ -1628,22 +1553,12 @@ local function load_li_settings()
 end
 
 local function load_en_settings()
-	local file = io.open(en_settings_file, "r")
-	if not file then
-		log("Unable to open " .. en_settings_file .. ", en_settings not loaded")
-		return false
+	local ok, list, err = aio.load_file(en_settings_file, aio.json_loader)
+
+	if err then
+		log('Entity settings loading: ' .. err)
 	end
-
-	local str = file:read("*a")
-	file:close()
-
-	if #str == 0 then
-		return false
-	end
-
-	local ok, list = base.pcall(json.decode, str)
 	if not ok then
-		log("Unable to decode en_settings file: " .. list)
 		return false
 	end
 
@@ -1664,48 +1579,36 @@ local function load_en_settings()
 end
 
 local function save_fl_settings()
-	local file = io.open(fl_settings_file, "w")
-	if not file then
-		log("Unable to open " .. fl_settings_file .. ", fl_settings not saved")
-		return
-	end
-
 	local list = {}
 	for k, v in base.pairs(fl_settings) do
 		list[k] = v.value
 	end
-	file:write(json.encode(list))
-	file:close()
+	local err = aio.save_file(fl_settings_file, json.encode(list))
+	if err then
+		log('Flood settings not saved: ' .. err)
+	end
 end
 
 local function save_li_settings()
-	local file = io.open(li_settings_file, "w")
-	if not file then
-		log("Unable to open " .. li_settings_file .. ", li_settings not saved")
-		return
-	end
-
 	local list = {}
 	for k, v in base.pairs(li_settings) do
 		list[k] = v.value
 	end
-	file:write(json.encode(list))
-	file:close()
+	local err = aio.save_file(li_settings_file, json.encode(list))
+	if err then
+		log('Limit settings not saved: ' .. err)
+	end
 end
 
 local function save_en_settings()
-	local file = io.open(en_settings_file, "w")
-	if not file then
-		log("Unable to open " .. en_settings_file .. ", en_settings not saved")
-		return
-	end
-
 	local list = {}
 	for k, v in base.pairs(en_settings) do
 		list[k] = v.value
 	end
-	file:write(json.encode(list))
-	file:close()
+	local err = aio.save_file(en_settings_file, json.encode(list))
+	if err then
+		log('Entity settings not saved: ' .. err)
+	end
 end
 
 local function onSOC(c) -- Stats verification for creating open sockets
@@ -5161,11 +5064,21 @@ commands.traceni = {
 	}
 }
 
-base.pcall(load_limitstats)
-base.pcall(load_commandstats)
-base.pcall(load_tmpbanstats)
-base.pcall(load_kickstats)
-base.pcall(load_entitystats)
+fldb_folder_exist = verify_fldb_folder()
+
+if fldb_folder_exist ~= 0 then
+	base.pcall(load_limitstats)
+	base.pcall(load_commandstats)
+	base.pcall(load_tmpbanstats)
+	base.pcall(load_kickstats)
+	base.pcall(load_entitystats)
+else
+	base.pcall(save_tmpbanstats)
+	base.pcall(save_kickstats)
+	base.pcall(save_limitstats)
+	base.pcall(save_commandstats)
+	base.pcall(save_entitystats)
+end
 
 fl_settings_loaded = load_fl_settings()
 li_settings_loaded = load_li_settings()
@@ -5327,9 +5240,6 @@ autil.on_unloading(_NAME, save_commandstats_timer)
 save_entitystats_timer = sm:addTimedJob(1800000, save_entitystats)
 autil.on_unloading(_NAME, save_entitystats_timer)
 
-save_bans_timer = sm:addTimedJob(1800000, banslua.save_bans)
-autil.on_unloading(_NAME, save_bans_timer)
-
 limitstats_clean_timer = sm:addTimedJob(30000, clear_expired_limitstats)
 autil.on_unloading(_NAME, limitstats_clean_timer)
 
@@ -5345,30 +5255,14 @@ autil.on_unloading(_NAME, kickstats_clean_timer)
 entitystats_clean_timer = sm:addTimedJob(900000, clear_expired_entitystats)
 autil.on_unloading(_NAME, entitystats_clean_timer)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(onONL)
-end)
+autil.on_unloading(_NAME, onONL)
 
-autil.on_unloading(_NAME, function()
- 	base.pcall(save_tmpbanstats)
-end)
+autil.on_unloading(_NAME, save_tmpbanstats)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(save_kickstats)
-end)
+autil.on_unloading(_NAME, save_kickstats)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(save_limitstats)
-end)
+autil.on_unloading(_NAME, save_limitstats)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(save_commandstats)
-end)
+autil.on_unloading(_NAME, save_commandstats)
 
-autil.on_unloading(_NAME, function()
-	base.pcall(save_entitystats)
-end)
-
-autil.on_unloading(_NAME, function()
-	base.pcall(banslua.save_bans)
-end)
+autil.on_unloading(_NAME, save_entitystats)
