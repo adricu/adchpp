@@ -101,7 +101,7 @@ commands.mass = {
 
 		local mass_cmd
 		if access.bot then
-			mass_cmd = autil.pm(message, access.bot:getSID(), 0)
+			mass_cmd = autil.pm(message, access.bot.main_bot:getSID(), 0)
 		else
 			mass_cmd = autil.info(message)
 		end
