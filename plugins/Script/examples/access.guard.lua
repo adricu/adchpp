@@ -75,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.32"
+guardrev = "1.0.33"
 
 -- Tmp tables
 local data = {}
@@ -1036,16 +1036,16 @@ local function verify_maxkicks(c, cmd, update, msg, minutes)
 		local ip = c:getIp()
 		if cid and kickstats.cids[cid].count >= fl_settings.fl_maxkicks.value then
 			local count = kickstats.cids[cid].count
-			local msg = "For ( "..count.." times ) beeing kicked !!! Last kick: " .. msg
-			dump_banned(c, cmd, update, msg, minutes)
+			local str = "For ( "..count.." times ) beeing kicked !!! Last kick: " .. msg
+			dump_banned(c, cmd, update, str, minutes)
 			kickstats.cids[cid] = nil
 			update = nil
 			return update
 		end
 		if kickstats.ips[ip].count >= fl_settings.fl_maxkicks.value then
 			local count = kickstats.ips[ip].count
-			local msg = "For ( "..count.." times ) beeing kicked !!! Last kick: " .. msg
-			dump_banned(c, cmd, update, msg, minutes)
+			local str = "For ( "..count.." times ) beeing kicked !!! Last kick: " .. msg
+			dump_banned(c, cmd, update, str, minutes)
 			kickstats.ips[ip] = nil
 			update = nil
 			return update
@@ -1055,7 +1055,7 @@ local function verify_maxkicks(c, cmd, update, msg, minutes)
 end
 
 local function dump_kicked(c, cmd, update, msg)
-	local str = "You are kicked because:" .. msg
+	local str = "You are kicked: " .. msg
 	local expires = -1
 	local cid, count
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
@@ -1309,7 +1309,7 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 			maxcount = li_settings.li_maxcount.value
 		end
 		if maxcount <= update.count then
-			local msg = " For spamming the hub too often ("..update.count.." times)  with ".. stat .." flooding"
+			local msg = "For spamming the hub too often (" ..update.count.. " times)  with " .. stat .. " !!!!"
 			update = dump_kicked(c, cmd, update, msg)
 			return update
 		end
@@ -1333,15 +1333,23 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 			else
 				rate = update.rate
 			end
-			local msg = " You are hammering the hub , cool down or you will be kicked !!!! (" .. rate .. " times / min) with " .. stat .. " "
+			if fl_settings.fl_maxwarnmsg.value > update.warns then
+				msg = "You are hammering the hub  (" .. rate .. " times / min) with the " .. stat .. " , cool down ..."
+				if fl_settings.fl_maxwarns.value > 0 then
+					msg = msg .. " , or you will be kicked !!!!"
+				end
+			end
 			if fl_settings.fl_maxwarns.value > 0 and update.warns >= fl_settings.fl_maxwarns.value then
-				local msg = " For hammering the hub to often (" .. update.warns .. " times)  for " .. stat .. " !"
+				msg = "For hammering the hub to often (" .. update.warns .. " times)  with the " .. stat .. " !"
 				update = dump_kicked(c, cmd, update, msg)
 				return update
 			end
 			update.warns = update.warns + 1
 			update.warning = 1
-			autil.reply(c, msg)
+			base.print(msg)
+			if msg then
+				autil.reply(c, msg)
+			end
 			return update
 		end
 		update.warning = 0
@@ -1616,7 +1624,7 @@ local function onSOC(c) -- Stats verification for creating open sockets
 	local ip = c:getIp()
 
 	if fl_settings.cmdsoc_rate.value > 0 or fl_settings.fl_maxrate.value > 0 then
-		local stat = "cmdsoc_rate"
+		local stat = "Open socket command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1666,7 +1674,7 @@ local function onCON(c) -- Stats verification for connects and building entitys 
 	end
 
 	if fl_settings.cmdcon_rate.value > 0 or fl_settings.fl_maxrate.value > 0 then
-		local stat = "cmdcon_rate"
+		local stat = "Connect command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1750,7 +1758,7 @@ local function onURX(c, cmd) -- Stats and flood verification for unknown command
 	local cid = c:getCID():toBase32()
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdurx_rate.value > 0) then
-		local stat = "cmdurxrate"
+		local stat = "Unknown command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = 0
@@ -1781,7 +1789,7 @@ local function onCRX(c, cmd) -- Stats and rules verification for bad context com
 	local cid = c:getCID():toBase32()
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdcrx_rate.value > 0) then
-		local stat = "cmdcrxrate"
+		local stat = "command with invalid context"
 		local msg = "Invalid context for a ( ".. cmd:getCommandString() .." ) command, the command is blocked !!!"
 		local type = "cmd"
 		local factor = 1
@@ -1813,7 +1821,7 @@ local function onCMD(c, cmd) -- Stats and rules verification for command strings
 	local cid = c:getCID():toBase32()
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdcmd_rate.value > 0) then
-		local stat = "cmdcmdrate"
+		local stat = "a user Command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1843,7 +1851,7 @@ c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers fro
 
 	if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not blom then
 		local ip = c:getIp()
-		local stat = "sublom"
+		local stat = "Support BLOM filter forced"
 		local str = "This hub requires that your client supports the BLOM (TTH search filtering) extention !"
 		local type = "lim"
 		local factor = 60
@@ -1869,7 +1877,7 @@ c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers fro
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsup_rate.value > 0 then
 		local ip = c:getIp()
-		local stat = "cmdsuprate"
+		local stat = "SUP command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1902,7 +1910,7 @@ local function onSID(c, cmd) -- Stats and rules verification for sid strings
 	local cid = c:getCID():toBase32()
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsid_rate.value > 0) then
-		local stat = "cmdsidrate"
+		local stat = "SID command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1933,7 +1941,7 @@ local function onPAS(c, cmd) -- Stats and rules verification for password string
 	local cid = c:getCID():toBase32()
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdpas_rate.value > 0) then
-		local stat = "cmdpasrate"
+		local stat = "PAS command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1964,7 +1972,7 @@ local function onSTA(c, cmd) -- Stats and rules verification for status strings
 	local cid = c:getCID():toBase32()
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsta_rate.value > 0) then
-		local stat = "cmdstarate"
+		local stat = "STA command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -1997,7 +2005,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if li_settings.maxschparam.value > 0 and params >= li_settings.maxschparam.value then
 		local cid = c:getCID():toBase32()
-		local stat = "maxschparam"
+		local stat = "Max Search parameters limit"
 		local msg = "Your search contained too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
 		local type = "lim"
 		local factor = 60
@@ -2021,7 +2029,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if li_settings.maxschlength.value > 0 and chars > li_settings.maxschlength.value then
 		local cid = c:getCID():toBase32()
-		local stat = "maxschlength"
+		local stat = "Max Search length limit"
 		local msg = "Your search string contained too many characters, max allowed is " .. li_settings.maxschlength.value
 		local type = "lim"
 		local factor = 60
@@ -2046,7 +2054,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if li_settings.minschlength.value > 0 and chars < li_settings.minschlength.value then
 		local cid = c:getCID():toBase32()
-		local stat = "minschlength"
+		local stat = "Min Search length limit"
 		local msg = "Your search string has not enough characters min alowed is ".. li_settings.minschlength.value.." "
 		local type = "lim"
 		local factor = 60
@@ -2073,7 +2081,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if string.len(TTH) > 0 and not string.match(feature, "+NAT0") and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
 		local cid = c:getCID():toBase32()
-		local stat = "cmdschtthrate"
+		local stat = "TTH Search command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2096,7 +2104,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if string.len(TTH) > 0 and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
 		local cid = c:getCID():toBase32()
-		local stat = "cmdschtthnatrate"
+		local stat = "NAT TTH Search command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2119,7 +2127,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if not string.match(feature, "+NAT0") and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0) then
 		local cid = c:getCID():toBase32()
-		local stat = "cmdschmanrate"
+		local stat = "manual Search command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2158,7 +2166,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0 then
 		local cid = c:getCID():toBase32()
-		local stat = "cmdschmannatrate"
+		local stat = "NAT manual Search command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2207,7 +2215,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 
 	if li_settings.maxmsglength.value > 0 and string.len(cmdmsg) >= li_settings.maxmsglength.value then
 		local cid = c:getCID():toBase32()
-		local stat = "maxmsglength"
+		local stat = "Max Message length limit"
 		local msg = "Your message contained too many characters, max allowed is ".. li_settings.maxmsglength.value.." "
 		local type = "lim"
 		local factor = 60
@@ -2231,7 +2239,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdmsg_rate.value > 0 then
 		local cid = c:getCID():toBase32()
-		local stat = "cmdmsgrate"
+		local stat = "MSG command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2278,7 +2286,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
-		local stat = "maxsameip"
+		local stat = "max same IP"
 		local str = "This hub allows a maximum of ( " .. li_settings.maxsameip.value .. " ) connections from the same ip address and that value is reached sorry for now !"
 		local type = "lim"
 		local factor = 60
@@ -2309,7 +2317,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local adcs = string.find(su, 'ADC0') or string.find(su, 'ADCS')
 
 	if li_settings.suadcs.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not adcs then
-		local stat = "suadcs"
+		local stat = "Support ADCS forced"
 		local str = "This hub requires that you have the secure transfer option enabled, go to Settings/Security Cerificates and enable 'Use TLS when remote client supports it' !"
 		local type = "lim"
 		local factor = 60
@@ -2337,7 +2345,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	-- user must either be active or support NAT-T
 
 	if li_settings.sunatt.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not natt then
-		local stat = "sunatt"
+		local stat = "Support NAT-T forced"
 		local str = "This hub requires that you have the NAT-T option enabled if you use passive mode, go to Settings and enable it or use a client that supports it !"
 		local type = "lim"
 		local factor = 60
@@ -2364,7 +2372,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local ss = base.tonumber(cmd:getParam("SS", 0)) or base.tonumber(c:getField("SS")) or 0
 
 	if li_settings.minsharesize.value > 0 and li_settings.li_minlevel.value <= get_level(c) and ss < li_settings.minsharesize.value then
-		local stat = "minsharesize"
+		local stat = "Min Share size limit"
 		local str = "Your share size ( " .. adchpp.Util_formatBytes(ss) .. " ) is too low, the minimum required size is " .. adchpp.Util_formatBytes(li_settings.minsharesize.value)
 		local type = "lim"
 		local factor = 60
@@ -2389,7 +2397,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.maxsharesize.value > 0 and li_settings.li_minlevel.value <= get_level(c) and ss > li_settings.maxsharesize.value then
-		local stat = "maxsharesize"
+		local stat = "Max Share size limit"
 		local str = "Your share size ( " .. adchpp.Util_formatBytes(ss) .. " ) is too high, the maximum allowed size is " .. adchpp.Util_formatBytes(li_settings.maxsharesize.value)
 		local type = "lim"
 		local factor = 60
@@ -2416,7 +2424,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local sf = base.tonumber(cmd:getParam("SF", 0)) or base.tonumber(c:getField("SF")) or 0
 
 	if li_settings.minsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf < li_settings.minsharefiles.value then
-		local stat = "minsharefiles"
+		local stat = "Min Shared files limit"
 		local str = "Your nr of shared files ( " .. sf .. " ) is too low, the minimum required nr of files is " .. li_settings.minsharefiles.value
 		local type = "lim"
 		local factor = 60
@@ -2441,7 +2449,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.maxsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf > li_settings.maxsharefiles.value then
-		local stat = "maxsharefiles"
+		local stat = "Max Shared files limit"
 		local str = "Your nr of shared files ( " .. sf .. " ) is too high, the maximum allowed nr of files is " .. li_settings.maxsharefiles.value
 		local type = "lim"
 		local factor = 60
@@ -2468,7 +2476,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local sl = base.tonumber(cmd:getParam("SL", 0)) or base.tonumber(c:getField("SL")) or 0
 
 	if li_settings.minslots.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sl < li_settings.minslots.value then
-		local stat = "minslots"
+		local stat = "Min Slots limit"
 		local str = "You have too few upload slots open ( " .. base.tostring(sl) .. " ), the minimum required is " .. base.tostring(li_settings.minslots.value)
 		local type = "lim"
 		local factor = 60
@@ -2493,7 +2501,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.maxslots.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sl > li_settings.maxslots.value then
-		local stat = "maxslots"
+		local stat = "Max Slots limit"
 		local str = "You have too many upload slots open ( " .. base.tostring(sl) .. " ), the maximum allowed is " .. base.tostring(li_settings.maxslots.value)
 		local type = "lim"
 		local factor = 60
@@ -2527,8 +2535,8 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local r = sl / h
 
 	if li_settings.minhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r < li_settings.minhubslotratio.value then
-		local stat = "minhubslotratio"
-		local str = "Your hubs/slots ratio ( " .. base.tostring(r) .. " ) is too low, you must open up more upload slots or disconnect from some hubs to achieve a ratio of " .. base.tostring(li_settings.minhubslotratio.value)
+		local stat = "Min Hub/Slot ratio limit"
+		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too low, you must open up more upload slots or disconnect from some hubs to achieve a ratio of " .. base.tostring(li_settings.minhubslotratio.value)
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2552,8 +2560,8 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.maxhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r > li_settings.maxhubslotratio.value then
-		local stat = "maxhubslotratio"
-		local str = "Your hubs/slots ratio ( " .. base.tostring(r) .. " ) is too high, you must reduce your open upload slots or connect to more hubs to achieve a ratio of " .. base.tostring(li_settings.maxhubslotratio.value)
+		local stat = "Max Hub/Slot ratio limit"
+		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too high, you must reduce your open upload slots or connect to more hubs to achieve a ratio of " .. base.tostring(li_settings.maxhubslotratio.value)
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2577,8 +2585,8 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.maxhubcount.value > 0 and li_settings.li_minlevel.value <= get_level(c) and h > li_settings.maxhubcount.value then
-		local stat = "maxhubcount"
-		local str = "The number of hubs you're connected to ( " .. base.tostring(h) .. " ) is too high, the maximum allowed is " .. base.tostring(li_settings.maxhubcount.value)
+		local stat = "Max Hubcount limit"
+		local str = "The number of Hubs you're connected to ( " .. base.tostring(h) .. " ) is too high, the maximum allowed is " .. base.tostring(li_settings.maxhubcount.value)
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2602,7 +2610,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.minnicklength.value > 0 and #ni < li_settings.minnicklength.value then
-		local stat = "minnicklength"
+		local stat = "Min Nick length limit"
 		local str = "Your nick ( " .. ni .. " ) is too short, it must contain " .. base.tostring(li_settings.minnicklength.value) .. " characters minimum"
 		local type = "lim"
 		local factor = 60
@@ -2627,7 +2635,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if li_settings.maxnicklength.value > 0 and #ni > li_settings.maxnicklength.value then
-		local stat = "maxnicklength"
+		local stat = "Max Nick length limit"
 		local str = "Your nick ( " .. ni .. " ) is too long, it can contain " .. base.tostring(li_settings.maxnicklength.value) .. " characters maximum"
 		local type = "lim"
 		local factor = 60
@@ -2652,7 +2660,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdinf_rate.value > 0) and c:getState() == adchpp.Entity_STATE_NORMAL then
-		local stat = "cmdinfrate"
+		local stat = "INF command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2684,7 +2692,7 @@ local function onRES(c, cmd) -- Stats and rules verification for search results 
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdres_rate.value > 0 then
-		local stat = "cmdresrate"
+		local stat = "search Results command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2716,7 +2724,7 @@ local function onCTM(c, cmd) -- Stats and rules verification for connect to me s
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdctm_rate.value > 0 then
-		local stat = "cmdctmrate"
+		local stat = "CTM command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2748,7 +2756,7 @@ local function onRCM(c, cmd) -- Stats and rules verification for reverse connect
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdrcm_rate.value > 0 then
-		local stat = "cmdrcmrate"
+		local stat = "RCM command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2780,7 +2788,7 @@ local function onNAT(c, cmd) -- Stats and rules verification for nat traversal c
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdnat_rate.value > 0 then
-		local stat = "cmdnatrate"
+		local stat = "NAT command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2812,7 +2820,7 @@ local function onRNT(c, cmd) -- Stats and rules verification for nat traversal r
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdrnt_rate.value > 0 then
-		local stat = "cmdrntrate"
+		local stat = "RNT command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2844,7 +2852,7 @@ local function onPSR(c, cmd) -- Stats and rules verification for partitial files
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdpsr_rate.value > 0 then
-		local stat = "cmdpsrrate"
+		local stat = "PSR command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2876,7 +2884,7 @@ local function onGET(c, cmd) -- Stats and rules verification for get strings
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdget_rate.value > 0 then
-		local stat = "cmdgetrate"
+		local stat = "GET command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2908,7 +2916,7 @@ local function onSND(c, cmd) -- Stats and rules verification for send strings
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsnd_rate.value > 0 then
-		local stat = "cmdsndrate"
+		local stat = "SND command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -2954,15 +2962,23 @@ fl_settings.fl_maxkicks = {
 
 	help = "maximum count of kicks before user is tmp bannend, 0 = disabled !!!!",
 
-	value = 0
+	value = 3
 }
 
 fl_settings.fl_maxwarns = {
 	alias = { maximumwarns = true, maxwarns = true },
 
-	help = "maximum count of hammering warnings before user is kicked, 0 = disabled !!!!",
+	help = "maximum count of flood attempts before user is kicked, 0 = disabled !!!!",
 
-	value = 0
+	value = 20
+}
+
+fl_settings.fl_maxwarnmsg = {
+	alias = { maxwarnsmsg = true, maximumwarnsmsg = true },
+
+	help = "maximum warning messages send to the user, after that the flood attempt just get blocked , 0 = disabled !!!!",
+
+	value = 5
 }
 
 fl_settings.fl_maxtmpbans = {
@@ -2978,7 +2994,7 @@ fl_settings.fl_tmpban =  {
 
 	help = "minutes a user will be temp banned after reaching the maxkicks value,  0 = disabled !!!!",
 
-	value = 0
+	value = 30
 }
 
 fl_settings.fl_maxrate = {
@@ -3053,7 +3069,7 @@ fl_settings.cmdsup_rate = {
 
 	help = "max rate in counts/min that a client can send sup strings, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 1
 }
 
 fl_settings.cmdsid_rate = {
@@ -3069,7 +3085,7 @@ fl_settings.cmdcon_rate = {
 
 	help = "maximum rate in counts/min that a user can reconnect, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 1
 }
 
 fl_settings.cmdsoc_rate = {
@@ -3077,7 +3093,7 @@ fl_settings.cmdsoc_rate = {
 
 	help = "maximum rate in counts/min that the same ip can open a new socket, 0 = default, -1 = disabled",
 
-	value = 15
+	value = 2
 }
 
 fl_settings.cmdurx_rate = {
@@ -3085,7 +3101,7 @@ fl_settings.cmdurx_rate = {
 
 	help = "max rate in counts/min that a client can send unknown adc commands, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 5
 }
 
 fl_settings.cmdcrx_rate = {
@@ -3093,7 +3109,7 @@ fl_settings.cmdcrx_rate = {
 
 	help = "max rate in counts/min that a client can send adc commands with a bad context, 0 = default, -1 = disabled",
 
-	value = 0
+	value = 5
 }
 
 fl_settings.cmdpas_rate = {
@@ -3165,7 +3181,7 @@ fl_settings.cmdpsr_rate = {
 
 	help = "max rate in counts/min that a client can send partitial file sharing string's, 0 = default, -1 = disabled",
 
-	value = 10
+	value = 0
 }
 
 fl_settings.cmdget_rate = {
@@ -3181,7 +3197,7 @@ fl_settings.cmdsnd_rate = {
 
 	help = "max rate in counts/min that a client can send the send transfer command, 0 = default, -1 = disabled",
 
-	value = 10
+	value = 5
 }
 
 fl_settings.cmdinf_exp = {
