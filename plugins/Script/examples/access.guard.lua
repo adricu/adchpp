@@ -75,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.33"
+guardrev = "1.0.34"
 
 -- Tmp tables
 local data = {}
@@ -1333,7 +1333,7 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 			else
 				rate = update.rate
 			end
-			if fl_settings.fl_maxwarnmsg.value > update.warns then
+			if fl_settings.fl_maxwarnmsg.value > update.warns or fl_settings.fl_maxwarnmsg.value == -1 then
 				msg = "You are hammering the hub  (" .. rate .. " times / min) with the " .. stat .. " , cool down ..."
 				if fl_settings.fl_maxwarns.value > 0 then
 					msg = msg .. " , or you will be kicked !!!!"
@@ -1346,7 +1346,6 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 			end
 			update.warns = update.warns + 1
 			update.warning = 1
-			base.print(msg)
 			if msg then
 				autil.reply(c, msg)
 			end
@@ -2976,7 +2975,7 @@ fl_settings.fl_maxwarns = {
 fl_settings.fl_maxwarnmsg = {
 	alias = { maxwarnsmsg = true, maximumwarnsmsg = true },
 
-	help = "maximum warning messages send to the user, after that the flood attempt just get blocked , 0 = disabled !!!!",
+	help = "maximum warning messages send to the user, after that the flood attempt just get blocked , -1 = disabled !!!!",
 
 	value = 5
 }
