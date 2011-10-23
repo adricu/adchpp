@@ -1219,7 +1219,7 @@ commands.info = {
 				str = "\n"
 				field_function("NI", "Nick")
 				field_function("ID", "CID")
-				str = str .. "IP: "
+				str = str .. "Hub connection: "
 				local user_c = user:asClient()
 				if user_c then
 					str = str .. user_c:getIp()
@@ -1227,6 +1227,8 @@ commands.info = {
 					str = str .. "unknown"
 				end
 				str = str .. "\n"
+				field_function("I4", "IPv4 address")
+				field_function("I6", "IPv6 address")
 				str = str .. "Level: " .. get_level(user) .. "\n"
 				field_function("DE", "Description")
 				field_function("SS", "Share size (bytes)")
@@ -1236,6 +1238,7 @@ commands.info = {
 				field_function("US", "Max upload speed (bytes/s)")
 				field_function("DS", "Max download speed (bytes/s)")
 				field_function("SL", "Max slots")
+				field_function("FS", "Free slots")
 				field_function("AS", "Speed limit for auto-slots (bytes/s)")
 				field_function("AM", "Minimum auto-slots")
 				field_function("EM", "E-mail")
