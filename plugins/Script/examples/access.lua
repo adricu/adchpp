@@ -753,6 +753,14 @@ verify_info = function(c, cid, nick)
 	return true
 end
 
+local function send_hub_info(c)
+	c:send(cm:getEntity(adchpp.AdcCommand_HUB_SID):getINF())
+
+	if settings.sendversion.value == 1 then
+		autil.reply(c, 'This hub is running ' .. adchpp.appName .. ' ' .. adchpp.versionString)
+	end
+end
+
 local function onSUP(c, cmd)
 	-- imitate ClientManager::handle(AdcCommand::SUP, ...)
 
@@ -760,7 +768,7 @@ local function onSUP(c, cmd)
 		return false
 	end
 
-	if c:getState() ~= adchpp.Entity_STATE_PROTOCOL or not c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) then
+	if c:getState() ~= adchpp.Entity_STATE_PROTOCOL then
 		-- let ClientManager further process this SUP
 		return true
 	end
@@ -768,7 +776,7 @@ local function onSUP(c, cmd)
 	-- imitate ClientManager::enterIdentify
 
 	if string.match(adchpp.versionString, 'Debug$') then
-		base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. " entering IDENTIFY (supports 'PING')")
+		base.print(adchpp.AdcCommand_fromSID(c:getSID()) .. ' entering IDENTIFY')
 	end
 
 	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
@@ -776,6 +784,15 @@ local function onSUP(c, cmd)
 	c:send(hub:getSUP())
 	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 		:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
+
+	c:setState(adchpp.Entity_STATE_IDENTIFY)
+
+	if (not c:hasSupport(adchpp.AdcCommand_toFourCC('PING'))) or settings.maxusers.value == 0 then
+		return false
+	end
+
+	-- send an INF to clients with the PING extension (hub list pingers)
+	base.print('Sending an INF with PING info to ' .. adchpp.AdcCommand_fromSID(c:getSID()))
 
 	local entities = cm:getEntities()
 	local uc = entities:size()
@@ -813,8 +830,6 @@ local function onSUP(c, cmd)
 	end
 	c:send(inf)
 
-	c:setState(adchpp.Entity_STATE_IDENTIFY)
-
 	return false
 end
 
@@ -842,10 +857,6 @@ local function onINF(c, cmd)
 		return true
 	end
 
-	if settings.sendversion.value == 1 then
-		autil.reply(c, "This hub is running " .. adchpp.appName .. " " .. adchpp.versionString)
-	end
-
 	local user = get_user(cid, nick)
 	if user.level == 0 then
 		-- non-reg user
@@ -854,6 +865,8 @@ local function onINF(c, cmd)
 			autil.dump(c, code, err)
 			return false
 		end
+
+		send_hub_info(c)
 
 		-- let ClientManager further verify this INF
 		return true
@@ -917,6 +930,8 @@ local function onPAS(c, cmd)
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, message)
 		return false
 	end
+
+	send_hub_info(c)
 
 	if message then
 		autil.reply(c, message)
