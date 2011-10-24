@@ -754,7 +754,54 @@ verify_info = function(c, cid, nick)
 end
 
 local function send_hub_info(c)
-	c:send(cm:getEntity(adchpp.AdcCommand_HUB_SID):getINF())
+	local hub = cm:getEntity(adchpp.AdcCommand_HUB_SID)
+	local inf
+
+	if c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) then
+		-- send a special INF to users with the PING extension (hub list pingers).
+		base.print('Sending an INF with PING info to ' .. adchpp.AdcCommand_fromSID(c:getSID()))
+
+		local entities = cm:getEntities()
+		local uc = entities:size()
+		local ss = 0
+		local sf = 0
+		if uc > 0 then
+			for i = 0, uc - 1 do
+				local entity = entities[i]
+				local ss_ = entity:getField("SS")
+				if #ss_ > 0 then
+					ss = ss + base.tonumber(ss_)
+				end
+				local sf_ = entity:getField("SF")
+				if #sf_ > 0 then
+					sf = sf + base.tonumber(sf_)
+				end
+			end
+		end
+
+		inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+		hub:getAllFields(inf)
+		inf:delParam("DE", 0)
+		inf:addParam("DE", settings.description.value)
+		-- add PING-specific information
+		:addParam("HH" .. settings.address.value)
+		:addParam("WS" .. settings.website.value)
+		:addParam("NE" .. settings.network.value)
+		:addParam("OW" .. settings.owner.value)
+		:addParam("UC" .. base.tostring(uc))
+		:addParam("SS" .. base.tostring(ss))
+		:addParam("SF" .. base.tostring(sf))
+		:addParam("UP" .. base.tostring(cm:getUpTime()))
+		if settings.maxusers.value > 0 then
+			inf:addParam("MC" .. base.tostring(settings.maxusers.value))
+		end
+
+	else
+		-- standard INF for non-PING users.
+		inf = hub:getINF()
+	end
+
+	c:send(inf)
 
 	if settings.sendversion.value == 1 then
 		autil.reply(c, 'This hub is running ' .. adchpp.appName .. ' ' .. adchpp.versionString)
@@ -762,7 +809,7 @@ local function send_hub_info(c)
 end
 
 local function onSUP(c, cmd)
-	-- imitate ClientManager::handle(AdcCommand::SUP, ...)
+	-- imitate ClientManager::handle(AdcCommand::SUP, ...) except we delay sending the initial INF.
 
 	if not cm:verifySUP(c, cmd) then
 		return false
@@ -786,49 +833,6 @@ local function onSUP(c, cmd)
 		:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
 
 	c:setState(adchpp.Entity_STATE_IDENTIFY)
-
-	if (not c:hasSupport(adchpp.AdcCommand_toFourCC('PING'))) or settings.maxusers.value == 0 then
-		return false
-	end
-
-	-- send an INF to clients with the PING extension (hub list pingers)
-	base.print('Sending an INF with PING info to ' .. adchpp.AdcCommand_fromSID(c:getSID()))
-
-	local entities = cm:getEntities()
-	local uc = entities:size()
-	local ss = 0
-	local sf = 0
-	if uc > 0 then
-		for i = 0, uc - 1 do
-			local entity = entities[i]
-			local ss_ = entity:getField("SS")
-			if #ss_ > 0 then
-				ss = ss + base.tonumber(ss_)
-			end
-			local sf_ = entity:getField("SF")
-			if #sf_ > 0 then
-				sf = sf + base.tonumber(sf_)
-			end
-		end
-	end
-
-	local inf = adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
-	hub:getAllFields(inf)
-	inf:delParam("DE", 0)
-	inf:addParam("DE", settings.description.value)
-	-- add PING-specific information
-	:addParam("HH" .. settings.address.value)
-	:addParam("WS" .. settings.website.value)
-	:addParam("NE" .. settings.network.value)
-	:addParam("OW" .. settings.owner.value)
-	:addParam("UC" .. base.tostring(uc))
-	:addParam("SS" .. base.tostring(ss))
-	:addParam("SF" .. base.tostring(sf))
-	:addParam("UP" .. base.tostring(cm:getUpTime()))
-	if settings.maxusers.value > 0 then
-		inf:addParam("MC" .. base.tostring(settings.maxusers.value))
-	end
-	c:send(inf)
 
 	return false
 end
