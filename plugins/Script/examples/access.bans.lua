@@ -608,7 +608,7 @@ commands.banschre = {
 		end
 
 		if bans.schsre[re] then
-			bans.msgsre[re] = nil
+			bans.schsre[re] = nil
 			save_bans()
 			autil.reply(c, "Searches that match \"" .. re .. "\" won't be blocked anymore")
 		else

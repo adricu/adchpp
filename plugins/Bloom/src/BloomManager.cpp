@@ -149,7 +149,6 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 			if((bloom && !bloom->match(TTHValue(tmp))) || !adchpp::Util::toInt(c.getField("SF"))) {
 				ok = false;
 				stopped++;
-				dcdebug("Stopping search\n");
 			}
 		}
 	}
