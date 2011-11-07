@@ -271,6 +271,11 @@ uint32_t, const uint32_t&
 %include "embed.i"
 
 %extend adchpp::AdcCommand {
+	bool hasParam(const char* name, size_t start) {
+		std::string tmp;
+        return self->getParam(name, start, tmp);
+	}
+
 	std::string getParam(const char* name, size_t start) {
 		std::string tmp;
 		if(self->getParam(name, start, tmp)) {
