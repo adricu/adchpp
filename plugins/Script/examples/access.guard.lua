@@ -75,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.34"
+guardrev = "1.0.35"
 
 -- Tmp tables
 local data = {}
@@ -188,7 +188,6 @@ local function load_tmpbanstats()
 	if not	tmpbanstats.cids then
 		tmpbanstats.cids = {}
 	end
-
 end
 
 local function load_kickstats()
@@ -528,7 +527,7 @@ end
 local function clear_expired_limitstats()
 	for _, limitstats_array in base.pairs(limitstats) do
 		for k, data in base.pairs(limitstats_array) do
-			if data.expires and data_expiration_diff(data) <= 0 then
+			if not data.expires or data_expiration_diff(data) <= 0 then
 				limitstats_array[k] = nil
 			end
 		end
@@ -538,7 +537,7 @@ end
 local function clear_expired_commandstats()
 	for _, command_array in base.pairs(commandstats) do
 		for k, data in base.pairs(command_array) do
-			if data.expires and data_expiration_diff(data) <= 0 then
+			if not data.expires or data_expiration_diff(data) <= 0 then
 				command_array[k] = nil
 			end
 		end
@@ -548,7 +547,7 @@ end
 local function clear_expired_tmpbanstats()
 	for _, command_array in base.pairs(tmpbanstats) do
 		for k, data in base.pairs(command_array) do
-			if data.expires and data_expiration_diff(data) <= 0 then
+			if not data.expires or data_expiration_diff(data) <= 0 then
 				command_array[k] = nil
 			end
 		end
@@ -558,7 +557,7 @@ end
 local function clear_expired_kickstats()
 	for _, command_array in base.pairs(kickstats) do
 		for k, data in base.pairs(command_array) do
-			if data.expires and data_expiration_diff(data) <= 0 then
+			if not data.expires or data_expiration_diff(data) <= 0 then
 				command_array[k] = nil
 			end
 		end
@@ -568,7 +567,7 @@ end
 local function clear_expired_entitystats()
 	for _, command_array in base.pairs(entitystats) do
 		for k, data in base.pairs(command_array) do
-			if data.expires and data_expiration_diff(data) <= 0 then
+			if not data.expires or data_expiration_diff(data) <= 0 then
 				command_array[k] = nil
 			end
 		end
@@ -660,6 +659,22 @@ local function data_rate_string(rate)
 	return rate
 end
 
+local function data_connection_string(con)
+	local speed = adchpp.Util_formatBytes(con)
+	if speed == "0 B" then
+		speed = "0.00 B"
+	end
+	return speed
+end
+
+local function data_sharesize_string(size)
+	local share = adchpp.Util_formatBytes(size)
+	if share == "0 B" then
+		share = "0.00 B"
+	end
+	return share
+end
+
 local function data_info_string_cid(info)
 	local str = "\tCounter: " .. info.count
 	if info.warns then
@@ -732,6 +747,7 @@ local function data_info_string_ip(info)
 	str = str .. "\n\tStarted: " .. data_started_string(info)
 
 	str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
+
 	return str
 end
 
@@ -773,25 +789,74 @@ local function data_info_string_log(info)
 end
 
 local function data_info_string_entity(info)
-
-	local str = "\n\tIP:\t\t\t\t\t" .. info.ip
+	local str = "\n\tEntity SID, Nick:\t\t\tSID: " .. info.sid
 
 	if info.ni then
-		str = str .. "\n\tNick:\t\t\t\t\t" .. info.ni
+		str = str .. "\t\t\tNick: " .. info.ni
+	end
+
+	str = str ..  "\n\tEntity IP's: \t\t\t\tCon. IP: " .. info.ip .. "   "
+
+	if info.i4 and info.i4 ~= info.ip then
+		str = str .. "\t\tIPv4: " .. info.i4
+	end
+
+	if info.i6 and info.i6 ~= info.ip then
+		str = str .. "\t\tIPv6: " .. info.i6
+	end
+
+	if info.us then
+		str = str .. "\n\tConnection:\t\t\t\tUp: " .. data_connection_string(info.us) .. "/s   "
+	end
+
+	if info.ds then
+		str = str .. "\t\tDown: " .. data_connection_string(info.ds) .. "/s"
+	end
+
+	if info.ss then
+		str = str .. "\n\tEntity Share:\t\t\t\tSize: " .. data_sharesize_string(info.ss) .. "   "
+	end
+
+	if info.sf then
+		str = str .. "\t\tFiles: " .. info.sf
+	end
+
+	if info.sl then
+		str = str .. "\n\tEntity Slots:\t\t\t\tMax: " .. info.sl .. "  "
+	end
+
+	if info.fs then
+		str = str .. "\t\t\tFree: " .. info.fs
+	end
+
+	if info.hn or info.hr or info.ho then
+		str = str .. "\n\tEntity Hubs:\t\t\t\tHN: " .. info.hn
+		str = str .. "\t\tHR: " .. info.hr
+		str = str .. "\t\tHO: " .. info.ho
 	end
 
 	if info.ap then
 		if info.ve then
-			str = str .. "\n\tApplication:\t\t\t\t" .. info.ap .. " " .. info.ve
+			str = str .. "\n\tApplication:\t\t\t\t" .. info.ap .. " " .. info.ve .. "   "
 		end
 	else
 		if info.ve then
-			str = str .. "\n\tApplication:\t\t\t\t" .. info.ve
+			str = str .. "\n\tApplication:\t\t\t\t" .. info.ve .. "   "
 		end
 	end
 
-	if info.level then
-		str = str .. "\n\tUsers Level:\t\t\t\t" .. info.level
+	if info.su then
+		str = str .. "\n\tSupports:\t\t\t\t" .. info.su
+	end
+
+	if users.cids[info.cid] then
+		local user = users.cids[info.cid]
+		if user.level then
+			str = str .. "\n\tEntity Regged:\t\t\t\tLevel: " .. user.level .. "  "
+		end
+		if user.regby then
+			str = str .. "\t\t\tBy: " .. user.regby .. "  "
+		end
 	end
 
 	if info.changes then
@@ -799,7 +864,7 @@ local function data_info_string_entity(info)
 	end
 
 	if info.logins then
-		str = str .. "\n\tLogins:\t\t\t\t\t" .. info.logins .. " times"
+		str = str .. "\n\tEntity Logins:\t\t\t\t" .. info.logins .. " times"
 	end
 
 	if info.join then
@@ -818,18 +883,11 @@ local function data_info_string_entity(info)
 	end
 
 	if info.updated then
-	str = str .. "\n\tLast Updated Nick, IP, AP or Level:\t" .. data_updated_string(info)
-	end
-
-	if users.cids[info.cid] then
-		local user = users.cids[info.cid]
-		if user.regby then
-			str = str .. "\n\tEntity Regged by:\t\t\t" .. user.regby 
-		end
+		str = str .. "\n\tLast Updated Nick, IP, AP or Level:\t" .. data_updated_string(info)
 	end
 
 	if info.started then
-	str = str .. "\n\tEntity Created:\t\t\t\t" .. data_started_string(info)
+		str = str .. "\n\tEntity Created:\t\t\t\t" .. data_started_string(info)
 	end
 
 	str = str .. "\n\tEntity Expires:\t\t\t\t" .. data_expiration_string(info) .. "\n"
@@ -838,23 +896,41 @@ local function data_info_string_entity(info)
 end
 
 local function data_info_string_entity_hist(info)
-
 	local str = "\tCID: " .. info.cid
-
 	if info.ip then
-		str = str .. "\n\tIP: " .. info.ip
+		str = str .. "\n\tCon. IP: " .. info.ip .. "  "
+	end
+
+	if info.i4 and info.i4 ~= info.ip then
+		str = str .. "\tIPv4: " .. info.i4 .. "\t      "
+	end
+
+	if info.i6 and info.i6 ~= info.ip then
+		str = str .. "\tIPv6: " .. info.i6 .. "     "
+	end
+
+	if not (info.i4 and info.i4 ~= info.ip) and not (info.i6 and info.i6 ~= info.ip) then
+		str = str .. "\t\t\t\t"
 	end
 
 	if info.ni then
-		str = str .. "\t\tNI: " .. info.ni
+		str = str .. "\tNI: " .. info.ni
+	end
+
+	if info.level then
+		str = str .. "\n\tLevel: " .. info.level .. "  "
+	end
+
+	if info.regby then
+			str = str .. "\t\t\t\t\t\tBy: " .. info.regby
 	end
 
 	if info.logins then
-		str = str .. "\n\tLogins: " .. info.logins
+		str = str .. "\n\tLogins: " .. info.logins .. "  "
 	end
 
 	if info.changes then
-		str = str .. "\t\tTimes Changed: " .. info.changes
+		str = str .. "\t\tTimes Changed: " .. info.changes .. "  "
 	end
 
 	if info.ap then
@@ -1360,14 +1436,32 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 end
 
 local function make_entity(c, days)
-	local ip = c:getIp()
-	local ni = c:getField("NI")
-	local ap = c:getField("AP")
-	local ve = c:getField("VE")
-	local level = get_level(c)
-	local data = {ip = ip}
+	local ni = base.tostring(c:getField("NI"))
+	local ap = base.tostring(c:getField("AP"))
+	local ve = base.tostring(c:getField("VE"))
+	local i4 = base.tostring(c:getField("I4"))
+	local i6 = base.tostring(c:getField("I6"))
+	local su = base.tostring(c:getField("SU"))
+	local ss = base.tonumber(c:getField("SS"))
+	local sf = base.tonumber(c:getField("SF"))
+	local sl = base.tonumber(c:getField("SL"))
+	local fs = base.tonumber(c:getField("FS"))
+	local us = base.tonumber(c:getField("US"))
+	local ds = base.tonumber(c:getField("DS"))
+	local hn = base.tonumber(c:getField("HN")) or 0
+	local hr = base.tonumber(c:getField("HR")) or 0
+	local ho = base.tonumber(c:getField("HO")) or 0
+
+	local data = { ip = c:getIp() }
+	data.sid = adchpp.AdcCommand_fromSID(c:getSID())
 	if ni and #ni > 0 then
 		data.ni = ni
+	end
+	if i4 and #i4 > 0 then
+		data.i4 = i4
+	end
+	if i6 and #i6 > 0 then
+		data.i6 = i6
 	end
 	if ap and #ap > 0 then
 		data.ap = ap
@@ -1375,29 +1469,118 @@ local function make_entity(c, days)
 	if ve and #ve > 0 then
 		data.ve = ve
 	end
-	data.level = level
-	data.changes = 0
+	if su and #su > 0 then
+		data.su = su
+	end
+	if ss and ss > 0 then
+		data.ss = ss
+	end
+	if sf and sf > 0 then
+		data.sf = sf
+	end
+	if sl and sl > 0 then
+		data.sl = sl
+	end
+	if fs and fs > 0 then
+		data.fs = fs
+	end
+	if us and us > 0 then
+		data.us = us
+	end
+	if ds and ds > 0 then
+		data.ds = ds
+	end
+	if users.cids[c:getCID():toBase32()] then
+		local user = users.cids[c:getCID():toBase32()]
+		if user.level then
+			data.level = user.level
+		end
+		if user.regby then
+			data.regby = user.regby
+		end
+	end
+	data.hn = hn
+	data.hr = hr
+	data.ho = ho
 	data.logins = 1
 	data.join = os.time()
 	data.leave = os.time()
 	data.timeon = 0
 	data.ltimeon = 0
 	data.started = os.time()
-	data.updated = os.time()
 	data.expires = os.time() + days * 86400
+
 	return data
 end
 
-local function logon_entity(c, data, days)
-	local cid = c:getCID():toBase32()
-	local ip = c:getIp()
-	local ni = c:getField("NI")
-	local ap = c:getField("AP")
-	local ve = c:getField("VE")
-	local level = get_level(c)
-	local update = { ip = ip }
+local function make_entity_hist(c, data, days)
+	local hist = { cid = c:getCID():toBase32() }
+	hist.ip = data.ip
+	if data.ni and #data.ni > 0 then
+		hist.ni = data.ni
+	end
+	if data.i4 and #data.i4 > 0 then
+		hist.i4 = data.i4
+	end
+	if data.i6 and #data.i6 > 0 then
+		hist.i6 = data.i6
+	end
+	if data.ap and #data.ap > 0 then
+		hist.ap = data.ap
+	end
+	if data.ve and #data.ve > 0 then
+		hist.ve = data.ve
+	end
+	if data.changes then
+		hist.changes = data.changes
+	else
+		hist.changes = 0
+	end
+	if data.level and data.level > 0 then
+		hist.level = data.level
+	end
+	if data.regby and #data.regby > 0 then
+		hist.regby = data.regby 
+	end
+	hist.logins = data.logins
+	hist.join = data.join
+	hist.leave = data.leave
+	hist.timeon = data.timeon
+	hist.ltimeon = data.ltimeon
+	hist.started = data.started
+	hist.updated = os.time()
+	hist.expires = os.time() + days * 86400
+
+	return hist
+end
+
+local function connect_entity(c, data, days)
+	local ni = base.tostring(c:getField("NI"))
+	local ap = base.tostring(c:getField("AP"))
+	local ve = base.tostring(c:getField("VE"))
+	local i4 = base.tostring(c:getField("I4"))
+	local i6 = base.tostring(c:getField("I6"))
+	local su = base.tostring(c:getField("SU"))
+	local ss = base.tonumber(c:getField("SS"))
+	local sf = base.tonumber(c:getField("SF"))
+	local sl = base.tonumber(c:getField("SL"))
+	local fs = base.tonumber(c:getField("FS"))
+	local us = base.tonumber(c:getField("US"))
+	local ds = base.tonumber(c:getField("DS"))
+	local hn = base.tonumber(c:getField("HN")) or 0
+	local hr = base.tonumber(c:getField("HR")) or 0
+	local ho = base.tonumber(c:getField("HO")) or 0
+
+	local update = { ip = c:getIp() }
+	update.sid = adchpp.AdcCommand_fromSID(c:getSID())
 	if ni and #ni > 0 then
 		update.ni = ni
+	end
+	if i4 and #i4 > 0 then
+		update.i4 = i4
+	end
+	if i6 and #i6 > 0 then
+		update.i6 = i6
 	end
 	if ap and #ap > 0 then
 		update.ap = ap
@@ -1405,8 +1588,42 @@ local function logon_entity(c, data, days)
 	if ve and #ve > 0 then
 		update.ve = ve
 	end
-	update.level = level
-	update.changes = data.changes
+	if su and #su > 0 then
+		update.su = su
+	end
+	if ss and ss > 0 then
+		update.ss = ss
+	end
+	if sf and sf > 0 then
+		update.sf = sf
+	end
+	if sl and sl > 0 then
+		update.sl = sl
+	end
+	if fs and fs > 0 then
+		update.fs = fs
+	end
+	if us and us > 0 then
+		update.us = us
+	end
+	if ds and ds > 0 then
+		update.ds = ds
+	end
+	update.hn = hn
+	update.hr = hr
+	update.ho = ho
+	if data.changes then
+		update.changes = data.changes
+	end
+	if users.cids[c:getCID():toBase32()] then
+		local user = users.cids[c:getCID():toBase32()]
+		if user.level then
+			update.level = user.level
+		end
+		if user.regby then
+			update.regby = user.regby
+		end
+	end
 	update.logins = data.logins + 1
 	update.join = os.time()
 	if data.leave then
@@ -1422,16 +1639,140 @@ local function logon_entity(c, data, days)
 		update.ltimeon = 0
 	end
 	update.started = data.started
-	update.updated = data.updated
+	if data.updated then
+		update.updated = data.updated
+	end
 	update.expires = os.time() + days * 86400
 
-	if ip ~= data.ip or ni ~= data.ni or level ~= data.level or (ap and data.ap and ap ~= data.ap) or (ve and data.ve and ve ~= data.ve) then
-		update.changes = data.changes + 1
-		update.updated = os.time()
-		data.cid = cid
-		table.insert(entitystats.hist_cids, data) -- inserts {data} at the end of table hist_cids
+	if update.ip ~= data.ip or update.i4 ~= data.i4 or update.i6 ~= data.i6 or update.ni ~= data.ni or update.level ~= data.level or update.regby ~= data.regby or (ap and data.ap and update.ap ~= data.ap) or (ve and data.ve and update.ve ~= data.ve) then
+		if data.changes then
+			update.changes = data.changes + 1
+		else
+			update.changes = 1
+		end
+		update.updated = os.time()	
+		local hist = make_entity_hist(c, data, days)
+		table.insert(entitystats.hist_cids, hist) -- inserts { hist } at the end of table hist_cids
 	end
+
 	return update
+end
+
+local function update_entity(c, data, days ,cmd)
+
+	if cmd:hasParam("NI", 0) or cmd:hasParam("AP", 0) or cmd:hasParam("VE", 0) or cmd:hasParam("I4", 0) or cmd:hasParam("I6", 0) then
+		local hist = make_entity_hist(c, data, days)
+		table.insert(entitystats.hist_cids, hist) -- inserts { hist } at the end of table hist_cids
+		if data.changes then
+			data.changes = data.changes + 1
+		else
+			data.changes = 1
+		end
+		data.updated = os.time()
+	end
+
+	if cmd:hasParam("NI", 0) then
+		if #cmd:getParam("NI", 0) > 0 then
+			data.ni = base.tostring(cmd:getParam("NI", 0))
+		else
+			data.ni = nil
+		end
+	end
+	if cmd:hasParam("AP", 0) then
+		if #cmd:getParam("AP", 0) > 0 then
+			data.ap = base.tostring(cmd:getParam("AP", 0))
+		else
+			data.ap = nil
+		end
+	end
+	if cmd:hasParam("VE", 0) then
+		if #cmd:getParam("VE", 0) > 0 then
+			data.ve = base.tostring(cmd:getParam("VE", 0))
+		else
+			data.ve = nil
+		end
+	end
+	if cmd:hasParam("I4", 0) then
+		if #cmd:getParam("I4", 0) > 0 then
+			data.i4 = base.tostring(cmd:getParam("I4", 0))
+		else
+			data.i4 = nil
+		end
+	end
+	if cmd:hasParam("I6", 0) then
+		if #cmd:getParam("I6", 0) > 0 then
+			data.i6 = base.tostring(cmd:getParam("I6", 0))
+		else
+			data.i6 = nil
+		end
+	end
+	if cmd:hasParam("SU", 0) then
+		if #cmd:getParam("SU", 0) > 0 then
+			data.su = base.tostring(cmd:getParam("SU", 0))
+		else
+			data.su = nil
+		end
+	end
+	if cmd:hasParam("SS", 0) then
+		if base.tonumber(cmd:getParam("SS", 0)) then
+			data.ss = base.tonumber(cmd:getParam("SS", 0))
+		else
+			data.ss = nil
+		end
+	end
+	if cmd:hasParam("SF", 0) then
+		if base.tonumber(cmd:getParam("SF", 0)) then
+			data.sf = base.tonumber(cmd:getParam("SF", 0))
+		else
+			data.sf = nil
+		end
+	end
+	if cmd:hasParam("SL", 0) then
+		if base.tonumber(cmd:getParam("SL", 0)) then
+			data.sl = base.tonumber(cmd:getParam("SL", 0))
+		else
+			data.sl = nil
+		end
+	end
+	if cmd:hasParam("FS", 0) then
+		if base.tonumber(cmd:getParam("FS", 0)) then
+			data.fs = base.tonumber(cmd:getParam("FS", 0))
+		else
+			data.fs = nil
+		end
+	end
+	if cmd:hasParam("US", 0) then
+		if base.tonumber(cmd:getParam("US", 0)) then
+			data.us = base.tonumber(cmd:getParam("US", 0))
+		else
+			data.us = nil
+		end
+	end
+	if cmd:hasParam("DS", 0) then
+		if base.tonumber(cmd:getParam("DS", 0)) then
+			data.ds = base.tonumber(cmd:getParam("DS", 0))
+		else
+			data.ds = nil
+		end
+	end
+	if cmd:hasParam("HN", 0) then
+		if base.tonumber(cmd:getParam("HN", 0)) then
+			data.hn = base.tonumber(cmd:getParam("HN", 0))
+		end
+	end
+	if cmd:hasParam("HR", 0) then
+		if base.tonumber(cmd:getParam("HR", 0)) then
+			data.hr = base.tonumber(cmd:getParam("HR", 0))
+		end
+	end
+	if cmd:hasParam("HO", 0) then
+		if base.tonumber(cmd:getParam("HO", 0)) then
+			data.ho = base.tonumber(cmd:getParam("HO", 0))
+		end
+	end
+	data.expires = os.time() + days * 86400
+
+	return data
 end
 
 local function online_entity(c, data, days)
@@ -1660,7 +2001,7 @@ local function onCON(c) -- Stats verification for connects and building entitys 
 		for ent, data in base.pairs(entitystats.last_cids) do
 			if ent == cid then
 				match = true
-				entitystats.last_cids[cid] = logon_entity(c, data, days)
+				entitystats.last_cids[cid] = connect_entity(c, data, days)
 			end
 		end
 		if not match then
@@ -2271,6 +2612,24 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	else
 		cid = cmd:getParam("ID", 0)
 		ni = cmd:getParam("NI", 0)
+	end
+
+	if en_settings.entitylog.value > 0 and c:getState() == adchpp.Entity_STATE_NORMAL then
+		local days, match, hist
+		if get_level(c) > 0 then
+			days = en_settings.entitylogregexptime.value
+		else
+			days = en_settings.entitylogexptime.value
+		end
+		for ent, data in base.pairs(entitystats.last_cids) do
+			if ent == cid then
+				match = true
+				entitystats.last_cids[cid] = update_entity(c, data, days, cmd, hist)
+			end
+		end
+		if not match then
+			entitystats.last_cids[cid] = make_entity(c, days)
+		end
 	end
 
 -- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
@@ -3132,7 +3491,7 @@ fl_settings.cmdcmd_rate = {
 
 	help = "max rate in counts/min that a client can send cmd strings, 0 = default, -1 = disabled",
 
-	value = 5
+	value = 6
 }
 
 fl_settings.cmdres_rate = {
@@ -3148,7 +3507,7 @@ fl_settings.cmdctm_rate = {
 
 	help = "max rate in counts/min that a client can send connect request's, 0 = default, -1 = disabled",
 
-	value = 120
+	value = 60
 }
 
 fl_settings.cmdrcm_rate = {
@@ -3156,7 +3515,7 @@ fl_settings.cmdrcm_rate = {
 
 	help = "max rate in counts/min that a client can send reverse connect's, 0 = default, -1 = disabled",
 
-	value = 8
+	value = 6
 }
 
 fl_settings.cmdnat_rate = {
@@ -3164,7 +3523,7 @@ fl_settings.cmdnat_rate = {
 
 	help = "max rate in counts/min that a client can send nat connect request's, 0 = default, -1 = disabled",
 
-	value = 120
+	value = 60
 }
 
 fl_settings.cmdrnt_rate = {
@@ -3172,7 +3531,7 @@ fl_settings.cmdrnt_rate = {
 
 	help = "max rate in counts/min that a client can send reverse nat connect's, 0 = default, -1 = disabled",
 
-	value = 8
+	value = 6
 }
 
 fl_settings.cmdpsr_rate = {
@@ -3186,7 +3545,7 @@ fl_settings.cmdpsr_rate = {
 fl_settings.cmdget_rate = {
 	alias = { get_rate = true },
 
-	help = "max rate in counts/min that a client can the get transfer command, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send the get transfer command, 0 = default, -1 = disabled",
 
 	value = 0
 }

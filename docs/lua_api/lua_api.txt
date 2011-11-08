@@ -105,8 +105,8 @@ NOTE: This is an inital release of the LUA API for ADCH++ the information here i
 [width="100%"]
 |==========================
 |TEntityList TEntityList()|Creates a new TEntityList object
-TEntityList TEntityList(number size)|Creates a new TEntityList object
-TEntityList TEntityList(number size, Entity Entity)|Creates a new TEntityList object
+|TEntityList TEntityList(number size)|Creates a new TEntityList object
+|TEntityList TEntityList(number size, Entity Entity)|Creates a new TEntityList object
 |==========================
 
 [width="100%"]
@@ -330,6 +330,7 @@ TigerHash_BYTES = 24,
 |Priority getPriority()|Returns with the command's priority
 |number getTo()|Returns the target SID of the command as number
 |string getType()|Returns with the given command's type (see this)
+|boolean hasParam(string name, number start)|Returns true if the command has a parameter with the given conditions
 |boolean hasFlag(string name, number start)|Returns true if the command has a parameter with the given conditions
 |void parse(string str)|The hub parses the given command
 |void resetBuffer()|Resets the command's buffer
