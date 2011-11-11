@@ -75,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.36"
+guardrev = "1.0.37"
 
 -- Tmp tables
 local data = {}
@@ -1517,7 +1517,7 @@ local function make_entity_hist(c, data, days)
 
 	for _, param in base.ipairs(strparam) do
 		if data[param] then
-			if #base.tostring(data[param]) > 0 then
+			if #base.tostring(data[param]) > 0 or base.tonumber(data[param]) then
 				hist[param] = data[param]
 			end
 		end
@@ -1537,7 +1537,7 @@ end
 local function connect_entity(c, data, days)
 	local strparam = { "ni", "ap", "ve", "i4", "i6", "su" } -- string parameters we want updated
 	local intparam = { "ss", "sf", "sl", "fs", "us", "ds", "hn", "hr", "ho" } -- integer parameters we want updated
-	local tabparam = { "started", "updated" } --  table parameters we want updated
+	local tabparam = { "started", "changes", "updated" } --  table parameters we want updated
 
 	local update = { ip = c:getIp() }
 	update.sid = adchpp.AdcCommand_fromSID(c:getSID())
@@ -1560,7 +1560,7 @@ local function connect_entity(c, data, days)
 
 	for _, param in base.ipairs(tabparam) do
 		if data[param] then
-			if #base.tostring(data[param]) > 0 then
+			if #base.tostring(data[param]) > 0 or base.tonumber(data[param]) then
 				update[param] = data[param]
 			end
 		end
