@@ -75,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.35"
+guardrev = "1.0.36"
 
 -- Tmp tables
 local data = {}
@@ -676,7 +676,11 @@ local function data_sharesize_string(size)
 end
 
 local function data_info_string_cid(info)
-	local str = "\tCounter: " .. info.count
+	local str = "\t"
+	if info.count then
+		str = str .. "Counter: " .. info.count
+	end
+
 	if info.warns then
 		str = str .. "\tWarns: " .. info.warns
 	end
@@ -715,15 +719,23 @@ local function data_info_string_cid(info)
 		str = str .. "     \t\t\tNI: " .. info.ni
 	end
 
-	str = str .. "\n\tStarted: " .. data_started_string(info)
+	if info.started then
+		str = str .. "\n\tStarted: " .. data_started_string(info)
+	end
 
-	str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
+	if info.expires then
+		str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
+	end
 
 	return str
 end
 
 local function data_info_string_ip(info)
-	local str = "\t\t\t\t\t\tCounter: " .. info.count
+	local str = "\t"
+	if info.count then
+		str = str .. "\t\t\t\t\tCounter: " .. info.count
+	end
+
 	if info.warns then
 		str = str .. "\tWarns: " .. info.warns
 	end
@@ -744,15 +756,23 @@ local function data_info_string_ip(info)
 		str = str .. "\t\t\tDiff.Rate: " .. data_rate_string(info.diffrate) .. " / m"
 	end
 
-	str = str .. "\n\tStarted: " .. data_started_string(info)
+	if info.started then
+		str = str .. "\n\tStarted: " .. data_started_string(info)
+	end
 
-	str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
+	if info.expires then
+		str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
+	end
 
 	return str
 end
 
 local function data_info_string_log(info)
-	local str = "     \t\t\tCounter: " .. info.count
+	local str = "\t"
+	if info.count then
+		str = str .. "t\t\tCounter: " .. info.count
+	end
+
 	if info.rate then
 		str = str .. "\n\tAvg.Rate: " .. data_rate_string(info.rate) .. " / m"
 	end
@@ -782,20 +802,26 @@ local function data_info_string_log(info)
 			str = str .. "\tApplication: " .. info.ve .. "       \t"
 		end
 	end
-
-	str = str .. "\tExpires: " .. data_expiration_string(info) .. "\n"
+	if info.expires then
+		str = str .. "\tExpires: " .. data_expiration_string(info) .. "\n"
+	end
 
 	return str
 end
 
 local function data_info_string_entity(info)
-	local str = "\n\tEntity SID, Nick:\t\t\tSID: " .. info.sid
+	local str = "\n"
+	if info.sid then
+		str = str .. "\tEntity SID, Nick:\t\t\tSID: " .. info.sid
+	end
 
 	if info.ni then
 		str = str .. "\t\t\tNick: " .. info.ni
 	end
 
-	str = str ..  "\n\tEntity IP's: \t\t\t\tCon. IP: " .. info.ip .. "   "
+	if info.ip then
+		str = str ..  "\n\tEntity IP's: \t\t\t\tCon. IP: " .. info.ip .. "   "
+	end
 
 	if info.i4 and info.i4 ~= info.ip then
 		str = str .. "\t\tIPv4: " .. info.i4
@@ -890,13 +916,19 @@ local function data_info_string_entity(info)
 		str = str .. "\n\tEntity Created:\t\t\t\t" .. data_started_string(info)
 	end
 
-	str = str .. "\n\tEntity Expires:\t\t\t\t" .. data_expiration_string(info) .. "\n"
+	if info.expires then
+		str = str .. "\n\tEntity Expires:\t\t\t\t" .. data_expiration_string(info) .. "\n"
+	end
 
 	return str
 end
 
 local function data_info_string_entity_hist(info)
-	local str = "\tCID: " .. info.cid
+	local str = "\t"
+	if info.cid then
+		str = str .. "CID: " .. info.cid
+	end
+
 	if info.ip then
 		str = str .. "\n\tCon. IP: " .. info.ip .. "  "
 	end
@@ -944,11 +976,11 @@ local function data_info_string_entity_hist(info)
 	end
 
 	if info.updated then
-	str = str .. "\n\tHist Created: " .. data_updated_string(info)
+		str = str .. "\n\tHist Created: " .. data_updated_string(info)
 	end
 
 	if info.started then
-	str = str .. "\n\tEntity Created: " .. data_started_string(info) .. "\n"
+		str = str .. "\n\tEntity Created: " .. data_started_string(info) .. "\n"
 	end
 
 	return str
@@ -1436,60 +1468,28 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 end
 
 local function make_entity(c, days)
-	local ni = base.tostring(c:getField("NI"))
-	local ap = base.tostring(c:getField("AP"))
-	local ve = base.tostring(c:getField("VE"))
-	local i4 = base.tostring(c:getField("I4"))
-	local i6 = base.tostring(c:getField("I6"))
-	local su = base.tostring(c:getField("SU"))
-	local ss = base.tonumber(c:getField("SS"))
-	local sf = base.tonumber(c:getField("SF"))
-	local sl = base.tonumber(c:getField("SL"))
-	local fs = base.tonumber(c:getField("FS"))
-	local us = base.tonumber(c:getField("US"))
-	local ds = base.tonumber(c:getField("DS"))
-	local hn = base.tonumber(c:getField("HN")) or 0
-	local hr = base.tonumber(c:getField("HR")) or 0
-	local ho = base.tonumber(c:getField("HO")) or 0
+	local strparam = { "ni", "ap", "ve", "i4", "i6", "su" } -- string parameters we want created
+	local intparam = { "ss", "sf", "sl", "fs", "us", "ds", "hn", "hr", "ho" } -- integer parameters we want created
 
 	local data = { ip = c:getIp() }
 	data.sid = adchpp.AdcCommand_fromSID(c:getSID())
-	if ni and #ni > 0 then
-		data.ni = ni
+
+	for _, param in base.ipairs(strparam) do
+		if c:getField(string.upper(param)) then
+			if #base.tostring(c:getField(string.upper(param))) > 0 then
+				data[param] = base.tostring(c:getField(string.upper(param)))
+			end
+		end
 	end
-	if i4 and #i4 > 0 then
-		data.i4 = i4
+
+	for _, param in base.ipairs(intparam) do
+		if c:getField(string.upper(param)) then
+			if base.tonumber(c:getField(string.upper(param))) then
+				data[param] = base.tonumber(c:getField(string.upper(param)))
+			end
+		end
 	end
-	if i6 and #i6 > 0 then
-		data.i6 = i6
-	end
-	if ap and #ap > 0 then
-		data.ap = ap
-	end
-	if ve and #ve > 0 then
-		data.ve = ve
-	end
-	if su and #su > 0 then
-		data.su = su
-	end
-	if ss and ss > 0 then
-		data.ss = ss
-	end
-	if sf and sf > 0 then
-		data.sf = sf
-	end
-	if sl and sl > 0 then
-		data.sl = sl
-	end
-	if fs and fs > 0 then
-		data.fs = fs
-	end
-	if us and us > 0 then
-		data.us = us
-	end
-	if ds and ds > 0 then
-		data.ds = ds
-	end
+
 	if users.cids[c:getCID():toBase32()] then
 		local user = users.cids[c:getCID():toBase32()]
 		if user.level then
@@ -1499,9 +1499,6 @@ local function make_entity(c, days)
 			data.regby = user.regby
 		end
 	end
-	data.hn = hn
-	data.hr = hr
-	data.ho = ho
 	data.logins = 1
 	data.join = os.time()
 	data.leave = os.time()
@@ -1514,40 +1511,23 @@ local function make_entity(c, days)
 end
 
 local function make_entity_hist(c, data, days)
+	local strparam = { "ip", "ni", "ap", "ve", "i4", "i6", "level", "regby", "logins", "join", "leave", "timeon", "ltimeon", "started" } -- string parameters we want in hist
+
 	local hist = { cid = c:getCID():toBase32() }
-	hist.ip = data.ip
-	if data.ni and #data.ni > 0 then
-		hist.ni = data.ni
+
+	for _, param in base.ipairs(strparam) do
+		if data[param] then
+			if #base.tostring(data[param]) > 0 then
+				hist[param] = data[param]
+			end
+		end
 	end
-	if data.i4 and #data.i4 > 0 then
-		hist.i4 = data.i4
-	end
-	if data.i6 and #data.i6 > 0 then
-		hist.i6 = data.i6
-	end
-	if data.ap and #data.ap > 0 then
-		hist.ap = data.ap
-	end
-	if data.ve and #data.ve > 0 then
-		hist.ve = data.ve
-	end
+
 	if data.changes then
 		hist.changes = data.changes
 	else
 		hist.changes = 0
 	end
-	if data.level and data.level > 0 then
-		hist.level = data.level
-	end
-	if data.regby and #data.regby > 0 then
-		hist.regby = data.regby 
-	end
-	hist.logins = data.logins
-	hist.join = data.join
-	hist.leave = data.leave
-	hist.timeon = data.timeon
-	hist.ltimeon = data.ltimeon
-	hist.started = data.started
 	hist.updated = os.time()
 	hist.expires = os.time() + days * 86400
 
@@ -1555,66 +1535,37 @@ local function make_entity_hist(c, data, days)
 end
 
 local function connect_entity(c, data, days)
-	local ni = base.tostring(c:getField("NI"))
-	local ap = base.tostring(c:getField("AP"))
-	local ve = base.tostring(c:getField("VE"))
-	local i4 = base.tostring(c:getField("I4"))
-	local i6 = base.tostring(c:getField("I6"))
-	local su = base.tostring(c:getField("SU"))
-	local ss = base.tonumber(c:getField("SS"))
-	local sf = base.tonumber(c:getField("SF"))
-	local sl = base.tonumber(c:getField("SL"))
-	local fs = base.tonumber(c:getField("FS"))
-	local us = base.tonumber(c:getField("US"))
-	local ds = base.tonumber(c:getField("DS"))
-	local hn = base.tonumber(c:getField("HN")) or 0
-	local hr = base.tonumber(c:getField("HR")) or 0
-	local ho = base.tonumber(c:getField("HO")) or 0
+	local strparam = { "ni", "ap", "ve", "i4", "i6", "su" } -- string parameters we want updated
+	local intparam = { "ss", "sf", "sl", "fs", "us", "ds", "hn", "hr", "ho" } -- integer parameters we want updated
+	local tabparam = { "started", "updated" } --  table parameters we want updated
 
 	local update = { ip = c:getIp() }
 	update.sid = adchpp.AdcCommand_fromSID(c:getSID())
-	if ni and #ni > 0 then
-		update.ni = ni
+
+	for _, param in base.ipairs(strparam) do
+		if c:getField(string.upper(param)) then
+			if #base.tostring(c:getField(string.upper(param))) > 0 then
+				update[param] = base.tostring(c:getField(string.upper(param)))
+			end
+		end
 	end
-	if i4 and #i4 > 0 then
-		update.i4 = i4
+
+	for _, param in base.ipairs(intparam) do
+		if c:getField(string.upper(param)) then
+			if base.tonumber(c:getField(string.upper(param))) then
+				update[param] = base.tonumber(c:getField(string.upper(param)))
+			end
+		end
 	end
-	if i6 and #i6 > 0 then
-		update.i6 = i6
+
+	for _, param in base.ipairs(tabparam) do
+		if data[param] then
+			if #base.tostring(data[param]) > 0 then
+				update[param] = data[param]
+			end
+		end
 	end
-	if ap and #ap > 0 then
-		update.ap = ap
-	end
-	if ve and #ve > 0 then
-		update.ve = ve
-	end
-	if su and #su > 0 then
-		update.su = su
-	end
-	if ss and ss > 0 then
-		update.ss = ss
-	end
-	if sf and sf > 0 then
-		update.sf = sf
-	end
-	if sl and sl > 0 then
-		update.sl = sl
-	end
-	if fs and fs > 0 then
-		update.fs = fs
-	end
-	if us and us > 0 then
-		update.us = us
-	end
-	if ds and ds > 0 then
-		update.ds = ds
-	end
-	update.hn = hn
-	update.hr = hr
-	update.ho = ho
-	if data.changes then
-		update.changes = data.changes
-	end
+
 	if users.cids[c:getCID():toBase32()] then
 		local user = users.cids[c:getCID():toBase32()]
 		if user.level then
@@ -1638,10 +1589,6 @@ local function connect_entity(c, data, days)
 		update.timeon = 0
 		update.ltimeon = 0
 	end
-	update.started = data.started
-	if data.updated then
-		update.updated = data.updated
-	end
 	update.expires = os.time() + days * 86400
 
 	if update.ip ~= data.ip or update.i4 ~= data.i4 or update.i6 ~= data.i6 or update.ni ~= data.ni or update.level ~= data.level or update.regby ~= data.regby or (ap and data.ap and update.ap ~= data.ap) or (ve and data.ve and update.ve ~= data.ve) then
@@ -1659,6 +1606,8 @@ local function connect_entity(c, data, days)
 end
 
 local function update_entity(c, data, days ,cmd)
+	local strparam = { "ni", "ap", "ve", "i4", "i6", "su" } -- string parameters we want updated
+	local intparam = { "ss", "sf", "sl", "fs", "us", "ds", "hn", "hr", "ho" } -- integer parameters we want updated
 
 	if cmd:hasParam("NI", 0) or cmd:hasParam("AP", 0) or cmd:hasParam("VE", 0) or cmd:hasParam("I4", 0) or cmd:hasParam("I6", 0) then
 		local hist = make_entity_hist(c, data, days)
@@ -1671,105 +1620,26 @@ local function update_entity(c, data, days ,cmd)
 		data.updated = os.time()
 	end
 
-	if cmd:hasParam("NI", 0) then
-		if #cmd:getParam("NI", 0) > 0 then
-			data.ni = base.tostring(cmd:getParam("NI", 0))
-		else
-			data.ni = nil
+	for _, param in base.ipairs(strparam) do
+		if cmd:hasParam(string.upper(param), 0) then
+			if #base.tostring(cmd:getParam(string.upper(param), 0)) > 0 then
+				data[param] = base.tostring(cmd:getParam(string.upper(param), 0))
+			else
+				data[param] = nil
+			end
 		end
 	end
-	if cmd:hasParam("AP", 0) then
-		if #cmd:getParam("AP", 0) > 0 then
-			data.ap = base.tostring(cmd:getParam("AP", 0))
-		else
-			data.ap = nil
+
+	for _, param in base.ipairs(intparam) do
+		if cmd:hasParam(string.upper(param), 0) then
+			if base.tonumber(cmd:getParam(string.upper(param), 0)) then
+				data[param] = base.tonumber(cmd:getParam(string.upper(param), 0))
+			else
+				data[param] = nil
+			end
 		end
 	end
-	if cmd:hasParam("VE", 0) then
-		if #cmd:getParam("VE", 0) > 0 then
-			data.ve = base.tostring(cmd:getParam("VE", 0))
-		else
-			data.ve = nil
-		end
-	end
-	if cmd:hasParam("I4", 0) then
-		if #cmd:getParam("I4", 0) > 0 then
-			data.i4 = base.tostring(cmd:getParam("I4", 0))
-		else
-			data.i4 = nil
-		end
-	end
-	if cmd:hasParam("I6", 0) then
-		if #cmd:getParam("I6", 0) > 0 then
-			data.i6 = base.tostring(cmd:getParam("I6", 0))
-		else
-			data.i6 = nil
-		end
-	end
-	if cmd:hasParam("SU", 0) then
-		if #cmd:getParam("SU", 0) > 0 then
-			data.su = base.tostring(cmd:getParam("SU", 0))
-		else
-			data.su = nil
-		end
-	end
-	if cmd:hasParam("SS", 0) then
-		if base.tonumber(cmd:getParam("SS", 0)) then
-			data.ss = base.tonumber(cmd:getParam("SS", 0))
-		else
-			data.ss = nil
-		end
-	end
-	if cmd:hasParam("SF", 0) then
-		if base.tonumber(cmd:getParam("SF", 0)) then
-			data.sf = base.tonumber(cmd:getParam("SF", 0))
-		else
-			data.sf = nil
-		end
-	end
-	if cmd:hasParam("SL", 0) then
-		if base.tonumber(cmd:getParam("SL", 0)) then
-			data.sl = base.tonumber(cmd:getParam("SL", 0))
-		else
-			data.sl = nil
-		end
-	end
-	if cmd:hasParam("FS", 0) then
-		if base.tonumber(cmd:getParam("FS", 0)) then
-			data.fs = base.tonumber(cmd:getParam("FS", 0))
-		else
-			data.fs = nil
-		end
-	end
-	if cmd:hasParam("US", 0) then
-		if base.tonumber(cmd:getParam("US", 0)) then
-			data.us = base.tonumber(cmd:getParam("US", 0))
-		else
-			data.us = nil
-		end
-	end
-	if cmd:hasParam("DS", 0) then
-		if base.tonumber(cmd:getParam("DS", 0)) then
-			data.ds = base.tonumber(cmd:getParam("DS", 0))
-		else
-			data.ds = nil
-		end
-	end
-	if cmd:hasParam("HN", 0) then
-		if base.tonumber(cmd:getParam("HN", 0)) then
-			data.hn = base.tonumber(cmd:getParam("HN", 0))
-		end
-	end
-	if cmd:hasParam("HR", 0) then
-		if base.tonumber(cmd:getParam("HR", 0)) then
-			data.hr = base.tonumber(cmd:getParam("HR", 0))
-		end
-	end
-	if cmd:hasParam("HO", 0) then
-		if base.tonumber(cmd:getParam("HO", 0)) then
-			data.ho = base.tonumber(cmd:getParam("HO", 0))
-		end
-	end
+
 	data.expires = os.time() + days * 86400
 
 	return data
@@ -5267,7 +5137,7 @@ commands.traceip = {
 		end
 
 		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+		for hist_cid, info in base.ipairs(entitystats.hist_cids) do
 			for i,v in base.ipairs(entni) do
 				if info.ni and v == info.ni then	
 					str = str .. "\n" .. data_info_string_entity_hist(info)
@@ -5276,7 +5146,7 @@ commands.traceip = {
 		end
 
 		str = str .. "\n\nAll Hist records that used this IP:"
-		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+		for hist_cid, info in base.ipairs(entitystats.hist_cids) do
 			if info.ip and info.ip == ip then
 				str = str .. "\n" .. data_info_string_entity_hist(info)
 			end
@@ -5334,7 +5204,7 @@ commands.tracecid = {
 		end
 
 		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+		for hist_cid, info in base.ipairs(entitystats.hist_cids) do
 			for i,v in base.ipairs(entni) do
 				if info.ni and v == info.ni then	
 					str = str .. "\n" .. data_info_string_entity_hist(info)
@@ -5352,7 +5222,7 @@ commands.tracecid = {
 		end
 
 		str = str .. "\n\nAll Hist records that used this CID:"
-		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+		for hist_cid, info in base.ipairs(entitystats.hist_cids) do
 			if info.cid and info.cid == cid then	
 				str = str .. "\n" .. data_info_string_entity_hist(info)
 			end
@@ -5401,7 +5271,7 @@ commands.traceni = {
 		end
 
 		str = str .. "\n\nAll Hist records that used this NI:"
-		for hist_cid, info in base.pairs(entitystats.hist_cids) do
+		for hist_cid, info in base.ipairs(entitystats.hist_cids) do
 			if info.ni and string.lower(info.ni) == string.lower(ni) then
 				str = str .. "\n" .. data_info_string_entity_hist(info)
 			end
