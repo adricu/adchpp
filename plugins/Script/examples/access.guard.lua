@@ -75,7 +75,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.37"
+guardrev = "1.0.38"
 
 -- Tmp tables
 local data = {}
@@ -770,7 +770,7 @@ end
 local function data_info_string_log(info)
 	local str = "\t"
 	if info.count then
-		str = str .. "t\t\tCounter: " .. info.count
+		str = str .. "\t\tCounter: " .. info.count
 	end
 
 	if info.rate then
@@ -2210,10 +2210,35 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		return true
 	end
 	
-	local sch = cmd:getParameters()
-	local params = sch:size()
+	local NATT, SEGA, TTH, chars
+	local params = cmd:getParameters()
+	local params_size = params:size()
+	local feature = base.tostring(cmd:getFeatures())
+	if #feature > 0 then
+		NATT = feature:match("+NAT0") or feature:match("+NATT")
+		SEGA = feature:match("+SEG0") or feature:match("+SEGA")
+	end
+	if #cmd:getParam("TR", 0) > 0 then
+		TTH = true
+	end
+	if not TTH then -- only getting search size for manual searches
+		local vars = {}
+		if params_size > 0 then
+			for i = 0, params_size - 1 do
+				local param = params[i]
+				if #param > 2 then
+					local field = string.sub(param, 1, 2)
+					if field == 'AN' then
+						local var = string.sub(param, 3)
+						table.insert(vars, string.lower(var))
+					end
+				end
+			end
+		end
+		chars = #table.concat(vars, ' ')
+	end
 
-	if li_settings.maxschparam.value > 0 and params >= li_settings.maxschparam.value then
+	if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
 		local cid = c:getCID():toBase32()
 		local stat = "Max Search parameters limit"
 		local msg = "Your search contained too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
@@ -2234,10 +2259,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		return false
 	end
 
-	local TTH, AN1, AN2, AN3 = cmd:getParam("TR", 0), cmd:getParam("AN", 0), cmd:getParam("AN", 1), cmd:getParam("AN", 2)
-	local chars = #TTH + #AN1 + #AN2 + #AN3
-
-	if li_settings.maxschlength.value > 0 and chars > li_settings.maxschlength.value then
+	if chars and li_settings.maxschlength.value > 0 and chars > li_settings.maxschlength.value then
 		local cid = c:getCID():toBase32()
 		local stat = "Max Search length limit"
 		local msg = "Your search string contained too many characters, max allowed is " .. li_settings.maxschlength.value
@@ -2262,7 +2284,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 
-	if li_settings.minschlength.value > 0 and chars < li_settings.minschlength.value then
+	if chars and li_settings.minschlength.value > 0 and chars < li_settings.minschlength.value then
 		local cid = c:getCID():toBase32()
 		local stat = "Min Search length limit"
 		local msg = "Your search string has not enough characters min alowed is ".. li_settings.minschlength.value.." "
@@ -2287,9 +2309,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 
-	local feature = base.tostring(cmd:getFeatures())
-
-	if string.len(TTH) > 0 and not string.match(feature, "+NAT0") and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
+	if TTH and not NATT and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
 		local cid = c:getCID():toBase32()
 		local stat = "TTH Search command"
 		local type = "cmd"
@@ -2312,7 +2332,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		return true
 	end
 
-	if string.len(TTH) > 0 and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
+	if TTH and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
 		local cid = c:getCID():toBase32()
 		local stat = "NAT TTH Search command"
 		local type = "cmd"
@@ -2335,7 +2355,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		return true
 	end
 
-	if not string.match(feature, "+NAT0") and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0) then
+	if not NATT and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0) then
 		local cid = c:getCID():toBase32()
 		local stat = "manual Search command"
 		local type = "cmd"
@@ -2343,7 +2363,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		local maxcount = -1
 		local maxrate = fl_settings.cmdschman_rate.value
 		local minutes = fl_settings.cmdschman_exp.value
-		if not string.match(feature, "+SEGA") then
+		if not SEGA then
 			if commandstats.schmancmds[cid] then
 				for victim_cid, data in base.pairs(commandstats.schmancmds) do
 					if cid == victim_cid then
@@ -2382,7 +2402,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		local maxcount = -1
 		local maxrate = fl_settings.cmdschman_rate.value
 		local minutes = fl_settings.cmdschman_exp.value
-		if not string.match(feature, "+SEGA") then
+		if not SEGA then
 			if commandstats.schmannatcmds[cid] then
 				for victim_cid, data in base.pairs(commandstats.schmannatcmds) do
 					if cid == victim_cid then
@@ -2412,8 +2432,8 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 			return true
 		end
 	end
-
 	return true
+
 end
 
 local function onMSG(c, cmd) -- Stats and rules verification for messages strings
@@ -2421,9 +2441,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 		return true
 	end
 
-	local cmdmsg = cmd:getParam(0)
-
-	if li_settings.maxmsglength.value > 0 and string.len(cmdmsg) >= li_settings.maxmsglength.value then
+	if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
 		local cid = c:getCID():toBase32()
 		local stat = "Max Message length limit"
 		local msg = "Your message contained too many characters, max allowed is ".. li_settings.maxmsglength.value.." "
@@ -2538,10 +2556,14 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return false
 	end
 
-	local su = base.tostring(cmd:getParam("SU", 0))
-	if su == '' then
+	local su
+
+	if cmd:hasParam("SU", 0) then
+		su = base.tostring(cmd:getParam("SU", 0))
+	else
 		su = base.tostring(c:getField("SU"))
 	end
+
 	local adcs = string.find(su, 'ADC0') or string.find(su, 'ADCS')
 
 	if li_settings.suadcs.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not adcs then
@@ -2920,7 +2942,7 @@ local function onRES(c, cmd) -- Stats and rules verification for search results 
 	local cid = c:getCID():toBase32()
 
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdres_rate.value > 0 then
-		local stat = "search Results command"
+		local stat = "Search Results command"
 		local type = "cmd"
 		local factor = 1
 		local maxcount = -1
@@ -3204,7 +3226,7 @@ fl_settings.fl_maxwarns = {
 fl_settings.fl_maxwarnmsg = {
 	alias = { maxwarnsmsg = true, maximumwarnsmsg = true },
 
-	help = "maximum warning messages send to the user, after that the flood attempt just get blocked , -1 = disabled !!!!",
+	help = "maximum warning messages send to the user, after that the flood attempt just get blocked , -1 = all msg's are send, 0 = no msg's are send !!!!",
 
 	value = 5
 }
