@@ -25,8 +25,6 @@ base.assert(math.ceil(adchpp.versionFloat * 100) >= 280, 'ADCH++ 2.8.0 or later 
 base.assert(base['access'], 'access.lua must be loaded and running before ' .. _NAME .. '.lua')
 base.assert(base.access['bans'], 'access.bans.lua must be loaded and running before ' .. _NAME .. '.lua')
 
-local start_time = os.time()
-
 local access = base.require("access")
 local banslua = base.require("access.bans")
 local users = access.users
@@ -75,7 +73,14 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.38"
+guardrev = "1.0.39"
+
+-- Local decleration for the timers and on_unload functions
+local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
+local clear_expired_limitstats_timer, save_limitstats_timer, save_limitstats
+local clear_expired_entitystats_timer, save_entitystats_timer, save_entitystats
+local clear_expired_tmpbanstats_timer, save_tmpbanstats_timer, save_tmpbanstats
+local clear_expired_kickstats_timer, save_kickstats_timer, save_kickstats
 
 -- Tmp tables
 local data = {}
@@ -116,10 +121,10 @@ commandstats.stacmds = {}
 commandstats.msgcmds = {}
 commandstats.schmancmds = {}
 commandstats.schmansegacmds = {}
-commandstats.schtthcmds = {}
 commandstats.schmannatcmds = {}
+commandstats.schmannatsegacmds = {}
+commandstats.schtthcmds = {}
 commandstats.schtthnatcmds = {}
-commandstats.schtthnatsegacmds = {}
 commandstats.rescmds = {}
 commandstats.ctmcmds = {}
 commandstats.rcmcmds = {}
@@ -213,6 +218,9 @@ local function load_kickstats()
 end
 
 local function load_commandstats()
+	if adchpp.versionString:match('Debug$') then
+		base.print("Start loading Commandstats ...")
+	end
 	commandstats = {}
 	commandstats.urxcmds = {}
 	commandstats.crxcmds = {}
@@ -227,9 +235,9 @@ local function load_commandstats()
 	commandstats.msgcmds = {}
 	commandstats.schmancmds = {}
 	commandstats.schmansegacmds = {}
-	commandstats.schtthcmds = {}
 	commandstats.schmannatcmds = {}
 	commandstats.schmannatsegacmds = {}
+	commandstats.schtthcmds = {}
 	commandstats.schtthnatcmds = {}
 	commandstats.rescmds = {}
 	commandstats.ctmcmds = {}
@@ -324,9 +332,15 @@ local function load_commandstats()
 	if not commandstats.getcmds then
 		commandstats.sndcmds = {}
 	end
+	if adchpp.versionString:match('Debug$') then
+		base.print("... Commandstats loaded.")
+	end
 end
 
 local function load_limitstats()
+	if adchpp.versionString:match('Debug$') then
+		base.print("Start loading Limitstats ...")
+	end
 	limitstats = {}
 	limitstats.maxschparams = {}
 	limitstats.maxschlengths = {}
@@ -414,9 +428,15 @@ local function load_limitstats()
 	if not limitstats.maxsameips then
 		limitstats.maxsameips = {}
 	end
+	if adchpp.versionString:match('Debug$') then
+		base.print("... Limitstats loaded.")
+	end
 end
 
 local function load_entitystats()
+	if adchpp.versionString:match('Debug$') then
+		base.print("Start loading entitystats ...")
+	end
 	entitystats = {}
 	entitystats.last_cids = {}
 	entitystats.hist_cids = {}
@@ -435,6 +455,9 @@ local function load_entitystats()
 	end
 	if not entitystats.hist_cids then
 		entitystats.hist_cids = {}
+	end
+	if adchpp.versionString:match('Debug$') then
+		base.print("... Entitystats loaded.")
 	end
 end
 
@@ -1831,51 +1854,81 @@ end
 
 local function onSOC(c) -- Stats verification for creating open sockets
 
-	local ip = c:getIp()
-
-	if fl_settings.cmdsoc_rate.value > 0 or fl_settings.fl_maxrate.value > 0 then
-		local stat = "Open socket command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdsoc_rate.value
-		local minutes = fl_settings.cmdsoc_exp.value
-		if commandstats.soccmds[ip] then
-			for victim_ip, data in base.pairs(commandstats.soccmds) do
-				if victim_ip == ip then
-					commandstats.soccmds[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.soccmds[ip] and commandstats.soccmds[ip].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local ip = c:getIp()
+		if (fl_settings.cmdsoc_rate.value > 0 or fl_settings.fl_maxrate.value > 0) then
+			local stat = "Open socket command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdsoc_rate.value
+			local minutes = fl_settings.cmdsoc_exp.value
+			if commandstats.soccmds[ip] then
+				for victim_ip, data in base.pairs(commandstats.soccmds) do
+					if victim_ip == ip then
+						commandstats.soccmds[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.soccmds[ip] and commandstats.soccmds[ip].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.soccmds[ip] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.soccmds[ip] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
 
-local function onCON(c) -- Stats verification for connects and building entitys tables
+local function onCON(c) -- Stats and limit verification for connects and building entitys tables
 
-	local cid = c:getCID():toBase32()
+	if li_settings.li_limitstats.value >= 0 then
+		countip = get_sameip(c)
+		if get_level(c) <= fl_settings.fl_level.value and countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
+			local stat = "max same IP"
+			local str = "This hub allows a maximum of ( " .. li_settings.maxsameip.value .. " ) connections from the same ip address and that value is reached sorry for now !"
+			local type = "lim"
+			local factor = 60
+			local maxcount = 0
+			maxrate = li_settings.maxsameip_rate.value
+			local minutes = li_settings.maxsameip_exp.value
+			if limitstats.maxsameips[cid] then
+				for victim_cid, data in base.pairs(limitstats.maxsameips) do
+					if cid == victim_cid then
+						limitstats.maxsameips[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if limitstats.maxsameips[cid] and limitstats.maxsameips[cid].warning > 0 then
+							dump_dropped(c, str)
+							return false
+						end
+					end
+				end
+			else
+				limitstats.maxsameips[cid] = make_data(c, cmd, msg, type, minutes)
+			end
+			dump_dropped(c, str)
+			return false
+		end
+	end
 
-	if en_settings.entitylog.value > 0 then
+	if en_settings.en_entitystats.value >= 0 then
+		local cid = c:getCID():toBase32()
 		local days, match
 		if get_level(c) > 0 then
-			days = en_settings.entitylogregexptime.value
+			days = en_settings.en_entitystatsregexptime.value
 		else
-			days = en_settings.entitylogexptime.value
+			days = en_settings.en_entitystatsexptime.value
 		end
-		for ent, data in base.pairs(entitystats.last_cids) do
-			if ent == cid then
-				match = true
-				entitystats.last_cids[cid] = connect_entity(c, data, days)
+		if days > 0 then
+			for ent, data in base.pairs(entitystats.last_cids) do
+				if ent == cid then
+					match = true
+					entitystats.last_cids[cid] = connect_entity(c, data, days)
+				end
 			end
-		end
-		if not match then
-			entitystats.last_cids[cid] = make_entity(c, days)
+			if not match then
+				entitystats.last_cids[cid] = make_entity(c, days)
+			end
 		end
 	end
 
@@ -1883,32 +1936,36 @@ local function onCON(c) -- Stats verification for connects and building entitys 
 		return true
 	end
 
-	if fl_settings.cmdcon_rate.value > 0 or fl_settings.fl_maxrate.value > 0 then
-		local stat = "Connect command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdcon_rate.value
-		local minutes = fl_settings.cmdcon_exp.value
-		if commandstats.concmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.concmds) do
-				if cid == victim_cid then
-					commandstats.concmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.concmds[cid] and commandstats.concmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.cmdcon_rate.value > 0 or fl_settings.fl_maxrate.value > 0 then
+			local stat = "Connect command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdcon_rate.value
+			local minutes = fl_settings.cmdcon_exp.value
+			if commandstats.concmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.concmds) do
+					if cid == victim_cid then
+						commandstats.concmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.concmds[cid] and commandstats.concmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.concmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.concmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
 
 local function onONL() -- Stats verification for online users and updating entity,s tables
-	if en_settings.entitylog.value > 0 and en_settings_done then
+
+	if en_settings.en_entitystats.value >= 0 and en_settings_done then
 		local entities = adchpp.getCM():getEntities()
 		local size = entities:size()
 		if size > 0 then
@@ -1918,18 +1975,20 @@ local function onONL() -- Stats verification for online users and updating entit
 					local days, match
 					local cid = c:getCID():toBase32()
 					if get_level(c) > 0 then
-						days = en_settings.entitylogregexptime.value
+						days = en_settings.en_entitystatsregexptime.value
 					else
-						days = en_settings.entitylogexptime.value
+						days = en_settings.en_entitystatsexptime.value
 					end
-					for ent, data in base.pairs(entitystats.last_cids) do
-						if ent == cid then
-							match = true
-							entitystats.last_cids[cid] = online_entity(c, data, days)
+					if days > 0 then
+						for ent, data in base.pairs(entitystats.last_cids) do
+							if ent == cid then
+								match = true
+								entitystats.last_cids[cid] = online_entity(c, data, days)
+							end
 						end
-					end
-					if not match then
-						entitystats.last_cids[cid] = make_entity(c, days)
+						if not match then
+							entitystats.last_cids[cid] = make_entity(c, days)
+						end
 					end
 				end
 			end
@@ -1940,22 +1999,23 @@ end
 
 local function onDIS(c) -- Stats verification for disconnects and updating entitys tables
 
-	local cid = c:getCID():toBase32()
-
-	if en_settings.entitylog.value > 0 then
+	if en_settings.en_entitystats.value >= 0 then
 		local days
+		local cid = c:getCID():toBase32()
 		if get_level(c) > 0 then
-			days = en_settings.entitylogregexptime.value
+			days = en_settings.en_entitystatsregexptime.value
 		else
-			days = en_settings.entitylogexptime.value
+			days = en_settings.en_entitystatsexptime.value
 		end
-		for ent, data in base.pairs(entitystats.last_cids) do
-			if ent == cid then
-				entitystats.last_cids[cid] = logoff_entity(c, data, days)
-				return true
+		if days > 0 then
+			for ent, data in base.pairs(entitystats.last_cids) do
+				if ent == cid then
+					entitystats.last_cids[cid] = logoff_entity(c, data, days)
+					return true
+				end
 			end
+			entitystats.last_cids[cid] = make_entity(c, days)
 		end
-		entitystats.last_cids[cid] = make_entity(c, days)
 	end
 	return true
 end
@@ -1965,28 +2025,29 @@ local function onURX(c, cmd) -- Stats and flood verification for unknown command
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdurx_rate.value > 0) then
-		local stat = "Unknown command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = 0
-		local maxrate = fl_settings.cmdurx_rate.value
-		local minutes = fl_settings.cmdurx_exp.value
-		if commandstats.urxcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.urxcmds) do
-				if cid == victim_cid then
-					commandstats.urxcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.urxcmds[cid] and commandstats.urxcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdurx_rate.value > 0) then
+			local stat = "Unknown command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = 0
+			local maxrate = fl_settings.cmdurx_rate.value
+			local minutes = fl_settings.cmdurx_exp.value
+			if commandstats.urxcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.urxcmds) do
+					if cid == victim_cid then
+						commandstats.urxcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.urxcmds[cid] and commandstats.urxcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.urxcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.urxcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
@@ -1996,31 +2057,32 @@ local function onCRX(c, cmd) -- Stats and rules verification for bad context com
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdcrx_rate.value > 0) then
-		local stat = "command with invalid context"
-		local msg = "Invalid context for a ( ".. cmd:getCommandString() .." ) command, the command is blocked !!!"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = 0
-		local maxrate = fl_settings.cmdcrx_rate.value
-		local minutes = fl_settings.cmdcrx_exp.value
-		if commandstats.crxcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.crxcmds) do
-				if cid == victim_cid then
-					commandstats.crxcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.crxcmds[cid] and commandstats.crxcmds[cid].warning > 0 then
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdcrx_rate.value > 0 then
+			local stat = "Command with invalid context"
+			local msg = "Invalid context for a ( ".. cmd:getCommandString() .." ) command, the command is blocked !!!"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = 0
+			local maxrate = fl_settings.cmdcrx_rate.value
+			local minutes = fl_settings.cmdcrx_exp.value
+			if commandstats.crxcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.crxcmds) do
+					if cid == victim_cid then
+						commandstats.crxcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.crxcmds[cid] and commandstats.crxcmds[cid].warning > 0 then
+							return false
+						end
 						return false
 					end
-					return false
 				end
 			end
+			commandstats.crxcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return false
 		end
-		commandstats.crxcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		return false
 	end
-	return false
 end
 
 local function onCMD(c, cmd) -- Stats and rules verification for command strings
@@ -2028,87 +2090,89 @@ local function onCMD(c, cmd) -- Stats and rules verification for command strings
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdcmd_rate.value > 0) then
-		local stat = "a user Command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdcmd_rate.value
-		local minutes = fl_settings.cmdcmd_exp.value
-		if commandstats.cmdcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.cmdcmds) do
-				if cid == victim_cid then
-					commandstats.cmdcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.cmdcmds[cid] and commandstats.cmdcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdcmd_rate.value > 0 then
+			local stat = "a user Command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdcmd_rate.value
+			local minutes = fl_settings.cmdcmd_exp.value
+			if commandstats.cmdcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.cmdcmds) do
+					if cid == victim_cid then
+						commandstats.cmdcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.cmdcmds[cid] and commandstats.cmdcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.cmdcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.cmdcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
 
 local function onSUP(c, cmd) -- Stats and rules verification for support strings
 
-	local blom = c:hasSupport(adchpp.AdcCommand_toFourCC("BLO0")) or c:hasSupport(adchpp.AdcCommand_toFourCC("BLOM")) or 
-c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers from this limitrule
+	if li_settings.li_limitstats.value >= 0 then
+		local blom = c:hasSupport(adchpp.AdcCommand_toFourCC("BLO0")) or c:hasSupport(adchpp.AdcCommand_toFourCC("BLOM")) or c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers from this rule
+		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not blom then
+			local ip = c:getIp()
+			local stat = "Support BLOM filter forced"
+			local str = "This hub requires that your client supports the BLOM (TTH search filtering) extention !"
+			local type = "lim"
+			local factor = 60
+			local maxcount = 0
+			maxrate = li_settings.sublom_rate.value
+			local minutes = li_settings.sublom_exp.value
+			if limitstats.subloms[ip] then
+				for victim_ip, data in base.pairs(limitstats.subloms) do
+					if ip == victim_ip then
+						limitstats.subloms[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if limitstats.subloms[ip] and limitstats.subloms[ip].warning > 0 then
+							dump_redirected(c, str)
+							return false
+						end
+					end
+				end
+			else
+				limitstats.subloms[ip] = make_data(c, cmd, msg, type, minutes)
+			end
+			dump_redirected(c, str)
+			return false
+		end
+	end
 
-	if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not blom then
-		local ip = c:getIp()
-		local stat = "Support BLOM filter forced"
-		local str = "This hub requires that your client supports the BLOM (TTH search filtering) extention !"
-		local type = "lim"
-		local factor = 60
-		local maxcount = 0
-		maxrate = li_settings.sublom_rate.value
-		local minutes = li_settings.sublom_exp.value
-		if limitstats.subloms[ip] then
-			for victim_ip, data in base.pairs(limitstats.subloms) do
-				if ip == victim_ip then
-					limitstats.subloms[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if limitstats.subloms[ip] and limitstats.subloms[ip].warning > 0 then
-						dump_redirected(c, str)
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsup_rate.value > 0 then
+			local ip = c:getIp()
+			local stat = "SUP command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdsup_rate.value
+			local minutes = fl_settings.cmdsup_exp.value
+			if commandstats.supcmds[ip] then
+				for victim_ip, data in base.pairs(commandstats.supcmds) do
+					if ip == victim_ip then
+						commandstats.supcmds[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.supcmds[ip] and commandstats.supcmds[ip].warning > 0 then
+							dump_dropped(c, "You are dropped for hammering the hub, stop or be kicked !!!")
+							return false
+						end
+						return true
 					end
 				end
 			end
-		else
-			limitstats.subloms[ip] = make_data(c, cmd, msg, type, minutes)
+			commandstats.supcmds[ip] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		dump_redirected(c, str)
-		return false
 	end
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsup_rate.value > 0 then
-		local ip = c:getIp()
-		local stat = "SUP command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdsup_rate.value
-		local minutes = fl_settings.cmdsup_exp.value
-		if commandstats.supcmds[ip] then
-			for victim_ip, data in base.pairs(commandstats.supcmds) do
-				if ip == victim_ip then
-					commandstats.supcmds[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.supcmds[ip] and commandstats.supcmds[ip].warning > 0 then
-						dump_dropped(c, "You are dropped for hammering the hub, stop or be kicked !!!")
-						return false
-					end
-					return true
-				end
-			end
-		end
-		commandstats.supcmds[ip] = make_data(c, cmd, msg, type, minutes)
-		return true
-	end
-
 	return true
 end
 
@@ -2117,28 +2181,29 @@ local function onSID(c, cmd) -- Stats and rules verification for sid strings
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsid_rate.value > 0) then
-		local stat = "SID command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdsid_rate.value
-		local minutes = fl_settings.cmdsid_exp.value
-		if commandstats.sidcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.sidcmds) do
-				if cid == victim_cid then
-					commandstats.sidcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.sidcmds[cid] and commandstats.sidcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsid_rate.value > 0 then
+			local stat = "SID command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdsid_rate.value
+			local minutes = fl_settings.cmdsid_exp.value
+			if commandstats.sidcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.sidcmds) do
+					if cid == victim_cid then
+						commandstats.sidcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.sidcmds[cid] and commandstats.sidcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.sidcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.sidcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
@@ -2148,28 +2213,29 @@ local function onPAS(c, cmd) -- Stats and rules verification for password string
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdpas_rate.value > 0) then
-		local stat = "PAS command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdpas_rate.value
-		local minutes = fl_settings.cmdpas_exp.value
-		if commandstats.pascmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.pascmds) do
-				if cid == victim_cid then
-					commandstats.pascmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.pascmds[cid] and commandstats.pascmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then 
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdpas_rate.value > 0 then
+			local stat = "PAS command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdpas_rate.value
+			local minutes = fl_settings.cmdpas_exp.value
+			if commandstats.pascmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.pascmds) do
+					if cid == victim_cid then
+						commandstats.pascmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.pascmds[cid] and commandstats.pascmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.pascmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.pascmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
@@ -2179,28 +2245,29 @@ local function onSTA(c, cmd) -- Stats and rules verification for status strings
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsta_rate.value > 0) then
-		local stat = "STA command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdsta_rate.value
-		local minutes = fl_settings.cmdsta_exp.value
-		if commandstats.stacmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.stacmds) do
-				if cid == victim_cid then
-					commandstats.stacmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.stacmds[cid] and commandstats.stacmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsta_rate.value > 0 then
+			local stat = "STA command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdsta_rate.value
+			local minutes = fl_settings.cmdsta_exp.value
+			if commandstats.stacmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.stacmds) do
+					if cid == victim_cid then
+						commandstats.stacmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.stacmds[cid] and commandstats.stacmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.stacmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.stacmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
 	return true
 end
@@ -2211,106 +2278,107 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 	end
 	
 	local NATT, SEGA, TTH, chars
-	local params = cmd:getParameters()
-	local params_size = params:size()
+	if li_settings.li_limitstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		local params = cmd:getParameters()
+		local params_size = params:size()
+		if #cmd:getParam("TR", 0) > 0 then
+			TTH = true
+		end
+		if not TTH then -- only getting search size for manual searches
+			local vars = {}
+			if params_size > 0 then
+				for i = 0, params_size - 1 do
+					local param = params[i]
+					if #param > 2 then
+						local field = string.sub(param, 1, 2)
+						if field == 'AN' then
+							local var = string.sub(param, 3)
+							table.insert(vars, string.lower(var))
+						end
+					end
+				end
+			end
+			chars = #table.concat(vars, ' ')
+		end
+		if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
+			local stat = "Max Search parameters limit"
+			local msg = "Your search contained too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
+			local type = "lim"
+			local factor = 60
+			local maxcount = 0
+			local maxrate = li_settings.maxschparam_rate.value
+			local minutes = li_settings.maxschparam_exp.value
+			if limitstats.maxmsglengths[cid] then
+				for victim_cid, data in base.pairs(limitstats.maxschparams) do
+					if cid == victim_cid then
+						limitstats.maxschparams[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						return false
+					end
+				end
+			end
+			limitstats.maxschparams[cid] = make_data(c, cmd, msg, type, minutes)
+			return false
+		end
+		if chars and li_settings.maxschlength.value > 0 and chars > li_settings.maxschlength.value then
+			local stat = "Max Search length limit"
+			local msg = "Your search string contained too many characters, max allowed is " .. li_settings.maxschlength.value
+			local type = "lim"
+			local factor = 60
+			local maxcount = 0
+			local maxrate = li_settings.maxschlength_rate.value
+			local minutes = li_settings.maxschlength_exp.value
+			if limitstats.maxschlengths[cid] then
+				for victim_cid, data in base.pairs(limitstats.maxschlengths) do
+					if cid == victim_cid then
+						limitstats.maxschlengths[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if limitstats.maxschlengths[cid] and limitstats.maxschlengths[cid].warning > 0 then
+							return false
+						end
+						return false
+					end
+				end
+			else
+				limitstats.maxschlengths[cid] = make_data(c, cmd, msg, type, minutes)
+				return false
+			end
+		end
+		if chars and li_settings.minschlength.value > 0 and chars < li_settings.minschlength.value then
+			local stat = "Min Search length limit"
+			local msg = "Your search string has not enough characters min alowed is ".. li_settings.minschlength.value.." "
+			local type = "lim"
+			local factor = 60
+			local maxcount = 0
+			local maxrate = li_settings.minschlength_rate.value
+			local minutes = li_settings.minschlength_exp.value
+			if limitstats.minschlengths[cid] then
+				for victim_cid, data in base.pairs(limitstats.minschlengths) do
+					if cid == victim_cid then
+						limitstats.minschlengths[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if limitstats.minschlengths[cid] and limitstats.minschlengths[cid].warning > 0 then
+							return false
+						end
+						return false
+					end
+				end
+			else
+				limitstats.minschlengths[cid] = make_data(c, cmd, msg, type, minutes)
+				return false
+			end
+		end
+	end
+
+	if fl_settings.fl_commandstats.value < 0 then
+		return true
+	end
+
+	local cid = c:getCID():toBase32()
 	local feature = base.tostring(cmd:getFeatures())
 	if #feature > 0 then
 		NATT = feature:match("+NAT0") or feature:match("+NATT")
 		SEGA = feature:match("+SEG0") or feature:match("+SEGA")
 	end
-	if #cmd:getParam("TR", 0) > 0 then
-		TTH = true
-	end
-	if not TTH then -- only getting search size for manual searches
-		local vars = {}
-		if params_size > 0 then
-			for i = 0, params_size - 1 do
-				local param = params[i]
-				if #param > 2 then
-					local field = string.sub(param, 1, 2)
-					if field == 'AN' then
-						local var = string.sub(param, 3)
-						table.insert(vars, string.lower(var))
-					end
-				end
-			end
-		end
-		chars = #table.concat(vars, ' ')
-	end
-
-	if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
-		local cid = c:getCID():toBase32()
-		local stat = "Max Search parameters limit"
-		local msg = "Your search contained too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
-		local type = "lim"
-		local factor = 60
-		local maxcount = 0
-		local maxrate = li_settings.maxschparam_rate.value
-		local minutes = li_settings.maxschparam_exp.value
-		if limitstats.maxmsglengths[cid] then
-			for victim_cid, data in base.pairs(limitstats.maxschparams) do
-				if cid == victim_cid then
-					limitstats.maxschparams[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					return false
-				end
-			end
-		end
-		limitstats.maxschparams[cid] = make_data(c, cmd, msg, type, minutes)
-		return false
-	end
-
-	if chars and li_settings.maxschlength.value > 0 and chars > li_settings.maxschlength.value then
-		local cid = c:getCID():toBase32()
-		local stat = "Max Search length limit"
-		local msg = "Your search string contained too many characters, max allowed is " .. li_settings.maxschlength.value
-		local type = "lim"
-		local factor = 60
-		local maxcount = 0
-		local maxrate = li_settings.maxschlength_rate.value
-		local minutes = li_settings.maxschlength_exp.value
-		if limitstats.maxschlengths[cid] then
-			for victim_cid, data in base.pairs(limitstats.maxschlengths) do
-				if cid == victim_cid then
-					limitstats.maxschlengths[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if limitstats.maxschlengths[cid] and limitstats.maxschlengths[cid].warning > 0 then
-						return false
-					end
-					return false
-				end
-			end
-		else
-			limitstats.maxschlengths[cid] = make_data(c, cmd, msg, type, minutes)
-			return false
-		end
-	end
-
-	if chars and li_settings.minschlength.value > 0 and chars < li_settings.minschlength.value then
-		local cid = c:getCID():toBase32()
-		local stat = "Min Search length limit"
-		local msg = "Your search string has not enough characters min alowed is ".. li_settings.minschlength.value.." "
-		local type = "lim"
-		local factor = 60
-		local maxcount = 0
-		local maxrate = li_settings.minschlength_rate.value
-		local minutes = li_settings.minschlength_exp.value
-		if limitstats.minschlengths[cid] then
-			for victim_cid, data in base.pairs(limitstats.minschlengths) do
-				if cid == victim_cid then
-					limitstats.minschlengths[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if limitstats.minschlengths[cid] and limitstats.minschlengths[cid].warning > 0 then
-						return false
-					end
-					return false
-				end
-			end
-		else
-			limitstats.minschlengths[cid] = make_data(c, cmd, msg, type, minutes)
-			return false
-		end
-	end
-
 	if TTH and not NATT and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
-		local cid = c:getCID():toBase32()
 		local stat = "TTH Search command"
 		local type = "cmd"
 		local factor = 1
@@ -2331,9 +2399,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		commandstats.schtthcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		return true
 	end
-
 	if TTH and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
-		local cid = c:getCID():toBase32()
 		local stat = "NAT TTH Search command"
 		local type = "cmd"
 		local factor = 1
@@ -2354,9 +2420,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		commandstats.schtthnatcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		return true
 	end
-
 	if not NATT and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0) then
-		local cid = c:getCID():toBase32()
 		local stat = "manual Search command"
 		local type = "cmd"
 		local factor = 1
@@ -2393,9 +2457,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 			return true
 		end
 	end
-
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0 then
-		local cid = c:getCID():toBase32()
 		local stat = "NAT manual Search command"
 		local type = "cmd"
 		local factor = 1
@@ -2433,7 +2495,6 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 	return true
-
 end
 
 local function onMSG(c, cmd) -- Stats and rules verification for messages strings
@@ -2441,57 +2502,133 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 		return true
 	end
 
-	if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
-		local cid = c:getCID():toBase32()
-		local stat = "Max Message length limit"
-		local msg = "Your message contained too many characters, max allowed is ".. li_settings.maxmsglength.value.." "
-		local type = "lim"
-		local factor = 60
-		local maxcount = 0
-		local maxrate = li_settings.maxmsglength_rate.value
-		local minutes = li_settings.maxmsglength_exp.value
-		if limitstats.maxmsglengths[cid] then
-			for victim_cid, data in base.pairs(limitstats.maxmsglengths) do
-				if cid == victim_cid then
-					limitstats.maxmsglengths[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if limitstats.maxmsglengths[cid] and limitstats.maxmsglengths[cid].warning > 0 then
+	if li_settings.li_limitstats.value >= 0 then
+		if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
+			local cid = c:getCID():toBase32()
+			local stat = "Max Message length limit"
+			local msg = "Your message contained too many characters, max allowed is ".. li_settings.maxmsglength.value.." "
+			local type = "lim"
+			local factor = 60
+			local maxcount = 0
+			local maxrate = li_settings.maxmsglength_rate.value
+			local minutes = li_settings.maxmsglength_exp.value
+			if limitstats.maxmsglengths[cid] then
+				for victim_cid, data in base.pairs(limitstats.maxmsglengths) do
+					if cid == victim_cid then
+						limitstats.maxmsglengths[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if limitstats.maxmsglengths[cid] and limitstats.maxmsglengths[cid].warning > 0 then
+							return false
+						end
 						return false
 					end
-					return false
 				end
 			end
+			limitstats.maxmsglengths[cid] = make_data(c, cmd, msg, type, minutes)
+			return false
 		end
-		limitstats.maxmsglengths[cid] = make_data(c, cmd, msg, type, minutes)
-		return false
 	end
 
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdmsg_rate.value > 0 then
-		local cid = c:getCID():toBase32()
-		local stat = "MSG command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdmsg_rate.value
-		local minutes = fl_settings.cmdmsg_exp.value
-		if commandstats.msgcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.msgcmds) do
-				if cid == victim_cid then
-					commandstats.msgcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.msgcmds[cid] and commandstats.msgcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdmsg_rate.value > 0 then
+			local cid = c:getCID():toBase32()
+			local stat = "MSG command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdmsg_rate.value
+			local minutes = fl_settings.cmdmsg_exp.value
+			if commandstats.msgcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.msgcmds) do
+					if cid == victim_cid then
+						commandstats.msgcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.msgcmds[cid] and commandstats.msgcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.msgcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.msgcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
 local function onINF(c, cmd) -- Stats and rules verification for info strings
+
+	if en_settings.en_entitystats.value >= 0 then
+		if c:getState() == adchpp.Entity_STATE_NORMAL then
+		local cid, ni
+			if c:getState() == adchpp.Entity_STATE_NORMAL then 
+				cid = c:getCID():toBase32()
+				ni = c:getField("NI")
+			else
+				cid = cmd:getParam("ID", 0)
+				ni = cmd:getParam("NI", 0)
+			end
+			local days, match, hist
+			if get_level(c) > 0 then
+				days = en_settings.en_entitystatsregexptime.value
+			else
+				days = en_settings.en_entitystatsexptime.value
+			end
+			if days > 0 then
+				for ent, data in base.pairs(entitystats.last_cids) do
+					if ent == cid then
+						match = true
+						entitystats.last_cids[cid] = update_entity(c, data, days, cmd, hist)
+					end
+				end
+				if not match then
+					entitystats.last_cids[cid] = make_entity(c, days)
+				end
+			end
+		end
+	end
+
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid, ni
+		if c:getState() == adchpp.Entity_STATE_NORMAL then 
+			cid = c:getCID():toBase32()
+			ni = c:getField("NI")
+		else
+			cid = cmd:getParam("ID", 0)
+			ni = cmd:getParam("NI", 0)
+		end
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdinf_rate.value > 0 and c:getState() == adchpp.Entity_STATE_NORMAL then
+			local stat = "INF command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdinf_rate.value
+			local minutes = fl_settings.cmdinf_exp.value
+			if commandstats.infcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.infcmds) do
+					if cid == victim_cid then
+						commandstats.infcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.infcmds[cid] and commandstats.infcmds[cid].warning > 0 then
+							return false
+						end
+						return true
+					end
+				end
+			end
+			commandstats.infcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
+		end
+	end
+
+
+
+	-- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
+	if get_level(c) > fl_settings.fl_level.value or cid == "UTKSLGRRI3RYPRCWUEYTROGTRFQJQRQDVHTMOOY" then
+		return true
+	end
+
+	if li_settings.li_limitstats.value < 0 then
+		return true
+	end
 
 	local cid, ni
 	if c:getState() == adchpp.Entity_STATE_NORMAL then 
@@ -2501,71 +2638,13 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		cid = cmd:getParam("ID", 0)
 		ni = cmd:getParam("NI", 0)
 	end
-
-	if en_settings.entitylog.value > 0 and c:getState() == adchpp.Entity_STATE_NORMAL then
-		local days, match, hist
-		if get_level(c) > 0 then
-			days = en_settings.entitylogregexptime.value
-		else
-			days = en_settings.entitylogexptime.value
-		end
-		for ent, data in base.pairs(entitystats.last_cids) do
-			if ent == cid then
-				match = true
-				entitystats.last_cids[cid] = update_entity(c, data, days, cmd, hist)
-			end
-		end
-		if not match then
-			entitystats.last_cids[cid] = make_entity(c, days)
-		end
-	end
-
--- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
-
-	if get_level(c) > fl_settings.fl_level.value or cid == "UTKSLGRRI3RYPRCWUEYTROGTRFQJQRQDVHTMOOY" then
-		return true
-	end
-
-	local countip
-	if c:getState() ~= adchpp.Entity_STATE_NORMAL then
-		countip = get_sameip(c)
-	end
-
-	if countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
-		local stat = "max same IP"
-		local str = "This hub allows a maximum of ( " .. li_settings.maxsameip.value .. " ) connections from the same ip address and that value is reached sorry for now !"
-		local type = "lim"
-		local factor = 60
-		local maxcount = 0
-		maxrate = li_settings.maxsameip_rate.value
-		local minutes = li_settings.maxsameip_exp.value
-		if limitstats.maxsameips[cid] then
-			for victim_cid, data in base.pairs(limitstats.maxsameips) do
-				if cid == victim_cid then
-					limitstats.maxsameips[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if limitstats.maxsameips[cid] and limitstats.maxsameips[cid].warning > 0 then
-						dump_dropped(c, str)
-						return false
-					end
-				end
-			end
-		else
-			limitstats.maxsameips[cid] = make_data(c, cmd, msg, type, minutes)
-		end
-		dump_dropped(c, str)
-		return false
-	end
-
 	local su
-
 	if cmd:hasParam("SU", 0) then
 		su = base.tostring(cmd:getParam("SU", 0))
 	else
 		su = base.tostring(c:getField("SU"))
 	end
-
 	local adcs = string.find(su, 'ADC0') or string.find(su, 'ADCS')
-
 	if li_settings.suadcs.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not adcs then
 		local stat = "Support ADCS forced"
 		local str = "This hub requires that you have the secure transfer option enabled, go to Settings/Security Cerificates and enable 'Use TLS when remote client supports it' !"
@@ -2590,10 +2669,8 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	local natt = string.find(su, 'NAT0') or string.find(su, 'NATT') or string.find(su, 'TCP4') or string.find(su, 'TCP6')
 	-- user must either be active or support NAT-T
-
 	if li_settings.sunatt.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not natt then
 		local stat = "Support NAT-T forced"
 		local str = "This hub requires that you have the NAT-T option enabled if you use passive mode, go to Settings and enable it or use a client that supports it !"
@@ -2618,9 +2695,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	local ss = base.tonumber(cmd:getParam("SS", 0)) or base.tonumber(c:getField("SS")) or 0
-
 	if li_settings.minsharesize.value > 0 and li_settings.li_minlevel.value <= get_level(c) and ss < li_settings.minsharesize.value then
 		local stat = "Min Share size limit"
 		local str = "Your share size ( " .. adchpp.Util_formatBytes(ss) .. " ) is too low, the minimum required size is " .. adchpp.Util_formatBytes(li_settings.minsharesize.value)
@@ -2645,7 +2720,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	if li_settings.maxsharesize.value > 0 and li_settings.li_minlevel.value <= get_level(c) and ss > li_settings.maxsharesize.value then
 		local stat = "Max Share size limit"
 		local str = "Your share size ( " .. adchpp.Util_formatBytes(ss) .. " ) is too high, the maximum allowed size is " .. adchpp.Util_formatBytes(li_settings.maxsharesize.value)
@@ -2670,9 +2744,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	local sf = base.tonumber(cmd:getParam("SF", 0)) or base.tonumber(c:getField("SF")) or 0
-
 	if li_settings.minsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf < li_settings.minsharefiles.value then
 		local stat = "Min Shared files limit"
 		local str = "Your nr of shared files ( " .. sf .. " ) is too low, the minimum required nr of files is " .. li_settings.minsharefiles.value
@@ -2697,7 +2769,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	if li_settings.maxsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf > li_settings.maxsharefiles.value then
 		local stat = "Max Shared files limit"
 		local str = "Your nr of shared files ( " .. sf .. " ) is too high, the maximum allowed nr of files is " .. li_settings.maxsharefiles.value
@@ -2722,9 +2793,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	local sl = base.tonumber(cmd:getParam("SL", 0)) or base.tonumber(c:getField("SL")) or 0
-
 	if li_settings.minslots.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sl < li_settings.minslots.value then
 		local stat = "Min Slots limit"
 		local str = "You have too few upload slots open ( " .. base.tostring(sl) .. " ), the minimum required is " .. base.tostring(li_settings.minslots.value)
@@ -2749,7 +2818,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	if li_settings.maxslots.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sl > li_settings.maxslots.value then
 		local stat = "Max Slots limit"
 		local str = "You have too many upload slots open ( " .. base.tostring(sl) .. " ), the maximum allowed is " .. base.tostring(li_settings.maxslots.value)
@@ -2774,7 +2842,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	local h1 = base.tonumber(cmd:getParam("HN", 0)) or base.tonumber(c:getField("HN")) or 0
 	local h2 = base.tonumber(cmd:getParam("HR", 0)) or base.tonumber(c:getField("HR")) or 0
 	local h3 = base.tonumber(cmd:getParam("HO", 0)) or base.tonumber(c:getField("HO")) or 0
@@ -2783,7 +2850,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		h = 1
 	end
 	local r = sl / h
-
 	if li_settings.minhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r < li_settings.minhubslotratio.value then
 		local stat = "Min Hub/Slot ratio limit"
 		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too low, you must open up more upload slots or disconnect from some hubs to achieve a ratio of " .. base.tostring(li_settings.minhubslotratio.value)
@@ -2808,7 +2874,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	if li_settings.maxhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r > li_settings.maxhubslotratio.value then
 		local stat = "Max Hub/Slot ratio limit"
 		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too high, you must reduce your open upload slots or connect to more hubs to achieve a ratio of " .. base.tostring(li_settings.maxhubslotratio.value)
@@ -2833,7 +2898,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	if li_settings.maxhubcount.value > 0 and li_settings.li_minlevel.value <= get_level(c) and h > li_settings.maxhubcount.value then
 		local stat = "Max Hubcount limit"
 		local str = "The number of Hubs you're connected to ( " .. base.tostring(h) .. " ) is too high, the maximum allowed is " .. base.tostring(li_settings.maxhubcount.value)
@@ -2858,7 +2922,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-
 	if li_settings.minnicklength.value > 0 and #ni < li_settings.minnicklength.value then
 		local stat = "Min Nick length limit"
 		local str = "Your nick ( " .. ni .. " ) is too short, it must contain " .. base.tostring(li_settings.minnicklength.value) .. " characters minimum"
@@ -2883,7 +2946,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_dropped(c, str)
 		return false
 	end
-
 	if li_settings.maxnicklength.value > 0 and #ni > li_settings.maxnicklength.value then
 		local stat = "Max Nick length limit"
 		local str = "Your nick ( " .. ni .. " ) is too long, it can contain " .. base.tostring(li_settings.maxnicklength.value) .. " characters maximum"
@@ -2908,29 +2970,6 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_dropped(c, str)
 		return false
 	end
-
-	if (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdinf_rate.value > 0) and c:getState() == adchpp.Entity_STATE_NORMAL then
-		local stat = "INF command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdinf_rate.value
-		local minutes = fl_settings.cmdinf_exp.value
-		if commandstats.infcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.infcmds) do
-				if cid == victim_cid then
-					commandstats.infcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.infcmds[cid] and commandstats.infcmds[cid].warning > 0 then
-						return false
-					end
-					return true
-				end
-			end
-		end
-		commandstats.infcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
-	end
-
 	return true
 end
 
@@ -2939,30 +2978,30 @@ local function onRES(c, cmd) -- Stats and rules verification for search results 
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdres_rate.value > 0 then
-		local stat = "Search Results command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdres_rate.value
-		local minutes = fl_settings.cmdres_exp.value
-		if commandstats.rescmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.rescmds) do
-				if cid == victim_cid then
-					commandstats.rescmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.rescmds[cid] and commandstats.rescmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdres_rate.value > 0 then
+			local stat = "Search Results command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdres_rate.value
+			local minutes = fl_settings.cmdres_exp.value
+			if commandstats.rescmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.rescmds) do
+					if cid == victim_cid then
+						commandstats.rescmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.rescmds[cid] and commandstats.rescmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.rescmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.rescmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -2971,30 +3010,30 @@ local function onCTM(c, cmd) -- Stats and rules verification for connect to me s
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdctm_rate.value > 0 then
-		local stat = "CTM command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdctm_rate.value
-		local minutes = fl_settings.cmdctm_exp.value
-		if commandstats.ctmcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.ctmcmds) do
-				if cid == victim_cid then
-					commandstats.ctmcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.ctmcmds[cid] and commandstats.ctmcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdctm_rate.value > 0 then
+			local stat = "CTM command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdctm_rate.value
+			local minutes = fl_settings.cmdctm_exp.value
+			if commandstats.ctmcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.ctmcmds) do
+					if cid == victim_cid then
+						commandstats.ctmcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.ctmcmds[cid] and commandstats.ctmcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.ctmcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.ctmcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3003,30 +3042,30 @@ local function onRCM(c, cmd) -- Stats and rules verification for reverse connect
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdrcm_rate.value > 0 then
-		local stat = "RCM command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdrcm_rate.value
-		local minutes = fl_settings.cmdrcm_exp.value
-		if commandstats.rcmcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.rcmcmds) do
-				if cid == victim_cid then
-					commandstats.rcmcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.rcmcmds[cid] and commandstats.rcmcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdrcm_rate.value > 0 then
+			local stat = "RCM command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdrcm_rate.value
+			local minutes = fl_settings.cmdrcm_exp.value
+			if commandstats.rcmcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.rcmcmds) do
+					if cid == victim_cid then
+						commandstats.rcmcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.rcmcmds[cid] and commandstats.rcmcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.rcmcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.rcmcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3035,30 +3074,30 @@ local function onNAT(c, cmd) -- Stats and rules verification for nat traversal c
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdnat_rate.value > 0 then
-		local stat = "NAT command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdnat_rate.value
-		local minutes = fl_settings.cmdnat_exp.value
-		if commandstats.natcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.natcmds) do
-				if cid == victim_cid then
-					commandstats.natcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.natcmds[cid] and commandstats.natcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdnat_rate.value > 0 then
+			local stat = "NAT command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdnat_rate.value
+			local minutes = fl_settings.cmdnat_exp.value
+			if commandstats.natcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.natcmds) do
+					if cid == victim_cid then
+						commandstats.natcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.natcmds[cid] and commandstats.natcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.natcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.natcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3067,30 +3106,30 @@ local function onRNT(c, cmd) -- Stats and rules verification for nat traversal r
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdrnt_rate.value > 0 then
-		local stat = "RNT command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdrnt_rate.value
-		local minutes = fl_settings.cmdrnt_exp.value
-		if commandstats.rntcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.rntcmds) do
-				if cid == victim_cid then
-					commandstats.rntcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.rntcmds[cid] and commandstats.rntcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdrnt_rate.value > 0 then
+			local stat = "RNT command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdrnt_rate.value
+			local minutes = fl_settings.cmdrnt_exp.value
+			if commandstats.rntcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.rntcmds) do
+					if cid == victim_cid then
+						commandstats.rntcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.rntcmds[cid] and commandstats.rntcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.rntcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.rntcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3099,30 +3138,30 @@ local function onPSR(c, cmd) -- Stats and rules verification for partitial files
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdpsr_rate.value > 0 then
-		local stat = "PSR command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdpsr_rate.value
-		local minutes = fl_settings.cmdpsr_exp.value
-		if commandstats.psrcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.psrcmds) do
-				if cid == victim_cid then
-					commandstats.psrcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.psrcmds[cid] and commandstats.psrcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdpsr_rate.value > 0 then
+			local stat = "PSR command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdpsr_rate.value
+			local minutes = fl_settings.cmdpsr_exp.value
+			if commandstats.psrcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.psrcmds) do
+					if cid == victim_cid then
+						commandstats.psrcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.psrcmds[cid] and commandstats.psrcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.psrcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.psrcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3131,30 +3170,30 @@ local function onGET(c, cmd) -- Stats and rules verification for get strings
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdget_rate.value > 0 then
-		local stat = "GET command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdget_rate.value
-		local minutes = fl_settings.cmdget_exp.value
-		if commandstats.getcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.getcmds) do
-				if cid == victim_cid then
-					commandstats.getcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.getcmds[cid] and commandstats.getcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdget_rate.value > 0 then
+			local stat = "GET command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdget_rate.value
+			local minutes = fl_settings.cmdget_exp.value
+			if commandstats.getcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.getcmds) do
+					if cid == victim_cid then
+						commandstats.getcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.getcmds[cid] and commandstats.getcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.getcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.getcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3163,30 +3202,30 @@ local function onSND(c, cmd) -- Stats and rules verification for send strings
 		return true
 	end
 
-	local cid = c:getCID():toBase32()
-
-	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsnd_rate.value > 0 then
-		local stat = "SND command"
-		local type = "cmd"
-		local factor = 1
-		local maxcount = -1
-		local maxrate = fl_settings.cmdsnd_rate.value
-		local minutes = fl_settings.cmdsnd_exp.value
-		if commandstats.sndcmds[cid] then
-			for victim_cid, data in base.pairs(commandstats.sndcmds) do
-				if cid == victim_cid then
-					commandstats.sndcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
-					if commandstats.sndcmds[cid] and commandstats.sndcmds[cid].warning > 0 then
-						return false
+	if fl_settings.fl_commandstats.value >= 0 then
+		local cid = c:getCID():toBase32()
+		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdsnd_rate.value > 0 then
+			local stat = "SND command"
+			local type = "cmd"
+			local factor = 1
+			local maxcount = -1
+			local maxrate = fl_settings.cmdsnd_rate.value
+			local minutes = fl_settings.cmdsnd_exp.value
+			if commandstats.sndcmds[cid] then
+				for victim_cid, data in base.pairs(commandstats.sndcmds) do
+					if cid == victim_cid then
+						commandstats.sndcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+						if commandstats.sndcmds[cid] and commandstats.sndcmds[cid].warning > 0 then
+							return false
+						end
+						return true
 					end
-					return true
 				end
 			end
+			commandstats.sndcmds[cid] = make_data(c, cmd, msg, type, minutes)
+			return true
 		end
-		commandstats.sndcmds[cid] = make_data(c, cmd, msg, type, minutes)
-		return true
 	end
-
 	return true
 end
 
@@ -3205,7 +3244,46 @@ local function recheck_info()
 	end
 end
 
+local function logging_change(value, clear_t, clear_s, save_t, save_s, load_f, clear_f, save_f)
+	if value >= 0 then
+		if not clear_t then
+			clear_t = sm:addTimedJob(clear_s, clear_f)
+		end
+		if value == 0 then
+			if save_t then
+				save_t = save_t()
+			end
+		end
+		if value > 0 then
+			base.pcall(load_f)
+			if not save_t then
+				save_t = sm:addTimedJob(save_s, save_f)
+			end
+		end
+	else
+		if clear_t then
+			clear_t = clear_t()
+		end
+		if save_t then
+			save_t = save_t()
+		end
+	end
+	return clear_t, save_t
+end
+
 -- Default flood settings for all limits and adc commands
+
+fl_settings.fl_commandstats = {
+	alias = { commandstats = true },
+
+	change = function()
+		clear_expired_commandstats_timer, save_commandstats_timer = logging_change(fl_settings.fl_commandstats.value, clear_expired_commandstats_timer, 30000, save_commandstats_timer, 60000, load_commandstats, clear_expired_commandstats, save_commandstats)
+	end,
+
+	help = "enforces the enabled flood rules and if selected saves a log, -1 = disabled, 0 = enabled, 1 = write to file",
+
+	value = -1
+}
 
 fl_settings.fl_maxkicks = {
 	alias = { maximumkicks = true, maxkicks = true },
@@ -3932,6 +4010,18 @@ li_settings.maxsameip_exp = {
 
 -- All the specific limits settings values
 
+li_settings.li_limitstats = {
+	alias = { limitstats = true },
+
+	change = function()
+		clear_expired_limitstats_timer, save_limitstats_timer = logging_change(li_settings.li_limitstats.value, clear_expired_limitstats_timer, 30000, save_limitstats_timer, 1800000, load_limitstats, clear_expired_limitstats, save_limitstats)
+	end,
+
+	help = "enforces the enabled limit rules and if selected saves a log, -1 = disabled, 0 = enabled, 1 = write to file",
+
+	value = -1
+}
+
 li_settings.li_maxrate = {
 	alias = { limratelim = true, maxratelim = true},
 
@@ -4196,26 +4286,31 @@ li_settings.maxsameip = {
 
 -- All the Entity settings
 
-en_settings.entitylog = {
-	alias = { entityloging = true },
+en_settings.en_entitystats = {
+	alias = { entitylog = true },
 
-	change = onONL,
+	change = function()
+		clear_expired_entitystats_timer, save_entitystats_timer = logging_change(en_settings.en_entitystats.value, clear_expired_entitystats_timer, 900000, save_entitystats_timer, 1800000, load_entitystats, clear_expired_entitystats, save_entitystats)
+		if en_settings.en_entitystats.value and en_settings.en_entitystats.value >= 0 then
+			onONL()
+		end
+	end,
 
-	help = "logs users cid , ip , nicks etc into a database and keeps history , 0 = disabled",
+	help = "logs users cid , ip's , nicks etc into a database and keeps history of changes , -1 = disabled, 0 = enabled, 1 = write to file",
 
-	value = 0
+	value = -1
 }
 
-en_settings.entitylogexptime = {
-	alias = { entitylogexpiretime = true, entityexpiretime = true},
+en_settings.en_entitystatsexptime = {
+	alias = { entitystatexpiretime = true, entityexpiretime = true},
 
 	help = "expiretime in days for a non registered user entity logs, 0 = disabled",
 
 	value = 7
 }
 
-en_settings.entitylogregexptime = {
-	alias = { entitylogregexpiretime = true, entityregexpiretime = true},
+en_settings.en_entitystatsregexptime = {
+	alias = { entitystatregexpiretime = true, entityregexpiretime = true},
 
 	help = "expiretime in days for a registered user entity logs, 0 = disabled",
 
@@ -5107,8 +5202,8 @@ commands.showentity = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nAll current Entity records that match your search criteria: [ " .. entity .. " ]\n" 
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if entity == last_cid or entity == info.ip or (info.ni and string.lower(info.ni) == string.lower(entity)) then
@@ -5146,8 +5241,8 @@ commands.traceip = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if info.ip and info.ip == ip then
@@ -5213,8 +5308,8 @@ commands.tracecid = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if last_cid == cid then
@@ -5280,8 +5375,8 @@ commands.traceni = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.entitylog.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.entitylogexptime.value .. " / " .. en_settings.entitylogregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if info.ni and string.lower(info.ni) == string.lower(ni) then
@@ -5330,22 +5425,6 @@ commands.traceni = {
 	}
 }
 
-fldb_folder_exist = verify_fldb_folder()
-
-if fldb_folder_exist ~= 0 then
-	base.pcall(load_limitstats)
-	base.pcall(load_commandstats)
-	base.pcall(load_tmpbanstats)
-	base.pcall(load_kickstats)
-	base.pcall(load_entitystats)
-else
-	base.pcall(save_tmpbanstats)
-	base.pcall(save_kickstats)
-	base.pcall(save_limitstats)
-	base.pcall(save_commandstats)
-	base.pcall(save_entitystats)
-end
-
 fl_settings_loaded = load_fl_settings()
 li_settings_loaded = load_li_settings()
 en_settings_loaded = load_en_settings()
@@ -5368,6 +5447,17 @@ end
 fl_settings_done = true
 li_settings_done = true
 en_settings_done = true
+
+if verify_fldb_folder() ~= 0 then
+	base.pcall(load_tmpbanstats)
+	base.pcall(load_kickstats)
+else
+	base.pcall(save_tmpbanstats)
+	base.pcall(save_kickstats)
+	base.pcall(save_limitstats)
+	base.pcall(save_commandstats)
+	base.pcall(save_entitystats)
+end
 
 local handlers = { 
 	[adchpp.AdcCommand_CMD_SID] = { onSID },
@@ -5488,47 +5578,33 @@ end)
 
 guard_5 = gen_cfgfl_list(), gen_cfgli_list(), gen_cfgen_list()
 
-onONL_timer = sm:addTimedJob(900000, onONL)
+local onONL_timer = sm:addTimedJob(900000, onONL)
 autil.on_unloading(_NAME, onONL_timer)
-
-save_tmpbanstats_timer = sm:addTimedJob(1800000, save_tmpbanstats)
-autil.on_unloading(_NAME, save_tmpbanstats_timer)
-
-save_kickstats_timer = sm:addTimedJob(1800000, save_kickstats)
-autil.on_unloading(_NAME, save_kickstats_timer)
-
-save_limitstats_timer = sm:addTimedJob(1800000, save_limitstats)
-autil.on_unloading(_NAME, save_limitstats_timer)
-
-save_commandstats_timer = sm:addTimedJob(1800000, save_commandstats)
-autil.on_unloading(_NAME, save_commandstats_timer)
-
-save_entitystats_timer = sm:addTimedJob(1800000, save_entitystats)
-autil.on_unloading(_NAME, save_entitystats_timer)
-
-limitstats_clean_timer = sm:addTimedJob(30000, clear_expired_limitstats)
-autil.on_unloading(_NAME, limitstats_clean_timer)
-
-commandstats_clean_timer = sm:addTimedJob(30000, clear_expired_commandstats)
-autil.on_unloading(_NAME, commandstats_clean_timer)
-
-tmpbanstats_clean_timer = sm:addTimedJob(900000, clear_expired_tmpbanstats)
-autil.on_unloading(_NAME, tmpbanstats_clean_timer)
-
-kickstats_clean_timer = sm:addTimedJob(900000, clear_expired_kickstats)
-autil.on_unloading(_NAME, kickstats_clean_timer)
-
-entitystats_clean_timer = sm:addTimedJob(900000, clear_expired_entitystats)
-autil.on_unloading(_NAME, entitystats_clean_timer)
-
 autil.on_unloading(_NAME, onONL)
 
-autil.on_unloading(_NAME, save_tmpbanstats)
+-- The 2 timers are created on settings change
+autil.on_unloading(_NAME, function() if clear_expired_commandstats_timer then clear_expired_commandstats_timer() end end)
+autil.on_unloading(_NAME, function() if save_commandstats_timer then save_commandstats_timer() end end)
+autil.on_unloading(_NAME, function() if fl_settings.fl_commandstats.value > 0 then save_commandstats() end end)
 
+-- The 2 timers are created on settings change
+autil.on_unloading(_NAME, function() if clear_expired_limitstats_timer then clear_expired_limitstats_timer() end end)
+autil.on_unloading(_NAME, function() if save_limitstats_timer then save_limitstats_timer() end end)
+autil.on_unloading(_NAME, function() if li_settings.li_limitstats.value > 0 then save_limitstats() end end)
+
+-- The 2 timers are created on settings change
+autil.on_unloading(_NAME, function() if clear_expired_entitystats_timer then clear_expired_entitystats_timer() end end)
+autil.on_unloading(_NAME, function() if save_entitystats_timer then save_entitystats_timer() end end)
+autil.on_unloading(_NAME, function() if en_settings.en_entitystats.value > 0 then save_entitystats() end end)
+
+save_kickstats_timer = sm:addTimedJob(1800000, save_kickstats)
+clear_expired_kickstats_timer = sm:addTimedJob(900000, clear_expired_kickstats)
+autil.on_unloading(_NAME, clear_expired_kickstats_timer)
+autil.on_unloading(_NAME, save_kickstats_timer)
 autil.on_unloading(_NAME, save_kickstats)
 
-autil.on_unloading(_NAME, save_limitstats)
-
-autil.on_unloading(_NAME, save_commandstats)
-
-autil.on_unloading(_NAME, save_entitystats)
+save_tmpbanstats_timer = sm:addTimedJob(1800000, save_tmpbanstats)
+clear_expired_tmpbanstats_timer = sm:addTimedJob(900000, clear_expired_tmpbanstats)
+autil.on_unloading(_NAME, clear_expired_tmpbanstats_timer)
+autil.on_unloading(_NAME, save_tmpbanstats_timer)
+autil.on_unloading(_NAME, save_tmpbanstats)
