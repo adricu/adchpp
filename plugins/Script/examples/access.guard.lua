@@ -73,9 +73,9 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.39"
+guardrev = "1.0.40"
 
--- Local decleration for the timers and on_unload functions
+-- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
 local clear_expired_limitstats_timer, save_limitstats_timer, save_limitstats
 local clear_expired_entitystats_timer, save_entitystats_timer, save_entitystats
@@ -1965,7 +1965,7 @@ end
 
 local function onONL() -- Stats verification for online users and updating entity,s tables
 
-	if en_settings.en_entitystats.value >= 0 and en_settings_done then
+	if en_settings.en_entitystats.value >= 0  then
 		local entities = adchpp.getCM():getEntities()
 		local size = entities:size()
 		if size > 0 then
@@ -3251,7 +3251,7 @@ local function logging_change(value, clear_t, clear_s, save_t, save_s, load_f, c
 		end
 		if value == 0 then
 			if save_t then
-				save_t = save_t()
+				save_t = save_t() -- unloads timer and gives the function a nil value
 			end
 		end
 		if value > 0 then
@@ -3277,8 +3277,10 @@ fl_settings.fl_commandstats = {
 	alias = { commandstats = true },
 
 	change = function()
-		clear_expired_commandstats_timer, save_commandstats_timer = logging_change(fl_settings.fl_commandstats.value, clear_expired_commandstats_timer, 30000, save_commandstats_timer, 60000, load_commandstats, clear_expired_commandstats, save_commandstats)
+		clear_expired_commandstats_timer, save_commandstats_timer = logging_change(fl_settings.fl_commandstats.value, clear_expired_commandstats_timer, 30000, save_commandstats_timer, 1800000, load_commandstats, clear_expired_commandstats, save_commandstats)
 	end,
+
+	announce = true,
 
 	help = "enforces the enabled flood rules and if selected saves a log, -1 = disabled, 0 = enabled, 1 = write to file",
 
@@ -4015,7 +4017,10 @@ li_settings.li_limitstats = {
 
 	change = function()
 		clear_expired_limitstats_timer, save_limitstats_timer = logging_change(li_settings.li_limitstats.value, clear_expired_limitstats_timer, 30000, save_limitstats_timer, 1800000, load_limitstats, clear_expired_limitstats, save_limitstats)
+		recheck_info()
 	end,
+
+	announce = true,
 
 	help = "enforces the enabled limit rules and if selected saves a log, -1 = disabled, 0 = enabled, 1 = write to file",
 
@@ -4296,6 +4301,8 @@ en_settings.en_entitystats = {
 		end
 	end,
 
+	announce = true,
+
 	help = "logs users cid , ip's , nicks etc into a database and keeps history of changes , -1 = disabled, 0 = enabled, 1 = write to file",
 
 	value = -1
@@ -4316,29 +4323,6 @@ en_settings.en_entitystatsregexptime = {
 
 	value = 60
 }
-
-local function verify_port(c, port)
-	local socket = base.require "socket"
-	local cid = c:getCID():toBase32()
-	local ip = c:getIp()
-	local tcp = port
-	local test_timeout = 0.9
-	local res = {}
-
-	local test = { cid, socket = socket.connect( ip, tcp ) }
-	if test.socket then
-		test.socket:settimeout( test_timeout )
-		test.socket:send( " \n" )
-		local str, err = test.socket:receive()
-		if err == "closed" then
-			res.tcp = true
-		else
-			res.err = err
-		end
-		res.socket = true
-	end
-	return res
-end
 
 local cfgfl_list_done = false
 local function gen_cfgfl_list()
@@ -4764,8 +4748,12 @@ commands.listcmdstats = {
 			return
 		end
 
-		str = "\n\nDefault settings for all cmd's:\t\t\tMaximum Rate: " .. fl_settings.fl_maxrate.value .. " / m"
-		str = str .. "\t\t\tExpire time: " .. fl_settings.fl_exptime.value
+		str = "\n\nDefault settings for all floods:\tMaximum Level: " .. fl_settings.fl_level.value
+		str = str .. "\t\t\tMaximum Warns: " .. fl_settings.fl_maxwarns.value
+		str = str .. "\t\tFlood Log Enabled: " .. fl_settings.fl_commandstats.value .. "\n\n"
+		str = str .. "\t\t\t\tMaximum Rate: " .. fl_settings.fl_maxrate.value .. " /h"
+		str = str .. "\t\t\tExpire Time: " .. fl_settings.fl_exptime.value
+		str = str .. "\t\t\tFor help use: +help cfgfl"
 		str = str .. "\n\n\nSCH command rules:\nSCH TTH string stats:"
 		str = str .. "\t\t\t\tMaximum Rate: " .. fl_settings.cmdschtth_rate.value .. " / m"
 		str = str .. "\t\t\tExpire Time: " .. fl_settings.cmdschtth_exp.value .. "\n"
@@ -4961,12 +4949,16 @@ commands.listlimstats = {
 			return
 		end
 
-		str = "\n\nDefault settings for all limits:\tMaximum Rate: " .. li_settings.li_maxrate.value .. " / h"
-		str = str .. "\t\t\tExpire time: " .. li_settings.li_exptime.value
-		str = str .. "\t\t\tMax level: " .. fl_settings.fl_level.value
-		str = str .. "\n\nSharing (*) limits settings:\tMin Level: " .. li_settings.li_minlevel.value
-		str = str .. "\t\t\t\tRedirect address: " .. li_settings.li_redirect.value
-		str = str .. "\n\n\nSearch limits:\n\nSearch parameters:"
+		str = "\n\nDefault settings for all limits:\tMaximum Rate: " .. li_settings.li_maxrate.value .. " /h"
+		str = str .. "\t\t\tMaximum Count: " .. li_settings.li_maxcount.value
+		str = str .. "\t\tLimit Log Enabled: " .. li_settings.li_limitstats.value .. "\n\n"
+		str = str .. "\t\t\t\tMaximum Level: " .. fl_settings.fl_level.value
+		str = str .. "\t\t\tExpire Time: " .. li_settings.li_exptime.value
+		str = str .. "\t\tFor help use: +help cfgli"
+		str = str .. "\n\nSharing (*) Limits Settings:\tMinimum Level: " .. li_settings.li_minlevel.value
+		str = str .. "\t\t\tRedirect Address: " .. li_settings.li_redirect.value
+
+		str = str .. "\n\n\nSearch Limits:\n\nSearch Parameters:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxschparam_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxschparam_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.maxschparam.value .. "\n"
@@ -4974,7 +4966,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. maxschparams .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nMin Search length:"
+		str = str .. "\n\nMin Search Length:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.minschlength_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.minschlength_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.minschlength.value .. "\n"
@@ -4982,7 +4974,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. minschlengths .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nMax Search length:"
+		str = str .. "\n\nMax Search Length:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxschlength_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxschlength_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.maxschlength.value .. "\n"
@@ -4990,7 +4982,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. maxschlengths .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nShare limits (*):\n\nMinimum Sharesize:"
+		str = str .. "\n\nShare Limits (*):\n\nMinimum Sharesize:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.minsharesize_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.minsharesize_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.minsharesize.value .. "\n"
@@ -5038,7 +5030,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. maxslots .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nHub Count and Ratio limits (*):\n\nMin Hub Slotratio:"
+		str = str .. "\n\nHub Count and Ratio Limits (*):\n\nMin Hub Slotratio:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.minhubslotratio_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.minhubslotratio_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.minhubslotratio.value .. "\n"
@@ -5062,7 +5054,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. maxhubcounts .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nSupport limits (*):\n\nSupport ADCS forced:"
+		str = str .. "\n\nSupport Limits (*):\n\nSupport ADCS Forced:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.suadcs_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.suadcs_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.suadcs.value .. "\n"
@@ -5070,7 +5062,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. suadcs .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nSupport NATT forced:"
+		str = str .. "\n\nSupport NATT Forced:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.sunatt_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.sunatt_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.sunatt.value .. "\n"
@@ -5078,7 +5070,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. sunatts .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nSupport BLOM forced:"
+		str = str .. "\n\nSupport BLOM Forced:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.sublom_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.sublom_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.sublom.value .. "\n"
@@ -5086,7 +5078,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. subloms .. data_info_string_ip(info)
 		end
 
-		str = str .. "\n\nMessage limits:\n\nMax Message length:"
+		str = str .. "\n\nMessage limits:\n\nMax Message Length:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxmsglength_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxmsglength_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.maxmsglength.value .. "\n"
@@ -5094,7 +5086,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. maxmsglengths .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nNick limits:\n\nMin Nick length stats:"
+		str = str .. "\n\nNick limits:\n\nMin Nick Length Stats:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.minnicklength_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.minnicklength_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.minnicklength.value .. "\n"
@@ -5102,7 +5094,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. minnicklengths .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nMax Nick length stats:"
+		str = str .. "\n\nMax Nick Length Stats:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxnicklength_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxnicklength_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.maxnicklength.value .. "\n"
@@ -5110,7 +5102,7 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. maxnicklengths .. data_info_string_cid(info)
 		end
 
-		str = str .. "\n\nUser IP limits:\n\nMax Same IP stats:"
+		str = str .. "\n\nUser IP limits:\n\nMax Same IP Stats:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxsameip_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxsameip_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.maxsameip.value .. "\n"
@@ -5202,9 +5194,10 @@ commands.showentity = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
-		str = str .. "\n\nAll current Entity records that match your search criteria: [ " .. entity .. " ]\n" 
+		str = "\n\nEntity Log settings: Entity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\tFor help use: +help cfgen"
+		str = str .. "\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
+		str = str .. "\n\n\tAll current Entity records that match your search criteria: [ " .. entity .. " ]\n" 
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if entity == last_cid or entity == info.ip or (info.ni and string.lower(info.ni) == string.lower(entity)) then
 				info.cid = last_cid
@@ -5241,8 +5234,9 @@ commands.traceip = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings: Entity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\tFor help use: +help cfgen"
+		str = str .. "\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if info.ip and info.ip == ip then
@@ -5308,8 +5302,9 @@ commands.tracecid = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings: Entity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\tFor help use: +help cfgen"
+		str = str .. "\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if last_cid == cid then
@@ -5375,8 +5370,9 @@ commands.traceni = {
 			return
 		end
 
-		str = "\n\nEntity Log settings:\t\t\tEntity Log enabled: " .. en_settings.en_entitystats.value
-		str = str .. "\t\t\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
+		str = "\n\nEntity Log settings: Entity Log enabled: " .. en_settings.en_entitystats.value
+		str = str .. "\tFor help use: +help cfgen"
+		str = str .. "\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\nEntity Last records:"
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if info.ni and string.lower(info.ni) == string.lower(ni) then
