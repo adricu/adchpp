@@ -22,26 +22,28 @@ IMPORTANT: The prepackaged LUA scripts should be properly loaded to get the func
 
 === Automatic spam, badword and badsearch protection: working with the banre commands
 
-+banxxxre commands are very powerful tools for getting rid of unwanted text showing in mainchat or private message as well as for blocking searches containing keywords which treated malicious. These commands use regular expressions to detect the unwanted content so their usage requires knowledge of how to construct a regular expression filter.
++banxxxre commands are very powerful tools for getting rid of unwanted text showing in mainchat or private message as well as for blocking searches containing keywords which treated malicious. These commands use LUA pattern matching method which is similar to the popular regular expressions. Usage of the commands to detect the unwanted content requires knowledge of how to construct a regular expression like filter.
 
-TIP: For more information about regular expressions visit: http://www.regular-expressions.info
+TIP: For basic information about regular expressions visit: http://www.regular-expressions.info 
+
+A quick tutorial about LUA patterns, their usage and differences to regular expressions is avalilable at http://www.wowpedia.org/Pattern_matching#.22Regexes.22_.28patterns.29_in_Lua[Wowpedia].
 
 .List of +banre commands
 [width="100%",options="header"]
 |==============================================
 | Command													| Purpose
-|+banmsgre [action] <chat-reg-exp> [reason] [expiration]	| Block chatmessages that match the given regular expression
-|+bannickre [action] <nick-reg-exp> [reason] [expiration]	| Block nicks that match the given regular expression
-|+banschre [action] <search-reg-exp> [reason] [expiration]	| Block searches that match the given regular expression
+|+banmsgre [action] <chat-reg-exp> [reason] [expiration]	| Block chatmessages that match the given LUA pattern
+|+bannickre [action] <nick-reg-exp> [reason] [expiration]	| Block nicks that match the given LUA pattern
+|+banschre [action] <search-reg-exp> [reason] [expiration]	| Block searches that match the given LUA pattern
 |==============================================
 
-Using the +banre commands the regular expression must be specified within '<' and '>' brackets. The action parameter is optional, you can skip it to achieve a simple block or set it to -1 to permanetly ban the user; any other positive number means how many minutes you want to tempban the user for. The expiration parameter is also optional, it defines when this particular rule expires (in minutes). Skipping [expiraton] results a permanent rule while specifying 0 allows you to remove this banre rule.
+Using the +banre commands the LUA pattern must be specified within '<' and '>' brackets. The action parameter is optional, you can skip it to achieve a simple block or set it to -1 to permanetly ban the user; any other positive number means how many minutes you want to tempban the user for. The expiration parameter is also optional, it defines when this particular rule expires (in minutes). Skipping [expiraton] results a permanent rule while specifying 0 allows you to remove this banre rule.
 
 IMPORTANT: Removing a banre rule does NOT automatically remove the already (temp)banned users!
 
 .Example: Banre Command Example
 --------------------------------------
-+banmsgre 100 <http://www\.spam\.com> unwanted spam
++banmsgre 100 <www> unwanted spam
 --------------------------------------
 
 === Setting up limits rules
