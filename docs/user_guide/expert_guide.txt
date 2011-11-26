@@ -74,6 +74,21 @@ You can set the limiting rules using the +cfgli command:
 +cfgli minsharesize 1000000
 --------------------------------------
 
+The limiting function is disabled by default, you can enable or disable the function globally using the
+--------------------------------------
++cfgli li_limitstats
+--------------------------------------
+setting.
+
+.Using the global limits enable/disable setting
+[width="100%",options="header"]
+|==============================================
+| Setting					| Purpose
+| li_limitstats				| Globaly enable/disable the limiting function,  0 = for limits enforcing only, 1 = limits enforcing and logging to a file on disk, -1 = function disabled completly
+|==============================================
+
+TIP: Other settings values and logs are kept even if you globally disable the limiting function.
+
 There are more advanced limiting possibilities, using those you can regulate user parameters like nick length, maximum length of search strings or require special ADC client features. You can get all the available limit rules settings, their description and current values using the
 --------------------------------------
 +help cfgli
@@ -118,7 +133,24 @@ command.
 
 === Flood protection
 
-The access.guard.lua script provides an advanced flood protection for your hub. Its enabled by default with optimal parameters. If you want to fine tune the flooding protection you can do so as every parameter is highly confgurable. You can list the available flood protection settings using the
+The access.guard.lua script provides an advanced flood protection for your hub. The function is globally disabled by default but the various settings are filled with optimal parameters to start with. If you want to fine tune the flooding protection you can do so as every parameter is highly confgurable. 
+
+You can enable or disable the function globally using the
+--------------------------------------
++cfgfl fl_commandstats
+--------------------------------------
+setting.
+
+.Using the global flood protection enable/disable setting
+[width="100%",options="header"]
+|==============================================
+| Setting					| Purpose
+| fl_commandstats			| Globaly enable/disable the flood protection function,  0 = for flood protection only, 1 = flood protection and logging to a file on disk, -1 = function disabled completly
+|==============================================
+
+TIP: Other settings values and logs are kept even if you globally disable the flood protection function.
+
+You can list the available individual flood protection settings using the
 --------------------------------------
 +help cfgfl
 --------------------------------------
@@ -160,7 +192,22 @@ setting where n is the log expire time in days for both logs.
 === Tracing users
 
 Above the basic current information the core provides about an online user (+info <nick/CID> command) it's possible to keep track of registered and unregistered users' activity in the hub for a given period of time (last n days). You can identify users logging on with different clients, using different nicks or arriving from various IP addresses.
-You can specify how long you want to trace different type of users. To see what configuration options available for enable/disable tracing users (entities) use the
+
+The tracing function is disabled by default, you can enable or disable it globally using the
+--------------------------------------
++cfgen en_entitystats
+--------------------------------------
+setting.
+
+.Using the global tracing enable/disable setting
+[width="100%",options="header"]
+|==============================================
+| Setting					| Purpose
+| en_entitystats			| Globaly enable/disable the tracing function,  0 = for entity logging only, 1 = entity logging to a log file as well, -1 = function disabled completly
+|==============================================
+
+
+You can specify how long you want to trace different type of users. To see what configuration options available for enable/disable tracing individual users (entities) use the
 --------------------------------------
 +help cfgen
 --------------------------------------
@@ -195,12 +242,14 @@ You can get the trace information for any stored entity (user) by one of its thr
 	Entity Expires:				in 59 days, 23 hours, 53 minutes and 48 seconds
 --------------------------------------
 
+TIP: Settings values and logs are kept even if you globally disable the entity tracing function.
+
 === Displaying extended hub statistics
 
 If the acces.guard script is running it's possible to obtain highly detailed statistics about the ADC commands used in the hub. This is an useful addition to the basic information the hub core provides with the +info command. 
 To see the extended hub commands usage statistics use the
 --------------------------------------
-+listlimitstats
++listcmdstats
 --------------------------------------
 command.
 
