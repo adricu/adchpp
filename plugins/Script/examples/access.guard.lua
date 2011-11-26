@@ -73,7 +73,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.40"
+guardrev = "1.0.41"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -1870,12 +1870,11 @@ local function onSOC(c) -- Stats verification for creating open sockets
 						if commandstats.soccmds[ip] and commandstats.soccmds[ip].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.soccmds[ip] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.soccmds[ip] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -1952,12 +1951,11 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 						if commandstats.concmds[cid] and commandstats.concmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.concmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.concmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2074,15 +2072,15 @@ local function onCRX(c, cmd) -- Stats and rules verification for bad context com
 						if commandstats.crxcmds[cid] and commandstats.crxcmds[cid].warning > 0 then
 							return false
 						end
-						return false
 					end
 				end
+			else
+				commandstats.crxcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.crxcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return false
 		end
 		return false
 	end
+	return false
 end
 
 local function onCMD(c, cmd) -- Stats and rules verification for command strings
@@ -2106,12 +2104,11 @@ local function onCMD(c, cmd) -- Stats and rules verification for command strings
 						if commandstats.cmdcmds[cid] and commandstats.cmdcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.cmdcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.cmdcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2165,12 +2162,11 @@ local function onSUP(c, cmd) -- Stats and rules verification for support strings
 							dump_dropped(c, "You are dropped for hammering the hub, stop or be kicked !!!")
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.supcmds[ip] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.supcmds[ip] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2197,12 +2193,11 @@ local function onSID(c, cmd) -- Stats and rules verification for sid strings
 						if commandstats.sidcmds[cid] and commandstats.sidcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.sidcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.sidcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2229,12 +2224,11 @@ local function onPAS(c, cmd) -- Stats and rules verification for password string
 						if commandstats.pascmds[cid] and commandstats.pascmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.pascmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.pascmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2261,12 +2255,11 @@ local function onSTA(c, cmd) -- Stats and rules verification for status strings
 						if commandstats.stacmds[cid] and commandstats.stacmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.stacmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.stacmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2335,13 +2328,12 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 						if limitstats.maxschlengths[cid] and limitstats.maxschlengths[cid].warning > 0 then
 							return false
 						end
-						return false
 					end
 				end
 			else
 				limitstats.maxschlengths[cid] = make_data(c, cmd, msg, type, minutes)
-				return false
 			end
+			return false
 		end
 		if chars and li_settings.minschlength.value > 0 and chars < li_settings.minschlength.value then
 			local stat = "Min Search length limit"
@@ -2358,13 +2350,12 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 						if limitstats.minschlengths[cid] and limitstats.minschlengths[cid].warning > 0 then
 							return false
 						end
-						return false
 					end
 				end
 			else
 				limitstats.minschlengths[cid] = make_data(c, cmd, msg, type, minutes)
-				return false
 			end
+			return false
 		end
 	end
 
@@ -2392,11 +2383,11 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 					if commandstats.schtthcmds[cid] and commandstats.schtthcmds[cid].warning > 0 then
 						return false
 					end
-					return true
 				end
 			end
+		else
+			commandstats.schtthcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		end
-		commandstats.schtthcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		return true
 	end
 	if TTH and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschtth_rate.value > 0) then
@@ -2413,11 +2404,11 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 					if commandstats.schtthnatcmds[cid] and commandstats.schtthnatcmds[cid].warning > 0 then
 						return false
 					end
-					return true
 				end
 			end
+		else
+			commandstats.schtthnatcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		end
-		commandstats.schtthnatcmds[cid] = make_data(c, cmd, msg, type, minutes)
 		return true
 	end
 	if not NATT and (fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0) then
@@ -2435,12 +2426,11 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 						if commandstats.schmancmds[cid] and commandstats.schmancmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.schmancmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.schmancmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		else
 			if commandstats.schmansegacmds[cid] then
 				for victim_cid, data in base.pairs(commandstats.schmansegacmds) do
@@ -2449,13 +2439,13 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 						if commandstats.schmansegacmds[cid] and commandstats.schmansegacmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.schmansegacmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.schmansegacmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
+		return true
 	end
 	if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdschman_rate.value > 0 then
 		local stat = "NAT manual Search command"
@@ -2472,12 +2462,11 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 						if commandstats.schmannatcmds[cid] and commandstats.schmannatcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.schmannatcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.schmannatcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		else
 			if commandstats.schmannatsegacmds[cid] then
 				for victim_cid, data in base.pairs(commandstats.schmannatsegacmds) do
@@ -2489,9 +2478,9 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 						return true
 					end
 				end
+			else
+				commandstats.schmannatsegacmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.schmannatsegacmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2519,11 +2508,11 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 						if limitstats.maxmsglengths[cid] and limitstats.maxmsglengths[cid].warning > 0 then
 							return false
 						end
-						return false
 					end
 				end
+			else
+				limitstats.maxmsglengths[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			limitstats.maxmsglengths[cid] = make_data(c, cmd, msg, type, minutes)
 			return false
 		end
 	end
@@ -2544,12 +2533,11 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 						if commandstats.msgcmds[cid] and commandstats.msgcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.msgcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.msgcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -2610,16 +2598,13 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 						if commandstats.infcmds[cid] and commandstats.infcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.infcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.infcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
-
-
 
 	-- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
 	if get_level(c) > fl_settings.fl_level.value or cid == "UTKSLGRRI3RYPRCWUEYTROGTRFQJQRQDVHTMOOY" then
@@ -2994,12 +2979,11 @@ local function onRES(c, cmd) -- Stats and rules verification for search results 
 						if commandstats.rescmds[cid] and commandstats.rescmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.rescmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.rescmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3026,12 +3010,11 @@ local function onCTM(c, cmd) -- Stats and rules verification for connect to me s
 						if commandstats.ctmcmds[cid] and commandstats.ctmcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.ctmcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.ctmcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3058,12 +3041,11 @@ local function onRCM(c, cmd) -- Stats and rules verification for reverse connect
 						if commandstats.rcmcmds[cid] and commandstats.rcmcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.rcmcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.rcmcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3090,12 +3072,11 @@ local function onNAT(c, cmd) -- Stats and rules verification for nat traversal c
 						if commandstats.natcmds[cid] and commandstats.natcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.natcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.natcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3122,12 +3103,11 @@ local function onRNT(c, cmd) -- Stats and rules verification for nat traversal r
 						if commandstats.rntcmds[cid] and commandstats.rntcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.rntcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.rntcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3154,12 +3134,11 @@ local function onPSR(c, cmd) -- Stats and rules verification for partitial files
 						if commandstats.psrcmds[cid] and commandstats.psrcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.psrcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.psrcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3186,12 +3165,11 @@ local function onGET(c, cmd) -- Stats and rules verification for get strings
 						if commandstats.getcmds[cid] and commandstats.getcmds[cid].warning > 0 then
 							return false
 						end
-						return true
 					end
 				end
+			else
+				commandstats.getcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.getcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true
@@ -3221,9 +3199,9 @@ local function onSND(c, cmd) -- Stats and rules verification for send strings
 						return true
 					end
 				end
+			else
+				commandstats.sndcmds[cid] = make_data(c, cmd, msg, type, minutes)
 			end
-			commandstats.sndcmds[cid] = make_data(c, cmd, msg, type, minutes)
-			return true
 		end
 	end
 	return true

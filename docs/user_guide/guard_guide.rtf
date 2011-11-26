@@ -1,7 +1,7 @@
 {\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fswiss\fcharset0 Arial;}}
 {\*\generator Msftedit 5.41.15.1515;}\viewkind4\uc1\pard\lang2067\b\f0\fs20 A small guide of how to use and understand the access.guard.lua script.\b0\par
 \par
-This script is made for ADCH++ and based on snippets and methods used in access and bans lua (thx dcdev team)  and fals under the ADCH++ project copyright, its a basic flood protection for ADC commands and some specific rules/limits and above all it can be made a lot better and smaller as it has some "doubles" , its alpha so .... lol.\par
+This script is made for ADCH++ and based on snippets and methods used in access and bans lua (thx dcdev team)  and fals under the ADCH++ project copyright, its a basic flood protection for ADC commands and some specific rules/limits and above all it can be made a lot better and smaller as it has some "doubles" , its beta so .... lol.\par
 \par
 The final intention is to base the rate rules on a "severnes" factor meaning taking into account what the context of the command is and the size of the strings it will generate but so far it's only rate based so if somebody feels like ? lol (cologic thx for that idea, it's the only way to do it right)\par
 \par
@@ -23,19 +23,32 @@ If the specific stats maxrate is set to 0 it will use the default setting specif
 \par
 On the limit rules  there is also a count function that will react on the li_maxcount setting and kick the user if needed.\par
 \par
-Each specific stats uses its own table with the users CID or IP as the index so if you create a new one you will also have to create the table for it, the rest should  be a simple copy paste of a simular stats , create the settings for it and addapt the paramaters that it should watch.\par
+Each specific stat / limit uses its own table with the users CID or IP as the index so if you create a new one you will also have to create the table for it, the rest should  be a simple copy paste of a simular stats , create the settings for it and addapt the paramaters that it should watch.\par
 \par
-By default all cmd stats rate are enabled with either specific cmd values or are using the default fl_maxrate value, limit rules and entity loging are disabled, to enable them you need to set the either the default rate for them to or a specific value you see fit for a certain limit and you need to specify the values for the special rules like, the entity loging can be enabled by it's setting.\par
+The script has 3 major parts and they are all disabled on first use.\par
 \par
-example for the cmd's\par
-+cfgfl maxrate 30\tab\tab enables all cmd rates with a max of 30 / minute\par
+To enable them do:\par
+\par
+\b +cfgfl fl_commandstats 0 or 1 ( 0 = just flood protection , 1 = flood protection and write to a logfile on disk)\par
+\par
++cfgli li_limitstats 0 or 1 ( 0 = just limits enforcing , 1 = limits enforcing and write to a logfile on disk)\par
+\par
++cfgen en_entitystats 0 or 1 ( 0 = just entity logging , 1 = entity logging and write to a logfile on disk)\par
+\par
+Those logfiles are loaded on hub start and on enabeling a module so all data survives a restart or script reloads\par
+\b0\par
+After that by default all cmd stats rates and flood protection are enabled with either specific cmd values or are using the default fl_maxrate value, to enable a certain limit you need to set a specific value you see fit for a it.\par
+\par
+example that changes the default and a specific rate for the cmd's\par
++cfgfl fl_maxrate 30\tab\tab sets all cmd rates to a max of 30 / minutes if no rate specified on the line itself\par
 or you can specify a specific cmd\par
 +cfgfl cmdschtth 12\tab\tab that will allow a max rate of 12 / minute for the automatic TTH search\par
++cfgfl fl_maxwarns 25\tab\tab will kick a users after 25 flooding events\par
 \par
 example for the limits\par
-+cfgli li_maxrate 240\tab\tab enables all limit rates with a max of  240 / hour (4 / minute)\par
++cfgli li_maxrate 240\tab\tab sets limit rates for those that have a limit value and no specific rate on the line itself to a max \tab\tab\tab\tab of  240 / hour (4 / minute)\par
 +cfgli maxmsglenght 800\tab sets the maxmsg length to 800\par
-+cfgli maxcount\tab 40\tab\tab will kick a user after been warned 40 times for all limit rules\par
++cfgli li_maxcount 40\tab\tab will kick a user after been warned 40 times regarding a limit rule\par
 \par
 \par
 Enjoy and be carefull with your settings as it will send warnings, kicks and temp bans to a user that breaks those rules (if you enable that), my advise is to run it a few days with all settings like they come and use the +listcmdstats and +listlimstats commands to get a feeling of what exactely is going on in your hub.\par
@@ -45,9 +58,9 @@ The commands itself are in the hubs help menu and each of the settings can be se
 \par
 ,help = +help cfgfl , +help cfgli and +help cfgen\par
 \par
-stats = +listcmdstats , +listlimstats\par
+stats = +listcmdstats , +listlimstats, +showentity\par
 \par
-First of all the script as posted has most limits and entity all logs disabled, each hubowner should decide what he wants limited / loged and what not.\par
+First of all the script as posted has most limits disabled, each hubowner should decide what he wants limited / logged and what not.\par
 \par
 Giving advice about "golden" rate values is almost impossible as it depends on the resources that the hub has available, like upload band, cpu power etc.\par
 \par
