@@ -73,7 +73,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.41"
+guardrev = "1.0.42"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -2547,15 +2547,8 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 
 	if en_settings.en_entitystats.value >= 0 then
 		if c:getState() == adchpp.Entity_STATE_NORMAL then
-		local cid, ni
-			if c:getState() == adchpp.Entity_STATE_NORMAL then 
-				cid = c:getCID():toBase32()
-				ni = c:getField("NI")
-			else
-				cid = cmd:getParam("ID", 0)
-				ni = cmd:getParam("NI", 0)
-			end
 			local days, match, hist
+			cid = c:getCID():toBase32()
 			if get_level(c) > 0 then
 				days = en_settings.en_entitystatsregexptime.value
 			else
@@ -2573,6 +2566,10 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 				end
 			end
 		end
+	end
+
+	if get_level(c) > fl_settings.fl_level.value then
+		return true
 	end
 
 	if fl_settings.fl_commandstats.value >= 0 then
@@ -2607,7 +2604,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	-- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
-	if get_level(c) > fl_settings.fl_level.value or cid == "UTKSLGRRI3RYPRCWUEYTROGTRFQJQRQDVHTMOOY" then
+	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) then
 		return true
 	end
 
@@ -2623,6 +2620,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		cid = cmd:getParam("ID", 0)
 		ni = cmd:getParam("NI", 0)
 	end
+
 	local su
 	if cmd:hasParam("SU", 0) then
 		su = base.tostring(cmd:getParam("SU", 0))
@@ -3252,7 +3250,7 @@ end
 -- Default flood settings for all limits and adc commands
 
 fl_settings.fl_commandstats = {
-	alias = { commandstats = true },
+	alias = { commandstats = true, commandlog = true },
 
 	change = function()
 		clear_expired_commandstats_timer, save_commandstats_timer = logging_change(fl_settings.fl_commandstats.value, clear_expired_commandstats_timer, 30000, save_commandstats_timer, 1800000, load_commandstats, clear_expired_commandstats, save_commandstats)
@@ -3991,7 +3989,7 @@ li_settings.maxsameip_exp = {
 -- All the specific limits settings values
 
 li_settings.li_limitstats = {
-	alias = { limitstats = true },
+	alias = { limitstats = true, limitlog = true },
 
 	change = function()
 		clear_expired_limitstats_timer, save_limitstats_timer = logging_change(li_settings.li_limitstats.value, clear_expired_limitstats_timer, 30000, save_limitstats_timer, 1800000, load_limitstats, clear_expired_limitstats, save_limitstats)
@@ -4270,7 +4268,7 @@ li_settings.maxsameip = {
 -- All the Entity settings
 
 en_settings.en_entitystats = {
-	alias = { entitylog = true },
+	alias = { entitystats = true, entitylog = true },
 
 	change = function()
 		clear_expired_entitystats_timer, save_entitystats_timer = logging_change(en_settings.en_entitystats.value, clear_expired_entitystats_timer, 900000, save_entitystats_timer, 1800000, load_entitystats, clear_expired_entitystats, save_entitystats)
