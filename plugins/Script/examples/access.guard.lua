@@ -73,7 +73,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.42"
+guardrev = "1.0.43"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -879,9 +879,16 @@ local function data_info_string_entity(info)
 	end
 
 	if info.hn or info.hr or info.ho then
-		str = str .. "\n\tEntity Hubs:\t\t\t\tHN: " .. info.hn
-		str = str .. "\t\tHR: " .. info.hr
-		str = str .. "\t\tHO: " .. info.ho
+		str = str .. "\n\tEntity Hubs:\t\t"
+		if info.hn then
+			str = str .. "\t\tHN: " .. info.hn
+		end
+		if info.hr then
+			str = str .. "\t\tHN: " .. info.hr
+		end
+		if info.ho then
+			str = str .. "\t\tHN: " .. info.ho
+		end
 	end
 
 	if info.ap then
@@ -1034,7 +1041,7 @@ end
 
 local function get_sameip(c)
  	local ip = c:getIp()
-	local countip = 1 -- user that connects
+	local countip = 0
 	local entities = adchpp.getCM():getEntities()
 	local size = entities:size()
 	if size > 0 then
@@ -1271,8 +1278,9 @@ local function dump_redirected(c, msg)
 end
 
 local function dump_dropped(c, msg)
+	local str
 	if msg then
-		local str = "You are disconnected because: " .. msg
+		str = "You are disconnected because: " .. msg
 	end
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
 		if str then
@@ -1882,9 +1890,9 @@ end
 
 local function onCON(c) -- Stats and limit verification for connects and building entitys tables
 
-	if li_settings.li_limitstats.value >= 0 then
-		countip = get_sameip(c)
-		if get_level(c) <= fl_settings.fl_level.value and countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
+	if li_settings.li_limitstats.value >= 0 and get_level(c) <= fl_settings.fl_level.value then
+		local countip = get_sameip(c)
+		if countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
 			local stat = "max same IP"
 			local str = "This hub allows a maximum of ( " .. li_settings.maxsameip.value .. " ) connections from the same ip address and that value is reached sorry for now !"
 			local type = "lim"
@@ -1901,10 +1909,12 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 							return false
 						end
 					end
+
 				end
 			else
 				limitstats.maxsameips[cid] = make_data(c, cmd, msg, type, minutes)
 			end
+
 			dump_dropped(c, str)
 			return false
 		end
@@ -2604,7 +2614,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	-- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
-	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) then
+	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) and c:getIp() == "208.115.230.197" then
 		return true
 	end
 
@@ -4255,8 +4265,6 @@ li_settings.sublom = {
 
 li_settings.maxsameip = {
 	alias = { maxsameips = true },
-
-	change = recheck_info,
 
 	help = "maximum number of connected users with the same ip address, 0 = disabled",
 

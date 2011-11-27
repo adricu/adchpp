@@ -86,6 +86,7 @@ local math = base.require('math')
 
 local start_time = os.time()
 local users_saved = true
+local is_dchublist -- Temp solution for (bug #880488) see onSUP, onINF and onPAS
 
 users = {}
 users.nicks = {}
@@ -832,6 +833,14 @@ local function onSUP(c, cmd)
 	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 		:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
 
+	if c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "208.115.230.197" then
+		-- Temp sending the hubs INF sooner to avoid disconnects from DCHublistpinger (bug #880488).
+		is_dchublist = true
+		send_hub_info(c)
+	else
+		is_dchublist = false
+	end
+
 	c:setState(adchpp.Entity_STATE_IDENTIFY)
 
 	return false
@@ -870,7 +879,10 @@ local function onINF(c, cmd)
 			return false
 		end
 
-		send_hub_info(c)
+		if not is_dchublist then
+			-- Temp avoid sending the hubs INF a second time to the DCHublistpinger (bug #880488).
+			send_hub_info(c)
+		end
 
 		-- let ClientManager further verify this INF
 		return true
@@ -935,7 +947,10 @@ local function onPAS(c, cmd)
 		return false
 	end
 
-	send_hub_info(c)
+	if not is_dchublist then
+		-- Temp avoid sending the hubs INF a second time to the registerd DCHublistpinger (bug #880488).
+		send_hub_info(c)
+	end
 
 	if message then
 		autil.reply(c, message)
