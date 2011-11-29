@@ -2,12 +2,27 @@
 * Process most settings again
 * [L#717858] Fix disconnection of users taking too long to log in
 * [L#717858] Consider users as connected before they start the TLS handshake
-* Adding access.guard.lua and removing duplicated functions
+* Add access.guard.lua a floodprotection and removing duplicated functions
+* Extend basic rules and added spamming protection to it
+* Add entity logging functions with history on changes
 * Add FO extension to hub INF
+* Add hasParam to lua API
+* [L#873985] Fix duplicated entry's in regtables  
+* [L#831522] Add partial matching for params of the +help command 
+* [L#813760] Extended bansre with search and action selection
+* [L#864642] Delayed sending hub's INF to end of the VERIFY or IDENTIFY state   
 * Remove the license page from the installer
+* Fix mixup between the access.bot & the actual bot 
+* Add to ClientManager signalReady Entity is ready for read / write
 * [L#804024] Separate application and version in INF
-* Improve Lua scripts
+* [L#888280] Fixed guide regarding reg exp in bans lua  
+* Added aio.lua load/save settings and users.txt with backup
+* Listen on all available sockets 
+* Improve Lua scripts,extra info in regged users table, history since last logon, etc
 * Update user guide
+* Update Boost to 1.47 
+* Add a sendRaw method for scripts 
+
 * [L#309402] Rudimentary IPv6 support
 * [L#829179] Expose SimpleXML::getChildName to scripts
 
