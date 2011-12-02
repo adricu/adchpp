@@ -73,7 +73,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.43"
+guardrev = "1.0.44"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -4297,7 +4297,7 @@ en_settings.en_entitystatsexptime = {
 
 	help = "expiretime in days for a non registered user entity logs, 0 = disabled",
 
-	value = 7
+	value = 9
 }
 
 en_settings.en_entitystatsregexptime = {
@@ -4305,7 +4305,7 @@ en_settings.en_entitystatsregexptime = {
 
 	help = "expiretime in days for a registered user entity logs, 0 = disabled",
 
-	value = 60
+	value = 62
 }
 
 local cfgfl_list_done = false
@@ -4735,7 +4735,7 @@ commands.listcmdstats = {
 		str = "\n\nDefault settings for all floods:\tMaximum Level: " .. fl_settings.fl_level.value
 		str = str .. "\t\t\tMaximum Warns: " .. fl_settings.fl_maxwarns.value
 		str = str .. "\t\tFlood Log Enabled: " .. fl_settings.fl_commandstats.value .. "\n\n"
-		str = str .. "\t\t\t\tMaximum Rate: " .. fl_settings.fl_maxrate.value .. " /h"
+		str = str .. "\t\t\t\tMaximum Rate: " .. fl_settings.fl_maxrate.value .. " /m"
 		str = str .. "\t\t\tExpire Time: " .. fl_settings.fl_exptime.value
 		str = str .. "\t\t\tFor help use: +help cfgfl"
 		str = str .. "\n\n\nSCH command rules:\nSCH TTH string stats:"

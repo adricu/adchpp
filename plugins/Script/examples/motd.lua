@@ -9,7 +9,6 @@ local adchpp = base.luadchpp
 -- Where to read MOTD file
 local file = adchpp.Util_getCfgPath() .. "motd.txt"
 
-local io = base.require('io')
 local string = base.require('string')
 local aio = base.require('aio')
 local autil = base.require('autil')

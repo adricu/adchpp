@@ -30,7 +30,7 @@ set /p USER=Username :
 set /p PWD=Password : 
 set /p LEVEL=Admin user level : 
 
-echo [{"password":"%PWD%","nick":"%USER%","level":%LEVEL%}] > .\config\users.txt || goto err
+echo [{"password":"%PWD%","nick":"%USER%","level":%LEVEL%,"regby":"%USER%","regtime":1322835912}] > .\config\users.txt || goto err
 
 echo Account successfully created.
 goto end

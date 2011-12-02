@@ -13,14 +13,12 @@ local access = base.access
 -- Where to read/write history file - set to nil to disable persistent history
 local history_file = adchpp.Util_getCfgPath() .. "history.txt"
 
-local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
 local string = base.require('string')
 local aio = base.require('aio')
 local autil = base.require('autil')
 local table = base.require('table')
-local json = base.require('json')
 
 local cm = adchpp.getCM()
 local sm = adchpp.getSM()

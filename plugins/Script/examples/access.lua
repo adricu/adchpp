@@ -76,7 +76,6 @@ command_contexts = {
 
 level_op = 3 -- kept in sync with settings.oplevel
 
-local io = base.require('io')
 local os = base.require('os')
 local json = base.require('json')
 local aio = base.require('aio')
