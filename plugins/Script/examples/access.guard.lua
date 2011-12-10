@@ -73,7 +73,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.44"
+guardrev = "1.0.45"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -742,9 +742,7 @@ local function data_info_string_cid(info)
 		str = str .. "     \t\t\tNI: " .. info.ni
 	end
 
-	if info.started then
-		str = str .. "\n\tStarted: " .. data_started_string(info)
-	end
+	str = str .. "\n\tStarted: " .. data_started_string(info)
 
 	if info.expires then
 		str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
@@ -779,9 +777,7 @@ local function data_info_string_ip(info)
 		str = str .. "\t\t\tDiff.Rate: " .. data_rate_string(info.diffrate) .. " / m"
 	end
 
-	if info.started then
-		str = str .. "\n\tStarted: " .. data_started_string(info)
-	end
+	str = str .. "\n\tStarted: " .. data_started_string(info)
 
 	if info.expires then
 		str = str .. "\t\tExpires: " .. data_expiration_string(info) .. "\n"
@@ -1254,7 +1250,7 @@ local function dump_kicked(c, cmd, update, msg)
 	update.count = 0
 	update.rate = 0
 	update.warns = 0
-	update.started = nill
+	update.started = nil
 	update.kicks = update.kicks + 1
 	update.warning = 0
 	return update
@@ -4969,7 +4965,7 @@ commands.listlimstats = {
 		str = str .. "\n\nShare Limits (*):\n\nMinimum Sharesize:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.minsharesize_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.minsharesize_exp.value
-		str = str .. "\t\t\tValue: " .. li_settings.minsharesize.value .. "\n"
+		str = str .. "\t\t\tValue: " .. data_sharesize_string(li_settings.minsharesize.value)
 		for minsharesizes, info in base.pairs(limitstats.minsharesizes) do
 			str = str .. "\n\tCID: " .. minsharesizes .. data_info_string_cid(info)
 		end
@@ -4977,7 +4973,7 @@ commands.listlimstats = {
 		str = str .. "\n\nMaximum Sharesize:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.maxsharesize_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.maxsharesize_exp.value
-		str = str .. "\t\t\tValue: " .. li_settings.maxsharesize.value .. "\n"
+		str = str .. "\t\t\tValue: " .. data_sharesize_string(li_settings.maxsharesize.value)
 		for maxsharesizes, info in base.pairs(limitstats.maxsharesizes) do
 			str = str .. "\n\tCID: " .. maxsharesizes .. data_info_string_cid(info)
 		end
