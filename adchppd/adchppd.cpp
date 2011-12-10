@@ -92,7 +92,7 @@ void loadXML(Core &core, const string& aFileName)
 
 #ifndef HAVE_OPENSSL
 					if(server->secure())
-						fprintf(stderr, "Error listening on port %d: This ADCH++ hasn't been compiled with support for secure connections\n", server->port);
+						fprintf(stderr, "Error listening on port %s: This ADCH++ hasn't been compiled with support for secure connections\n", server->port.c_str());
 					else
 #endif
 					servers.push_back(server);
