@@ -161,14 +161,37 @@ Section -un.Service
 SectionEnd
 
 Section -un.remSettings
-  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to remove all ADCH++ configuration and accounts?" IDYES Remove IDNO NoRemove
-  Remove: Delete "$INSTDIR\config\users.txt"
+  MessageBox MB_ICONQUESTION|MB_YESNO "Do you wish to remove all the ADCH++ configuration files, statistics, logs and accounts?" IDYES Remove IDNO NoRemove
+  Remove: 
+  Delete "$INSTDIR\config\users.txt"
   Delete "$INSTDIR\config\history.txt"
   Delete "$INSTDIR\config\settings.txt"
   Delete "$INSTDIR\config\motd.txt"
   Delete "$INSTDIR\config\bans.txt"
+  Delete "$INSTDIR\config\en_settings.txt"
+  Delete "$INSTDIR\config\fl_settings.txt"
+  Delete "$INSTDIR\config\li_settings.txt"
+  Delete "$INSTDIR\config\users.txt.tmp"
+  Delete "$INSTDIR\config\history.txt.tmp"
+  Delete "$INSTDIR\config\settings.txt.tmp"
+  Delete "$INSTDIR\config\motd.txt.tmp"
+  Delete "$INSTDIR\config\bans.txt.tmp"
+  Delete "$INSTDIR\config\en_settings.txt.tmp"
+  Delete "$INSTDIR\config\fl_settings.txt.tmp"
+  Delete "$INSTDIR\config\li_settings.txt.tmp"
   Delete "$INSTDIR\config\Script.xml"
   Delete "$INSTDIR\config\adchpp.xml"
+  Delete "$INSTDIR\config\logs\*.log"
+  Delete "$INSTDIR\Scripts\FL_Database\commandstats.txt"
+  Delete "$INSTDIR\Scripts\FL_Database\entitystats.txt"
+  Delete "$INSTDIR\Scripts\FL_Database\kickstats.txt"
+  Delete "$INSTDIR\Scripts\FL_Database\limitstats.txt"
+  Delete "$INSTDIR\Scripts\FL_Database\tmpbanstats.txt"
+  Delete "$INSTDIR\Scripts\FL_Database\commandstats.txt.tmp"
+  Delete "$INSTDIR\Scripts\FL_Database\entitystats.txt.tmp"
+  Delete "$INSTDIR\Scripts\FL_Database\kickstats.txt.tmp"
+  Delete "$INSTDIR\Scripts\FL_Database\limitstats.txt.tmp"
+  Delete "$INSTDIR\Scripts\FL_Database\tmpbanstats.txt.tmp"
   NoRemove:
 SectionEnd
 
@@ -217,7 +240,9 @@ Section Uninstall
   Delete "$DESKTOP\ADCH++.lnk"
 
   RMDir "$SMPROGRAMS\ADCH++"
+  RMDir "$INSTDIR\Scripts\FL_Database"
   RMDir "$INSTDIR\Scripts"
+  RMDir "$INSTDIR\config\logs"
   RMDir "$INSTDIR\config"
   RMDir "$INSTDIR\Docs\images\icons"
   RMDir "$INSTDIR\Docs\images"

@@ -133,7 +133,7 @@ command.
 
 === Flood protection
 
-The access.guard.lua script provides an advanced flood protection for your hub. The function is globally disabled by default but the various settings are filled with optimal parameters to start with. If you want to fine tune the flooding protection you can do so as every parameter is highly confgurable. 
+The access.guard.lua script provides an advanced flood protection for your hub. The function is globally disabled by default but the various settings are filled with optimal parameters to start with. If you want to fine tune the flood protection you can do so as every parameter is highly configurable. 
 
 You can enable or disable the function globally using the
 --------------------------------------
