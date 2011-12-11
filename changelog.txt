@@ -1,4 +1,4 @@
--- 2.8.0 2011-12-10 --
+-- 2.8.0 2011-12-11 --
 * Send a QUI with TL-1 during fatal STA disconnects
 * Process most settings again
 * [L#717858] Fix disconnection of users taking too long to log in
@@ -8,7 +8,7 @@
 * Add entity logging functions with history on changes
 * Add FO extension to hub INF
 * Add hasParam to lua API
-* [L#873985] Fix duplicated entry's in regtables
+* [L#873985] Fix duplicated entries in regtables
 * [L#831522] Add partial matching for params of the +help command
 * [L#813760] Extended bansre with search and action selection
 * [L#864642] Delayed sending hub's INF to end of the VERIFY or IDENTIFY state

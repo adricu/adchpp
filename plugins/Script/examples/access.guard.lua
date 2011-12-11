@@ -1,10 +1,9 @@
---[[
-The final intention of this script is to base the rate rules on a "severnes" factor meaning taking into account what the context of the command is and the size of the strings it will generate but so far it's only rate based so if somebody feels like ? lol (cologic thx for that idea, it's the only way to do it right)
+-- This script contains settings and commands related to hub security. If this script is not loaded, flood protection, limits and entity tracing won't work... 
+-- The final goal of this script is to base its several kind of rate rules on a "severeness" factor meaning it takes into account what the context of the commands are and the size of the strings they will produce.
+-- The intention was to make a "hubs and users friendly" anti flood and guard system, so if one spams by "accident" he will receive warnings only first, and if the user stops his bad actions, he can, after a few seconds, use the command again like any other user. On the other side the script should prevent hammering of users that do not comply to the rules.
 
-The intention was to make on 1 side a "hubs users friendly" anti flood and guard system, so if one by "accident" spams he will receive warnings and his action will be stopped, after some time, in most cases less then 15 seconds, he can use the command again like any other user and on the other side prevent the hammering of users that do not comply to the limit rules.
+-- Read the Expert Guide in the Docs folder for basic usage information. For in-depth explanation of the impementation follow http://bazaar.launchpad.net/~dcplusplus-team/adchpp/trunk/view/head:/docs/user_guide/guard_guide.rtf it will give you a nice idea of what is possible and what not...
 
-Read the Guard-HowTo.rtf it will give you a nice idea of whats possible and what not ...
-]]
 
 local base = _G
 
@@ -1287,7 +1286,7 @@ local function dump_dropped(c, msg)
 end
 
 local function update_diffhists(diffhists, diffrate, histdata)
-	local minutes = 2 -- expire time for the record, the record will not be used for the differential anymore so user can				spam again if not kicked by the rule this value is also important for the age factor as	that uses 				the total diffhits to lower the diffrate. 
+	local minutes = 2 -- expire time for the record, the record will not be used for the differential anymore so user can spam again if not kicked by the rule; this value is also important for the age factor as that uses the total diffhits to lower the diffrate. 
 	local trigger = 60 -- age in seconds that adds the record to the calculation off the differential
 	local diffcount = 2 -- number of records counted in the trigger time span to trigger the differential rate
 	local diffhits = 0
@@ -1475,7 +1474,7 @@ local function update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, s
 				end
 			end
 			if fl_settings.fl_maxwarns.value > 0 and update.warns >= fl_settings.fl_maxwarns.value then
-				msg = "For hammering the hub to often (" .. update.warns .. " times)  with the " .. stat .. " !"
+				msg = "For hammering the hub too often (" .. update.warns .. " times)  with the " .. stat .. " !"
 				update = dump_kicked(c, cmd, update, msg)
 				return update
 			end
@@ -1890,7 +1889,7 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 		local countip = get_sameip(c)
 		if countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
 			local stat = "max same IP"
-			local str = "This hub allows a maximum of ( " .. li_settings.maxsameip.value .. " ) connections from the same ip address and that value is reached sorry for now !"
+			local str = "This hub allows a maximum of ( " .. li_settings.maxsameip.value .. " ) connections from the same ip address and that value is already reached. Sorry for now !"
 			local type = "lim"
 			local factor = 60
 			local maxcount = 0
@@ -2127,7 +2126,7 @@ local function onSUP(c, cmd) -- Stats and rules verification for support strings
 		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not blom then
 			local ip = c:getIp()
 			local stat = "Support BLOM filter forced"
-			local str = "This hub requires that your client supports the BLOM (TTH search filtering) extention !"
+			local str = "This hub requires that your client supports the BLOM (TTH search filtering) extension !"
 			local type = "lim"
 			local factor = 60
 			local maxcount = 0
@@ -2165,7 +2164,7 @@ local function onSUP(c, cmd) -- Stats and rules verification for support strings
 					if ip == victim_ip then
 						commandstats.supcmds[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
 						if commandstats.supcmds[ip] and commandstats.supcmds[ip].warning > 0 then
-							dump_dropped(c, "You are dropped for hammering the hub, stop or be kicked !!!")
+							dump_dropped(c, "You are dropped for hammering the hub, stop or you'll be kicked !!!")
 							return false
 						end
 					end
@@ -2302,7 +2301,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 		if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
 			local stat = "Max Search parameters limit"
-			local msg = "Your search contained too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
+			local msg = "Your search contains too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
 			local type = "lim"
 			local factor = 60
 			local maxcount = 0
@@ -2321,7 +2320,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 		if chars and li_settings.maxschlength.value > 0 and chars > li_settings.maxschlength.value then
 			local stat = "Max Search length limit"
-			local msg = "Your search string contained too many characters, max allowed is " .. li_settings.maxschlength.value
+			local msg = "Your search string contains too many characters, max allowed is " .. li_settings.maxschlength.value
 			local type = "lim"
 			local factor = 60
 			local maxcount = 0
@@ -2501,7 +2500,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 		if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
 			local cid = c:getCID():toBase32()
 			local stat = "Max Message length limit"
-			local msg = "Your message contained too many characters, max allowed is ".. li_settings.maxmsglength.value.." "
+			local msg = "Your message contains too many characters, max allowed is ".. li_settings.maxmsglength.value.." "
 			local type = "lim"
 			local factor = 60
 			local maxcount = 0
@@ -2636,7 +2635,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local adcs = string.find(su, 'ADC0') or string.find(su, 'ADCS')
 	if li_settings.suadcs.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not adcs then
 		local stat = "Support ADCS forced"
-		local str = "This hub requires that you have the secure transfer option enabled, go to Settings/Security Cerificates and enable 'Use TLS when remote client supports it' !"
+		local str = "This hub requires the secure transfers option enabled in your client (its usually in Settings/Security Cerificates, enable 'Use TLS when remote client supports it' there) !"
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2662,7 +2661,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	-- user must either be active or support NAT-T
 	if li_settings.sunatt.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not natt then
 		local stat = "Support NAT-T forced"
-		local str = "This hub requires that you have the NAT-T option enabled if you use passive mode, go to Settings and enable it or use a client that supports it !"
+		local str = "This hub requires the NAT-T option enabled in passive mode, enable it or use a client that supports Nat-Traversal !"
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2736,7 +2735,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local sf = base.tonumber(cmd:getParam("SF", 0)) or base.tonumber(c:getField("SF")) or 0
 	if li_settings.minsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf < li_settings.minsharefiles.value then
 		local stat = "Min Shared files limit"
-		local str = "Your nr of shared files ( " .. sf .. " ) is too low, the minimum required nr of files is " .. li_settings.minsharefiles.value
+		local str = "Your number of shared files ( " .. sf .. " ) is too low, the minimum required number of files is " .. li_settings.minsharefiles.value
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2760,7 +2759,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 	if li_settings.maxsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf > li_settings.maxsharefiles.value then
 		local stat = "Max Shared files limit"
-		local str = "Your nr of shared files ( " .. sf .. " ) is too high, the maximum allowed nr of files is " .. li_settings.maxsharefiles.value
+		local str = "Your number of shared files ( " .. sf .. " ) is too high, the maximum allowed number of files is " .. li_settings.maxsharefiles.value
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -2865,7 +2864,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 	if li_settings.maxhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r > li_settings.maxhubslotratio.value then
 		local stat = "Max Hub/Slot ratio limit"
-		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too high, you must reduce your open upload slots or connect to more hubs to achieve a ratio of " .. base.tostring(li_settings.maxhubslotratio.value)
+		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too high, you must reduce your opened upload slots or connect to more hubs to achieve a ratio of " .. base.tostring(li_settings.maxhubslotratio.value)
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -3264,7 +3263,7 @@ fl_settings.fl_commandstats = {
 
 	announce = true,
 
-	help = "enforces the enabled flood rules and if selected saves a log, -1 = disabled, 0 = enabled, 1 = write to file",
+	help = "globally enable the flood protection function & enforces the enabled flood rules, 0 = for flood protection only, 1 = flood protection and logging to a file on disk, -1 = function disabled completly",
 
 	value = -1
 }
@@ -3272,7 +3271,7 @@ fl_settings.fl_commandstats = {
 fl_settings.fl_maxkicks = {
 	alias = { maximumkicks = true, maxkicks = true },
 
-	help = "maximum count of kicks before user is tmp bannend, 0 = disabled !!!!",
+	help = "maximum count of kicks before user is tmp banned, 0 = disabled !!!!",
 
 	value = 3
 }
@@ -3288,7 +3287,7 @@ fl_settings.fl_maxwarns = {
 fl_settings.fl_maxwarnmsg = {
 	alias = { maxwarnsmsg = true, maximumwarnsmsg = true },
 
-	help = "maximum warning messages send to the user, after that the flood attempt just get blocked , -1 = all msg's are send, 0 = no msg's are send !!!!",
+	help = "maximum warning messages to send to the user, after that the flood attempt just get blocked , -1 = send all msg's, 0 = no msg's should be sent !!!!",
 
 	value = 5
 }
@@ -3296,7 +3295,7 @@ fl_settings.fl_maxwarnmsg = {
 fl_settings.fl_maxtmpbans = {
 	alias = { maximumtmpbans = true, maxtmpbans = true },
 
-	help = "maximum count of tmpbans before user is banned for ever, 0 = disabled !!!!",
+	help = "maximum count of tmpbans before user is banned forever, 0 = disabled !!!!",
 
 	value = 0
 }
@@ -3304,7 +3303,7 @@ fl_settings.fl_maxtmpbans = {
 fl_settings.fl_tmpban =  {
 	alias = { floodtmpban = true },
 
-	help = "minutes a user will be temp banned after reaching the maxkicks value,  0 = disabled !!!!",
+	help = "minutes a user will be temp banned for after reaching the maxkicks value,  0 = disabled !!!!",
 
 	value = 30
 }
@@ -3320,7 +3319,7 @@ fl_settings.fl_maxrate = {
 fl_settings.fl_level = {
 	alias = { verifylevel = true },
 
-	help = "all users whose level <= this setting wil be affected by the flood and limit rules, -1 = disabled",
+	help = "all users with level greater than this will be affected by the flood and limit rules, -1 = disabled",
 
 	value = access.settings.oplevel.value - 1
 }
@@ -3328,7 +3327,7 @@ fl_settings.fl_level = {
 fl_settings.fl_exptime = {
 	alias = { cmdexpiretime = true, expiretime = true},
 
-	help = "default expiretime for all enabled command stats in minutes,  must be > 0",
+	help = "default expire time for all enabled command stats in minutes, must be > 0",
 
 	value = 2
 }
@@ -3336,7 +3335,7 @@ fl_settings.fl_exptime = {
 fl_settings.fl_logexptime = {
 	alias = { floodlogexpiretime = true, logexpiretime = true},
 
-	help = "expiretime in days for the tmpban and kick logs, 0 = disabled",
+	help = "expire time in days for the tmpban and kick logs, 0 = disabled",
 
 	value = 7
 }
@@ -3347,7 +3346,7 @@ fl_settings.fl_logexptime = {
 fl_settings.cmdinf_rate = {
 	alias = { inf_rate = true },
 
-	help = "max rate in counts/min that a client can send his inf updates, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send its inf updates, 0 = default, -1 = disabled",
 
 	value = 10
 }
@@ -3355,7 +3354,7 @@ fl_settings.cmdinf_rate = {
 fl_settings.cmdschman_rate = {
 	alias = { sch_rate = true },
 
-	help = "max rate in counts/min that a client can send searches, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send search requests, 0 = default, -1 = disabled",
 
 	value = 6
 }
@@ -3363,7 +3362,7 @@ fl_settings.cmdschman_rate = {
 fl_settings.cmdschtth_rate = {
 	alias = { sch_rate = true },
 
-	help = "max rate in counts/min that a client can send TTH searches, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send TTH search requests, 0 = default, -1 = disabled",
 
 	value = 3
 }
@@ -3371,7 +3370,7 @@ fl_settings.cmdschtth_rate = {
 fl_settings.cmdmsg_rate = {
 	alias = { msg_rate = true },
 
-	help = "max rate in counts/min that a client can send msg's, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send chat messages, 0 = default, -1 = disabled",
 
 	value = 0
 }
@@ -3459,7 +3458,7 @@ fl_settings.cmdres_rate = {
 fl_settings.cmdctm_rate = {
 	alias = { ctm_rate = true },
 
-	help = "max rate in counts/min that a client can send connect request's, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send connect requests, 0 = default, -1 = disabled",
 
 	value = 60
 }
@@ -3467,7 +3466,7 @@ fl_settings.cmdctm_rate = {
 fl_settings.cmdrcm_rate = {
 	alias = { rcm_rate = true },
 
-	help = "max rate in counts/min that a client can send reverse connect's, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send reverse connect requests, 0 = default, -1 = disabled",
 
 	value = 6
 }
@@ -3475,7 +3474,7 @@ fl_settings.cmdrcm_rate = {
 fl_settings.cmdnat_rate = {
 	alias = { nat_rate = true },
 
-	help = "max rate in counts/min that a client can send nat connect request's, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send nat connect requests, 0 = default, -1 = disabled",
 
 	value = 60
 }
@@ -3483,7 +3482,7 @@ fl_settings.cmdnat_rate = {
 fl_settings.cmdrnt_rate = {
 	alias = { rnt_rate = true },
 
-	help = "max rate in counts/min that a client can send reverse nat connect's, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send reverse nat connect requests, 0 = default, -1 = disabled",
 
 	value = 6
 }
@@ -3491,7 +3490,7 @@ fl_settings.cmdrnt_rate = {
 fl_settings.cmdpsr_rate = {
 	alias = { psr_rate = true },
 
-	help = "max rate in counts/min that a client can send partitial file sharing string's, 0 = default, -1 = disabled",
+	help = "max rate in counts/min that a client can send partitial file sharing strings, 0 = default, -1 = disabled",
 
 	value = 0
 }
@@ -3531,7 +3530,7 @@ fl_settings.cmdmsg_exp = {
 fl_settings.cmdschman_exp = {
 	alias = { sch_exp = true },
 
-	help = "minutes before the MAN sch commandstats are removed, 0 = default",
+	help = "minutes before the manual search commandstats are removed, 0 = default",
 
 	value = 0
 }
@@ -3539,7 +3538,7 @@ fl_settings.cmdschman_exp = {
 fl_settings.cmdschtth_exp = {
 	alias = { sch_exp = true },
 
-	help = "minutes before the TTH sch commandstats are removed, 0 = default",
+	help = "minutes before the TTH search commandstats are removed, 0 = default",
 
 	value = 0
 }
@@ -4004,7 +4003,7 @@ li_settings.li_limitstats = {
 
 	announce = true,
 
-	help = "enforces the enabled limit rules and if selected saves a log, -1 = disabled, 0 = enabled, 1 = write to file",
+	help = "globally enable/disable the limiting function, 0 = for limits enforcing only, 1 = limits enforcing and logging to a file on disk, -1 = function disabled completly",
 
 	value = -1
 }
@@ -4020,7 +4019,7 @@ li_settings.li_maxrate = {
 li_settings.li_exptime = {
 	alias = { liexpiretime = true, expiretime = true},
 
-	help = "default expiretime for all enabled limit stats in minutes,  must be > 0",
+	help = "default expire time for all enabled limit stats in minutes, must be > 0",
 
 	value = 720
 }
@@ -4038,7 +4037,7 @@ li_settings.li_minlevel = {
 
 	change = recheck_info,
 
-	help = "minimum level to verify a user regarding the sharing limit rules like slots/hubs/sharesize, 0 = all user will be verifyed",
+	help = "minimum level to verify a user regarding the sharing limit rules like slots/hubs/sharesize, 0 = all user will be verified",
 
 	value = 0
 }
@@ -4046,7 +4045,7 @@ li_settings.li_minlevel = {
 li_settings.li_redirect = {
 	alias = { limitredirect = true },
 
-	help = "redirect address for the sharing limit rules like slots/hubs/sharesize, ' ' = users are just disconnected",
+	help = "redirect address for the sharing limit rules like slots/hubs/sharesize, empty = users are disconnected only",
 
 	value = ""
 }
@@ -4283,7 +4282,7 @@ en_settings.en_entitystats = {
 
 	announce = true,
 
-	help = "logs users cid , ip's , nicks etc into a database and keeps history of changes , -1 = disabled, 0 = enabled, 1 = write to file",
+	help = "globally enable/disable the tracing function (logs users' cid, ip's, nicks, etc... into a database and keeps history of changes) , 0 = for entity logging only, 1 = entity logging to a log file as well, -1 = function disabled completly",
 
 	value = -1
 }
@@ -4291,7 +4290,7 @@ en_settings.en_entitystats = {
 en_settings.en_entitystatsexptime = {
 	alias = { entitystatexpiretime = true, entityexpiretime = true},
 
-	help = "expiretime in days for a non registered user entity logs, 0 = disabled",
+	help = "expire time in days for non-registered users' entity logs, 0 = disabled",
 
 	value = 9
 }
@@ -4299,7 +4298,7 @@ en_settings.en_entitystatsexptime = {
 en_settings.en_entitystatsregexptime = {
 	alias = { entitystatregexpiretime = true, entityregexpiretime = true},
 
-	help = "expiretime in days for a registered user entity logs, 0 = disabled",
+	help = "expire time in days for registered users' entity logs, 0 = disabled",
 
 	value = 62
 }
@@ -5255,7 +5254,7 @@ commands.traceip = {
 
 	end,
 
-	help = "trace a entity last info and history using his IP address",
+	help = "trace an entity's last info and history using its IP address",
 
 	protected = is_stats,
 
@@ -5323,7 +5322,7 @@ commands.tracecid = {
 
 	end,
 
-	help = "trace a entity last info and history using his CID",
+	help = "trace an entity's last info and history using its CID",
 
 	protected = is_stats,
 
@@ -5391,7 +5390,7 @@ commands.traceni = {
 
 	end,
 
-	help = "trace a entity last info and history using his Nick",
+	help = "trace an entity's last info and history using its Nick",
 
 	protected = is_stats,
 
@@ -5524,7 +5523,7 @@ guard_2 = cm:signalState():connect(function(entity)
 		if c then
 			local con = onCON(c)
 			if not con then
-				dump_dropped(c, "You are disconnected for hammering the hub with connect attempts, stop or be kicked !!!")
+				dump_dropped(c, "You are disconnected for hammering the hub with connect attempts, stop or you'll be kicked !!!")
 				return false
 			end
 		end
