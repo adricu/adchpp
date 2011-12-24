@@ -8,8 +8,8 @@ MESSAGES = 100
 
 import socket, threading, time, random, sys
 
-from pyadchpp import ParseException, CID, Core, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID
-
+from pyadchpp import ParseException, CID, Core, CID_generate, Encoder_toBase32, Encoder_fromBase32, AdcCommand, AdcCommand_toSID, TigerHash, CID, cvar
+print(cvar.versionString)
 core = Core.create("")
 
 class Client(object):
