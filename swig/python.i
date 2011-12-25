@@ -44,7 +44,7 @@
 %typemap(in) std::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::function<void (adchpp::Entity&, Util::Reason, const std::string&)> {
+%typemap(in) std::function<void (adchpp::Entity&, adchpp::Util::Reason, const std::string&)> {
 	$1 = PyHandle($input, false);
 }
 %typemap(in) std::function<void (adchpp::Bot&, const adchpp::BufferPtr&)> {
@@ -208,6 +208,9 @@ struct PyHandle {
 	void operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i);
 
 	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i);
+	
+	void operator()(adchpp::Entity& c, adchpp::Util::Reason reason, const std::string& str);
+	
 	void operator()(adchpp::Bot& c, const adchpp::BufferPtr& ptr);
 private:
 	PyObject* obj;
@@ -343,6 +346,17 @@ private:
 		if(PyInt_Check(ret)) {
 			i &= static_cast<bool>(PyInt_AsLong(ret));
 		}
+	}
+	
+	void PyHandle::operator()(adchpp::Entity& c, adchpp::Util::Reason reason, const std::string& str) {
+		PyGIL gil;
+		PyHandle args(PyTuple_New(3), true);
+
+		PyTuple_SetItem(args, 0, SWIG_NewPointerObj(SWIG_as_voidptr(&c), SWIGTYPE_p_adchpp__Entity, 0 |  0 ));
+		PyTuple_SetItem(args, 1, PyInt_FromLong(reason));
+		PyTuple_SetItem(args, 2, PyString_FromString(str.c_str()));
+
+		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}
 
 	void PyHandle::operator()(adchpp::Bot& c, const adchpp::BufferPtr& ptr) {
