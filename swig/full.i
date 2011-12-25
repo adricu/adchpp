@@ -23,7 +23,6 @@ public:
 
 	const std::string &getConfigPath() const;
 
-	typedef std::function<void()> Callback;
 	%extend {
 		/* work around 2 problems:
 		- SWIG fails to convert a script function to const Callback&.

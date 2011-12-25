@@ -20,6 +20,17 @@
 %typemap(in) std::function<void ()> {
 	$1 = PyHandle($input, false);
 }
+%typemap(out) std::function<void ()> {
+	PyObject* callback = SWIG_NewPointerObj(new std::function<void ()>($1), SWIGTYPE_p_std__functionT_void_fF_t, 1);
+	
+	PyObject* (*proxyFunc)(PyObject*,PyObject*) = &PyCallback::noArgs;
+	static PyMethodDef methd = {"Callback", proxyFunc, METH_NOARGS, "No Args Callback Function"};
+	PyObject* name = PyString_FromString(methd.ml_name);
+	PyObject* pyCallbackObj = PyCFunction_NewEx(&methd, callback, name);
+	Py_DECREF(name);
+	
+	return pyCallbackObj;
+}
 %typemap(in) std::function<void ( const std::string&)> {
 	$1 = PyHandle($input, false);
 }
@@ -368,5 +379,20 @@ private:
 
 		PyHandle ret(PyObject_Call(obj, args, 0), true);
 	}
+	
+	struct PyCallback {
+		static PyObject* noArgs(PyObject* func, PyObject* nothing) { 
+			void* ptr;
+			
+			if(SWIG_ConvertPtr(func, &ptr, SWIGTYPE_p_std__functionT_void_fF_t, 0) == 0){
+				std::function<void()>* callbackPtr = reinterpret_cast<std::function<void()>*>(ptr);
+				(*callbackPtr)();
+				delete callbackPtr;
+			}
+
+			return Py_None;
+		}
+
+	};
 %}
 
