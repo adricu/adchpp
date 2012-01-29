@@ -28,6 +28,8 @@
 
 #include "adchppd.h"
 
+#include <locale.h>
+
 using namespace adchpp;
 using namespace std;
 
@@ -240,6 +242,8 @@ static void printUsage() {
 }
 
 int CDECL main(int argc, char* argv[]) {
+	setlocale(LC_ALL, "");
+
 	configPath = Util::getAppPath() + "config\\";
 
 	int task = 0;

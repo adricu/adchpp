@@ -108,7 +108,6 @@ public:
 	ADCHPP_DLL static std::string emptyString;
 	static std::wstring emptyStringW;
 
-	ADCHPP_DLL static void initialize();
 	ADCHPP_DLL static std::string getOsVersion();
 	ADCHPP_DLL static void decodeUrl(const std::string& aUrl, std::string& aServer, short& aPort, std::string& aFile);
 	ADCHPP_DLL static std::string formatTime(const std::string& msg, time_t t = std::time(NULL));

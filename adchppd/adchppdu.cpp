@@ -27,6 +27,7 @@
 
 #include <signal.h>
 #include <limits.h>
+#include <locale.h>
 
 #include "adchppd.h"
 
@@ -180,6 +181,7 @@ static void printUsage() {
 }
 
 int main(int argc, char* argv[]) {
+	setlocale(LC_ALL, "");
 
 	char buf[PATH_MAX + 1] = { 0 };
 	char* path = buf;
