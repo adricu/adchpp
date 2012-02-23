@@ -593,7 +593,11 @@ To build ADCH++ from source you have to:
 	** libstdc++-devel
 	** redhat: readline-devel, debian: libreadline-dev
 	   sys-libs/readline
-* Clang: Modify tools/clang.py to fit your requirements
+* Clang: Build with scons tools=clang. Make sure you modify tools/clang.py according to your
+configuration.
+* Clang Static Analyzer: Build with scons tools=clang-analyzer. Have a look at
+tools/clang-analyzer.py to tweak options passed to scan-build. Since the Clang Static Analyzer uses
+Clang, follow the above instructions for Clang configuration as well.
 * To compile with support for secure connections, you need OpenSSL:
 	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory. append a 'd' to debug libs and put x64 / ia64 libs into openssl/lib/x64 / openssl/lib/ia64 respectively.
 	** Linux: if you don't have it already, get the openssl-devel/libssl-dev package

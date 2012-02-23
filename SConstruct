@@ -80,7 +80,7 @@ else:
 	tooldef = 'default'
 
 opts.AddVariables(
-	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default', 'clang']),
+	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default', 'clang', 'clang-analyzer']),
 	EnumVariable('mode', 'Compile mode', 'debug', ['debug', 'release']),
 	ListVariable('plugins', 'The plugins to compile', 'all', plugins),
 	BoolVariable('gch', 'Use GCH when compiling GUI (disable if you have linking problems with mingw)', 'yes'),
