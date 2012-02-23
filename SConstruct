@@ -80,7 +80,7 @@ else:
 	tooldef = 'default'
 
 opts.AddVariables(
-	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default']),
+	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default', 'clang']),
 	EnumVariable('mode', 'Compile mode', 'debug', ['debug', 'release']),
 	ListVariable('plugins', 'The plugins to compile', 'all', plugins),
 	BoolVariable('gch', 'Use GCH when compiling GUI (disable if you have linking problems with mingw)', 'yes'),
@@ -101,7 +101,7 @@ TARGET_ARCH = defEnv['arch']
 if TARGET_ARCH == 'x64':
 	TARGET_ARCH = 'amd64'
 
-env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], options = opts, TARGET_ARCH = TARGET_ARCH, MSVS_ARCH = TARGET_ARCH)
+env = Environment(ENV = os.environ, tools = [defEnv['tools'], 'swig'], toolpath = ['tools'], options = opts, TARGET_ARCH = TARGET_ARCH, MSVS_ARCH = TARGET_ARCH)
 
 # filter out boost from dependencies to get a speedier rebuild scan
 # this means that if boost changes, scons -c needs to be run
@@ -183,24 +183,24 @@ env.Append(SCANNERS=[SWIGScanner])
 
 if not env.GetOption('clean') and not env.GetOption("help"):
 	conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
-	
-	if conf.CheckCHeader('poll.h'):
-		conf.env.Append(CPPDEFINES='HAVE_POLL_H')
-	if conf.CheckCHeader('sys/epoll.h'):
-		conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
+
 	if conf.CheckCHeader('ruby.h'):
 		conf.env['HAVE_RUBY_H'] = True
-	if conf.CheckLib('dl', 'dlopen'):
-		conf.env.Append(CPPDEFINES=['HAVE_DL'])
 	if not dev.is_win32():
+		if conf.CheckCHeader('poll.h'):
+			conf.env.Append(CPPDEFINES='HAVE_POLL_H')
+		if conf.CheckCHeader('sys/epoll.h'):
+			conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
 		if conf.CheckLib('pthread', 'pthread_create'):
 			conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
 		if conf.CheckLib('ssl', 'SSL_connect'):
 			conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
+		if conf.CheckLib('dl', 'dlopen'):
+			conf.env.Append(CPPDEFINES=['HAVE_DL'])
 	else:
 		if os.path.exists(Dir('#/openssl/include').abspath):
 			conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
-	
+
 	env = conf.Finish()
 
 env.Append(LIBPATH = env.Dir(dev.get_build_root() + 'bin/').abspath)

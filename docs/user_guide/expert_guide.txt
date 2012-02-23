@@ -572,7 +572,7 @@ The current version of ADCH++ supports the following http://adc.sourceforge.net/
 
 These are the minimum versions of tools required to compile ADCH++:
     
-	* GCC 4.4.x (for Windows: <http://www.mingw.org>) or Microsoft Visual C++ 10 (2010)
+	* GCC 4.4 (for Windows: <http://www.mingw.org>), Microsoft Visual C++ 10 (2010), Clang 3.0
     * SCons 1.2.0 or later http://www.scons.org
     * SWIG 1.3.40 or later http://www.swig.org
     * Optional: Python 2.4.x or later (32 bit version only) http://www.python.org
@@ -593,6 +593,7 @@ To build ADCH++ from source you have to:
 	** libstdc++-devel
 	** redhat: readline-devel, debian: libreadline-dev
 	   sys-libs/readline
+* Clang: Modify tools/clang.py to fit your requirements
 * To compile with support for secure connections, you need OpenSSL:
 	** Windows: compile it yourself (or ask someone to do it) and put it in the "openssl" directory. append a 'd' to debug libs and put x64 / ia64 libs into openssl/lib/x64 / openssl/lib/ia64 respectively.
 	** Linux: if you don't have it already, get the openssl-devel/libssl-dev package
