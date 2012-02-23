@@ -72,7 +72,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.45"
+guardrev = "1.0.47"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -879,10 +879,10 @@ local function data_info_string_entity(info)
 			str = str .. "\t\tHN: " .. info.hn
 		end
 		if info.hr then
-			str = str .. "\t\tHN: " .. info.hr
+			str = str .. "\t\tHR: " .. info.hr
 		end
 		if info.ho then
-			str = str .. "\t\tHN: " .. info.ho
+			str = str .. "\t\tHO: " .. info.ho
 		end
 	end
 
@@ -1104,9 +1104,9 @@ local function dump_banned(c, cmd, update, msg, minutes)
 		else
 			count = countip
 		end
-		tmpban = { count = count, reason = msg, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = logexpire }
+		tmpban = { count = count, reason = msg, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve, expires = logexpire }
 	else
-		tmpban = { count = 1, reason = msg, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = logexpire }
+		tmpban = { count = 1, reason = msg, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve, expires = logexpire }
 	end
 	if c:getState() ~= adchpp.Entity_STATE_PROTOCOL then 
 		tmpbanstats.cids[cid] = tmpban
@@ -1203,11 +1203,11 @@ local function dump_kicked(c, cmd, update, msg)
 		local logexpires = fl_settings.fl_logexptime.value * 86400
 		if cid then
 			if not kickstats.cids[cid] and not kickstats.ips[ip] then
-				local kick = { count = 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = os.time() + logexpires }
+				local kick = { count = 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve , expires = os.time() + logexpires }
 				kickstats.cids[cid] = kick
 				kickstats.ips[ip] = kick
 			else
-				local kick = { count = 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = os.time() + logexpires }
+				local kick = { count = 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve, expires = os.time() + logexpires }
 				if not kickstats.ips[ip] then
 					kickstats.ips[ip] = kick
 				end
@@ -1219,7 +1219,7 @@ local function dump_kicked(c, cmd, update, msg)
 				else
 					count = kickstats.ips[ip].count + 1
 				end
-				local kick = { count = count, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = os.time() + logexpires }
+				local kick = { count = count, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve, expires = os.time() + logexpires }
 				kickstats.cids[cid] = kick
 				kickstats.ips[ip] = kick
 				update = verify_maxkicks(c, cmd, update, msg, minutes)
@@ -1229,11 +1229,11 @@ local function dump_kicked(c, cmd, update, msg)
 			end
 		else
 			if not kickstats.ips[ip] then
-				local kick = { count = 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = os.time() + logexpires }
+				local kick = { count = 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve, expires = os.time() + logexpires }
 				kickstats.ips[ip] = kick
 			else
 				count = kickstats.ips[ip].count
-				local kick = { count = count + 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ve = update.ve, expires = os.time() + logexpires }
+				local kick = { count = count + 1, reason = str, rate = update.rate, diffrate = update.diffrate, ni = update.ni, ap = update.ap, ve = update.ve, expires = os.time() + logexpires }
 				kickstats.ips[ip] = kick
 				update = verify_maxkicks(c, cmd, update, msg, minutes)
 				if not update then
@@ -3319,7 +3319,7 @@ fl_settings.fl_maxrate = {
 fl_settings.fl_level = {
 	alias = { verifylevel = true },
 
-	help = "all users with level greater than this will be affected by the flood and limit rules, -1 = disabled",
+	help = "all users with level greater than this will be excluded from the flood and limit rules, -1 = disabled",
 
 	value = access.settings.oplevel.value - 1
 }
