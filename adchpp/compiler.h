@@ -21,6 +21,11 @@
 #error GCC 4.4 is required
 #endif
 
+#if __GNUC_MINOR__ == 4
+// GCC 4.4 is missing this type
+#define default_random_engine minstd_rand0
+#endif
+
 #elif defined(_MSC_VER)
 #if _MSC_VER < 1600
 #error MSVC 10 (2010) is required
