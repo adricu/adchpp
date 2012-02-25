@@ -242,6 +242,6 @@ if env['docs']:
 
 		guide_path = '#/docs/user_guide/'
 		env.Command(doc_path + 'user_guide/basic_guide.html', guide_path + 'basic_guide.txt', asciidoc)
-		env.Command(doc_path + 'user_guide/novice_guide.html', guide_path + 'novice_guide.txt', asciidoc)
+		env.Command(doc_path + 'user_guide/expert_guide.html', guide_path + 'expert_guide.txt', asciidoc)
 		env.Command(doc_path + 'user_guide/images', guide_path + 'images', Copy('$TARGET', '$SOURCE'))
 

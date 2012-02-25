@@ -412,7 +412,7 @@ ADCH++ core is exposed to various scripting languages that either has direct acc
 By default ADCH\++ comes with prepackaged LUA scripts to handle the basic hub functions. These scripts themselves are very good examples of how to use the ADCH++ LUA API. You can also use following examlpe file to learn the basics:
 ---------------------------------------------------------------------
 [source,lua]
-include::..\..\plugins\Script\examples\example.lua[]
+include::../../plugins/Script/examples/example.lua[]
 ---------------------------------------------------------------------
 
 The complete list of of the ADCH\++ LUA API functions are available both in the Docs folder in the ADCH\++ repository or at the http://adchpp.sourceforge.net/doc/lua_api.html[ADCH++ home page].
@@ -422,7 +422,7 @@ The complete list of of the ADCH\++ LUA API functions are available both in the 
 Example file using the Ruby interface:
 ---------------------------------------------------------------------
 [source,ruby]
-include::..\..\rbutil\adchpp.rb[]
+include::../../rbutil/adchpp.rb[]
 ---------------------------------------------------------------------
 
 === Python Interface
@@ -430,7 +430,7 @@ include::..\..\rbutil\adchpp.rb[]
 Example file using the Python interface:
 ---------------------------------------------------------------------
 [source,python]
-include::..\..\pyutil\adchpp.py[]
+include::../../pyutil/adchpp.py[]
 ---------------------------------------------------------------------
 
 == ADCH++ command line parameters
