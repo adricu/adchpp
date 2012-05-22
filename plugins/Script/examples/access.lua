@@ -831,7 +831,7 @@ local function onSUP(c, cmd)
 	c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_SID, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
 		:addParam(adchpp.AdcCommand_fromSID(c:getSID())));
 
-	if c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "208.115.230.197" then
+	if c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "108.175.166.22" then
 		-- Temp sending the hubs INF sooner to avoid disconnects from DCHublistpinger (bug #880488).
 		send_hub_info(c)
 	end
@@ -874,7 +874,7 @@ local function onINF(c, cmd)
 			return false
 		end
 
-		if not (c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "208.115.230.197") then
+		if not (c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "108.175.166.22") then
 			-- Temp avoid sending the hubs INF a second time to the DCHublistpinger (bug #880488).
 			send_hub_info(c)
 		end
@@ -942,7 +942,7 @@ local function onPAS(c, cmd)
 		return false
 	end
 
-	if not (c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "208.115.230.197") then
+	if not (c:hasSupport(adchpp.AdcCommand_toFourCC('PING')) and c:getIp() == "108.175.166.22") then
 		-- Temp avoid sending the hubs INF a second time to the registerd DCHublistpinger (bug #880488).
 		send_hub_info(c)
 	end

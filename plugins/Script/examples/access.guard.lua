@@ -72,7 +72,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.47"
+guardrev = "1.0.48"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -2609,7 +2609,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	-- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
-	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) and c:getIp() == "208.115.230.197" then
+	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) and c:getIp() == "108.175.166.22" then
 		return true
 	end
 
