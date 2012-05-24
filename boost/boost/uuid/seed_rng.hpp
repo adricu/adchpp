@@ -139,7 +139,11 @@ private:
         }
 
         {
-            unsigned int rn[] = { std::rand(), std::rand(), std::rand() };
+            unsigned int rn[] = 
+                { static_cast<unsigned int>(std::rand())
+                , static_cast<unsigned int>(std::rand())
+                , static_cast<unsigned int>(std::rand())
+                };
             sha.process_bytes( (unsigned char const*)rn, sizeof( rn ) );
         }
 
@@ -149,7 +153,9 @@ private:
 
             if(random_)
             {
-                std::fread( buffer, 1, 20, random_ );
+                // the not_used variable is to suppress warnings
+                size_t not_used = 0;
+                not_used = std::fread( buffer, 1, 20, random_ );
             }
 
             // using an uninitialized buffer[] if fopen fails

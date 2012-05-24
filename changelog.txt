@@ -2,6 +2,7 @@
 * [L#881790] Make python callback callable (thanks Andy Chmilenko)
 * [L#940745] Improve build option granularity (thanks klondike)
 * [L#940756] Improve Ruby detection (thanks klondike)
+* Update Boost to version 1.49
 
 -- 2.8.0 2011-12-11 --
 * Send a QUI with TL-1 during fatal STA disconnects

@@ -28,6 +28,10 @@ def buildRbModule():
 		print "Ruby not found, skipping ruby module"
 		return
 
+	if not conf.CheckCHeader('ruby.h'):
+		print "ruby.h not found, skipping ruby module"
+		return
+
 	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby','-autorename'])
 
 	ruby_wrap = dev.get_build_path(source_path) + 'ruby_wrap.cxx'
@@ -70,9 +74,6 @@ def buildRbModule():
 		
 	rb = env.SharedLibrary(dev.get_target(source_path, 'rbadchpp'), [f],
 						SHLIBPREFIX='')
-	if not conf.CheckCHeader( 'ruby.h' ):
-		print "ruby.h not found, skipping ruby module"
-		return
 
 	targets.append(rb)
 
