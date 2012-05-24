@@ -22,7 +22,7 @@ def getRbConf(name):
 
 def buildRbModule():
 	env = dev.env.Clone()
-	conf = Configure(env)
+	conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
 
 	if not runCommand([dev.env['ruby'], '-v']):
 		print "Ruby not found, skipping ruby module"
