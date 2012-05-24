@@ -70,6 +70,7 @@ gcc_defs = {
 import os,sys,distutils.sysconfig
 
 plugins = filter(lambda x: os.path.isfile(os.path.join('plugins', x, 'SConscript')), os.listdir('plugins'))
+langs = ['lua', 'python', 'ruby']
 
 defEnv = Environment(ENV = os.environ)
 opts = Variables('custom.py', ARGUMENTS)
@@ -83,12 +84,15 @@ opts.AddVariables(
 	EnumVariable('tools', 'Toolset to compile with, default = platform default (msvc under windows)', tooldef, ['mingw', 'default', 'clang', 'clang-analyzer']),
 	EnumVariable('mode', 'Compile mode', 'debug', ['debug', 'release']),
 	ListVariable('plugins', 'The plugins to compile', 'all', plugins),
+	ListVariable('langs', 'The language bindings to compile', 'all', langs),
+	BoolVariable('secure', 'Add support for secure TLS connections via OpenSSL', 'yes'),
 	BoolVariable('gch', 'Use GCH when compiling GUI (disable if you have linking problems with mingw)', 'yes'),
 	BoolVariable('verbose', 'Show verbose command lines', 'no'),
 	BoolVariable('savetemps', 'Save intermediate compilation files (assembly output)', 'no'),
 	('prefix', 'Prefix to use when cross compiling', ''),
 	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix')),
+	('ruby', 'Path to the ruby binary', 'ruby'),
 	BoolVariable('docs', 'Build docs (requires asciidoc)', 'no')
 )
 
@@ -184,8 +188,6 @@ env.Append(SCANNERS=[SWIGScanner])
 if not env.GetOption('clean') and not env.GetOption("help"):
 	conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
 
-	if conf.CheckCHeader('ruby.h'):
-		conf.env['HAVE_RUBY_H'] = True
 	if not dev.is_win32():
 		if conf.CheckCHeader('poll.h'):
 			conf.env.Append(CPPDEFINES='HAVE_POLL_H')
@@ -193,12 +195,12 @@ if not env.GetOption('clean') and not env.GetOption("help"):
 			conf.env.Append(CPPDEFINES=['HAVE_SYS_EPOLL_H'])
 		if conf.CheckLib('pthread', 'pthread_create'):
 			conf.env.Append(CPPDEFINES=['HAVE_PTHREAD'])
-		if conf.CheckLib('ssl', 'SSL_connect'):
+		if env['secure'] and conf.CheckLib('ssl', 'SSL_connect'):
 			conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
 		if conf.CheckLib('dl', 'dlopen'):
 			conf.env.Append(CPPDEFINES=['HAVE_DL'])
 	else:
-		if os.path.exists(Dir('#/openssl/include').abspath):
+		if env['secure'] and os.path.exists(Dir('#/openssl/include').abspath):
 			conf.env.Append(CPPDEFINES=['HAVE_OPENSSL'])
 
 	env = conf.Finish()
@@ -217,7 +219,8 @@ dev.adchpp = dev.build('adchpp/')
 dev.build('adchppd/')
 
 # Lua for plugins & swig
-dev.build('lua/')
+if 'Script' in env['plugins'] or 'lua' in env['langs']:
+	dev.build('lua/')
 
 # Library wrappers
 dev.build('swig/')

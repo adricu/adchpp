@@ -18,12 +18,13 @@ def runCommand(cmd):
 		return ""
 
 def getRbConf(name):
-	return runCommand(['ruby', '-rmkmf', '-e', "print Config.expand('$(" + name + ")')"])
+	return runCommand([dev.env['ruby'], '-rmkmf', '-e', "print RbConfig.expand('$(" + name + ")')"])
 
 def buildRbModule():
 	env = dev.env.Clone()
+	conf = Configure(env)
 
-	if 'HAVE_RUBY_H' not in env or not runCommand(['ruby', '-v']):
+	if not runCommand([dev.env['ruby'], '-v']):
 		print "Ruby not found, skipping ruby module"
 		return
 
@@ -69,6 +70,10 @@ def buildRbModule():
 		
 	rb = env.SharedLibrary(dev.get_target(source_path, 'rbadchpp'), [f],
 						SHLIBPREFIX='')
+	if not conf.CheckCHeader( 'ruby.h' ):
+		print "ruby.h not found, skipping ruby module"
+		return
+
 	targets.append(rb)
 
 def buildPyModule():
@@ -77,10 +82,6 @@ def buildPyModule():
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')
 	env.Append(SWIGFLAGS=['-c++','-threads','-Wall','-python', '-O', '-modern', '-features', 'autodoc=1'])
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
-
-	if env['arch'] != 'x86':
-		print 'Skipping Python module'
-		return
 
 	version = sys.version[0] + sys.version[2]
 	
@@ -188,11 +189,14 @@ def buildPHPModule():
 	php_adchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(php_adchpp)
 
-buildRbModule()
+if 'ruby' in dev.env['langs']:
+	buildRbModule()
 
-buildPyModule()
+if 'python' in dev.env['langs']:
+	buildPyModule()
 
-buildLuaModule()
+if 'lua' in dev.env['langs']:
+	buildLuaModule()
 
 # TODO buildPHPModule()
 
