@@ -28,20 +28,7 @@ def buildRbModule():
 		print "Ruby not found, skipping ruby module"
 		return
 
-	if not conf.CheckCHeader('ruby.h'):
-		print "ruby.h not found, skipping ruby module"
-		return
-
 	env.Append(SWIGFLAGS=['-c++','-Wall','-ruby','-autorename'])
-
-	ruby_wrap = dev.get_build_path(source_path) + 'ruby_wrap.cxx'
-
-	f = env.CFile(target=ruby_wrap, source='ruby.i')
-	
-	doc_path = env.Dir(dev.get_target(source_path, "doc/")).path
-	env["DOCPATH"] = doc_path
-	# TODO make it not rebuild every time...
-	# docs = env.Command(doc_path + "/index.html", ruby_wrap, "rdoc -o \"$DOCPATH\" $SOURCES")
 
 	import distutils.sysconfig
 	
@@ -64,14 +51,28 @@ def buildRbModule():
 	if not soname:
 		print "Ruby RUBY_SO_NAME not found, skipping ruby module"
 		return
-	
-	if '_DEBUG' in env['CPPDEFINES']:
-		env['CPPDEFINES'].remove('_DEBUG')
 
 	env.Append(LIBPATH=[libdir])
 	env.Append(CPPPATH=['#', incdir, os.path.join(incdir, arch)])
 	env.Append(LIBS=[soname, 'adchpp'])
 		
+	if not conf.CheckCHeader('ruby.h'):
+		print "ruby.h not found, skipping ruby module"
+		return
+
+	ruby_wrap = dev.get_build_path(source_path) + 'ruby_wrap.cxx'
+
+	f = env.CFile(target=ruby_wrap, source='ruby.i')
+	
+	doc_path = env.Dir(dev.get_target(source_path, "doc/")).path
+	env["DOCPATH"] = doc_path
+	# TODO make it not rebuild every time...
+	# docs = env.Command(doc_path + "/index.html", ruby_wrap, "rdoc -o \"$DOCPATH\" $SOURCES")
+
+	
+	if '_DEBUG' in env['CPPDEFINES']:
+		env['CPPDEFINES'].remove('_DEBUG')
+
 	rb = env.SharedLibrary(dev.get_target(source_path, 'rbadchpp'), [f],
 						SHLIBPREFIX='')
 
