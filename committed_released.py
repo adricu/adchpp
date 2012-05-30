@@ -29,8 +29,9 @@ for bug_task in bug_tasks:
 		continue
 	total = total + 1
 	try:
-		bug_task.transitionToStatus(status = 'Fix Released')
+		bug_task.status = 'Fix Released'
 		bug_task.bug.newMessage(content = message)
+		bug_task.lp_save()
 		changed = changed + 1
 	except HTTPError:
 		unchanged.append(bug_task.bug.id)
