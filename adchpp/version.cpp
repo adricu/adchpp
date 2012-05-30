@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 Jacek Sieka, arnetheduck on gmail point com
+ * Copyright (C) 2006-2012 Jacek Sieka, arnetheduck on gmail point com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 
 // don't forget to also update the .rc file of adchppd!
 #define APPNAME "ADCH++"
-#define VERSIONSTRING "2.8.0 (r" xstrver(ADCHPP_REVISION) ")"
-#define VERSIONFLOAT 2.80
+#define VERSIONSTRING "2.8.1 (r" xstrver(ADCHPP_REVISION) ")"
+#define VERSIONFLOAT 2.81
 
 #ifndef NDEBUG
 #define BUILDSTRING "Debug"
