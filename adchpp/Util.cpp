@@ -317,12 +317,26 @@ string Util::getOsVersion() {
 #endif // WIN32
 }
 
+#ifdef __MINGW32__
+// creating a random_device throws an exception in MinGW with GCC 4.6; simpler alternative...
+uint32_t Util::rand() {
+	static bool init = false;
+	if(!init) {
+		::srand(::time(0));
+		init = true;
+	}
+
+	return ::rand();
+}
+
+#else
 uint32_t Util::rand() {
 	static std::random_device rd;
 	static std::default_random_engine dre(rd());
 
 	return dre();
 }
+#endif
 
 bool Util::isPrivateIp(std::string const& ip) {
 	struct in_addr addr;
