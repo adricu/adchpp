@@ -26,6 +26,7 @@
 #endif
 
 #include "Exception.h"
+#include "nullptr.h"
 
 namespace adchpp { 
 
@@ -88,14 +89,14 @@ protected:
 #ifdef _WIN32
 	HANDLE threadHandle;
 	static DWORD WINAPI starter(void* p) {
-		Thread* t = (Thread*)p;
-		return (DWORD)t->run();
+		return static_cast<DWORD>(reinterpret_cast<Thread*>(p)->run());
 	}
 #else
 	pthread_t t;
 	static void* starter(void* p) {
-		Thread* t = (Thread*)p;
-		return (void*)t->run();
+		// ignore the return value.
+		reinterpret_cast<Thread*>(p)->run();
+		return nullptr;
 	}
 #endif
 };
