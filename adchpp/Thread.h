@@ -23,6 +23,7 @@
 # include <pthread.h>
 # include <sched.h>
 # include <sys/resource.h>
+#include <unistd.h>
 #endif
 
 #include "Exception.h"

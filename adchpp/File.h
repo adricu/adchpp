@@ -25,6 +25,7 @@
 #ifndef _WIN32
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #endif
 
 namespace adchpp {
