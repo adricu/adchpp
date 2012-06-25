@@ -1,0 +1,4 @@
+This directory contains compilable files from Lua FileSystem
+<http://www.keplerproject.org/luafilesystem>.
+
+The F_SPEC def has been added in lfs.h.

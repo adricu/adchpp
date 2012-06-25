@@ -11,6 +11,6 @@ else:
 if '-fvisibility=hidden' in env['CCFLAGS']:
 	env['CCFLAGS'].remove('-fvisibility=hidden')
 
-ret = env.SharedLibrary(target, sources)
+ret = [env.SharedLibrary(target, sources), dev.build('LuaFileSystem/')]
 
 Return('ret')

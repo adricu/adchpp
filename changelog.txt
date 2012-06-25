@@ -1,3 +1,5 @@
+* Add Lua FileSystem
+
 -- 2.8.1 2012-05-30 --
 * [L#830841] Python plugin api signal fix (thanks Andy Chmilenko)
 * [L#881790] Make python callback callable (thanks Andy Chmilenko)
