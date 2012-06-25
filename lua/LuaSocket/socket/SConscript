@@ -1,0 +1,27 @@
+Import('dev source_path')
+
+env, target, sources = dev.prepare_build(source_path, 'core', source_glob = '*.c', in_bin = False)
+env['SHLIBPREFIX'] = ''
+
+if dev.is_win32():
+	env.Append(CPPDEFINES = ['LUASOCKET_API="__declspec(dllexport)"'])
+env.Append(CPPPATH = ['#/lua/'])
+env.Append(LIBS = ['alua'])
+
+if dev.is_win32():
+	to_remove = 'usocket.c'
+else:
+	to_remove = 'wsocket.c'
+for i, source in enumerate(sources):
+	if source.find(to_remove) != -1:
+		del sources[i]
+
+ret = env.SharedLibrary(target, sources)
+
+built_lib = dev.get_target(source_path, 'core' + env['SHLIBSUFFIX'], in_bin = False)
+target_lib = dev.get_target(source_path, 'socket/core' + env['SHLIBSUFFIX'], in_bin = True)
+
+env.Depends(target_lib, ret)
+env.Command(target_lib, built_lib, Move('$TARGET', '$SOURCE'))
+
+Return('ret')

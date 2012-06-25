@@ -1,0 +1,6 @@
+Import('dev source_path')
+
+ret = [dev.build('mime/'), dev.build('socket/'),
+		Execute(Copy(Dir(dev.get_target(source_path, 'lua')), Dir('lua/')))]
+
+Return('ret')

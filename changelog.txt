@@ -1,4 +1,5 @@
 * Add Lua FileSystem
+* Add Lua Socket
 
 -- 2.8.1 2012-05-30 --
 * [L#830841] Python plugin api signal fix (thanks Andy Chmilenko)
