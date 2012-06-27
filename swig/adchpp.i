@@ -628,8 +628,8 @@ private:
 %template(SignalEI) Signal<void (Entity&, int)>;
 %template(SignalTraitsEI) SignalTraits<void (Entity&, int)>;
 
-%template(SignalERS) Signal<void (Entity&, adchpp::Util::Reason, const std::string &)>;
-%template(SignalTraitsERS) SignalTraits<void (Entity&, adchpp::Util::Reason, const std::string &)>;
+%template(SignalERS) Signal<void (Entity&, Util::Reason, const std::string &)>;
+%template(SignalTraitsERS) SignalTraits<void (Entity&, Util::Reason, const std::string &)>;
 
 %template(SignalESB) Signal<void (Entity&, const StringList&, bool&)>;
 %template(SignalTraitsESB) SignalTraits<void (Entity&, const StringList&, bool&)>;
