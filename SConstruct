@@ -60,7 +60,8 @@ msvc_defs = {
 }
 
 gcc_defs = {
-	'common' : ['_REENTRANT'],
+	# _BSD_SOURCE is for some int types in LuaSocket on Linux.
+	'common' : ['_REENTRANT', '_BSD_SOURCE'],
 	'debug' : ['_DEBUG'],
 	'release' : ['NDEBUG']
 }
