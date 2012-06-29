@@ -33,6 +33,12 @@ public:
 		res[2]=_ULL(0xF096A5B4C3B2E187);
 	}
 
+	TigerHash(uint64_t pos, uint64_t initial_res[3]) : pos(pos) {
+		res[0] = initial_res[0];
+		res[1] = initial_res[1];
+		res[2] = initial_res[2];
+	}
+
 	~TigerHash() { }
 
 	/** Calculates the Tiger hash of the data. */

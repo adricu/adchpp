@@ -26,6 +26,7 @@
 #include "Hub.h"
 #include "Bot.h"
 #include "TimeUtil.h"
+#include "TigerHash.h"
 
 #include "forward.h"
 
@@ -118,6 +119,14 @@ public:
 	 * Verify password
 	 */
 	ADCHPP_DLL bool verifyPassword(Entity& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
+	bool verifyPassword(Entity& c, const std::string& password, const ByteVector& salt,
+			    const std::string& suppliedHash, TigerHash&& tiger);
+
+	/**
+	 * Verify hashed password; based on http://www.dcbase.org/forums/viewtopic.php?p=2861#p2861
+	 */
+	ADCHPP_DLL bool verifyHashedPassword(Entity& c, const ByteVector& hashedPassword, int64_t hashedPasswordLen,
+					     const ByteVector& salt, const std::string& suppliedHash);
 
 	/**
 	 * Verify that IP is correct and replace any zero addresses.

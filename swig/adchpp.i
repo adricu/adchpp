@@ -701,6 +701,8 @@ public:
 	bool verifyINF(Entity& c, AdcCommand& cmd) throw();
 	bool verifyNick(Entity& c, const AdcCommand& cmd) throw();
 	bool verifyPassword(Entity& c, const std::string& password, const ByteVector& salt, const std::string& suppliedHash);
+	bool verifyHashedPassword(Entity& c, const ByteVector& hashedPassword, int64_t hashedPasswordLen,
+				  const ByteVector& salt, const std::string& suppliedHash) throw();
 	bool verifyIp(Client& c, AdcCommand& cmd) throw();
 	bool verifyCID(Entity& c, AdcCommand& cmd) throw();
 	bool verifyOverflow(Entity& c);
