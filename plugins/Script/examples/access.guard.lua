@@ -72,7 +72,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.48"
+guardrev = "1.0.49"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -1885,7 +1885,7 @@ end
 
 local function onCON(c) -- Stats and limit verification for connects and building entitys tables
 
-	if li_settings.li_limitstats.value >= 0 and get_level(c) <= fl_settings.fl_level.value then
+	if li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value then
 		local countip = get_sameip(c)
 		if countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
 			local stat = "max same IP"
@@ -2123,7 +2123,7 @@ local function onSUP(c, cmd) -- Stats and rules verification for support strings
 
 	if li_settings.li_limitstats.value >= 0 then
 		local blom = c:hasSupport(adchpp.AdcCommand_toFourCC("BLO0")) or c:hasSupport(adchpp.AdcCommand_toFourCC("BLOM")) or c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers from this rule
-		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not blom then
+		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and get_level(c) <= li_settings.li_level.value and not blom then
 			local ip = c:getIp()
 			local stat = "Support BLOM filter forced"
 			local str = "This hub requires that your client supports the BLOM (TTH search filtering) extension !"
@@ -2271,15 +2271,12 @@ local function onSTA(c, cmd) -- Stats and rules verification for status strings
 end
 
 local function onSCH(c, cmd) -- Stats and rules verification for search strings
-	if get_level(c) > fl_settings.fl_level.value then
-		return true
-	end
 	
-	local NATT, SEGA, TTH, chars
-	if li_settings.li_limitstats.value >= 0 then
-		local cid = c:getCID():toBase32()
-		local params = cmd:getParameters()
-		local params_size = params:size()
+	local NATT, SEGA, TTH, chars, cid , params, params_size
+	if (fl_settings.fl_commandstats.value >= 0 or get_level(c) <= fl_settings.fl_level.value) or (li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value) then
+		cid = c:getCID():toBase32()
+		params = cmd:getParameters()
+		params_size = params:size()
 		if #cmd:getParam("TR", 0) > 0 then
 			TTH = true
 		end
@@ -2299,6 +2296,9 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 			end
 			chars = #table.concat(vars, ' ')
 		end
+	end
+
+	if li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value then
 		if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
 			local stat = "Max Search parameters limit"
 			local msg = "Your search contains too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
@@ -2364,7 +2364,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 
-	if fl_settings.fl_commandstats.value < 0 then
+	if fl_settings.fl_commandstats.value < 0 or get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2492,11 +2492,8 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 end
 
 local function onMSG(c, cmd) -- Stats and rules verification for messages strings
-	if get_level(c) > fl_settings.fl_level.value then
-		return true
-	end
 
-	if li_settings.li_limitstats.value >= 0 then
+	if li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value then
 		if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
 			local cid = c:getCID():toBase32()
 			local stat = "Max Message length limit"
@@ -2522,7 +2519,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 		end
 	end
 
-	if fl_settings.fl_commandstats.value >= 0 then
+	if fl_settings.fl_commandstats.value >= 0 and get_level(c) <= fl_settings.fl_level.value then
 		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdmsg_rate.value > 0 then
 			local cid = c:getCID():toBase32()
 			local stat = "MSG command"
@@ -2573,11 +2570,8 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		end
 	end
 
-	if get_level(c) > fl_settings.fl_level.value then
-		return true
-	end
 
-	if fl_settings.fl_commandstats.value >= 0 then
+	if fl_settings.fl_commandstats.value >= 0 and get_level(c) <= fl_settings.fl_level.value then
 		local cid, ni
 		if c:getState() == adchpp.Entity_STATE_NORMAL then 
 			cid = c:getCID():toBase32()
@@ -2613,7 +2607,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return true
 	end
 
-	if li_settings.li_limitstats.value < 0 then
+	if li_settings.li_limitstats.value < 0 or get_level(c) > li_settings.li_level.value then
 		return true
 	end
 
@@ -3319,7 +3313,7 @@ fl_settings.fl_maxrate = {
 fl_settings.fl_level = {
 	alias = { verifylevel = true },
 
-	help = "all users with level greater than this will be excluded from the flood and limit rules, -1 = disabled",
+	help = "all users with level greater than this will be excluded from the flood rules, -1 = disabled",
 
 	value = access.settings.oplevel.value - 1
 }
@@ -4032,6 +4026,14 @@ li_settings.li_maxcount = {
 	value = 0
 }
 
+li_settings.li_level = {
+	alias = { limitlevel = true },
+
+	help = "all users with level greater than this will be excluded from the limit rules, -1 = disabled",
+
+	value = access.settings.oplevel.value - 1
+}
+
 li_settings.li_minlevel = {
 	alias = { limitminlevel = true },
 
@@ -4433,7 +4435,7 @@ commands.cfgfl = {
 	protected = is_admin,
 
 	user_command = {
-		name = "Guard management" .. autil.ucmd_sep .. "Hub Flood protection" .. autil.ucmd_sep .. "Change a Flood setting",
+		name = "Guard management" .. autil.ucmd_sep .. "Hub Flood Protection" .. autil.ucmd_sep .. "Change a Flood setting",
 		params = {
 			'', -- will be set by gen_cfgfl_list
 			autil.ucmd_line("New value for the setting")
@@ -4931,7 +4933,7 @@ commands.listlimstats = {
 		str = "\n\nDefault settings for all limits:\tMaximum Rate: " .. li_settings.li_maxrate.value .. " /h"
 		str = str .. "\t\t\tMaximum Count: " .. li_settings.li_maxcount.value
 		str = str .. "\t\tLimit Log Enabled: " .. li_settings.li_limitstats.value .. "\n\n"
-		str = str .. "\t\t\t\tMaximum Level: " .. fl_settings.fl_level.value
+		str = str .. "\t\t\t\tMaximum Level: " .. li_settings.li_level.value
 		str = str .. "\t\t\tExpire Time: " .. li_settings.li_exptime.value
 		str = str .. "\t\tFor help use: +help cfgli"
 		str = str .. "\n\nSharing (*) Limits Settings:\tMinimum Level: " .. li_settings.li_minlevel.value
@@ -5125,7 +5127,7 @@ commands.showkicklog = {
 
 	protected = is_stats,
 
-	user_command = { name = "Guard management" .. autil.ucmd_sep .. "Action logs" .. autil.ucmd_sep .. "Show Kick log" }
+	user_command = { name = "Guard management" .. autil.ucmd_sep .. "Action Logs" .. autil.ucmd_sep .. "Show Kick log" }
 }
 
 commands.showtmpbanlog = {
