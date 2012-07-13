@@ -151,7 +151,7 @@ local function failover_change()
 	cm:sendToAll(adchpp.AdcCommand(adchpp.AdcCommand_CMD_INF, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID):addParam("FO", failover):getBuffer())
 end
 
-local function validate_ni(new)
+function validate_ni(new)
 	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
 		if char <= 32 then
 			return "the name can't contain any space nor new line"
@@ -159,7 +159,7 @@ local function validate_ni(new)
 	end
 end
 
-local function validate_de(new)
+function validate_de(new)
 	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
 		if char < 32 then
 			return "the description can't contain any new line nor tabulation"

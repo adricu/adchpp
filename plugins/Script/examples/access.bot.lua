@@ -43,7 +43,7 @@ access.add_setting('botname', {
 
 	value = "Bot",
 
-	validate = validate_ni
+	validate = access.validate_ni
 })
 
 access.add_setting('botdescription', {
@@ -60,7 +60,7 @@ access.add_setting('botdescription', {
 
 	value = "",
 
-	validate = validate_de
+	validate = access.validate_de
 })
 
 access.add_setting('botemail', {
