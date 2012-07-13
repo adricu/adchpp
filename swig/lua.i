@@ -144,7 +144,7 @@ public:
         lua_pop(L, 1);
 	}
 
-	void operator()(adchpp::Entity& c, Util::Reason reason, const std::string& info) {
+	void operator()(adchpp::Entity& c, DCReason reason, const std::string& info) {
 		pushFunction();
 
 		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
@@ -260,7 +260,7 @@ uint32_t, const uint32_t&
 	$1 = LuaFunction(L);
 }
 
-%typemap(in) std::function<void (adchpp::Entity&, adchpp::Util::Reason, const std::string&) > {
+%typemap(in) std::function<void (adchpp::Entity&, DCReason, const std::string&) > {
 	$1 = LuaFunction(L);
 }
 

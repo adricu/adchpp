@@ -284,6 +284,11 @@ public:
 
 };
 
+// SWIG doesn't like nested classes
+%{
+typedef Util::Reason DCReason;
+%}
+
 class CID {
 public:
 	enum { SIZE = 192 / 8 };
@@ -574,7 +579,7 @@ public:
 	size_t getQueuedBytes() throw();
 
 	/** @param reason The statistic to update */
-	void disconnect(Util::Reason reason, const std::string &) throw();
+	void disconnect(DCReason reason, const std::string &) throw();
 	const std::string& getIp() const throw();
 
 	/**
@@ -585,7 +590,7 @@ public:
 	void setDataMode(const DataFunction& handler, int64_t aBytes);
 
 	%extend{
-		void disconnect(Util::Reason reason) {
+		void disconnect(DCReason reason) {
 			self->disconnect(reason, Util::emptyString);
 		}
 	}
@@ -598,9 +603,9 @@ public:
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
 	
-	virtual void disconnect(Util::Reason reason, const std::string &);
+	virtual void disconnect(DCReason reason, const std::string &);
 	%extend{
-		void disconnect(Util::Reason reason) {
+		void disconnect(DCReason reason) {
 			self->disconnect(reason, Util::emptyString);
 		}
 	}
@@ -628,8 +633,8 @@ private:
 %template(SignalEI) Signal<void (Entity&, int)>;
 %template(SignalTraitsEI) SignalTraits<void (Entity&, int)>;
 
-%template(SignalERS) Signal<void (Entity&, Util::Reason, const std::string &)>;
-%template(SignalTraitsERS) SignalTraits<void (Entity&, Util::Reason, const std::string &)>;
+%template(SignalERS) Signal<void (Entity&, DCReason, const std::string &)>;
+%template(SignalTraitsERS) SignalTraits<void (Entity&, DCReason, const std::string &)>;
 
 %template(SignalESB) Signal<void (Entity&, const StringList&, bool&)>;
 %template(SignalTraitsESB) SignalTraits<void (Entity&, const StringList&, bool&)>;
@@ -715,7 +720,7 @@ public:
 	typedef SignalTraits<void (Entity&, const std::string&)> SignalBadLine;
 	typedef SignalTraits<void (Entity&, const AdcCommand&, bool&)> SignalSend;
 	typedef SignalTraits<void (Entity&, int)> SignalState;
-	typedef SignalTraits<void (Entity&, Util::Reason, const std::string &)> SignalDisconnected;
+	typedef SignalTraits<void (Entity&, DCReason, const std::string &)> SignalDisconnected;
 
 	SignalConnected::Signal& signalConnected() { return signalConnected_; }
 	SignalReady::Signal& signalReady() { return signalReady_; }
