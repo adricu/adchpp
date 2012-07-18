@@ -115,7 +115,7 @@ verify_info
 -- * change: function called when the value has changed.
 -- * help: information about this setting, displayed in +help cfg.
 -- * value: the value of this setting, either a number or a string. [compulsory]
--- * validate: function(string) called before changing the value; may return an error string.
+-- * validate: function(table{value=string}) called before changing the value; may return an error string.
 settings = {}
 
 -- List of +commands handled by the main script. Possible fields each command can contain:
@@ -152,23 +152,33 @@ local function failover_change()
 end
 
 function validate_ni(new)
-	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
-		if char <= 32 then
-			return "the name can't contain any space nor new line"
+	local chars = { string.byte(new.value, 1, #new.value) }
+	new.value = ''
+	for _, char in base.ipairs(chars) do
+		if char < 32 then
+			new.value = new.value .. '_'
+		elseif char == 32 then
+			new.value = new.value .. '\194\160' -- non-breaking space
+		else
+			new.value = new.value .. string.char(char)
 		end
 	end
 end
 
 function validate_de(new)
-	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+	local chars = { string.byte(new.value, 1, #new.value) }
+	new.value = ''
+	for _, char in base.ipairs(chars) do
 		if char < 32 then
-			return "the description can't contain any new line nor tabulation"
+			new.value = new.value .. '_'
+		else
+			new.value = new.value .. string.char(char)
 		end
 	end
 end
 
 local function validate_fo(new)
-	for _, char in base.ipairs({ string.byte(new, 1, #new) }) do
+	for _, char in base.ipairs({ string.byte(new.value, 1, #new.value) }) do
 		if char < 33 then
 			return "the failover addresses can't contain any new line, tabulation nor spaces"
 		end
@@ -1062,17 +1072,20 @@ commands.cfg = {
 			value = num
 		end
 
-		if value == old then
-			autil.reply(c, "The value is the same as before, no change done")
-			return
-		end
-
 		if setting.validate then
-			local err = setting.validate(value)
+			-- use a table to pass the new string by reference, so it can be modified
+			local ref_holder = { value = value }
+			local err = setting.validate(ref_holder)
 			if err then
 				autil.reply(c, "The new value \"" .. value .. "\" is invalid, no change done (" .. err .. ")")
 				return
 			end
+			value = ref_holder.value
+		end
+
+		if value == old then
+			autil.reply(c, "The value is the same as before, no change done")
+			return
 		end
 
 		if setting.level and value > get_level(c) then
