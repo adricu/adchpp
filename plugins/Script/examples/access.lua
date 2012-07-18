@@ -152,29 +152,12 @@ local function failover_change()
 end
 
 function validate_ni(new)
-	local chars = { string.byte(new.value, 1, #new.value) }
-	new.value = ''
-	for _, char in base.ipairs(chars) do
-		if char < 32 then
-			new.value = new.value .. '_'
-		elseif char == 32 then
-			new.value = new.value .. '\194\160' -- non-breaking space
-		else
-			new.value = new.value .. string.char(char)
-		end
-	end
+	new.value = string.gsub(new.value, '[\001-\031]', '_')
+	new.value = string.gsub(new.value, ' ', '\194\160') -- non-breaking space
 end
 
 function validate_de(new)
-	local chars = { string.byte(new.value, 1, #new.value) }
-	new.value = ''
-	for _, char in base.ipairs(chars) do
-		if char < 32 then
-			new.value = new.value .. '_'
-		else
-			new.value = new.value .. string.char(char)
-		end
-	end
+	new.value = string.gsub(new.value, '[\001-\031]', '_')
 end
 
 local function validate_fo(new)

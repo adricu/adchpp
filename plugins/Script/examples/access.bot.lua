@@ -23,7 +23,7 @@ access.add_setting('botcid', {
 	value = adchpp.CID_generate():toBase32(),
 
 	validate = function(new)
-		if adchpp.CID(new):isZero() then
+		if adchpp.CID(new.value):isZero() then
 			return "the CID must be a valid 39-byte base32 representation"
 		end
 	end
