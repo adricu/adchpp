@@ -250,7 +250,9 @@ settings.menuname = {
 
 	help = "title of the main user command menu sent to clients",
 
-	value = "ADCH++"
+	value = "ADCH++",
+
+	validate = validate_ni
 }
 
 settings.oplevel = {
