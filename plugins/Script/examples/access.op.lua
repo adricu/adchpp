@@ -12,6 +12,7 @@ local string = base.require("string")
 local commands = access.commands
 local settings = access.settings
 local get_user = access.get_user
+local get_user_c = access.get_user_c
 local is_op = access.is_op
 
 local cm = adchpp.getCM()
@@ -91,6 +92,8 @@ commands.mass = {
 		end
 		if string.len(level) > 0 then
 			level = base.tonumber(level)
+		else
+			level = 0
 		end
 
 		local entities = cm:getEntities()
@@ -110,7 +113,7 @@ commands.mass = {
 		for i = 0, size - 1 do
 			local other = entities[i]:asClient()
 			if other then
-				local ok = string.len(level) == 0 or level <= 0
+				local ok = level <= 0
 				if not ok then
 					local user = get_user_c(other)
 					ok = user.level >= level
@@ -127,7 +130,7 @@ commands.mass = {
 		autil.reply(c, "Message sent to " .. count .. " users")
 	end,
 
-	help = "message [min-level]",
+	help = "message [min-level] , no min-level means send to everyone",
 
 	protected = is_op,
 
