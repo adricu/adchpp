@@ -252,7 +252,7 @@ settings.menuname = {
 
 	value = "ADCH++",
 
-	validate = validate_ni
+	validate = validate_de
 }
 
 settings.oplevel = {

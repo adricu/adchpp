@@ -24,18 +24,10 @@ access.add_setting('botcid', {
 	value = adchpp.CID_generate():toBase32(),
 
 	validate = function(new)
-		local i = 0
-		if #new.value == 39 then
-			for _, char in base.ipairs({ string.byte(new.value, 1, #new.value) }) do
-				if string.match(string.char(char), "[A-Z2-7]") then
-					i = i + 1
-				end
-			end
-		end
-		if i == 0 or i < 39 then
+		if adchpp.CID(new.value):toBase32() ~= new.value then
 			return "the CID must be a valid 39-byte base32 representation"
 		end
-end
+	end
 })
 
 access.add_setting('botname', {
