@@ -252,7 +252,7 @@ settings.menuname = {
 
 	value = "ADCH++",
 
-	validate = validate_de
+	validate = validate_ni -- for compatibility with scripts that use the hub name as their uc menu
 }
 
 settings.oplevel = {
