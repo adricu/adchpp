@@ -130,7 +130,7 @@ commands.mass = {
 		autil.reply(c, "Message sent to " .. count .. " users")
 	end,
 
-	help = "message [min-level] , no min-level means send to everyone",
+	help = "message [min-level] -no min-level means send to everyone",
 
 	protected = is_op,
 
@@ -152,9 +152,18 @@ commands.redirect = {
 			return
 		end
 
-		local nick, address = parameters:match("^(%S+) (.+)")
-		if not nick or not address then
-			autil.reply(c, "You need to supply a nick and an address")
+                local nick_pos, _, nick = parameters:find("^(%S+)")
+
+		if nick_pos then
+			parameters = parameters:sub(nick_pos + 2)
+			if #parameters <= 0 then
+				autil.reply(c, "Bad arguments")
+				return
+			end
+		end
+
+		if not nick then
+			autil.reply(c, "You need to supply a nick")
 			return
 		end
 
@@ -167,6 +176,12 @@ commands.redirect = {
 			return
 		end
 
+		local address, reason = parameters:match("<([^>]+)> ?(.*)")
+		if not address then
+			autil.reply(c, "You need to supply a redirect address (within '<' and '>' brackets)")
+			return
+		end
+
 		local victim_cid = victim:getCID():toBase32()
 		local victim_user = get_user(victim_cid, 0)
 		if level <= victim_user.level then
@@ -174,23 +189,35 @@ commands.redirect = {
 			return
 		end
 
-		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd) cmd:addParam("RD" .. address) end)
+		local text = "You have been redirected"
+		if string.len(reason) > 0 then
+			text = text .. " (reason: " .. reason .. ")"
+		end
+
+		autil.dump(victim, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
+			cmd:addParam("ID" .. adchpp.AdcCommand_fromSID(c:getSID()))
+			:addParam("MS" .. text)
+			cmd:addParam("RD" .. address)
+		end)
+
 		autil.reply(c, "\"" .. nick .. "\" (CID: " .. victim_cid .. ") has been redirected to \"" .. address .. "\"")
 	end,
 
-	help = "nick address",
+	help = "nick <address> [reason] - redirects the user to the given address (must be within '<' and '>' brackets); reason is optional ", 
 
 	protected = is_op,
 
 	user_command = {
 		hub_params = {
 			autil.ucmd_line("Nick"),
-			autil.ucmd_line("Address")
+			"<" .. autil.ucmd_line("Redirect Address") .. ">",
+			autil.ucmd_line("Reason (facultative)")
 		},
 		name = "Hub management" .. autil.ucmd_sep .. "Punish" .. autil.ucmd_sep .. "Redirect",
 		user_params = {
 			"%[userNI]",
-			autil.ucmd_line("Address")
+			"<" .. autil.ucmd_line("Redirect Address") .. ">",
+			autil.ucmd_line("Reason (facultative)")
 		}
 	}
 }
