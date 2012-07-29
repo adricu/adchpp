@@ -58,6 +58,7 @@ command_contexts = {
 	[adchpp.AdcCommand_CMD_STA] = context_hubdirect,
 	[adchpp.AdcCommand_CMD_SUP] = context_hub,
 	[adchpp.AdcCommand_CMD_SID] = context_hub,
+	[adchpp.AdcCommand_CMD_CMD] = context_hub,
 	[adchpp.AdcCommand_CMD_INF] = context_bcast,
 	[adchpp.AdcCommand_CMD_MSG] = context_send,
 	[adchpp.AdcCommand_CMD_SCH] = context_send,
