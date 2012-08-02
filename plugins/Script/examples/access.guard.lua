@@ -72,7 +72,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.49"
+guardrev = "1.0.50"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -152,6 +152,7 @@ limitstats.maxhubslotratios = {}
 limitstats.maxhubcounts = {}
 limitstats.suadcs = {}
 limitstats.sunatts = {}
+limitstats.susegas = {}
 limitstats.subloms = {}
 limitstats.maxsameips = {}
 
@@ -358,6 +359,7 @@ local function load_limitstats()
 	limitstats.maxhubcounts = {}
 	limitstats.suadcs = {}
 	limitstats.sunatts = {}
+	limitstats.susegas = {}
 	limitstats.subloms = {}
 	limitstats.maxsameips = {}
 
@@ -420,6 +422,9 @@ local function load_limitstats()
 	end
 	if not limitstats.sunatts then
 		limitstats.sunatts = {}
+	end
+	if not limitstats.susegas then
+		limitstats.susegas = {}
 	end
 	if not limitstats.subloms then
 		limitstats.subloms = {}
@@ -1000,6 +1005,10 @@ local function data_info_string_entity_hist(info)
 		end
 	end
 
+	if info.su then
+		str = str .. "\n\tSuported: " .. info.su
+	end
+
 	if info.updated then
 		str = str .. "\n\tHist Created: " .. data_updated_string(info)
 	end
@@ -1537,7 +1546,7 @@ local function make_entity(c, days)
 end
 
 local function make_entity_hist(c, data, days)
-	local strparam = { "ip", "ni", "ap", "ve", "i4", "i6", "level", "regby", "logins", "join", "leave", "timeon", "ltimeon", "started" } -- string parameters we want in hist
+	local strparam = { "ip", "ni", "ap", "ve", "i4", "i6", "su", "level", "regby", "logins", "join", "leave", "timeon", "ltimeon", "started" } -- string parameters we want in hist
 
 	local hist = { cid = c:getCID():toBase32() }
 
@@ -1635,7 +1644,7 @@ local function update_entity(c, data, days ,cmd)
 	local strparam = { "ni", "ap", "ve", "i4", "i6", "su" } -- string parameters we want updated
 	local intparam = { "ss", "sf", "sl", "fs", "us", "ds", "hn", "hr", "ho" } -- integer parameters we want updated
 
-	if cmd:hasParam("NI", 0) or cmd:hasParam("AP", 0) or cmd:hasParam("VE", 0) or cmd:hasParam("I4", 0) or cmd:hasParam("I6", 0) then
+	if cmd:hasParam("NI", 0) or cmd:hasParam("AP", 0) or cmd:hasParam("VE", 0) or cmd:hasParam("I4", 0) or cmd:hasParam("I6", 0) or cmd:hasParam("SU", 0)  then
 		local hist = make_entity_hist(c, data, days)
 		table.insert(entitystats.hist_cids, hist) -- inserts { hist } at the end of table hist_cids
 		if data.changes then
@@ -2673,6 +2682,31 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 			end
 		else
 			limitstats.sunatts[cid] = make_data(c, cmd, msg, type, minutes)
+		end
+		dump_redirected(c, str)
+		return false
+	end
+	local sega = string.find(su, 'SEG0') or string.find(su, 'SEGA')
+	if li_settings.susega.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not sega then
+		local stat = "Support SEGA forced"
+		local str = "This hub requires the SEGA option enabled, enable it or use a client that supports SEGA grouped extention searching !"
+		local type = "lim"
+		local factor = 60
+		local maxcount = 0
+		maxrate = li_settings.susega_rate.value
+		local minutes = li_settings.susega_exp.value
+		if limitstats.susegas[cid] then
+			for victim_cid, data in base.pairs(limitstats.susegas) do
+				if cid == victim_cid then
+					limitstats.susegas[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
+					if limitstats.susegas[cid] and limitstats.susegas[cid].warning > 0 then
+						dump_redirected(c, str)
+						return false
+					end
+				end
+			end
+		else
+			limitstats.susegas[cid] = make_data(c, cmd, msg, type, minutes)
 		end
 		dump_redirected(c, str)
 		return false
@@ -3953,6 +3987,22 @@ li_settings.sunatt_exp = {
 	value = 0
 }
 
+li_settings.susega_rate = {
+	alias = { supportsega_rate = true },
+
+	help = "maximum rate in counts / hour that a user can try this, 0 = default, -1 = disabled",
+
+	value = 0
+}
+
+li_settings.susega_exp = {
+	alias = { supportsega_exp = true },
+
+	help = "minutes before the support sega attempts are removed, 0 = default",
+
+	value = 0
+}
+
 li_settings.sublom_rate = {
 	alias = { supportblom_rate = true },
 
@@ -4242,6 +4292,18 @@ li_settings.sunatt = {
 	change = recheck_info,
 
 	help = "disallow passive users that have disabled NAT-T (passive-passive) support for file transfers, 0 = disabled",
+
+	announce = true,
+
+	value = 0
+}
+
+li_settings.susega = {
+	alias = { supportsega = true },
+
+	change = recheck_info,
+
+	help = "disallow clients that don't have SEGA (Grouped search extention) support, 0 = disabled",
 
 	announce = true,
 
@@ -5051,12 +5113,20 @@ commands.listlimstats = {
 			str = str .. "\n\tCID: " .. sunatts .. data_info_string_cid(info)
 		end
 
+		str = str .. "\n\nSupport SEGA Forced:"
+		str = str .. "\t\tMaximum Rate: " .. li_settings.susega_rate.value .. " / h"
+		str = str .. "\t\t\tExpire Time: " .. li_settings.susega_exp.value
+		str = str .. "\t\t\tValue: " .. li_settings.susega.value .. "\n"
+		for susegas, info in base.pairs(limitstats.susegas) do
+			str = str .. "\n\tCID: " .. susegas .. data_info_string_cid(info)
+		end
+
 		str = str .. "\n\nSupport BLOM Forced:"
 		str = str .. "\t\tMaximum Rate: " .. li_settings.sublom_rate.value .. " / h"
 		str = str .. "\t\t\tExpire Time: " .. li_settings.sublom_exp.value
 		str = str .. "\t\t\tValue: " .. li_settings.sublom.value .. "\n"
 		for subloms, info in base.pairs(limitstats.subloms) do
-			str = str .. "\n\tCID: " .. subloms .. data_info_string_ip(info)
+			str = str .. "\n\tIP: " .. subloms .. data_info_string_ip(info)
 		end
 
 		str = str .. "\n\nMessage limits:\n\nMax Message Length:"
