@@ -119,6 +119,23 @@ public:
 		}
 		lua_pop(L, 1);
 	}
+	
+	void operator()(adchpp::Entity& c, const adchpp::AdcCommand& cmd, bool& i) {
+		pushFunction();
+
+		SWIG_NewPointerObj(L, &c, SWIGTYPE_p_adchpp__Entity, 0);
+		SWIG_NewPointerObj(L, &cmd, SWIGTYPE_p_adchpp__AdcCommand, 0);
+		lua_pushboolean(L, i);
+
+		if(docall(3, 1) != 0) {
+			return;
+		}
+
+		if(lua_isboolean(L, -1)) {
+			i &= lua_toboolean(L, -1) == 1;
+		}
+		lua_pop(L, 1);
+	}
 
 	void operator()(const adchpp::SimpleXML& s) {
 		pushFunction();
@@ -241,6 +258,10 @@ uint32_t, const uint32_t&
 }
 
 %typemap(in) std::function<void (adchpp::Entity &, adchpp::AdcCommand &, bool&) > {
+	$1 = LuaFunction(L);
+}
+
+%typemap(in) std::function<void (adchpp::Entity &, const adchpp::AdcCommand &, bool&) > {
 	$1 = LuaFunction(L);
 }
 
