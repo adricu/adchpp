@@ -175,6 +175,15 @@ public:
 		}
 	}
 
+	void setBufferSize(size_t newSize);
+	size_t getBufferSize() const;
+
+	void setMaxBufferSize(size_t newSize);
+	size_t getMaxBufferSize() const;
+
+	void setOverflowTimeout(size_t timeout);
+	size_t getOverflowTimeout() const;
+
 	void setServers(const ServerInfoList& servers_);
 
 	SocketStats &getStats();
@@ -729,6 +738,12 @@ public:
 	SignalSend::Signal& signalSend() { return signalSend_; }
 	SignalState::Signal& signalState() { return signalState_; }
 	SignalDisconnected::Signal& signalDisconnected() { return signalDisconnected_; }
+	
+	void setMaxCommandSize(size_t newSize);
+	size_t getMaxCommandSize() const;
+
+	void setLogTimeout(size_t millis);
+	size_t getLogTimeout() const;
 
 	//virtual ~ClientManager() throw() { }
 };
