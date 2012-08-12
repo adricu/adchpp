@@ -587,8 +587,6 @@ public:
 
 	size_t getQueuedBytes() throw();
 
-	/** @param reason The statistic to update */
-	void disconnect(DCReason reason, const std::string &) throw();
 	const std::string& getIp() const throw();
 
 	/**
@@ -599,8 +597,11 @@ public:
 	void setDataMode(const DataFunction& handler, int64_t aBytes);
 
 	%extend{
-		void disconnect(DCReason reason) {
-			self->disconnect(reason, Util::emptyString);
+		void disconnect(int reason) {
+			self->disconnect(static_cast<DCReason>(reason), Util::emptyString);
+		}
+		void disconnect(int reason, const std::string& info) {
+			self->disconnect(static_cast<DCReason>(reason), info);
 		}
 	}
 };
@@ -611,11 +612,13 @@ public:
 
 	using Entity::send;
 	virtual void send(const BufferPtr& cmd);
-	
-	virtual void disconnect(DCReason reason, const std::string &);
+
 	%extend{
-		void disconnect(DCReason reason) {
-			self->disconnect(reason, Util::emptyString);
+		void disconnect(int reason) {
+			self->disconnect(static_cast<DCReason>(reason), Util::emptyString);
+		}
+		void disconnect(int reason, const std::string& info) {
+			self->disconnect(static_cast<DCReason>(reason), info);
 		}
 	}
 };
