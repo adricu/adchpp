@@ -194,10 +194,11 @@ def buildPHPModule():
 if 'ruby' in dev.env['langs']:
 	buildRbModule()
 
-if 'python' in dev.env['langs'] and dev.env['arch'] == 'x86':
-	buildPyModule()
-else:
-	print 'Skipping Python module because ARCH != x86'
+if 'python' in dev.env['langs']:
+	if   dev.env['PLATFORM'] == 'win32' and dev.env['arch'] != 'x86':
+		print 'Skipping Python module because build platform is Windows and ARCH != x86'
+	else:
+		buildPyModule()
 
 if 'lua' in dev.env['langs']:
 	buildLuaModule()
