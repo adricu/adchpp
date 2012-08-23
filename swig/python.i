@@ -55,7 +55,7 @@
 %typemap(in) std::function<void (adchpp::Entity&, const adchpp::StringList&, bool&)> {
 	$1 = PyHandle($input, false);
 }
-%typemap(in) std::function<void (adchpp::Entity&, adchpp::Util::Reason, const std::string&)> {
+%typemap(in) std::function<void (adchpp::Entity&, DCReason, const std::string&)> {
 	$1 = PyHandle($input, false);
 }
 %typemap(in) std::function<void (adchpp::Bot&, const adchpp::BufferPtr&)> {
@@ -162,6 +162,9 @@
 }
 
 %runtime %{
+
+typedef Util::Reason DCReason;
+
 struct PyGIL {
 	PyGIL() { state = PyGILState_Ensure(); }
 	~PyGIL() { PyGILState_Release(state); }
@@ -220,7 +223,7 @@ struct PyHandle {
 
 	void operator()(adchpp::Entity& c, const adchpp::StringList& cmd, bool& i);
 	
-	void operator()(adchpp::Entity& c, adchpp::Util::Reason reason, const std::string& str);
+	void operator()(adchpp::Entity& c, DCReason reason, const std::string& str);
 	
 	void operator()(adchpp::Bot& c, const adchpp::BufferPtr& ptr);
 private:
@@ -359,7 +362,7 @@ private:
 		}
 	}
 	
-	void PyHandle::operator()(adchpp::Entity& c, adchpp::Util::Reason reason, const std::string& str) {
+	void PyHandle::operator()(adchpp::Entity& c, DCReason reason, const std::string& str) {
 		PyGIL gil;
 		PyHandle args(PyTuple_New(3), true);
 
