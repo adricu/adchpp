@@ -72,7 +72,7 @@ local level_stats = access.settings.oplevel.value
 local level_script = access.settings.oplevel.value
 
 -- Script version
-guardrev = "1.0.50"
+guardrev = "1.0.51"
 
 -- Local declaration for the timers and on_unload functions
 local clear_expired_commandstats_timer, save_commandstats_timer, save_commandstats
@@ -1172,7 +1172,7 @@ local function verify_maxkicks(c, cmd, update, msg, minutes)
 		local cid
 		if c:getState() == adchpp.Entity_STATE_NORMAL then 
 			cid = c:getCID():toBase32()
-		elseif cmd then
+		elseif cmd and c:getState() ~= adchpp.Entity_STATE_PROTOCOL then
 			cid = cmd:getParam("ID", 0)
 		end
 		local ip = c:getIp()
@@ -1202,7 +1202,7 @@ local function dump_kicked(c, cmd, update, msg)
 	local cid, count
 	if c:getState() == adchpp.Entity_STATE_NORMAL then
 		cid = c:getCID():toBase32()
-	elseif cmd then
+	elseif cmd and c:getState() ~= adchpp.Entity_STATE_PROTOCOL then
 		cid = cmd:getParam("ID", 0)
 	end
 	local ip = c:getIp()
@@ -2612,7 +2612,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 	-- TODO exclude pingers from certain verifications excluded DCHublistspinger for now
-	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) and c:getIp() == "108.175.166.22" then
+	if c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) and c:getIp() == "64.31.32.183" then
 		return true
 	end
 
@@ -2689,7 +2689,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	local sega = string.find(su, 'SEG0') or string.find(su, 'SEGA')
 	if li_settings.susega.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not sega then
 		local stat = "Support SEGA forced"
-		local str = "This hub requires the SEGA option enabled, enable it or use a client that supports SEGA grouped extention searching !"
+		local str = "This hub requires the SEGA option enabled, enable it or use a client that supports SEGA grouped extension searching !"
 		local type = "lim"
 		local factor = 60
 		local maxcount = 0
@@ -4303,7 +4303,7 @@ li_settings.susega = {
 
 	change = recheck_info,
 
-	help = "disallow clients that don't have SEGA (Grouped search extention) support, 0 = disabled",
+	help = "disallow clients that don't have SEGA (Grouped search extension) support, 0 = disabled",
 
 	announce = true,
 
