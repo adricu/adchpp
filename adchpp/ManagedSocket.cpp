@@ -223,10 +223,10 @@ void ManagedSocket::fail(Util::Reason reason, const std::string &info) throw() {
 	if(failedHandler) {
 		failedHandler(reason, info);
 
-		connectedHandler = 0;
-		readyHandler = 0;
-		dataHandler = 0;
-		failedHandler = 0;
+		connectedHandler = nullptr;
+		readyHandler = nullptr;
+		dataHandler = nullptr;
+		failedHandler = nullptr;
 	}
 }
 

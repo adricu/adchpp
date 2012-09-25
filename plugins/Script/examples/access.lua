@@ -1367,98 +1367,70 @@ commands.listregs = {
 	alias = { listreg = true, listregged = true, reggedusers = true, showreg = true, showregs = true, showregged = true },
 
 	command = function(c, parameters)
-		local user = get_user_c(c)
-		if user.level == 0 then
-			autil.reply(c, "Only registered users can use this command")
+		if not commands.listregs.protected(c) then
 			return
 		end
 
+		local user = get_user_c(c)
 		local param = string.lower(parameters)
 
 		local list = {}
-		if #param == 0 then
-			for _, v in base.ipairs(registered_users()) do
+		for _, v in base.ipairs(registered_users()) do
+			if v.level <= user.level and (#param == 0 or (v.nick and string.match(string.lower(v.nick), param, 1))) then
 				local fields = {}
-				if v.level <= user.level then
-					if v.nick then
-						table.insert(fields, "\tNick: " .. v.nick)
-					end
-					if settings.passinlist.value ~=0 and v.level < user.level and v.password then
-						table.insert(fields, "\n\tPassword: " .. v.password)
-					end
-					if v.cid then
-						table.insert(fields, "\n\tCID: " .. v.cid .. "  ")
-					end
-					if settings.passinlist.value ~=0 and v.level < user.level then
-						table.insert(fields, "Level: " .. v.level)
-					end
-
-					if v.regtime then
-						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago   ")
-					end
-					if v.regby then
-						table.insert(fields, "Regged By: " .. v.regby)
-					end
-					if v.lasttime then
-						table.insert(fields, "\n\tLast logon: " .. time_diff(v.lasttime) .. " ago")
-					end
-					if v.lastofftime then
-						table.insert(fields, "\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
-					end
-					table.insert(list, table.concat(fields, "\t\t"))
-				end
-			end
-			if table.getn(list) > 0 then
-				table.sort(list)
-				autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level) :\n\n" .. table.concat(list, "\n\n") .. "\n")
-			else
-				autil.reply(c, "There are no registered users with a level <= " .. user.level .. " (your level) :\n\n")
-			end
-		else
-			for _, v in base.ipairs(registered_users()) do
-				local fields = {}
-				if v.nick and string.match(string.lower(v.nick), param, 1) and v.level <= user.level then
+				if v.nick then
 					table.insert(fields, "\tNick: " .. v.nick)
-					if settings.passinlist.value ~=0 and v.level < user.level and v.password then
-						table.insert(fields, "\n\tPassword: " .. v.password)
-					end
-					if v.cid then
-						table.insert(fields, "\n\tCID: " .. v.cid .. "  ")
-					end
-					if settings.passinlist.value ~=0 and v.level < user.level then
-						table.insert(fields, "Level: " .. v.level)
-					end
-					if v.regtime then
-						table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago  ")
-					end
-					if v.regby then
-						table.insert(fields, "Regged By: " .. v.regby)
-					end
-					if v.lasttime then
-						table.insert(fields, "\n\tLast logon: " .. time_diff(v.lasttime) .. " ago")
-					end
-					if v.lastofftime then
-						table.insert(fields, "\tLast logoff: " .. time_diff(v.lastofftime) .. " ago")
-					end
-					table.insert(list, table.concat(fields, "\t\t"))
 				end
+				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
+					table.insert(fields, "\n\tPassword: " .. v.password)
+				end
+				if v.cid then
+					table.insert(fields, "\n\tCID: " .. v.cid)
+				end
+				if settings.passinlist.value ~=0 and v.level <= user.level then
+					table.insert(fields, "Level: " .. v.level)
+				end
+				if v.regtime then
+					table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
+				end
+				if v.regby then
+					table.insert(fields, "Regged by: " .. v.regby)
+				end
+				if v.lasttime then
+					table.insert(fields, "\n\tLast logon: " .. time_diff(v.lasttime) .. " ago")
+				end
+				if v.lastofftime then
+					table.insert(fields, "Last logoff: " .. time_diff(v.lastofftime) .. " ago")
+				end
+				table.insert(list, table.concat(fields, "\t\t"))
 			end
-			if table.getn(list) > 0 then
-				table.sort(list)
-				autil.reply(c, "Registered users with a level <= " .. user.level .. " (your level) and a nick containing ( " .. param .. " ) :\n\n" .. table.concat(list, "\n\n") .. "\n")
-			else
-				autil.reply(c, "There are no registered users with a level <= " .. user.level .. " (your level) and a nick containing ( " .. param .. " ) :\n\n")
-			end
+		end
+		local match_text
+		if #param == 0 then
+			match_text = ''
+		else
+			match_text = ' and a nick containing "' .. param .. '"'
+		end
+		if table.getn(list) > 0 then
+			table.sort(list)
+			autil.reply(c, 'Registered users with a level <= ' .. user.level .. ' (your level)' .. match_text .. ':\n\n' .. table.concat(list, '\n\n') .. '\n')
+		else
+			autil.reply(c, 'There are no registered users with a level <= ' .. user.level .. ' (your level)' .. match_text)
 		end
 	end,
 
-	help = "lists the hubs registered users, optional a nick searchstring parameter",
+	help = "[nick] - list registered users; if a nick is given, only list users that match against it",
 
-	protected = function(c) return not get_user_c(c).is_default end,
+	protected = is_op,
 
 	user_command = {
-		name = "List regs",
-		params = { autil.ucmd_line("Search string facultative; defaults to al regged users") }
+		hub_params = {
+			autil.ucmd_line("Nick (facultative; leave empty to list all regged users)")
+		},
+		name = "Hub management" .. autil.ucmd_sep .. "List regs",
+		user_params = {
+			"%[userNI]"
+		}
 	}
 }
 
