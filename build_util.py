@@ -75,12 +75,16 @@ class Dev:
 
 	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True,
 			precompiled_header = None, shared_precompiled_header = None):
+		build_path = self.get_build_path(source_path)
 		env = self.env.Clone()
-		env.VariantDir(self.get_build_path(source_path), '.', duplicate = 0)
+		env.VariantDir(build_path, '.', duplicate = 0)
 
 		sources = self.get_sources(source_path, source_glob)
 
 		if precompiled_header is not None or shared_precompiled_header is not None:
+			# TODO we work around the 2 problems described on
+			# <http://scons.tigris.org/issues/show_bug.cgi?id=2680> - remove once not needed
+
 			if shared_precompiled_header is None:
 				pch = precompiled_header
 			else:
@@ -91,16 +95,22 @@ class Dev:
 					# the PCH/GCH builder will take care of this one
 					del sources[i]
 
-			if env['CC'] == 'cl': # MSVC
+			if 'msvc' in env['TOOLS']:
 				env['PCHSTOP'] = pch + '.h'
-				env['PCH'] = env.PCH(self.get_target(source_path, pch + '.pch', False), pch + '.cpp')[0]
+				pch = env.PCH(build_path + pch + '.pch', pch + '.cpp')
+				env['PCH'] = pch[0]
+				env['ARFLAGS'] = env['ARFLAGS'] + ' ' + str(pch[1])
+				env['LINKFLAGS'] = env['LINKFLAGS'] + ' ' + str(pch[1])
 
 			elif 'gcc' in env['TOOLS']:
 				if shared_precompiled_header is None:
 					gch_tool = 'Gch'
 				else:
 					gch_tool = 'GchSh'
-				exec "env['" + gch_tool + "'] = env." + gch_tool + "(self.get_target(source_path, pch + '.gch', False), pch + '.h')[0]"
+				exec "env['" + gch_tool + "'] = env." + gch_tool + "(build_path + pch + '.h.gch', pch + '.h')[0]"
+
+				# little dance to add the pch object to include paths, while overriding the current directory
+				env['CXXCOM'] = env['CXXCOM'] + ' -include ' + env.Dir(build_path).abspath + '/' + pch + '.h'
 
 		return (env, self.get_target(source_path, name, in_bin), sources)
 
