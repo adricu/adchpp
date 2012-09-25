@@ -1492,9 +1492,7 @@ commands.regnick = {
 	alias = { reguser = true },
 
 	command = function(c, parameters)
-		local my_user = get_user_c(c)
-		if my_user.is_default then
-			autil.reply(c, "Only registered users may register others")
+		if not commands.regnick.protected(c) then
 			return
 		end
 
@@ -1511,6 +1509,8 @@ commands.regnick = {
 			autil.reply(c, "You need to supply a nick")
 			return
 		end
+
+		local my_user = get_user_c(c)
 
 		local other = cm:findByNick(nick)
 
@@ -1542,7 +1542,7 @@ commands.regnick = {
 		if #password == 0 then
 			-- un-reg
 			if not users.nicks[other_user.nick] then
-				autil.reply(c, "Usersname:  " .. nick .. "  is not a registered user")
+				autil.reply(c, '"' .. nick .. '"  is not a registered user')
 				return
 			end
 
@@ -1550,7 +1550,7 @@ commands.regnick = {
 
 			save_users()
 
-			autil.reply(c, "Usersname:  " .. nick .. "  has been un-registered")
+			autil.reply(c, '"' .. nick .. '" has been un-registered')
 
 			if other then
 				autil.reply(other, "You've been un-registered")
@@ -1562,16 +1562,16 @@ commands.regnick = {
 
 		register_user(cid, nick, password, level, c:getField("NI"))
 
-		autil.reply(c, "\n\tYou successfully registered:\n\n\t\tUsersname:\t" .. nick .. "\n\t\tPassword:\t" .. password .. "\n")
+		autil.reply(c, "\n\tYou have successfully registered:\n\n\t\tNick:\t" .. nick .. "\n\t\tPassword:\t" .. password .. "\n")
 
 		if other then
-			autil.reply(other, "You've been successfully registered with Password:  " .. password)
+			autil.reply(other, "You've been successfully registered with the password \"" .. password .. "\"")
 		end
 	end,
 
 	help = "nick [password] [level] - register a user; use no password to un-reg; level defaults to your own level minus one",
 
-	protected = function(c) return has_level(c, 2) end,
+	protected = is_op,
 
 	user_command = {
 		hub_params = {

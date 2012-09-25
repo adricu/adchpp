@@ -2,7 +2,7 @@
 * Add Lua Socket
 * [L#920788] Fix signalSend in lua (thanks Andy Chmilenko)
 * [L#920791] Expose a few different functions to scripts (thanks Andy Chmilenko)
-* Restrict the +listreg command to operators
+* Restrict +listreg and +regnick to operators
 
 -- 2.8.1 2012-05-30 --
 * [L#830841] Python plugin api signal fix (thanks Andy Chmilenko)
