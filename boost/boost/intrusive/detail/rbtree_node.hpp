@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Olaf Krzikalla 2004-2006.
-// (C) Copyright Ion Gaztanaga  2006-2009.
+// (C) Copyright Ion Gaztanaga  2006-2012.
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -164,13 +164,13 @@ struct rbtree_node_traits
          ,  OptimizeSize &&
            (max_pointer_plus_bits
             < VoidPointer
-            , detail::alignment_of<compact_rbtree_node<VoidPointer> >::value 
+            , detail::alignment_of<compact_rbtree_node<VoidPointer> >::value
             >::value >= 1)
          >
 {};
 
-} //namespace intrusive 
-} //namespace boost 
+} //namespace intrusive
+} //namespace boost
 
 #include <boost/intrusive/detail/config_end.hpp>
 

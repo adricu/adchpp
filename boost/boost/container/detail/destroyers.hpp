@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2011.
+// (C) Copyright Ion Gaztanaga 2005-2012.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -21,10 +21,10 @@
 #include <boost/container/detail/workaround.hpp>
 #include <boost/container/detail/version_type.hpp>
 #include <boost/container/detail/utilities.hpp>
-#include <boost/container/allocator/allocator_traits.hpp>
+#include <boost/container/allocator_traits.hpp>
 
 namespace boost {
-namespace container { 
+namespace container {
 namespace container_detail {
 
 //!A deleter for scoped_ptr that deallocates the memory
@@ -65,6 +65,44 @@ struct null_scoped_array_deallocator
    {}
 };
 
+template <class Allocator>
+struct scoped_destroy_deallocator
+{
+   typedef boost::container::allocator_traits<Allocator> AllocTraits;
+   typedef typename AllocTraits::pointer    pointer;
+   typedef typename AllocTraits::size_type  size_type;
+   typedef container_detail::integral_constant<unsigned,
+      boost::container::container_detail::
+         version<Allocator>::value>                          alloc_version;
+   typedef container_detail::integral_constant<unsigned, 1>  allocator_v1;
+   typedef container_detail::integral_constant<unsigned, 2>  allocator_v2;
+
+   scoped_destroy_deallocator(pointer p, Allocator& a)
+      : m_ptr(p), m_alloc(a) {}
+
+   ~scoped_destroy_deallocator()
+   {
+      if(m_ptr){
+         AllocTraits::destroy(m_alloc, container_detail::to_raw_pointer(m_ptr));
+         priv_deallocate(m_ptr, alloc_version());
+      }
+   }
+
+   void release()
+   {  m_ptr = 0; }
+
+   private:
+
+   void priv_deallocate(const pointer &p, allocator_v1)
+   {  AllocTraits::deallocate(m_alloc, p, 1); }
+
+   void priv_deallocate(const pointer &p, allocator_v2)
+   {  m_alloc.deallocate_one(p); }
+
+   pointer     m_ptr;
+   Allocator&  m_alloc;
+};
+
 
 //!A deleter for scoped_ptr that destroys
 //!an object using a STL allocator.
@@ -85,7 +123,10 @@ struct scoped_destructor_n
 
    void increment_size(size_type inc)
    {  m_n += inc;   }
-   
+
+   void increment_size_backwards(size_type inc)
+   {  m_n += inc;   m_p -= inc;  }
+  
    ~scoped_destructor_n()
    {
       if(!m_p) return;
@@ -115,8 +156,57 @@ struct null_scoped_destructor_n
    void increment_size(size_type)
    {}
 
+   void increment_size_backwards(size_type)
+   {}
+
    void release()
    {}
+};
+
+template<class A>
+class scoped_destructor
+{
+   typedef boost::container::allocator_traits<A> AllocTraits;
+   public:
+   typedef typename A::value_type value_type;
+   scoped_destructor(A &a, value_type *pv)
+      : pv_(pv), a_(a)
+   {}
+
+   ~scoped_destructor()
+   {
+      if(pv_){
+         AllocTraits::destroy(a_, pv_);
+      }
+   }
+
+   void release()
+   {  pv_ = 0; }
+
+   private:
+   value_type *pv_;
+   A &a_;
+};
+
+
+template<class A>
+class value_destructor
+{
+   typedef boost::container::allocator_traits<A> AllocTraits;
+   public:
+   typedef typename A::value_type value_type;
+   value_destructor(A &a, value_type &rv)
+      : rv_(rv), a_(a)
+   {}
+
+   ~value_destructor()
+   {
+      AllocTraits::destroy(a_, &rv_);
+   }
+
+   private:
+   value_type &rv_;
+   A &a_;
 };
 
 template <class Allocator>
@@ -154,8 +244,8 @@ class allocator_destroyer
 };
 
 
-}  //namespace container_detail { 
-}  //namespace container { 
+}  //namespace container_detail {
+}  //namespace container {
 }  //namespace boost {
 
 #include <boost/container/detail/config_end.hpp>
