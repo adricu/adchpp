@@ -1,8 +1,8 @@
 = ADCH++ Basic User Guide
 Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, iceman50 <bdcdevel@gmail.com>
-Document Version 0.3.3
+Document Version 0.3.4
 :toc:
-This version of the guide corresponds with ADCH++ version: *2.8.0* or later
+This version of the guide corresponds with ADCH++ version: *2.9.0*
 
 == Introduction
 
@@ -344,7 +344,7 @@ Most commands are also available in the user menu of the connected ADC clients p
 |+mute nick [reason] [minutes]						| Mute an online user. Use 0 for minutes to allow the user to talk again.
 |+myip 												| Show your IP. This command is available for everyone.
 |+mypass new_pass									| Change your password, make sure you change it in your client options too. This command is available for everyone.
-|+redirect nick address								| Redirect the user to the given address.
+|+redirect nick <address> [reason]					| Redirect the user to the given address. Address must be enclosed by < and >. Reason is optional.
 |+regnick nick [password] [level] 					| Register a user; omit password and level to un-reg; level defaults to your own level minus one.
 |+reload 											| Reload scripts.
 |+test												| Make the hub reply "Test ok". This command is available for everyone.
@@ -484,5 +484,6 @@ Changelog:
 0.3.1: Updated corresponding to ADCH++ version 2.7.0 (emtee)
 0.3.2: Improved details, readability, added a commands list table and a new FAQ item, revised the settings list and features updated to correspond ADCH++ version 2.8.0 (emtee)
 0.3.3: Updated according the changes of the guard script addition (emtee)
+0.3.4: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

@@ -1,8 +1,8 @@
 = ADCH++  Expert User Guide
 Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, Pirre <pierreparys@hotmail.com>, Poy <poy@123gen.com>
-Document Version 0.4.1
+Document Version 0.4.2
 :toc:
-This version of the guide corresponds with ADCH++ version: *2.8.0* or later
+This version of the guide corresponds with ADCH++ version: *2.9.0*
 
 == Introduction
 
@@ -106,7 +106,8 @@ You can use the following commands to specify the action and counts:
 |li_exptime					| Global expire time for all enabled limit rules in minutes, it must be greater than zero. This time specifies how long the count of limit breaches will be kept for an user. If no more problems occour within the specified time interval the counts will be reset.
 |li_maxcount				| Global maximum count of attempts allowed for all limit rules, 0 = disabled. If the number of attempts reach this value within li_exptime then action will be taken.
 |li_maxrate					| Global maximum rate in counts/hour for all enabled limit rules,  0 = disabled. If the number of attempts reach this value then action will be taken immediately.
-|li_minlevel				| Minimum user level to apply the sharing limit rules like slots/hubs/sharesize, 0 means all users will be checked. You can use this setting in conjunction with minsearchlevel and mindownloadlevel settings to allow restricted user levels to login without complying the rules.
+|li_level					| All users with level greater than this will be excluded from the limit rules like slots/hubs/sharesize, use -1 to disable. You can use this setting in conjunction with li_minlevel to apply the limit rules to certain userslevels while exclude higher and lower levels (e.g. unregistered users and operators).
+|li_minlevel				| Minimum user level to apply the sharing limit rules like slots/hubs/sharesize, 0 means all users will be checked. You can use this setting in conjunction with minsearchlevel and mindownloadlevel settings to block low user levels but allow them to login without complying the rules.
 |li_redirect				| Specifies the action when the sharing limit rules like slots/hubs/sharesize is breached. Set a redirect address for redirecting, if you want the user simply disconnected then leave this setting blank. This setting does not effect some of the limits counts (like maxnicklength or search related limits), those are immediately added to the flood protection counts.
 |==============================================
 
@@ -167,7 +168,7 @@ You can configure how many punishment actions should occour from one kind to ste
 |==============================================
 | Setting					| Purpose
 |fl_exptime					| Global expire time for all flood settings in minutes, it must be greater than zero. This time specifies how long the count of detected flood attempts will be kept for a particualr user. If no more problems occour within the specified time interval the counts will be reset.
-|fl_level					| All users with level greater of this setting will be affected by the flood and limit rules, -1 = disabled
+|fl_level					| All users with level greater of this setting will be affected by the flood protecting rules, -1 = disabled
 |fl_maxrate 				| Global maximum rate in counts/minute for all enabled flood protection rules, 0 = disabled. If the number of attempts reach this value then the next punishing action in a row will be taken immediately.
 |fl_maxwarns				| Maximum amount of hammering warnings before the user is disconnected, 0 = disabled
 |fl_maxkicks				| Maximum amount of kicks occoured before the user is tempbanned, 0 = disabled
@@ -644,5 +645,6 @@ Changelog:
 0.3.0: Improvements, added MinGW crash report guide, updated corresponding to ADCH++ version 2.8.0 (emtee)
 0.4.0: Added the Advanced hub security (guard) section (emtee, pirre)
 0.4.1: Added compile instructions for Clang (poy)
+0.4.2: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

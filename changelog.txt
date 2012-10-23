@@ -1,6 +1,8 @@
 -- 2.9.0 2012-10-23 --
 * Add Lua FileSystem
 * Add Lua Socket
+* Separate user level detection for limit and flood protection
+* Add NI, DE, CID and user command validation to comply with the protocol
 * [L#920788] Fix signalSend in lua (thanks Andy Chmilenko)
 * [L#920791] Expose a few different functions to scripts (thanks Andy Chmilenko)
 * Restrict +listreg and +regnick to operators
