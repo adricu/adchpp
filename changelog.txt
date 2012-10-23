@@ -1,3 +1,4 @@
+-- 2.9.0 2012-10-23 --
 * Add Lua FileSystem
 * Add Lua Socket
 * [L#920788] Fix signalSend in lua (thanks Andy Chmilenko)
