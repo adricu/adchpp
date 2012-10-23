@@ -145,7 +145,6 @@ static void runDaemon(const string& configPath) {
 
 		core->run();
 
-		core->shutdown();
 		core.reset();
 	} catch(const adchpp::Exception& e) {
 		fprintf(stderr, "Failed to start: %s\n", e.what());
@@ -165,8 +164,6 @@ static void runConsole(const string& configPath) {
 
 		printf(".\n%s running, press ctrl-c to exit...\n", versionString.c_str());
 		core->run();
-
-		core->shutdown();
 
 		core.reset();
 	} catch(const Exception& e) {

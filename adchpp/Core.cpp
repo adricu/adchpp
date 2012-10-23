@@ -63,6 +63,11 @@ void Core::run() {
 }
 
 void Core::shutdown() {
+	// make sure we run shutdown routines from the right thread.
+	addJob(std::bind(&Core::doShutdown, this));
+}
+
+void Core::doShutdown() {
 	sm->shutdown();
 	pm->shutdown();
 }

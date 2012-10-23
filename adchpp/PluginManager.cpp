@@ -142,7 +142,6 @@ bool PluginManager::loadPlugin(const string& file) {
 
 void PluginManager::shutdown() {
 	registry.clear();
-	active.clear();
 
 	for(PluginList::reverse_iterator i = active.rbegin(); i != active.rend(); ++i)
 		i->pluginUnload();
@@ -150,6 +149,7 @@ void PluginManager::shutdown() {
 	for(PluginList::reverse_iterator i = active.rbegin(); i != active.rend(); ++i)
 		PM_UNLOAD_LIBRARY(i->handle);
 #endif
+	active.clear();
 }
 
 PluginManager::CommandDispatch::CommandDispatch(PluginManager& pm, const std::string& name_, const PluginManager::CommandSlot& f_) :

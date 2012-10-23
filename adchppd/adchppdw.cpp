@@ -19,7 +19,6 @@
 #include <adchpp/adchpp.h>
 #include <adchpp/common.h>
 
-#include <adchpp/Semaphores.h>
 #include <adchpp/LogManager.h>
 #include <adchpp/Util.h>
 #include <adchpp/version.h>
@@ -168,7 +167,6 @@ static void WINAPI serviceStart(DWORD, TCHAR* argv[]) {
 
 	try {
 		core->run();
-		core->shutdown();
 	} catch(const Exception& e) {
 		//LOG(modName, "ADCH++ startup failed because: " + e.getError());
 	}
@@ -218,8 +216,6 @@ static void runConsole() {
 		// LOG(modName, versionString + " starting from console");
 		printf(".\n%s running, press ctrl-c to exit...\n", versionString.c_str());
 		core->run();
-
-		core->shutdown();
 
 		core.reset();
 	} catch(const Exception& e) {

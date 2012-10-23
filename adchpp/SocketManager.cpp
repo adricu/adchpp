@@ -371,7 +371,7 @@ void SocketManager::cancelTimer(timer_ptr timer, Callback* callback) {
 }
 
 void SocketManager::shutdown() {
-	addJob(std::bind(&SocketManager::closeFactories, this));
+	closeFactories();
 
 	work.reset();
 	io.stop();

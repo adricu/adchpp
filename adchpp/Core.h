@@ -77,6 +77,8 @@ private:
 
 	void init();
 
+	void doShutdown(); /// @todo remove when we have lambdas
+
 	std::unique_ptr<LogManager> lm;
 	std::unique_ptr<SocketManager> sm;
 	std::unique_ptr<PluginManager> pm;
