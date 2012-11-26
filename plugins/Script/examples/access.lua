@@ -1376,19 +1376,21 @@ commands.listregs = {
 
 		local list = {}
 		for _, v in base.ipairs(registered_users()) do
-			if v.level <= user.level and (#param == 0 or (v.nick and string.match(string.lower(v.nick), param, 1))) then
+			local other_level = v.level
+			if not other_level then other_level = 0 end
+			if other_level <= user.level and (#param == 0 or (v.nick and string.match(string.lower(v.nick), param, 1))) then
 				local fields = {}
 				if v.nick then
 					table.insert(fields, "\tNick: " .. v.nick)
 				end
-				if settings.passinlist.value ~=0 and v.level < user.level and v.password then
+				if settings.passinlist.value ~=0 and other_level < user.level and v.password then
 					table.insert(fields, "\n\tPassword: " .. v.password)
 				end
 				if v.cid then
 					table.insert(fields, "\n\tCID: " .. v.cid)
 				end
-				if settings.passinlist.value ~=0 and v.level <= user.level then
-					table.insert(fields, "Level: " .. v.level)
+				if settings.passinlist.value ~=0 and other_level <= user.level then
+					table.insert(fields, "Level: " .. other_level)
 				end
 				if v.regtime then
 					table.insert(fields, "\n\tRegistered: " .. time_diff(v.regtime) .. " ago")
