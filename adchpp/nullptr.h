@@ -6,6 +6,8 @@
 #ifdef __GNUC__
 #if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 6) // GCC 4.6 is the first GCC to implement nullptr.
 
+#define FAKE_NULLPTR
+
 const // this is a const object...
 class {
 public:
