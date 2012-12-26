@@ -1,6 +1,6 @@
 = ADCH++  Expert User Guide
 Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, Pirre <pierreparys@hotmail.com>, Poy <poy@123gen.com>
-Document Version 0.4.2
+Document Version 0.4.3
 :toc:
 This version of the guide corresponds with ADCH++ version: *2.9.0*
 
@@ -259,7 +259,7 @@ TIP: All statistics, traces and logs are saved so in case of a clean hub restart
 
 == PtokaX API2 bridge for ADCH++
 
-It's possible to create or use existing PtokaX API2 LUA scripts in your hub using the ADCHPP-PtokaX bridge script. The bridge is separately maintained and available to download at https://launchpad.net/adchpp-ptokax[its home page]. Before you go on make sure you read the documentation provided in the ADCHPP-PtokaX package.
+It's possible to create or use existing PtokaX API2 LUA scripts in your hub using the ADCHPP-PtokaX bridge script. The bridge is separately maintained and available to download at https://launchpad.net/adchpp-ptokax[its home page]. Before you go on make sure you read the documentation (README.txt) provided in the ADCHPP-PtokaX package.
 
 CAUTION: To avoid problems make sure you use the revision of PtokaX bridge script corresponding to the ADCH++ version you run.
 
@@ -318,13 +318,9 @@ px\px_clock.lua
 px\px_badsearch.lua
 --------------------------------------
 
-Some of the PtokaX scripts (like FreshStuff or Feedwatch) may require LUA filesystem or socket library. In case of any of these libraries needed they can be configured in the following way under Windows:
+Some of the PtokaX scripts (like FreshStuff or Feedwatch) may require LUA filesystem or socket library. Since version 2.9.0 the ADCH++ repository contains these libraries and the Windows binary distributions include the compiled libraries as .dll's. 
 
-The Adchpp-PtokaX package contains the required libraries as precompiled .dll binaries. You should extract the libs to the directories indicated by each script (it could be the normal ADCH\++ dir or their own sub-dir). In general, where there should have been a px\*\*\*.dll file in an original PtokaX configuration, you want to put the corresponding \***.dll file instead. When a script asks you to put the files to "scripts/libs", you want to actually put them in the ADCH++ directory itself (next to the other binary files).
-
-CAUTION: Make sure you use the .dlls corresponding to the compiler your ADCH\++ compiled with (If you are using the officially released version of ADCH++, then pick "release-mingw-x86" packages).
-
-TIP: Linux users can found more information about library compilation and placement in the !readme.txt file provided in the "libs" folder of the Adchpp-PtokaX package.
+CAUTION: Sometimes the libraries (.dll's in Windows) have to be copied to the appropriate place when a PtokaX scripts search for them in esoteric paths (for example lv/libs for Leviathan). You can get more information from the README file that comes with ADCHPP-PtokaX package.
 
 This is the example of how the Freshstuff script should be correctly configured. Add the script as you would normally do with any scripts. The rest of the directory contents should look like this:
 
@@ -646,5 +642,6 @@ Changelog:
 0.4.0: Added the Advanced hub security (guard) section (emtee, pirre)
 0.4.1: Added compile instructions for Clang (poy)
 0.4.2: Updated corresponding to ADCH++ version 2.9.0 (emtee)
+0.4.3: Update LUASockets info (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
