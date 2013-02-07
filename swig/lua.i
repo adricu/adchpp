@@ -1,4 +1,5 @@
 %module luadchpp
+%include "lua_fnptr.i"
 
 /*
 in addition to the elements defined here and in adchpp.i, the Lua interface also includes:
@@ -8,6 +9,15 @@ after a script has been loaded or unloaded.
 - loading(filename), unloading(filename): functions called (if they exist in the global environment)
 before a script is being loaded or unloaded. return true to discard further processing.
 */
+
+%inline %{
+/* Deleter for per-entity objects */
+static void free_lua_ref(void *data) {
+	SWIGLUA_REF *ref = reinterpret_cast<SWIGLUA_REF*> (data);
+	swiglua_ref_clear(ref);
+	delete ref;
+}
+%}
 
 typedef unsigned int size_t;
 
@@ -307,38 +317,22 @@ uint32_t, const uint32_t&
 }
 
 %extend adchpp::Entity {
-	std::string getStringData(const PluginDataHandle& handle) {
+	SWIGLUA_REF getPluginData(const PluginDataHandle& handle) {
 		void* ret = $self->getPluginData(handle);
 		if(ret) {
-			return *reinterpret_cast<std::string*>(ret);
+			return *reinterpret_cast<SWIGLUA_REF*>(ret);
 		}
-		return std::string();
+		return {0, 0};
 	}
 
-	void setStringData(const PluginDataHandle& handle, std::string data) {
-		$self->setPluginData(handle, reinterpret_cast<void*>(new std::string(data)));
-	}
-
-	ByteVector getByteVectorData(const PluginDataHandle& handle) {
-		void* ret = $self->getPluginData(handle);
-		if(ret) {
-			return *reinterpret_cast<ByteVector*>(ret);
-		}
-		return ByteVector();
-	}
-
-	void setByteVectorData(const PluginDataHandle& handle, ByteVector data) {
-		$self->setPluginData(handle, reinterpret_cast<void*>(new ByteVector(data)));
+	void setPluginData(const PluginDataHandle& handle, SWIGLUA_REF data) {
+		$self->setPluginData(handle, reinterpret_cast<void*>(new SWIGLUA_REF(data)));
 	}
 }
 
 %extend adchpp::PluginManager {
-	PluginDataHandle registerStringData() {
-		return self->registerPluginData(PluginData::simpleDataDeleter<std::string>);
-	}
-
-	PluginDataHandle registerByteVectorData() {
-		return self->registerPluginData(PluginData::simpleDataDeleter<ByteVector>);
+	PluginDataHandle registerPluginData() {
+		return self->registerPluginData(free_lua_ref);
 	}
 }
 

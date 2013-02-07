@@ -1,4 +1,5 @@
 * Improve Lua scripts
+* [L#1118699] Normalize per-entity data storage from Lua
 
 -- 2.9.0 2012-10-23 --
 * Add Lua FileSystem

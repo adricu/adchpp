@@ -104,7 +104,7 @@ local lm = adchpp.getLM()
 local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
-local saltsHandle = pm:registerByteVectorData()
+local saltsHandle = pm:registerPluginData()
 
 -- forward declarations.
 local cut_str,
@@ -892,7 +892,7 @@ local function onINF(c, cmd)
 
 	autil.reply(c, "You are registered, please provide a password")
 
-	c:setByteVectorData(saltsHandle, cm:enterVerify(c, true))
+	c:setPluginData(saltsHandle, cm:enterVerify(c, true))
 	return false
 end
 
@@ -902,7 +902,7 @@ local function onPAS(c, cmd)
 		return false
 	end
 
-	local salt = c:getByteVectorData(saltsHandle)
+	local salt = c:getPluginData(saltsHandle)
 
 	if not salt then
 		autil.dump(c, adchpp.AdcCommand_ERROR_PROTOCOL_GENERIC, "You didn't get any salt?")
