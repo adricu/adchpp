@@ -105,6 +105,7 @@ local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
 local saltsHandle = pm:registerPluginData()
+local levelHandle = pm:registerPluginData()
 
 -- forward declarations.
 local cut_str,
@@ -541,12 +542,22 @@ function get_user_c(c)
 end
 
 function get_level(c)
-	local user = get_user_c(c)
-	if not user then
-		return 0
+	local level = c:getPluginData(levelHandle)
+	if level then
+		return level
+	else --This should never happen
+		return 0 -- Default level
 	end
+end
 
-	return user.level
+function set_level(c, level)
+	c:setPluginData(levelHandle, level)
+	--Handle the OP flags
+	if level >= settings.oplevel.value then
+		c:setFlag(adchpp.Entity_FLAG_OP)
+	else
+		c:unsetFlag(adchpp.Entity_FLAG_OP)
+	end
 end
 
 function has_level(c, level)
@@ -862,7 +873,7 @@ local function onINF(c, cmd)
 	end
 
 	local user = get_user(cid, nick)
-	if user.level == 0 then
+	if user.is_default then
 		-- non-reg user
 		local code, err = check_max_users()
 		if code then
@@ -875,14 +886,15 @@ local function onINF(c, cmd)
 			send_hub_info(c)
 		end
 
+		set_level(c,0) -- User has default level (0)
+
 		-- let ClientManager further verify this INF
 		return true
 	end
 
+	set_level(c,user.level) -- Load the user's level
+
 	c:setFlag(adchpp.Entity_FLAG_REGISTERED)
-	if user.level >= settings.oplevel.value then
-		c:setFlag(adchpp.Entity_FLAG_OP)
-	end
 	
 	cmd:addParam("CT", c:getField("CT"))
 
@@ -1371,25 +1383,25 @@ commands.listregs = {
 			return
 		end
 
-		local user = get_user_c(c)
+		local ulevel = get_level(c)
 		local param = string.lower(parameters)
 
 		local list = {}
 		for _, v in base.ipairs(registered_users()) do
 			local other_level = v.level
 			if not other_level then other_level = 0 end
-			if other_level <= user.level and (#param == 0 or (v.nick and string.match(string.lower(v.nick), param, 1))) then
+			if other_level <= ulevel and (#param == 0 or (v.nick and string.match(string.lower(v.nick), param, 1))) then
 				local fields = {}
 				if v.nick then
 					table.insert(fields, "\tNick: " .. v.nick)
 				end
-				if settings.passinlist.value ~=0 and other_level < user.level and v.password then
+				if settings.passinlist.value ~=0 and other_level < ulevel and v.password then
 					table.insert(fields, "\n\tPassword: " .. v.password)
 				end
 				if v.cid then
 					table.insert(fields, "\n\tCID: " .. v.cid)
 				end
-				if settings.passinlist.value ~=0 and other_level <= user.level then
+				if settings.passinlist.value ~=0 and other_level <= ulevel then
 					table.insert(fields, "Level: " .. other_level)
 				end
 				if v.regtime then
@@ -1415,9 +1427,9 @@ commands.listregs = {
 		end
 		if table.getn(list) > 0 then
 			table.sort(list)
-			autil.reply(c, 'Registered users with a level <= ' .. user.level .. ' (your level)' .. match_text .. ':\n\n' .. table.concat(list, '\n\n') .. '\n')
+			autil.reply(c, 'Registered users with a level <= ' .. ulevel .. ' (your level)' .. match_text .. ':\n\n' .. table.concat(list, '\n\n') .. '\n')
 		else
-			autil.reply(c, 'There are no registered users with a level <= ' .. user.level .. ' (your level)' .. match_text)
+			autil.reply(c, 'There are no registered users with a level <= ' .. ulevel .. ' (your level)' .. match_text)
 		end
 	end,
 
@@ -1522,19 +1534,19 @@ commands.regnick = {
 		end
 
 		local other_user = get_user(cid, nick)
-		if other_user.level >= my_user.level then
+		if other_user.level >= ulevel then
 			autil.reply(c, "There is already a registered user with a level higher or equal than yours with this nick")
 			return
 		end
 
 		if level and string.len(level) > 0 then
 			level = base.tonumber(level)
-			if level >= my_user.level then
-				autil.reply(c, "You may only register to a lower level than your own (" .. my_user.level .. ")")
+			if level >= ulevel then
+				autil.reply(c, "You may only register to a lower level than your own (" .. ulevel .. ")")
 				return
 			end
 		else
-			level = my_user.level - 1
+			level = ulevel - 1
 		end
 		if level < 1 then
 			autil.reply(c, "Level too low")
@@ -1567,6 +1579,7 @@ commands.regnick = {
 		autil.reply(c, "\n\tYou have successfully registered:\n\n\t\tNick:\t" .. nick .. "\n\t\tPassword:\t" .. password .. "\n")
 
 		if other then
+			set_level(other, level) -- Automatically set the new level
 			autil.reply(other, "You've been successfully registered with the password \"" .. password .. "\"")
 		end
 	end,

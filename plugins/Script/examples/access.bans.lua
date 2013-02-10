@@ -217,8 +217,7 @@ commands.ban = {
 		end
 
 		local victim_cid = victim:getCID():toBase32()
-		local victim_user = access.get_user(victim_cid, 0)
-		if victim_user and level <= victim_user.level then
+		if level <= access.get_level(victim) then
 			autil.reply(c, "You can't ban users whose level is higher or equal than yours")
 			return
 		end
@@ -736,8 +735,7 @@ commands.mute = {
 		end
 
 		local victim_cid = victim:getCID():toBase32()
-		local victim_user = access.get_user(victim_cid, 0)
-		if victim_user and level <= victim_user.level then
+		if level <= access.get_level(victim) then
 			autil.reply(c, "You can't mute users whose level is higher or equal than yours")
 			return
 		end

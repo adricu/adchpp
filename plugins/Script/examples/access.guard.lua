@@ -26,7 +26,6 @@ base.assert(base.access['bans'], 'access.bans.lua must be loaded and running bef
 
 local access = base.require("access")
 local banslua = base.require("access.bans")
-local users = access.users
 local commands = access.commands
 local cid_regex = access.cid_regex
 local pid_regex = access.pid_regex
@@ -904,9 +903,9 @@ local function data_info_string_entity(info)
 	if info.su then
 		str = str .. "\n\tSupports:\t\t\t\t" .. info.su
 	end
-
-	if users.cids[info.cid] then
-		local user = users.cids[info.cid]
+	str = str .. "\n\tCurrent Level:\t\t\t\t" .. access.get_level(info)
+	local user = access.get_user_c(info)
+	if not user.is_default then
 		if user.level then
 			str = str .. "\n\tEntity Regged:\t\t\t\tLevel: " .. user.level .. "  "
 		end
@@ -1525,8 +1524,8 @@ local function make_entity(c, days)
 		end
 	end
 
-	if users.cids[c:getCID():toBase32()] then
-		local user = users.cids[c:getCID():toBase32()]
+	local user = access.get_user_c(c)
+	if not user.is_default then
 		if user.level then
 			data.level = user.level
 		end
@@ -1601,8 +1600,8 @@ local function connect_entity(c, data, days)
 		end
 	end
 
-	if users.cids[c:getCID():toBase32()] then
-		local user = users.cids[c:getCID():toBase32()]
+	local user = access.get_user_c(c)
+	if not user.is_default then
 		if user.level then
 			update.level = user.level
 		end
@@ -1711,38 +1710,8 @@ end
 
 local default_user = { level = 0, is_default = true }
 
-local function get_user(cid, nick)
-	local user
-
-	if cid then
-		user = users.cids[cid]
-	end
-
-	if not user and nick then
-		user = users.nicks[nick]
-	end
-	
-	if not user then
-		user = default_user
-	end
-
-	return user
-end
-
-function get_user_c(c)
-	return get_user(c:getCID():toBase32(), c:getField("NI"))
-end
-
-function get_level(c)
-	local user = get_user_c(c)
-	if not user then
-		return 0
-	end
-	return user.level
-end
-
 local function has_level(c, level)
-	return get_level(c) >= level
+	return access.get_level(c) >= level
 end
 
 local function is_admin(c)
@@ -1894,7 +1863,7 @@ end
 
 local function onCON(c) -- Stats and limit verification for connects and building entitys tables
 
-	if li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value then
+	if li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value then
 		local countip = get_sameip(c)
 		if countip and li_settings.maxsameip.value > 0 and countip > li_settings.maxsameip.value then
 			local stat = "max same IP"
@@ -1927,7 +1896,7 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 	if en_settings.en_entitystats.value >= 0 then
 		local cid = c:getCID():toBase32()
 		local days, match
-		if get_level(c) > 0 then
+		if access.get_level(c) > 0 then
 			days = en_settings.en_entitystatsregexptime.value
 		else
 			days = en_settings.en_entitystatsexptime.value
@@ -1945,7 +1914,7 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 		end
 	end
 
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -1986,7 +1955,7 @@ local function onONL() -- Stats verification for online users and updating entit
 				if c and c:getState() == adchpp.Entity_STATE_NORMAL then
 					local days, match
 					local cid = c:getCID():toBase32()
-					if get_level(c) > 0 then
+					if access.get_level(c) > 0 then
 						days = en_settings.en_entitystatsregexptime.value
 					else
 						days = en_settings.en_entitystatsexptime.value
@@ -2014,7 +1983,7 @@ local function onDIS(c) -- Stats verification for disconnects and updating entit
 	if en_settings.en_entitystats.value >= 0 then
 		local days
 		local cid = c:getCID():toBase32()
-		if get_level(c) > 0 then
+		if access.get_level(c) > 0 then
 			days = en_settings.en_entitystatsregexptime.value
 		else
 			days = en_settings.en_entitystatsexptime.value
@@ -2033,7 +2002,7 @@ local function onDIS(c) -- Stats verification for disconnects and updating entit
 end
 
 local function onURX(c, cmd) -- Stats and flood verification for unknown command strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2065,7 +2034,7 @@ local function onURX(c, cmd) -- Stats and flood verification for unknown command
 end
 
 local function onCRX(c, cmd) -- Stats and rules verification for bad context command strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2098,7 +2067,7 @@ local function onCRX(c, cmd) -- Stats and rules verification for bad context com
 end
 
 local function onCMD(c, cmd) -- Stats and rules verification for command strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2132,7 +2101,7 @@ local function onSUP(c, cmd) -- Stats and rules verification for support strings
 
 	if li_settings.li_limitstats.value >= 0 then
 		local blom = c:hasSupport(adchpp.AdcCommand_toFourCC("BLO0")) or c:hasSupport(adchpp.AdcCommand_toFourCC("BLOM")) or c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers from this rule
-		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= get_level(c) and get_level(c) <= li_settings.li_level.value and not blom then
+		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and access.get_level(c) <= li_settings.li_level.value and not blom then
 			local ip = c:getIp()
 			local stat = "Support BLOM filter forced"
 			local str = "This hub requires that your client supports the BLOM (TTH search filtering) extension !"
@@ -2187,7 +2156,7 @@ local function onSUP(c, cmd) -- Stats and rules verification for support strings
 end
 
 local function onSID(c, cmd) -- Stats and rules verification for sid strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2218,7 +2187,7 @@ local function onSID(c, cmd) -- Stats and rules verification for sid strings
 end
 
 local function onPAS(c, cmd) -- Stats and rules verification for password strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2249,7 +2218,7 @@ local function onPAS(c, cmd) -- Stats and rules verification for password string
 end
 
 local function onSTA(c, cmd) -- Stats and rules verification for status strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2282,7 +2251,7 @@ end
 local function onSCH(c, cmd) -- Stats and rules verification for search strings
 	
 	local NATT, SEGA, TTH, chars, cid , params, params_size
-	if (fl_settings.fl_commandstats.value >= 0 or get_level(c) <= fl_settings.fl_level.value) or (li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value) then
+	if (fl_settings.fl_commandstats.value >= 0 or access.get_level(c) <= fl_settings.fl_level.value) or (li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value) then
 		cid = c:getCID():toBase32()
 		params = cmd:getParameters()
 		params_size = params:size()
@@ -2307,7 +2276,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 
-	if li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value then
+	if li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value then
 		if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
 			local stat = "Max Search parameters limit"
 			local msg = "Your search contains too many parameters, max allowed is ".. li_settings.maxschparam.value.." "
@@ -2373,7 +2342,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 
-	if fl_settings.fl_commandstats.value < 0 or get_level(c) > fl_settings.fl_level.value then
+	if fl_settings.fl_commandstats.value < 0 or access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -2502,7 +2471,7 @@ end
 
 local function onMSG(c, cmd) -- Stats and rules verification for messages strings
 
-	if li_settings.li_limitstats.value >= 0 and get_level(c) <= li_settings.li_level.value then
+	if li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value then
 		if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
 			local cid = c:getCID():toBase32()
 			local stat = "Max Message length limit"
@@ -2528,7 +2497,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 		end
 	end
 
-	if fl_settings.fl_commandstats.value >= 0 and get_level(c) <= fl_settings.fl_level.value then
+	if fl_settings.fl_commandstats.value >= 0 and access.get_level(c) <= fl_settings.fl_level.value then
 		if fl_settings.fl_maxrate.value > 0 or fl_settings.cmdmsg_rate.value > 0 then
 			local cid = c:getCID():toBase32()
 			local stat = "MSG command"
@@ -2560,7 +2529,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		if c:getState() == adchpp.Entity_STATE_NORMAL then
 			local days, match, hist
 			cid = c:getCID():toBase32()
-			if get_level(c) > 0 then
+			if access.get_level(c) > 0 then
 				days = en_settings.en_entitystatsregexptime.value
 			else
 				days = en_settings.en_entitystatsexptime.value
@@ -2580,7 +2549,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 
 
-	if fl_settings.fl_commandstats.value >= 0 and get_level(c) <= fl_settings.fl_level.value then
+	if fl_settings.fl_commandstats.value >= 0 and access.get_level(c) <= fl_settings.fl_level.value then
 		local cid, ni
 		if c:getState() == adchpp.Entity_STATE_NORMAL then 
 			cid = c:getCID():toBase32()
@@ -2616,7 +2585,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return true
 	end
 
-	if li_settings.li_limitstats.value < 0 or get_level(c) > li_settings.li_level.value then
+	if li_settings.li_limitstats.value < 0 or access.get_level(c) > li_settings.li_level.value then
 		return true
 	end
 
@@ -2636,7 +2605,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		su = base.tostring(c:getField("SU"))
 	end
 	local adcs = string.find(su, 'ADC0') or string.find(su, 'ADCS')
-	if li_settings.suadcs.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not adcs then
+	if li_settings.suadcs.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and not adcs then
 		local stat = "Support ADCS forced"
 		local str = "This hub requires the secure transfers option enabled in your client (its usually in Settings/Security Cerificates, enable 'Use TLS when remote client supports it' there) !"
 		local type = "lim"
@@ -2662,7 +2631,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 	end
 	local natt = string.find(su, 'NAT0') or string.find(su, 'NATT') or string.find(su, 'TCP4') or string.find(su, 'TCP6')
 	-- user must either be active or support NAT-T
-	if li_settings.sunatt.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not natt then
+	if li_settings.sunatt.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and not natt then
 		local stat = "Support NAT-T forced"
 		local str = "This hub requires the NAT-T option enabled in passive mode, enable it or use a client that supports Nat-Traversal !"
 		local type = "lim"
@@ -2687,7 +2656,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return false
 	end
 	local sega = string.find(su, 'SEG0') or string.find(su, 'SEGA')
-	if li_settings.susega.value > 0 and li_settings.li_minlevel.value <= get_level(c) and not sega then
+	if li_settings.susega.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and not sega then
 		local stat = "Support SEGA forced"
 		local str = "This hub requires the SEGA option enabled, enable it or use a client that supports SEGA grouped extension searching !"
 		local type = "lim"
@@ -2712,7 +2681,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return false
 	end
 	local ss = base.tonumber(cmd:getParam("SS", 0)) or base.tonumber(c:getField("SS")) or 0
-	if li_settings.minsharesize.value > 0 and li_settings.li_minlevel.value <= get_level(c) and ss < li_settings.minsharesize.value then
+	if li_settings.minsharesize.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and ss < li_settings.minsharesize.value then
 		local stat = "Min Share size limit"
 		local str = "Your share size ( " .. adchpp.Util_formatBytes(ss) .. " ) is too low, the minimum required size is " .. adchpp.Util_formatBytes(li_settings.minsharesize.value)
 		local type = "lim"
@@ -2736,7 +2705,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-	if li_settings.maxsharesize.value > 0 and li_settings.li_minlevel.value <= get_level(c) and ss > li_settings.maxsharesize.value then
+	if li_settings.maxsharesize.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and ss > li_settings.maxsharesize.value then
 		local stat = "Max Share size limit"
 		local str = "Your share size ( " .. adchpp.Util_formatBytes(ss) .. " ) is too high, the maximum allowed size is " .. adchpp.Util_formatBytes(li_settings.maxsharesize.value)
 		local type = "lim"
@@ -2761,7 +2730,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return false
 	end
 	local sf = base.tonumber(cmd:getParam("SF", 0)) or base.tonumber(c:getField("SF")) or 0
-	if li_settings.minsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf < li_settings.minsharefiles.value then
+	if li_settings.minsharefiles.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and sf < li_settings.minsharefiles.value then
 		local stat = "Min Shared files limit"
 		local str = "Your number of shared files ( " .. sf .. " ) is too low, the minimum required number of files is " .. li_settings.minsharefiles.value
 		local type = "lim"
@@ -2785,7 +2754,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-	if li_settings.maxsharefiles.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sf > li_settings.maxsharefiles.value then
+	if li_settings.maxsharefiles.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and sf > li_settings.maxsharefiles.value then
 		local stat = "Max Shared files limit"
 		local str = "Your number of shared files ( " .. sf .. " ) is too high, the maximum allowed number of files is " .. li_settings.maxsharefiles.value
 		local type = "lim"
@@ -2810,7 +2779,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		return false
 	end
 	local sl = base.tonumber(cmd:getParam("SL", 0)) or base.tonumber(c:getField("SL")) or 0
-	if li_settings.minslots.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sl < li_settings.minslots.value then
+	if li_settings.minslots.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and sl < li_settings.minslots.value then
 		local stat = "Min Slots limit"
 		local str = "You have too few upload slots open ( " .. base.tostring(sl) .. " ), the minimum required is " .. base.tostring(li_settings.minslots.value)
 		local type = "lim"
@@ -2834,7 +2803,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-	if li_settings.maxslots.value > 0 and li_settings.li_minlevel.value <= get_level(c) and sl > li_settings.maxslots.value then
+	if li_settings.maxslots.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and sl > li_settings.maxslots.value then
 		local stat = "Max Slots limit"
 		local str = "You have too many upload slots open ( " .. base.tostring(sl) .. " ), the maximum allowed is " .. base.tostring(li_settings.maxslots.value)
 		local type = "lim"
@@ -2866,7 +2835,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		h = 1
 	end
 	local r = sl / h
-	if li_settings.minhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r < li_settings.minhubslotratio.value then
+	if li_settings.minhubslotratio.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and r < li_settings.minhubslotratio.value then
 		local stat = "Min Hub/Slot ratio limit"
 		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too low, you must open up more upload slots or disconnect from some hubs to achieve a ratio of " .. base.tostring(li_settings.minhubslotratio.value)
 		local type = "lim"
@@ -2890,7 +2859,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-	if li_settings.maxhubslotratio.value > 0 and li_settings.li_minlevel.value <= get_level(c) and r > li_settings.maxhubslotratio.value then
+	if li_settings.maxhubslotratio.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and r > li_settings.maxhubslotratio.value then
 		local stat = "Max Hub/Slot ratio limit"
 		local str = "Your Hubs/Slots ratio ( " .. base.tostring(r) .. " ) is too high, you must reduce your opened upload slots or connect to more hubs to achieve a ratio of " .. base.tostring(li_settings.maxhubslotratio.value)
 		local type = "lim"
@@ -2914,7 +2883,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 		dump_redirected(c, str)
 		return false
 	end
-	if li_settings.maxhubcount.value > 0 and li_settings.li_minlevel.value <= get_level(c) and h > li_settings.maxhubcount.value then
+	if li_settings.maxhubcount.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and h > li_settings.maxhubcount.value then
 		local stat = "Max Hubcount limit"
 		local str = "The number of Hubs you're connected to ( " .. base.tostring(h) .. " ) is too high, the maximum allowed is " .. base.tostring(li_settings.maxhubcount.value)
 		local type = "lim"
@@ -2990,7 +2959,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 end
 
 local function onRES(c, cmd) -- Stats and rules verification for search results strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3021,7 +2990,7 @@ local function onRES(c, cmd) -- Stats and rules verification for search results 
 end
 
 local function onCTM(c, cmd) -- Stats and rules verification for connect to me strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3052,7 +3021,7 @@ local function onCTM(c, cmd) -- Stats and rules verification for connect to me s
 end
 
 local function onRCM(c, cmd) -- Stats and rules verification for reverse connect to me strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3083,7 +3052,7 @@ local function onRCM(c, cmd) -- Stats and rules verification for reverse connect
 end
 
 local function onNAT(c, cmd) -- Stats and rules verification for nat traversal connect to me strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3114,7 +3083,7 @@ local function onNAT(c, cmd) -- Stats and rules verification for nat traversal c
 end
 
 local function onRNT(c, cmd) -- Stats and rules verification for nat traversal rev connect to me strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3145,7 +3114,7 @@ local function onRNT(c, cmd) -- Stats and rules verification for nat traversal r
 end
 
 local function onPSR(c, cmd) -- Stats and rules verification for partitial filesharing strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3176,7 +3145,7 @@ local function onPSR(c, cmd) -- Stats and rules verification for partitial files
 end
 
 local function onGET(c, cmd) -- Stats and rules verification for get strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 
@@ -3207,7 +3176,7 @@ local function onGET(c, cmd) -- Stats and rules verification for get strings
 end
 
 local function onSND(c, cmd) -- Stats and rules verification for send strings
-	if get_level(c) > fl_settings.fl_level.value then
+	if access.get_level(c) > fl_settings.fl_level.value then
 		return true
 	end
 

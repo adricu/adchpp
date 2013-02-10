@@ -11,8 +11,7 @@ local string = base.require("string")
 
 local commands = access.commands
 local settings = access.settings
-local get_user = access.get_user
-local get_user_c = access.get_user_c
+local get_level = access.get_level
 local is_op = access.is_op
 
 local cm = adchpp.getCM()
@@ -21,7 +20,7 @@ commands.kick = {
 	alias = { drop = true, dropuser = true, kickuser = true },
 
 	command = function(c, parameters)
-		local level = access.get_level(c)
+		local level = get_level(c)
 		if level < settings.oplevel.value then
 			return
 		end
@@ -42,8 +41,7 @@ commands.kick = {
 		end
 
 		local victim_cid = victim:getCID():toBase32()
-		local victim_user = get_user(victim_cid, 0)
-		if level <= victim_user.level then
+		if level <= get_level(victim) then
 			autil.reply(c, "You can't kick users whose level is higher or equal than yours")
 			return
 		end
@@ -115,8 +113,7 @@ commands.mass = {
 			if other then
 				local ok = level <= 0
 				if not ok then
-					local user = get_user_c(other)
-					ok = user.level >= level
+					ok = get_level(other) >= level
 				end
 
 				if ok then
@@ -147,7 +144,7 @@ commands.redirect = {
 	alias = { forward = true },
 
 	command = function(c, parameters)
-		local level = access.get_level(c)
+		local level = get_level(c)
 		if level < settings.oplevel.value then
 			return
 		end
@@ -183,8 +180,7 @@ commands.redirect = {
 		end
 
 		local victim_cid = victim:getCID():toBase32()
-		local victim_user = get_user(victim_cid, 0)
-		if level <= victim_user.level then
+		if level <= get_level(victim) then
 			autil.reply(c, "You can't redirect users whose level is higher or equal than yours")
 			return
 		end
