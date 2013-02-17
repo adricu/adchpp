@@ -1281,14 +1281,12 @@ local function dump_redirected(c, msg)
 end
 
 local function dump_dropped(c, msg)
-	local str
+	local str = "You are disconnected."
 	if msg then
-		str = "You are disconnected because: " .. msg
+		str = " Reason: " .. msg
 	end
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
-		if str then
-			cmd:addParam("MS" .. str)
-		end
+		cmd:addParam("MS" .. str)
 		cmd:addParam("TL" .. base.tostring(-1))
 	end)
 end
