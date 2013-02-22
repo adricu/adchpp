@@ -45,7 +45,7 @@ msvc_xxflags = {
 }
 
 gcc_link_flags = {
-	'common' : ['-g', '-Wl,--no-undefined', '-time'],
+	'common' : ['-g', '$UNDEF', '-time'],
 	'debug' : [],
 	'release' : ['-O3']				
 }
@@ -179,6 +179,7 @@ env.Append(CXXFLAGS = xxflags['common'])
 
 env.Append(LINKFLAGS = link_flags[env['mode']])
 env.Append(LINKFLAGS = link_flags['common'])
+env.Append(UNDEF = '-Wl,--no-undefined')
 
 if dev.is_win32():
 	env.Append(LIBS = ['ws2_32', 'mswsock'])
