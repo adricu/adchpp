@@ -1524,7 +1524,7 @@ commands.regnick = {
 			return
 		end
 
-		local my_user = get_user_c(c)
+		local ulevel = get_level(c)
 
 		local other = cm:findByNick(nick)
 
