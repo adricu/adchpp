@@ -108,6 +108,7 @@ commands.mass = {
 		end
 
 		local count = 0
+                local i = 0
 		for i = 0, size - 1 do
 			local other = entities[i]:asClient()
 			if other then

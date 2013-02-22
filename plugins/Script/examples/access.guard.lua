@@ -2250,9 +2250,9 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 	
 	local NATT, SEGA, TTH, chars, cid , params, params_size
 	if (fl_settings.fl_commandstats.value >= 0 or access.get_level(c) <= fl_settings.fl_level.value) or (li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value) then
-		cid = c:getCID():toBase32()
-		params = cmd:getParameters()
-		params_size = params:size()
+		local cid = c:getCID():toBase32()
+		local params = cmd:getParameters()
+		local params_size = params:size()
 		if #cmd:getParam("TR", 0) > 0 then
 			TTH = true
 		end
