@@ -29,15 +29,28 @@
 
 STANDARD_EXCEPTION(BloomException);
 
-class BloomManager : public Plugin {
+class ADCHPP_VISIBLE BloomManager : public Plugin {
 public:
 	BloomManager(Core &core);
 	virtual ~BloomManager();
 
-	virtual int getVersion() { return 0; }
+	virtual int getVersion() { return 1; }
 
 	void init();
 
+        /*Check if the entity has a bloom filter*/
+	bool hasBloom(Entity& c) const;
+        
+        /*Check if the entity may have the desired TTH according to the filter*/
+	bool hasTTH(Entity& c,const TTHValue& tth) const;
+
+	/*Get the number of searches sent (to clients)*/
+	int64_t getSearches() const;
+	/*Get the number of searches by TTH sent (to clients)*/
+	int64_t getTTHSearches() const;
+	/*Get the number of sent searches stopped*/
+	int64_t getStoppedSearches() const;
+        
 	static const std::string className;
 private:
 	PluginDataHandle bloomHandle;
