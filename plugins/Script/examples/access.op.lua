@@ -107,7 +107,8 @@ commands.mass = {
 			mass_cmd = autil.info(message)
 		end
 
-		local count = 0, i
+		local count = 0
+                local i = 0
 		for i = 0, size - 1 do
 			local other = entities[i]:asClient()
 			if other then

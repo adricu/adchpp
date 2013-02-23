@@ -83,13 +83,11 @@ function encode (v)
     local rval = {}
     -- Consider arrays separately
     local bArray, maxCount = isArray(v)
-    local i
     if bArray then
       for i = 1,maxCount do
         table.insert(rval, encode(v[i]))
       end
     else	-- An object, not an array
-      local j
       for i,j in base.pairs(v) do
         if isEncodable(i) and isEncodable(j) then
           table.insert(rval, '"' .. encodeString(i) .. '":' .. encode(j))
@@ -206,7 +204,6 @@ function decode_scanConstant(s, startPos)
   local consts = { ["true"] = true, ["false"] = false, ["null"] = nil }
   local constNames = {"true","false","null"}
 
-  local i,k
   for i,k in base.pairs(constNames) do
     --print ("[" .. string.sub(s,startPos, startPos + string.len(k) -1) .."]", k)
     if string.sub(s,startPos, startPos + string.len(k) -1 )==k then
@@ -353,7 +350,6 @@ function isArray(t)
   -- Next we count all the elements, ensuring that any non-indexed elements are not-encodable 
   -- (with the possible exception of 'n')
   local maxIndex = 0
-  local k, v
   for k,v in base.pairs(t) do
     if (base.type(k)=='number' and math.floor(k)==k and 1<=k) then	-- k,v is an indexed pair
       if (not isEncodable(v)) then return false end	-- All array elements must be encodable
