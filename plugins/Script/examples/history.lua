@@ -68,6 +68,7 @@ local function get_items(c)
 	local user = access.get_user_c(c)
 	local from = user.lastofftime
 	if from then
+		local hist, data
 		for hist, data in base.pairs(messages) do
 			if data.htime > from then
 				items = items + 1
@@ -176,6 +177,7 @@ local function load_messages()
 		return
 	end
 
+	local k, v
 	for k, v in base.pairs(list) do
 		messages[k] = v
 		pos = pos + 1

@@ -74,6 +74,7 @@ function on_loading(name, f)
 end
 base.loading = function(file)
 	local ret = false
+	local v
 	for _, v in base.pairs(loading) do
 		if file_of_name(file, v.name) then
 			if v.f() then
@@ -89,6 +90,7 @@ function on_loaded(name, f)
 	table.insert(loaded, { name = name, f = f })
 end
 base.loaded = function(file)
+	local v
 	for _, v in base.pairs(loaded) do
 		if file_of_name(file, v.name) then
 			v.f()
@@ -102,6 +104,7 @@ function on_unloading(name, f)
 end
 base.unloading = function(file)
 	local ret = false
+	local v
 	for _, v in base.pairs(unloading) do
 		if file_of_name(file, v.name) then
 			if v.f() then
@@ -117,6 +120,7 @@ function on_unloaded(name, f)
 	table.insert(unloaded, { name = name, f = f })
 end
 base.unloaded = function(file)
+	local v
 	for _, v in base.pairs(unloaded) do
 		if file_of_name(file, v.name) then
 			v.f()

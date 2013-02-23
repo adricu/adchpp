@@ -93,6 +93,7 @@ end
 local function clear_expired_bans()
 	local save = false
 
+	local ban_array, k, ban
 	for _, ban_array in base.pairs(bans) do
 		for k, ban in base.pairs(ban_array) do
 			if ban.expires and ban_expiration_diff(ban) <= 0 then
@@ -633,7 +634,7 @@ commands.listbans = {
 	alias = { listban = true, listbanned = true, showban = true, showbans = true, showbanned = true, banlist = true, banslist = true },
 
 	command = function(c)
-		local level = access.get_level(c)
+		local level = access.get_level(c), cid, ban, ip, nick, nickre, msgre, schre
 		if level < settings.oplevel.value then
 			return
 		end
@@ -786,6 +787,7 @@ local function onMSG(c, cmd)
 	local level = access.get_level(c)
 	local msg = string.lower(cmd:getParam(0))
 
+	local re, reban
 	for re, reban in base.pairs(bans.msgsre) do
 		if reban.level > level and msg:match(re) then
 			local str = "Message blocked"
@@ -826,6 +828,7 @@ local function onSCH(c, cmd)
 		local params = cmd:getParameters()
 		local params_size = params:size()
 		if params_size > 0 then
+			local i
 			for i = 0, params_size - 1 do
 				local param = params[i]
 				if #param > 2 then
@@ -840,6 +843,7 @@ local function onSCH(c, cmd)
 		sch = table.concat(vars, ' ')
 	end
 
+	local re, reban
 	for re, reban in base.pairs(bans.schsre) do
 		if reban.level > level and sch:match(re) then
 			local str = "Search blocked"
@@ -887,6 +891,7 @@ local function onINF(c, cmd)
 	elseif bans.nicks[nick] then
 		ban = bans.nicks[nick]
 	else
+		local re, reban
 		for re, reban in base.pairs(bans.nicksre) do
 			if nick:match(re) and reban.level > access.get_level(c) then
 			local str = "Nick blocked"

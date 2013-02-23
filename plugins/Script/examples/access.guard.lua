@@ -502,6 +502,7 @@ end
 local function handle_plus_command(c, msg)
 	local command, parameters = msg:match("^%+(%a+) ?(.*)")
 	if command then
+		local  k, v
 		for k, v in base.pairs(commands) do
 			if k == command or (v.alias and v.alias[command]) then
 				return true
@@ -551,6 +552,7 @@ local function data_join_now_diff(data)
 end
 
 local function clear_expired_limitstats()
+	local limitstats_array, k, data
 	for _, limitstats_array in base.pairs(limitstats) do
 		for k, data in base.pairs(limitstats_array) do
 			if not data.expires or data_expiration_diff(data) <= 0 then
@@ -561,6 +563,7 @@ local function clear_expired_limitstats()
 end
 
 local function clear_expired_commandstats()
+	local command_array, k, data
 	for _, command_array in base.pairs(commandstats) do
 		for k, data in base.pairs(command_array) do
 			if not data.expires or data_expiration_diff(data) <= 0 then
@@ -571,6 +574,7 @@ local function clear_expired_commandstats()
 end
 
 local function clear_expired_tmpbanstats()
+	local command_array, k, data
 	for _, command_array in base.pairs(tmpbanstats) do
 		for k, data in base.pairs(command_array) do
 			if not data.expires or data_expiration_diff(data) <= 0 then
@@ -581,6 +585,7 @@ local function clear_expired_tmpbanstats()
 end
 
 local function clear_expired_kickstats()
+	local command_array, k, data
 	for _, command_array in base.pairs(kickstats) do
 		for k, data in base.pairs(command_array) do
 			if not data.expires or data_expiration_diff(data) <= 0 then
@@ -591,6 +596,7 @@ local function clear_expired_kickstats()
 end
 
 local function clear_expired_entitystats()
+	local command_array, k, data
 	for _, command_array in base.pairs(entitystats) do
 		for k, data in base.pairs(command_array) do
 			if not data.expires or data_expiration_diff(data) <= 0 then
@@ -1048,6 +1054,7 @@ local function get_sameip(c)
 	local entities = adchpp.getCM():getEntities()
 	local size = entities:size()
 	if size > 0 then
+		local i
 		for i = 0, size - 1 do
 			local c = entities[i]:asClient()
 			if c and c:getIp() == ip then
@@ -1306,6 +1313,7 @@ local function update_diffhists(diffhists, diffrate, histdata)
 	tmp.maxrate = histdata.maxrate
 	tmp.histstarted = os.time()
 	tmp.histexpires = os.time() + minutes * 60
+	local hists, k, hist
 	for _, hists in base.pairs(diffhists) do
 		table.insert(hists, tmp) -- inserts {tmp} at the end of table hists !!!!!!!!
 		for k, hist in base.pairs(hists) do
@@ -1506,6 +1514,7 @@ local function make_entity(c, days)
 	local data = { ip = c:getIp() }
 	data.sid = adchpp.AdcCommand_fromSID(c:getSID())
 
+	local param
 	for _, param in base.ipairs(strparam) do
 		if c:getField(string.upper(param)) then
 			if #base.tostring(c:getField(string.upper(param))) > 0 then
@@ -1546,7 +1555,8 @@ local function make_entity_hist(c, data, days)
 	local strparam = { "ip", "ni", "ap", "ve", "i4", "i6", "su", "level", "regby", "logins", "join", "leave", "timeon", "ltimeon", "started" } -- string parameters we want in hist
 
 	local hist = { cid = c:getCID():toBase32() }
-
+	
+	local param
 	for _, param in base.ipairs(strparam) do
 		if data[param] then
 			if #base.tostring(data[param]) > 0 or base.tonumber(data[param]) then
@@ -1574,6 +1584,7 @@ local function connect_entity(c, data, days)
 	local update = { ip = c:getIp() }
 	update.sid = adchpp.AdcCommand_fromSID(c:getSID())
 
+	local param
 	for _, param in base.ipairs(strparam) do
 		if c:getField(string.upper(param)) then
 			if #base.tostring(c:getField(string.upper(param))) > 0 then
@@ -1652,6 +1663,7 @@ local function update_entity(c, data, days ,cmd)
 		data.updated = os.time()
 	end
 
+	local param
 	for _, param in base.ipairs(strparam) do
 		if cmd:hasParam(string.upper(param), 0) then
 			if #base.tostring(cmd:getParam(string.upper(param), 0)) > 0 then
@@ -1730,6 +1742,7 @@ local function load_fl_settings()
 		return false
 	end
 
+	local k, v
 	for k, v in base.pairs(list) do
 		if fl_settings[k] then
 			local change = fl_settings[k].value ~= v
@@ -1756,6 +1769,7 @@ local function load_li_settings()
 		return false
 	end
 
+	local k, v
 	for k, v in base.pairs(list) do
 		if li_settings[k] then
 			local change = li_settings[k].value ~= v
@@ -1782,6 +1796,7 @@ local function load_en_settings()
 		return false
 	end
 
+	local k, v
 	for k, v in base.pairs(list) do
 		if en_settings[k] then
 			local change = en_settings[k].value ~= v
@@ -1800,6 +1815,7 @@ end
 
 local function save_fl_settings()
 	local list = {}
+	local k, v
 	for k, v in base.pairs(fl_settings) do
 		list[k] = v.value
 	end
@@ -1811,6 +1827,7 @@ end
 
 local function save_li_settings()
 	local list = {}
+	local k, v
 	for k, v in base.pairs(li_settings) do
 		list[k] = v.value
 	end
@@ -1822,6 +1839,7 @@ end
 
 local function save_en_settings()
 	local list = {}
+	local k, v
 	for k, v in base.pairs(en_settings) do
 		list[k] = v.value
 	end
@@ -1843,6 +1861,7 @@ local function onSOC(c) -- Stats verification for creating open sockets
 			local maxrate = fl_settings.cmdsoc_rate.value
 			local minutes = fl_settings.cmdsoc_exp.value
 			if commandstats.soccmds[ip] then
+				local victim_ip, data
 				for victim_ip, data in base.pairs(commandstats.soccmds) do
 					if victim_ip == ip then
 						commandstats.soccmds[ip] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -1872,6 +1891,7 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 			maxrate = li_settings.maxsameip_rate.value
 			local minutes = li_settings.maxsameip_exp.value
 			if limitstats.maxsameips[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(limitstats.maxsameips) do
 					if cid == victim_cid then
 						limitstats.maxsameips[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -1900,6 +1920,7 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 			days = en_settings.en_entitystatsexptime.value
 		end
 		if days > 0 then
+			local ent, data
 			for ent, data in base.pairs(entitystats.last_cids) do
 				if ent == cid then
 					match = true
@@ -1926,6 +1947,7 @@ local function onCON(c) -- Stats and limit verification for connects and buildin
 			local maxrate = fl_settings.cmdcon_rate.value
 			local minutes = fl_settings.cmdcon_exp.value
 			if commandstats.concmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.concmds) do
 					if cid == victim_cid then
 						commandstats.concmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -1948,6 +1970,7 @@ local function onONL() -- Stats verification for online users and updating entit
 		local entities = adchpp.getCM():getEntities()
 		local size = entities:size()
 		if size > 0 then
+			local i, ent, data
 			for i = 0, size - 1 do
 				local c = entities[i]:asClient()
 				if c and c:getState() == adchpp.Entity_STATE_NORMAL then
@@ -1987,6 +2010,7 @@ local function onDIS(c) -- Stats verification for disconnects and updating entit
 			days = en_settings.en_entitystatsexptime.value
 		end
 		if days > 0 then
+			local ent, data
 			for ent, data in base.pairs(entitystats.last_cids) do
 				if ent == cid then
 					entitystats.last_cids[cid] = logoff_entity(c, data, days)
@@ -2014,6 +2038,7 @@ local function onURX(c, cmd) -- Stats and flood verification for unknown command
 			local maxrate = fl_settings.cmdurx_rate.value
 			local minutes = fl_settings.cmdurx_exp.value
 			if commandstats.urxcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.urxcmds) do
 					if cid == victim_cid then
 						commandstats.urxcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -2047,6 +2072,7 @@ local function onCRX(c, cmd) -- Stats and rules verification for bad context com
 			local maxrate = fl_settings.cmdcrx_rate.value
 			local minutes = fl_settings.cmdcrx_exp.value
 			if commandstats.crxcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.crxcmds) do
 					if cid == victim_cid then
 						commandstats.crxcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -2079,6 +2105,7 @@ local function onCMD(c, cmd) -- Stats and rules verification for command strings
 			local maxrate = fl_settings.cmdcmd_rate.value
 			local minutes = fl_settings.cmdcmd_exp.value
 			if commandstats.cmdcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.cmdcmds) do
 					if cid == victim_cid then
 						commandstats.cmdcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -2097,6 +2124,7 @@ end
 
 local function onSUP(c, cmd) -- Stats and rules verification for support strings
 
+	local victim_ip, data
 	if li_settings.li_limitstats.value >= 0 then
 		local blom = c:hasSupport(adchpp.AdcCommand_toFourCC("BLO0")) or c:hasSupport(adchpp.AdcCommand_toFourCC("BLOM")) or c:hasSupport(adchpp.AdcCommand_toFourCC("PING")) -- excluding hublistpingers from this rule
 		if li_settings.sublom.value > 0 and li_settings.li_minlevel.value <= access.get_level(c) and access.get_level(c) <= li_settings.li_level.value and not blom then
@@ -2168,6 +2196,7 @@ local function onSID(c, cmd) -- Stats and rules verification for sid strings
 			local maxrate = fl_settings.cmdsid_rate.value
 			local minutes = fl_settings.cmdsid_exp.value
 			if commandstats.sidcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.sidcmds) do
 					if cid == victim_cid then
 						commandstats.sidcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -2199,6 +2228,7 @@ local function onPAS(c, cmd) -- Stats and rules verification for password string
 			local maxrate = fl_settings.cmdpas_rate.value
 			local minutes = fl_settings.cmdpas_exp.value
 			if commandstats.pascmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.pascmds) do
 					if cid == victim_cid then
 						commandstats.pascmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -2230,6 +2260,7 @@ local function onSTA(c, cmd) -- Stats and rules verification for status strings
 			local maxrate = fl_settings.cmdsta_rate.value
 			local minutes = fl_settings.cmdsta_exp.value
 			if commandstats.stacmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.stacmds) do
 					if cid == victim_cid then
 						commandstats.stacmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -2250,15 +2281,16 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 	
 	local NATT, SEGA, TTH, chars, cid , params, params_size
 	if (fl_settings.fl_commandstats.value >= 0 or access.get_level(c) <= fl_settings.fl_level.value) or (li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value) then
-		local cid = c:getCID():toBase32()
-		local params = cmd:getParameters()
-		local params_size = params:size()
+		cid = c:getCID():toBase32()
+		params = cmd:getParameters()
+		params_size = params:size()
 		if #cmd:getParam("TR", 0) > 0 then
 			TTH = true
 		end
 		if not TTH then -- only getting search size for manual searches
 			local vars = {}
 			if params_size > 0 then
+				local i
 				for i = 0, params_size - 1 do
 					local param = params[i]
 					if #param > 2 then
@@ -2274,6 +2306,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 		end
 	end
 
+	local victim_cid, data
 	if li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value then
 		if li_settings.maxschparam.value > 0 and params_size >= li_settings.maxschparam.value then
 			local stat = "Max Search parameters limit"
@@ -2468,6 +2501,7 @@ local function onSCH(c, cmd) -- Stats and rules verification for search strings
 end
 
 local function onMSG(c, cmd) -- Stats and rules verification for messages strings
+	local victim_cid, data
 
 	if li_settings.li_limitstats.value >= 0 and access.get_level(c) <= li_settings.li_level.value then
 		if li_settings.maxmsglength.value > 0 and #cmd:getParam(0) >= li_settings.maxmsglength.value then
@@ -2522,6 +2556,7 @@ local function onMSG(c, cmd) -- Stats and rules verification for messages string
 end
 
 local function onINF(c, cmd) -- Stats and rules verification for info strings
+	local victim_cid, data
 
 	if en_settings.en_entitystats.value >= 0 then
 		if c:getState() == adchpp.Entity_STATE_NORMAL then
@@ -2533,6 +2568,7 @@ local function onINF(c, cmd) -- Stats and rules verification for info strings
 				days = en_settings.en_entitystatsexptime.value
 			end
 			if days > 0 then
+				local ent
 				for ent, data in base.pairs(entitystats.last_cids) do
 					if ent == cid then
 						match = true
@@ -2971,6 +3007,7 @@ local function onRES(c, cmd) -- Stats and rules verification for search results 
 			local maxrate = fl_settings.cmdres_rate.value
 			local minutes = fl_settings.cmdres_exp.value
 			if commandstats.rescmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.rescmds) do
 					if cid == victim_cid then
 						commandstats.rescmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3002,6 +3039,7 @@ local function onCTM(c, cmd) -- Stats and rules verification for connect to me s
 			local maxrate = fl_settings.cmdctm_rate.value
 			local minutes = fl_settings.cmdctm_exp.value
 			if commandstats.ctmcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.ctmcmds) do
 					if cid == victim_cid then
 						commandstats.ctmcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3033,6 +3071,7 @@ local function onRCM(c, cmd) -- Stats and rules verification for reverse connect
 			local maxrate = fl_settings.cmdrcm_rate.value
 			local minutes = fl_settings.cmdrcm_exp.value
 			if commandstats.rcmcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.rcmcmds) do
 					if cid == victim_cid then
 						commandstats.rcmcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3064,6 +3103,7 @@ local function onNAT(c, cmd) -- Stats and rules verification for nat traversal c
 			local maxrate = fl_settings.cmdnat_rate.value
 			local minutes = fl_settings.cmdnat_exp.value
 			if commandstats.natcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.natcmds) do
 					if cid == victim_cid then
 						commandstats.natcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3095,6 +3135,7 @@ local function onRNT(c, cmd) -- Stats and rules verification for nat traversal r
 			local maxrate = fl_settings.cmdrnt_rate.value
 			local minutes = fl_settings.cmdrnt_exp.value
 			if commandstats.rntcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.rntcmds) do
 					if cid == victim_cid then
 						commandstats.rntcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3126,6 +3167,7 @@ local function onPSR(c, cmd) -- Stats and rules verification for partitial files
 			local maxrate = fl_settings.cmdpsr_rate.value
 			local minutes = fl_settings.cmdpsr_exp.value
 			if commandstats.psrcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.psrcmds) do
 					if cid == victim_cid then
 						commandstats.psrcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3157,6 +3199,7 @@ local function onGET(c, cmd) -- Stats and rules verification for get strings
 			local maxrate = fl_settings.cmdget_rate.value
 			local minutes = fl_settings.cmdget_exp.value
 			if commandstats.getcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.getcmds) do
 					if cid == victim_cid then
 						commandstats.getcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3188,6 +3231,7 @@ local function onSND(c, cmd) -- Stats and rules verification for send strings
 			local maxrate = fl_settings.cmdsnd_rate.value
 			local minutes = fl_settings.cmdsnd_exp.value
 			if commandstats.sndcmds[cid] then
+				local victim_cid, data
 				for victim_cid, data in base.pairs(commandstats.sndcmds) do
 					if cid == victim_cid then
 						commandstats.sndcmds[cid] = update_data(c, cmd, data, maxcount, maxrate, factor, msg, type, stat, minutes)
@@ -3210,6 +3254,7 @@ local function recheck_info()
 		local entities = adchpp.getCM():getEntities()
 		local size = entities:size()
 		if size > 0 then
+			local i
 			for i = 0, size - 1 do
 				local c = entities[i]:asClient()
 				if c then
@@ -4340,6 +4385,7 @@ local function gen_cfgfl_list()
 		return
 	end
 	local list = {}
+	local k, v
 	for k, v in base.pairs(fl_settings) do
 		local str = cut_str(v.help or "no information", 30)
 		str = string.gsub(str, '/', '//')
@@ -4378,6 +4424,7 @@ commands.cfgfl = {
 		end
 
 		local setting = nil
+		local k, v
 		for k, v in base.pairs(fl_settings) do
 			if k == name or (v.alias and v.alias[name]) then
 				setting = v
@@ -4442,6 +4489,7 @@ commands.cfgfl = {
 
 	helplong = function()
 		local list = {}
+		local k, v, k_alias, v_alias
 		for k, v in base.pairs(fl_settings) do
 			local str = k .. " - current value: " .. base.tostring(v.value)
 			if v.help then
@@ -4478,6 +4526,7 @@ local function gen_cfgli_list()
 		return
 	end
 	local list = {}
+	local k, v
 	for k, v in base.pairs(li_settings) do
 		local str = cut_str(v.help or "no information", 30)
 		str = string.gsub(str, '/', '//')
@@ -4516,6 +4565,7 @@ commands.cfgli = {
 		end
 
 		local setting = nil
+		local k, v
 		for k, v in base.pairs(li_settings) do
 			if k == name or (v.alias and v.alias[name]) then
 				setting = v
@@ -4580,6 +4630,7 @@ commands.cfgli = {
 
 	helplong = function()
 		local list = {}
+		local k, v, k_alias, v_alias
 		for k, v in base.pairs(li_settings) do
 			local str = k .. " - current value: " .. base.tostring(v.value)
 			if v.help then
@@ -4616,6 +4667,7 @@ local function gen_cfgen_list()
 		return
 	end
 	local list = {}
+	local k, v
 	for k, v in base.pairs(en_settings) do
 		local str = cut_str(v.help or "no information", 30)
 		str = string.gsub(str, '/', '//')
@@ -4654,6 +4706,7 @@ commands.cfgen = {
 		end
 
 		local setting = nil
+		local k, v
 		for k, v in base.pairs(en_settings) do
 			if k == name or (v.alias and v.alias[name]) then
 				setting = v
@@ -4718,6 +4771,7 @@ commands.cfgen = {
 
 	helplong = function()
 		local list = {}
+		local k, v, k_alias, v_alias
 		for k, v in base.pairs(en_settings) do
 			local str = k .. " - current value: " .. base.tostring(v.value)
 			if v.help then
@@ -4754,6 +4808,9 @@ commands.listcmdstats = {
 --	data_info_sort(statstable) TODO
 
 	command = function(c)
+		local info, schtthcmds, schtthnatcmds, schmancmds, schmansegacmds, schmannatcmds,schmannatsegacmds, rescmds, msgcmds
+		local infcmds, ctmcmds, rcmcmds, natcmds, rntcmds, psrcmds, getcmds, sndcmds, stacmds, sidcmds, pascmds, concmds
+		local supcmds, soccmds, cmdcmds, urxcmds, crxcmds
 		if not commands.listcmdstats.protected(c) then
 			return
 		end
@@ -4955,6 +5012,10 @@ commands.listlimstats = {
 --	data_info_sort(statstable) TODO
 
 	command = function(c)
+		local info, maxschparams, minschlengths, maxschlengths, minsharesizes, maxsharesizes
+		local minsharefiles, maxsharefiles, minslots, maxslots, minhubslotratios, maxhubslotratios
+		local maxhubcounts, suadcs, sunatts, susegas, subloms, maxmsglengths, minnicklengths
+		local maxnicklengths, maxsameips
 		if not commands.listlimstats.protected(c) then
 			return
 		end
@@ -5142,6 +5203,7 @@ commands.showkicklog = {
 	alias = { listkicklog = true },
 
 	command = function(c)
+		local info, ipkick, cidkick
 		if not commands.showkicklog.protected(c) then
 			return
 		end
@@ -5171,6 +5233,7 @@ commands.showtmpbanlog = {
 	alias = { listtmpbanlog = true },
 
 	command = function(c)
+		local info, iptmpban, cidtmpban
 		if not commands.showtmpbanlog.protected(c) then
 			return
 		end
@@ -5216,6 +5279,7 @@ commands.showentity = {
 		str = str .. "\tFor help use: +help cfgen"
 		str = str .. "\tExpire time User / Reg: " .. en_settings.en_entitystatsexptime.value .. " / " .. en_settings.en_entitystatsregexptime.value .." day(s)"
 		str = str .. "\n\n\tAll current Entity records that match your search criteria: [ " .. entity .. " ]\n" 
+		local last_cid, info
 		for last_cid, info in base.pairs(entitystats.last_cids) do
 			if entity == last_cid or entity == info.ip or (info.ni and string.lower(info.ni) == string.lower(entity)) then
 				info.cid = last_cid
@@ -5244,6 +5308,7 @@ commands.traceip = {
 			return
 		end
 
+		local last_cid, info, hist_cid, i, v
 		local entni, entcid = { }, { }
 		local value = param
 		local ip = base.tostring(value)
@@ -5311,6 +5376,7 @@ commands.tracecid = {
 			return
 		end
 
+		local last_cid, info, hist_cid, i, v
 		local entni, entip = { }, { }
 		local value = param
 
@@ -5379,6 +5445,7 @@ commands.traceni = {
 			return
 		end
 
+		local last_cid, info, hist_cid, i, v
 		local entip, entcid = { }, { }
 		local value = param
 
@@ -5535,6 +5602,7 @@ local function onReceive(entity, cmd, ok)
 	local ret = true
 	local handler = handlers[cmd:getCommand()]
 	if handler then
+		local v
 		for _, v in base.pairs(handler) do
 			ret = v(c, cmd) and ret
 		end
