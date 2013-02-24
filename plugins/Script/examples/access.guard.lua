@@ -5556,8 +5556,8 @@ guard_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	return res
 end)
 
-guard_2 = cm:signalState():connect(function(entity)
-	if entity:getState() == adchpp.Entity_STATE_NORMAL then
+guard_2 = cm:signalState():connect(function(entity, oldstate)
+	if entity:getState() == adchpp.Entity_STATE_NORMAL and oldstate ~= adchpp.Entity_STATE_DATA then
 		local c = entity:asClient()
 		if c then
 			local con = onCON(c)

@@ -218,8 +218,8 @@ local function parse(cmd)
 	messages_saved = false
 end
 
-history_1 = cm:signalState():connect(function(entity)
-	if access.settings.history_connect.value > 0 and entity:getState() == adchpp.Entity_STATE_NORMAL then
+history_1 = cm:signalState():connect(function(entity, oldstate)
+	if access.settings.history_connect.value > 0 and entity:getState() == adchpp.Entity_STATE_NORMAL and oldstate ~= adchpp.Entity_STATE_DATA then
 		autil.reply(entity, get_lines(access.settings.history_connect.value + 1))
 	end
 end)

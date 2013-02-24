@@ -49,7 +49,9 @@ public:
 	 * May only be called from on(ClientListener::Command...).
 	 */
 	typedef std::function<void (Client&, const uint8_t*, size_t)> DataFunction;
-	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes; }
+	void setDataMode(const DataFunction& handler, int64_t aBytes) { dataHandler = handler; dataBytes = aBytes;
+	//Notify we go into data state
+	oldState = getState(); cm.setState(Entity::STATE_DATA); }
 
 	virtual size_t getQueuedBytes() const { return socket->getQueuedBytes(); }
 	virtual time::ptime getOverflow() const { return socket->getOverflow(); }
@@ -63,6 +65,7 @@ private:
 	BufferPtr buffer;
 	ManagedSocketPtr socket;
 	int64_t dataBytes;
+	Entity::State oldState;
 
 	DataFunction dataHandler;
 	void setSocket(const ManagedSocketPtr& aSocket) throw();

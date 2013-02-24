@@ -30,8 +30,8 @@ end
 
 load_motd()
 
-motd_1 = adchpp.getCM():signalState():connect(function(entity)
-	if motd and entity:getState() == adchpp.Entity_STATE_NORMAL then
+motd_1 = adchpp.getCM():signalState():connect(function(entity, oldstate)
+	if motd and entity:getState() == adchpp.Entity_STATE_NORMAL and oldstate ~= adchpp.Entity_STATE_DATA then
 		autil.reply(entity, motd)
 	end
 end)

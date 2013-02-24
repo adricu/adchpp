@@ -98,6 +98,10 @@ void Client::onData(const BufferPtr& buf) throw() {
 			dataHandler(*this, data + done, n);
 			dataBytes -= n;
 			done += n;
+			if (dataBytes == 0) {
+				//Back to old state
+				cm.setState(oldState);
+			}
 		} else {
 			size_t j = done;
 			while(j < len && data[j] != '\n')
