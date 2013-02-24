@@ -100,7 +100,7 @@ void Client::onData(const BufferPtr& buf) throw() {
 			done += n;
 			if (dataBytes == 0) {
 				//Back to old state
-				cm.setState(oldState);
+				cm.setState(*this,oldState);
 			}
 		} else {
 			size_t j = done;
@@ -174,5 +174,14 @@ void Client::onFailed(Util::Reason reason, const std::string &info) throw() {
 	cm.onFailed(*this, reason, info);
 	delete this;
 }
+
+void Client::setDataMode(const DataFunction& handler, int64_t aBytes) {
+	dataHandler = handler;
+	dataBytes = aBytes;
+	//Notify we go into data state
+	oldState = getState();
+	cm.setState(*this,Entity::STATE_DATA);
+}
+
 
 }
