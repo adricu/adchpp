@@ -162,20 +162,26 @@ class Dev:
 			asciidoc = 'python ' + asciidoc
 		return asciidoc
 
-def CheckPKGConfig(context, version):
-	context.Message( 'Checking for pkg-config... ' )
-	ret = context.TryAction('pkg-config --atleast-pkgconfig-version=%s' % version)[0]
-	context.Result( ret )
-	return ret
+	def CheckPKGConfig(self, context, version):
+		context.Message( 'Checking for pkg-config... ' )
+		ret = context.TryAction('pkg-config --atleast-pkgconfig-version=%s' % version)[0]
+		context.Result( ret )
+		return ret
 
-def CheckPKG(context, name):
-	context.Message( 'Checking for %s... ' % name )
-	ret = context.TryAction('pkg-config --exists "%s"' % name)[0]
-	if ret:
-		context.env.ParseConfig('pkg-config --cflags --libs "%s"' % name)
+	def CheckPKG(self, context, name):
+		context.Message( 'Checking for %s... ' % name )
+		ret = context.TryAction('pkg-config --exists "%s"' % name)[0]
+		if ret:
+			context.env.ParseConfig('pkg-config --cflags --libs "%s"' % name)
 
-	context.Result( ret )
-	return ret
+		context.Result( ret )
+		return ret
+	
+	def CheckLuaPKG(self, context, name, version):
+		context.Message( 'Checking for %s version %s... ' % (name, version) )
+		res = context.TryAction('$lua -l %s -e "os.exit"(("%s._VERSION == \'%s\'")" and 0 or 1")' % (name, name, version)) [0]
+		context.Result( res)
+		return res
 
 def array_remove(array, to_remove):
 	if to_remove in array:

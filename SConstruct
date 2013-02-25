@@ -97,6 +97,8 @@ opts.AddVariables(
 	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix')),
 	('ruby', 'Path to the ruby binary', 'ruby'),
+	('lua', 'Path to the lua binary', 'lua'),
+	BoolVariable('systemlua', 'Try to use the system lua libraries', 'no'),
 	BoolVariable('docs', 'Build docs (requires asciidoc)', 'no')
 )
 

@@ -1,12 +1,11 @@
-Import('dev source_path')
+Import('dev source_path setLuaEnv')
 
 env, target, sources = dev.prepare_build(source_path, 'core', source_glob = '*.c', in_bin = False)
 env['SHLIBPREFIX'] = ''
 
 if dev.is_win32():
 	env.Append(CPPDEFINES = ['LUASOCKET_API="__declspec(dllexport)"'])
-env.Append(CPPPATH = ['#/lua/'])
-env.Append(LIBS = ['alua'])
+setLuaEnv(env)
 
 if dev.is_win32():
 	to_remove = 'usocket.c'
