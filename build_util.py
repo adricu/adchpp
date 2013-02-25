@@ -183,6 +183,28 @@ class Dev:
 		context.Result( res)
 		return res
 
+	def CheckBoost(self, context, version):
+		v_arr = version.split(".")
+		version_n = 0
+		if len(v_arr) > 0:
+			version_n += int(v_arr[0])*100000
+		if len(v_arr) > 1:
+			version_n += int(v_arr[1])*100
+		if len(v_arr) > 2:
+			version_n += int(v_arr[2])
+
+		context.Message('Checking for Boost version >= %s... ' % (version))
+		ret = context.TryCompile("""
+#include <boost/version.hpp>
+
+#if BOOST_VERSION < %d
+#error Installed boost is too old!
+#endif
+	int main() { return 0; }
+		""" % version_n, '.cpp')
+		context.Result(ret)
+		return ret
+
 def array_remove(array, to_remove):
 	if to_remove in array:
 		array.remove(to_remove)
