@@ -1616,10 +1616,14 @@ commands.topic = {
 	alias = { changetopic = true, settopic = true, changehubtopic = true, sethubtopic = true },
 
 	command = function(c, parameters)
-		commands.cfg.command(c, "topic " .. parameters)
+		if #parameters == 0 then
+			autil.reply(c, "Current hub topic: " .. settings.topic.value)
+		else
+			commands.cfg.command(c, "topic " .. parameters)
+		end
 	end,
 
-	help = "topic - change the hub topic (shortcut to +cfg topic)",
+	help = "[new_topic] - show or change the hub topic (shortcut to +cfg topic)",
 
 	protected = commands.cfg.protected,
 
