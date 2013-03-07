@@ -29,9 +29,9 @@ else:
 	def setLuaEnv(env):
 		env.ParseConfig('pkg-config --cflags --libs lua')
 	Export('setLuaEnv')
-	if not conf.CheckLuaPKG('socket', 'LuaSocket 2.0.2'): 
-		ret += dev.build('LuaFileSystem/')
 	if not conf.CheckLuaPKG('lfs', 'LuaFileSystem 1.5.0'):
+		ret += dev.build('LuaFileSystem/')
+	if not conf.CheckLuaPKG('socket', 'LuaSocket 2.0.2'): 
 		ret += dev.build('LuaSocket/')
 
 conf.Finish()
