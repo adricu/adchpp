@@ -1738,8 +1738,8 @@ access_1 = cm:signalReceive():connect(function(entity, cmd, ok)
 	return res
 end)
 
-access_2 = cm:signalState():connect(function(entity, oldstate)
-	if entity:getState() == adchpp.Entity_STATE_NORMAL and oldstate ~= adchpp.Entity_STATE_DATA then
+access_2 = cm:signalState():connect(function(entity)
+	if entity:getState() == adchpp.Entity_STATE_NORMAL then
 		local c = entity:asClient()
 		if c and (
 			entity:hasSupport(adchpp.AdcCommand_toFourCC("UCMD")) or entity:hasSupport(adchpp.AdcCommand_toFourCC("UCM0"))
