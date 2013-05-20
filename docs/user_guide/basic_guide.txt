@@ -1,8 +1,8 @@
 = ADCH++ Basic User Guide
-Authors & contributors : Toast <toast@adcportal.com>, eMTee <emtee11@gmail.com>, iceman50 <bdcdevel@gmail.com>
-Document Version 0.3.4
+Created by the DC++ team
+Document Version 0.3.5
 :toc:
-This version of the guide corresponds with ADCH++ version: *2.9.0*
+This version of the guide corresponds with ADCH++ version: *2.9.x*
 
 == Introduction
 
@@ -19,7 +19,7 @@ This basic guide shows you how to do the minimum configuration, setup and admini
 This part describes the installation procedure of ADCH++ under Linux and Windows.
 
 === Installing on Windows
-ADCH++ needs Windows 2000 or later to run (XP SP3 or newer is recommended as Windows 2000 isn't supported anymore).
+ADCH++ needs Windows XP SP3 or later to run.
 
 Before you go on you have to decide whether you want to run a debug or a release build of ADCH\+\+. For normal usage the best choice is the release build which is available prepackaged for download in the official ADCH++ home page.
 
@@ -125,7 +125,7 @@ TIP: Linux users should uncomment the following line in adchpp.xml <!--Plugins P
 
 === Setting up ports
 
-Add a new <Server/> entry to adchpp.xml with the port you wish you to run your hub on. You must put this line into the Servers part between the <Servers> and </Servers> nodes.
+Add a new <Server/> entry to adchpp.xml with the port you wish your hub to listen to. You must put a line similar to the following into the Servers part of the config file, between the <Servers> and </Servers> nodes.
 
 .Example:
 ---------------------------------------------------------------------
@@ -134,13 +134,13 @@ Add a new <Server/> entry to adchpp.xml with the port you wish you to run your h
 		<Server Port="2113"/>
 	</Servers>
 ---------------------------------------------------------------------
-In this example you will use the address adc://yourdomain:2113 to connect to your hub.
+In this example you will use the address adc://yourdomain:2113 in your DC client to log on to your hub.
 
-To make users able to connect to your hub in securely encrypted way (ADCS connections), set TLS="1" and specify the following (preferably absolute) paths: Certificate, PrivateKey, TrustedPath, DHParams.
+To be able to connect to your hub in a secure encrypted way (ADCS connections), set TLS="1" and specify the following path's: Certificate, PrivateKey, TrustedPath, DHParams.
 
 IMPORTANT: Linux users should always use _absolute_ path's in this setting.
 
-An example encrypted server setting:
+An example of an encrypted server setting:
 
 .Example: insert this to the Server line in adchpp.xml:
 ---------------------------------------------------------------------
@@ -150,32 +150,34 @@ An example encrypted server setting:
 		TrustedPath="certs/trusted/" DHParams="certs/dhparam.pem"/>
 	</Servers>
 ---------------------------------------------------------------------
+In this example you will use the address adcs://yourdomain:2780 in your DC client to log on to your hub.
 
-To make the SSL encrypted connectivity possible you must generate the above security certificate files for your hub using OpenSSL. You must copy your generated .pem files to the path you specified in the <Server...> setting.
+To make the SSL encrypted connectivity possible you must generate three security certificate (.pem) files for your hub (see the example above). You need to install OpenSSL to generate your cert files. The .pem files must be located in their path specified in the <Server ...> settings to be able to make ADCS connections to the hub.
 
 .How to get OpenSSL (needed for certificate generation)
 [width="100%",options="header"]
 |==============================================
 | Distribution		| Command
+| Windows			| http://www.slproweb.com/products/Win32OpenSSL.html[OpenSSL for Windows]
 | Debian 			| sudo install apt-get openssl
 | Redhat	 		| yum install openssl
-| Windows			| http://www.slproweb.com/products/Win32OpenSSL.html[OpenSSL for Windows]
 |==============================================
 
-Simple commands using OpenSSL to generate certificate files for encrypted connections:
+To automatically generate files and place them to the deafult path you can use the certificate files generator script (generate_certs.cmd/sh) provided in the ADCH\++ release package. Alternatively you can download the script corresponding to your operating system (http://bazaar.launchpad.net/\~dcplusplus-team/adchpp/trunk/files/head:/windows/[Windows] or http://bazaar.launchpad.net/~dcplusplus-team/adchpp/trunk/files/head:/linux/[Linux]) from the ADCH++ code repository as well.
 
+The script will create and automatically place the generated certificate files to a folder named 'certs' under the ADCH++ program folder.
+
+IMPORTANT: If you run the certificate files generator script under Windows it is recommended to install OpenSSL to its default folder (or into C:\Program Files\OpenSSL) and run the script in elevated mode (as Administrator) on Vista and later.
+
+Alternatively you can generate the .pem files manually using the following commands:
+
+.Simple commands that use OpenSSL to generate certificate files for encrypted connections
 ---------------------------------------------------------------------
 [source,bat]
 openssl genrsa -out privkey.pem 2048
 openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 openssl dhparam -outform PEM -out dhparam.pem 1024
 ---------------------------------------------------------------------
-
-Alternatively, you can use the certificate files generator script (generate_certs.cmd/sh) available in the release packages as well as at the following link: http://launchpadlibrarian.net/31960965/Cert_Generator.7z
-
-The script will create and automatically place the generated certificate files to a folder named 'certs' under the ADCH++ program folder.
-
-IMPORTANT: If you run the certificate files generator script under Windows its recommended to install OpenSSL to its default folder (into Program Files) and run the script in elevated mode (as Administrator) on Vista and later.
 
 TIP: Remember if you have specified TLS=1 in the server configuration, all users must connect to your hub using the prefix adcs:// added to the hub address (adcs://yourdomain:port). You can open more than one ports for your hub by adding more <Server/> entries. You can even mix secure and unsecure (non-TLS) port connections by adding TLS=1 parameter to a particular <Server/> entry only.
 
@@ -455,14 +457,14 @@ You simply re-register the user with the new password and user level. You must s
 
 If you want to know more about ADCH++
 
-. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\+\+ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at http://code.launchpad.net/adchpp/
+. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\++ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at http://code.launchpad.net/adchpp/
 . You can get support for ADCH++ at the project's official Answers tracker at http://answers.launchpad.net/adchpp/[Launchpad].
 . You can get more information or discuss topics about ADCH++ at the http://dcbase.org[DCBase.org community portal] forums.
 
 == Appendix
 This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
 
-Copyright (c) 2010-2012 Jacek Sieka
+Copyright (c) 2010-2013 Jacek Sieka
 
 
 Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at http://www.gnu.org/copyleft/fdl.html 
@@ -485,5 +487,6 @@ Changelog:
 0.3.2: Improved details, readability, added a commands list table and a new FAQ item, revised the settings list and features updated to correspond ADCH++ version 2.8.0 (emtee)
 0.3.3: Updated according the changes of the guard script addition (emtee)
 0.3.4: Updated corresponding to ADCH++ version 2.9.0 (emtee)
+0.3.5: Make the basic adchpp.xml and secure hub setup part more understandable; remove individual credits and their emails (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
