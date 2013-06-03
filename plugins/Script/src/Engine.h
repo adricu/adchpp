@@ -19,9 +19,12 @@
 #ifndef ENGINE_H_
 #define ENGINE_H_
 
+#include <string>
+#include <unordered_map>
+
 class Script;
 
-typedef std::unordered_set<std::string, std::string> ParameterMap;
+typedef std::unordered_map<std::string, std::string> ParameterMap;
 
 class Engine {
 public:
