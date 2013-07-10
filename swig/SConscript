@@ -1,6 +1,6 @@
 # vim: set filetype: py
 
-Import('dev source_path')
+Import('dev source_path setLuaEnv')
 
 targets = []
 build_path = dev.get_build_path(source_path)
@@ -58,7 +58,9 @@ def buildRbModule():
 		
 	if not conf.CheckCHeader('ruby.h'):
 		print "ruby.h not found, skipping ruby module"
+		conf.Finish()
 		return
+	conf.Finish()
 
 	ruby_wrap = dev.get_build_path(source_path) + 'ruby_wrap.cxx'
 
@@ -130,26 +132,32 @@ def buildPyModule():
 	pyd = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(pyd)
 
-def buildLuaModule():
-	env, target, sources = dev.prepare_build(source_path, 'luadchpp', 'lua.i')
+def buildLuaModule(lib,mod,plugin):
+	env, target, sources = dev.prepare_build(source_path, lib, mod)
 
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
+
+	env.Append(LIBS = ['adchpp'])
+	if 'Bloom' in dev.env['plugins']:
+		env.Append(LIBS = ['bloom'])
+
+	env.Append(CPPPATH=['#'])
 	
-	env.Append(LIBS=['adchpp', 'alua'])
 	# We assume the lua from the script plugin will be used...
-	
-	env.Append(CPPPATH=['#', '#/lua/'])
-	
+	setLuaEnv(env)
+
 	if dev.is_win32():
 		env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
 	else:
 		env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
-
+	
 	# on x64, SWIG includes some unsafe pointer conversions that the compiler of course disallows...
 	if 'gcc' in env['TOOLS'] and env['arch'] != 'x86':
 		env.Append(CPPFLAGS = ['-fpermissive'])
+		if plugin:
+			env.Replace(UNDEF = '')
 
 	luadchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(luadchpp)
@@ -205,7 +213,9 @@ if 'python' in dev.env['langs']:
 		buildPyModule()
 
 if 'lua' in dev.env['langs']:
-	buildLuaModule()
+	buildLuaModule('luadchpp','lua.i',False)
+	if 'Bloom' in dev.env['plugins']:
+		buildLuaModule('luadchppbloom','bloom.i',True)
 
 # TODO buildPHPModule()
 

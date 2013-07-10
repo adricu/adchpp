@@ -45,7 +45,7 @@ msvc_xxflags = {
 }
 
 gcc_link_flags = {
-	'common' : ['-g', '-Wl,--no-undefined', '-time'],
+	'common' : ['-g', '$UNDEF', '-time'],
 	'debug' : [],
 	'release' : ['-O3']				
 }
@@ -97,6 +97,9 @@ opts.AddVariables(
 	EnumVariable('arch', 'Target architecture', 'x86', ['x86', 'x64', 'ia64']),
 	('python', 'Python path to use when compiling python extensions', distutils.sysconfig.get_config_var('prefix')),
 	('ruby', 'Path to the ruby binary', 'ruby'),
+	('lua', 'Path to the lua binary', 'lua'),
+	BoolVariable('systemlua', 'Try to use the system lua libraries', 'no'),
+	BoolVariable('systemboost', 'Try to use the system boost libraries', 'no'),
 	BoolVariable('docs', 'Build docs (requires asciidoc)', 'no')
 )
 
@@ -127,10 +130,20 @@ dev.prepare()
 
 env.SConsignFile()
 
-env.Append(CPPPATH = ['#/boost/'])
-env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
-if env['CC'] == 'cl': # MSVC
-	env.Append(CPPDEFINES = ['BOOST_ALL_NO_LIB=1'])
+conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False, custom_tests = { 'CheckBoost' : dev.CheckBoost })
+
+if (not dev.env['systemboost'] or not conf.CheckBoost("1.49.0") or
+not conf.CheckLibWithHeader("libboost_date_time", "boost/date_time/posix_time/posix_time.hpp", 'CXX', 'boost::posix_time::microsec_clock::local_time();',0) or 
+not conf.CheckLibWithHeader("libboost_system", "boost/system/error_code.hpp", 'CXX', 'boost::system::error_code ec;',0)): 
+		compileboost=True
+else:
+		compileboost=False
+
+if compileboost:
+	env.Append(CPPPATH = ['#/boost/'])
+	env.Append(CPPDEFINES = ['BOOST_ALL_DYN_LINK=1'])
+	if env['CC'] == 'cl': # MSVC
+		env.Append(CPPDEFINES = ['BOOST_ALL_NO_LIB=1'])
 
 if not dev.is_win32():
 	env.Append(CPPDEFINES = ['_XOPEN_SOURCE=500'] )
@@ -179,6 +192,7 @@ env.Append(CXXFLAGS = xxflags['common'])
 
 env.Append(LINKFLAGS = link_flags[env['mode']])
 env.Append(LINKFLAGS = link_flags['common'])
+env.Append(UNDEF = '-Wl,--no-undefined')
 
 if dev.is_win32():
 	env.Append(LIBS = ['ws2_32', 'mswsock'])
@@ -195,7 +209,6 @@ SWIGScanner = SCons.Scanner.ClassicCPP(
 env.Append(SCANNERS=[SWIGScanner])
 
 if not env.GetOption('clean') and not env.GetOption("help"):
-	conf = Configure(env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False)
 
 	if not dev.is_win32():
 		if conf.CheckCHeader('poll.h'):
@@ -218,10 +231,13 @@ env.Append(LIBPATH = env.Dir(dev.get_build_root() + 'bin/').abspath)
 if not dev.is_win32():
 	dev.env.Append(RPATH = env.Literal('\\$$ORIGIN'))
 
-dev.boost_date_time = dev.build('boost/libs/date_time/src/')
-dev.boost_system = dev.build('boost/libs/system/src/')
-
-env.Append(LIBS = ['aboost_system', 'aboost_date_time'])
+if compileboost:
+	dev.boost_date_time = dev.build('boost/libs/date_time/src/')
+	dev.boost_system = dev.build('boost/libs/system/src/')
+	
+	env.Append(LIBS = ['aboost_system', 'aboost_date_time'])
+else:
+	env.Append(LIBS = ['boost_system', 'boost_date_time'])
 
 dev.adchpp = dev.build('adchpp/')
 

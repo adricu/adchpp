@@ -58,6 +58,27 @@ void BloomManager::init() {
 	statsConn = manage(pm.onCommand("stats", std::bind(&BloomManager::onStats, this, _1)));
 }
 
+bool BloomManager::hasBloom(Entity& c) const {
+	return c.getPluginData(bloomHandle);
+}
+
+bool BloomManager::hasTTH(Entity& c,const TTHValue& tth) const {
+	HashBloom* bloom = reinterpret_cast<HashBloom*>(c.getPluginData(bloomHandle));
+	return !bloom || bloom->match(tth);
+}
+
+int64_t BloomManager::getSearches() const {
+	return searches;
+}
+
+int64_t BloomManager::getTTHSearches() const {
+	return tthSearches;
+}
+
+int64_t BloomManager::getStoppedSearches() const {
+	return stopped;
+}
+
 BloomManager::~BloomManager() {
 	LOG(className, "Shutting down");
 }
@@ -145,8 +166,7 @@ void BloomManager::onSend(Entity& c, const AdcCommand& cmd, bool& ok) {
 		string tmp;
 		if(cmd.getParam("TR", 0, tmp)) {
 			tthSearches++;
-			HashBloom* bloom = reinterpret_cast<HashBloom*>(c.getPluginData(bloomHandle));
-			if((bloom && !bloom->match(TTHValue(tmp))) || !adchpp::Util::toInt(c.getField("SF"))) {
+			if(!hasTTH(c,TTHValue(tmp)) || !adchpp::Util::toInt(c.getField("SF"))) {
 				ok = false;
 				stopped++;
 			}
@@ -182,6 +202,8 @@ void BloomManager::onData(Entity& c, const uint8_t* data, size_t len) {
 		c.setPluginData(bloomHandle, bloom);
 		bloom->reset(pending->buffer, pending->k, h);
 		c.clearPluginData(pendingHandle);
+		/* Mark the new filter as received */
+		signalBloomReady_(c);
 	}
 }
 

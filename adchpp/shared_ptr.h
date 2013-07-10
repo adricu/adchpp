@@ -49,6 +49,7 @@ using SHARED_PTR_NS::shared_ptr;
 using SHARED_PTR_NS::make_shared;
 using SHARED_PTR_NS::enable_shared_from_this;
 using SHARED_PTR_NS::static_pointer_cast;
+using SHARED_PTR_NS::dynamic_pointer_cast;
 
 }
 

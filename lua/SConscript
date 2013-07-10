@@ -1,18 +1,39 @@
 Import('dev source_path')
 
-env, target, sources = dev.prepare_build(source_path, 'alua', 'all.c')
+conf = Configure(dev.env, conf_dir = dev.get_build_path('.sconf_temp'), log_file = dev.get_build_path('config.log'), clean = False, help = False,
+	custom_tests = { 'CheckPKGConfig' : dev.CheckPKGConfig, 'CheckPKG' : dev.CheckPKG, 'CheckLuaPKG' : dev.CheckLuaPKG })
 
-if dev.is_win32():
-	env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
-else:
-	env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
-	env.Append(LIBS=['m', 'dl'])
+ret=[]
+luaenv=dev.env
 
-if '-fvisibility=hidden' in env['CCFLAGS']:
-	env['CCFLAGS'].remove('-fvisibility=hidden')
+if not dev.env['systemlua'] or not conf.CheckPKGConfig('0.20.0') or not conf.CheckPKG('lua = 5.1.4'):
+	def setLuaEnv(env):
+		env.Append(LIBS=['alua'])
+		env.Append(CPPPATH=['#/lua/'])
+	Export('setLuaEnv')
 
-ret = [env.SharedLibrary(target, sources),
+	env, target, sources = dev.prepare_build(source_path, 'alua', 'all.c')
+
+	if dev.is_win32():
+		env.Append(CPPDEFINES=['LUA_BUILD_AS_DLL=1'])
+	else:
+		env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
+		env.Append(LIBS=['m', 'dl'])
+
+	if '-fvisibility=hidden' in env['CCFLAGS']:
+		env['CCFLAGS'].remove('-fvisibility=hidden')
+	ret = [env.SharedLibrary(target, sources),
 		dev.build('LuaFileSystem/'),
 		dev.build('LuaSocket/')]
+else:
+	def setLuaEnv(env):
+		env.ParseConfig('pkg-config --cflags --libs lua')
+	Export('setLuaEnv')
+	if not conf.CheckLuaPKG('lfs', 'LuaFileSystem 1.5.0'):
+		ret += dev.build('LuaFileSystem/')
+	if not conf.CheckLuaPKG('socket', 'LuaSocket 2.0.2'): 
+		ret += dev.build('LuaSocket/')
+
+conf.Finish()
 
 Return('ret')

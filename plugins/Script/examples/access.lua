@@ -488,7 +488,7 @@ local function save_settings()
 	end
 end
 
-local function add_stats(stat)
+function add_stats(stat)
 	if stats[stat] then
 		stats[stat] = stats[stat] + 1
 	else
@@ -1524,7 +1524,7 @@ commands.regnick = {
 			return
 		end
 
-		local my_user = get_user_c(c)
+		local ulevel = get_level(c)
 
 		local other = cm:findByNick(nick)
 

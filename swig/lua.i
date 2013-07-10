@@ -24,7 +24,7 @@ typedef unsigned int size_t;
 %{
 	static adchpp::Core *getCurrentCore(lua_State *l) {
 		lua_getglobal(l, "currentCore");
-		void *core = lua_touserdata(l, 1);
+		void *core = lua_touserdata(l, lua_gettop(l));
 		lua_pop(l, 1);
 		return reinterpret_cast<Core*>(core);
 	}

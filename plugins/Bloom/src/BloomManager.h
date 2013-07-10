@@ -24,21 +24,40 @@
 #include <adchpp/Exception.h>
 #include <adchpp/ClientManager.h>
 #include <adchpp/Plugin.h>
+#include <adchpp/Signal.h>
 
 #include "HashBloom.h"
 
 STANDARD_EXCEPTION(BloomException);
 
-class BloomManager : public Plugin {
+class ADCHPP_VISIBLE BloomManager : public Plugin {
 public:
 	BloomManager(Core &core);
 	virtual ~BloomManager();
 
-	virtual int getVersion() { return 0; }
+	virtual int getVersion() { return 2; }
 
 	void init();
 
+        /*Check if the entity has a bloom filter*/
+	PLUGIN_EXPORT bool hasBloom(Entity& c) const;
+        
+        /*Check if the entity may have the desired TTH according to the filter*/
+	PLUGIN_EXPORT bool hasTTH(Entity& c, const TTHValue& tth) const;
+
+	/*Get the number of searches sent (to clients)*/
+	PLUGIN_EXPORT int64_t getSearches() const;
+	/*Get the number of searches by TTH sent (to clients)*/
+	PLUGIN_EXPORT int64_t getTTHSearches() const;
+	/*Get the number of sent searches stopped*/
+	PLUGIN_EXPORT int64_t getStoppedSearches() const;
+        
 	static const std::string className;
+	
+	/*This signal is sent when a BloomFilter has been received*/
+	typedef SignalTraits<void (Entity&)> SignalBloomReady;
+	PLUGIN_EXPORT SignalBloomReady::Signal& signalBloomReady() { return signalBloomReady_; }
+
 private:
 	PluginDataHandle bloomHandle;
 	PluginDataHandle pendingHandle;
@@ -58,6 +77,8 @@ private:
 	void onStats(Entity& c);
 
 	Core &core;
+	
+	SignalBloomReady::Signal signalBloomReady_;
 };
 
 #endif //ACCESSMANAGER_H
