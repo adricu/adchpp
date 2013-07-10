@@ -28,6 +28,4 @@ end
 checkold =  adchpp.getCM():signalState():connect(checker)
 
 -- Checks for bloom updates happening after getting into NORMAL
-checkempty = bm:signalBloomReady() -- :connect(checker)
-base.print (bm:signalBloomReady())
-base.print (adchpp.getCM():signalState())
+checkempty = bm:signalBloomReady():connect(checker)
