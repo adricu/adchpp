@@ -6,6 +6,8 @@
 
 #include <adchpp/PluginManager.h>
 #include <adchpp/Core.h>
+#include <adchpp/Signal.h>
+#include <adchpp/Entity.h>
 
 using namespace adchpp;
 using namespace std;
@@ -30,6 +32,9 @@ using namespace std;
 	}
 
 %}
+
+%template(SignalE) Signal<void (Entity&)>;
+%template(SignalTraitsE) SignalTraits<void (Entity&)>;
 
 class BloomManager {
 public:
