@@ -453,12 +453,31 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 	return true;
 }
 
+namespace {
+bool validateNickF(wchar_t c) { /// @todo lambda
+	static std::locale loc("C");
+	return c == L'\u00AD' /* soft hyphen */ || !std::isprint(c, loc);
+}
+
+bool validateNick(const string& nick) {
+	if(!Util::validateCharset(nick, 33)) { // chars < 33 forbidden (including the space char)
+		return false;
+	}
+
+	// avoid impersonators
+	if(std::find_if(nick.begin(), nick.end(), validateNickF) != nick.end()) {
+		return false;
+	}
+
+	return true;
+}
+}
 
 bool ClientManager::verifyNick(Entity& c, const AdcCommand& cmd) throw() {
 	if(cmd.getParam("NI", 0, strtmp)) {
 		dcdebug("%s verifying nick %s\n", AdcCommand::fromSID(c.getSID()).c_str(), strtmp.c_str());
 		
-		if(!Util::validateCharset(strtmp, 33)) {
+		if(!validateNick(strtmp)) {
 			disconnect(c, Util::REASON_NICK_INVALID, "Invalid character in nick", AdcCommand::ERROR_NICK_INVALID);
 			return false;
 		}

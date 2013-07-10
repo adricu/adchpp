@@ -3,16 +3,27 @@ echo ADCH++ Certifcation Generator
 echo.
 echo This script reqires Win32 OpenSSL Installed
 echo Win32 OpenSSL - http://www.slproweb.com/products/Win32OpenSSL.html
-pause
+echo.
 
-set SSL=%PROGRAMFILES%\OpenSSL\bin\openssl.exe
+set SSL=C:\OpenSSL-Win32\bin\openssl.exe
+set OPENSSL_CONF=C:\OpenSSL-Win32\bin\openssl.cfg
+
 if not exist "%SSL%" (
-   echo OpenSSL isnt found make sure path is correct, exiting...
+   echo OpenSSL isn't found in %SSL%
+   set SSL=%PROGRAMFILES%\OpenSSL\bin\openssl.exe
+   set OPENSSL_CONF=%PROGRAMFILES%\OpenSSL\bin\openssl.cfg
+)
+
+if not exist "%SSL%" (
+   echo.
+   echo OpenSSL isn't found in %SSL%, exiting...
    pause
    exit
 )
 
-echo OpenSSL is found
+echo.
+echo OpenSSL is found in %SSL%
+pause
 
 if not exist .\config goto notfound
 if exist .\adchppd.exe goto found
@@ -36,5 +47,4 @@ cd..
 move *.pem certs\
 
 :end
-set SSL=
 pause
