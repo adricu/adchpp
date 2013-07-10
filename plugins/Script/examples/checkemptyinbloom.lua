@@ -14,7 +14,7 @@ local autil = base.require('autil')
 local bm = badchpp.getBM()
 
 -- Checking function
-local checker = (function(entity)
+local function checker (entity)
 	-- Only run the check in NORMAL state
 	if entity:getState() == adchpp.Entity_STATE_NORMAL then
 		-- If no bloom is available hasTTH has undefined behaviour
@@ -22,10 +22,12 @@ local checker = (function(entity)
 			autil.reply(entity, "It's possible you have empty files in your share")
 		end
 	end
-end)
+end
 
 -- Checks for possible bllom update that may happen before getting into NORMAL
-checkold = bm:signalBloomReady():connect(checker)
+checkold =  adchpp.getCM():signalState():connect(checker)
 
 -- Checks for bloom updates happening after getting into NORMAL
-checkempty = bm:signalBloomReady():connect(checker)
+checkempty = bm:signalBloomReady() -- :connect(checker)
+base.print (bm:signalBloomReady())
+base.print (adchpp.getCM():signalState())
