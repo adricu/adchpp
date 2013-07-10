@@ -33,6 +33,23 @@ using namespace std;
 
 %}
 
+template<typename F>
+struct Signal {
+%extend {
+	ManagedConnectionPtr connect(std::function<F> f) {
+		return manage(self, f);
+	}
+}
+};
+
+template<typename F>
+struct SignalTraits {
+	typedef adchpp::Signal<F> Signal;
+	//typedef adchpp::ConnectionPtr Connection;
+	typedef adchpp::ManagedConnectionPtr ManagedConnection;
+};
+
+
 %template(SignalE) Signal<void (Entity&)>;
 %template(SignalTraitsE) SignalTraits<void (Entity&)>;
 
