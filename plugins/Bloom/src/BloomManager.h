@@ -24,6 +24,7 @@
 #include <adchpp/Exception.h>
 #include <adchpp/ClientManager.h>
 #include <adchpp/Plugin.h>
+#include <adchpp/Signal.h>
 
 #include "HashBloom.h"
 
@@ -34,7 +35,7 @@ public:
 	BloomManager(Core &core);
 	virtual ~BloomManager();
 
-	virtual int getVersion() { return 1; }
+	virtual int getVersion() { return 2; }
 
 	void init();
 
@@ -52,6 +53,11 @@ public:
 	int64_t getStoppedSearches() const;
         
 	static const std::string className;
+	
+	/*This signal is sent when a BloomFilter has been received*/
+	typedef SignalTraits<void (Entity&)> SignalBloomReady;
+	/* Is this really necessary? */
+	SignalBloomReady::Signal& signalBloomReady() { return signalBloomReady_; }
 private:
 	PluginDataHandle bloomHandle;
 	PluginDataHandle pendingHandle;
@@ -71,6 +77,8 @@ private:
 	void onStats(Entity& c);
 
 	Core &core;
+	
+	SignalBloomReady::Signal signalBloomReady_;
 };
 
 #endif //ACCESSMANAGER_H

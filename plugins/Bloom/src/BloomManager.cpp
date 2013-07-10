@@ -202,6 +202,8 @@ void BloomManager::onData(Entity& c, const uint8_t* data, size_t len) {
 		c.setPluginData(bloomHandle, bloom);
 		bloom->reset(pending->buffer, pending->k, h);
 		c.clearPluginData(pendingHandle);
+		/* Mark the new filter as received */
+		signalBloomReady_(c);
 	}
 }
 
