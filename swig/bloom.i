@@ -37,6 +37,8 @@ public:
 	int64_t getSearches() const;
 	int64_t getTTHSearches() const;
 	int64_t getStoppedSearches() const;
+	typedef SignalTraits<void (Entity&)> SignalBloomReady;
+	SignalBloomReady::Signal& signalBloomReady() { return signalBloomReady_; }
 };
 
 %extend BloomManager {
