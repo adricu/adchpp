@@ -40,24 +40,24 @@ public:
 	void init();
 
         /*Check if the entity has a bloom filter*/
-	bool hasBloom(Entity& c) const;
+	PLUGIN_EXPORT bool hasBloom(Entity& c) const;
         
         /*Check if the entity may have the desired TTH according to the filter*/
-	bool hasTTH(Entity& c,const TTHValue& tth) const;
+	PLUGIN_EXPORT bool hasTTH(Entity& c, const TTHValue& tth) const;
 
 	/*Get the number of searches sent (to clients)*/
-	int64_t getSearches() const;
+	PLUGIN_EXPORT int64_t getSearches() const;
 	/*Get the number of searches by TTH sent (to clients)*/
-	int64_t getTTHSearches() const;
+	PLUGIN_EXPORT int64_t getTTHSearches() const;
 	/*Get the number of sent searches stopped*/
-	int64_t getStoppedSearches() const;
+	PLUGIN_EXPORT int64_t getStoppedSearches() const;
         
 	static const std::string className;
 	
 	/*This signal is sent when a BloomFilter has been received*/
 	typedef SignalTraits<void (Entity&)> SignalBloomReady;
-	/* Is this really necessary? */
-	SignalBloomReady::Signal& signalBloomReady() { return signalBloomReady_; }
+	PLUGIN_EXPORT SignalBloomReady::Signal& signalBloomReady() { return signalBloomReady_; }
+
 private:
 	PluginDataHandle bloomHandle;
 	PluginDataHandle pendingHandle;

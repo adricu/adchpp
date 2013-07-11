@@ -10,7 +10,6 @@
 #include <adchpp/Entity.h>
 
 using namespace adchpp;
-using namespace std;
 
 %}
 
@@ -18,10 +17,17 @@ using namespace std;
 %import "lua.i"
 
 %runtime %{
-#include <memory> 
+#include <plugins/Bloom/src/stdinc.h>
 #include <plugins/Bloom/src/BloomManager.h>
 #include <iostream>
 %}
+
+using namespace std;
+
+template<typename T>
+struct shared_ptr {
+	T* operator->();
+};
 
 %{
 	static adchpp::Core *getCurrentCore(lua_State *l) {
@@ -60,12 +66,12 @@ public:
 	int64_t getTTHSearches() const;
 	int64_t getStoppedSearches() const;
 	typedef SignalTraits<void (Entity&)> SignalBloomReady;
-	SignalBloomReady::Signal& signalBloomReady() { return signalBloomReady_; }
+	SignalBloomReady::Signal& signalBloomReady();
 };
 
 %extend BloomManager {
-	bool hasTTH(adchpp::Entity& c,const std::string tth) {
-		return self->hasTTH(c,TTHValue(tth));
+	bool hasTTH(adchpp::Entity& c, std::string tth) {
+		return self->hasTTH(c, TTHValue(tth));
 	}
 }
 
@@ -76,7 +82,7 @@ public:
 namespace adchpp {
 /* Get Bloom Manager */
 shared_ptr<BloomManager> getBM(lua_State* l) {
-	return (std::dynamic_pointer_cast<BloomManager>(getCurrentCore(l)->getPluginManager().getPlugin("BloomManager")));
+	return dynamic_pointer_cast<BloomManager>(getCurrentCore(l)->getPluginManager().getPlugin("BloomManager"));
 }
 
 }

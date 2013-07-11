@@ -16,12 +16,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef SCRIPT_STDINC_H
-#define SCRIPT_STDINC_H
+#ifndef BLOOM_STDINC_H
+#define BLOOM_STDINC_H
 
 #include <adchpp/adchpp.h>
 #include <adchpp/common.h>
 
 using namespace adchpp;
 
-#endif //ACCESS_STDINC_H
+#ifdef _WIN32
+#define PLUGIN_EXPORT __declspec(dllexport)
+#else
+#define PLUGIN_EXPORT __attribute__ ((visibility("default")))
+#endif
+
+#endif

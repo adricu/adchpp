@@ -138,9 +138,11 @@ def buildLuaModule(lib,mod,plugin):
 	env['SWIGOUTDIR'] = Dir(dev.get_build_path('bin'))
 	
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
-	
-	env.Append(LIBS=['adchpp'])
-	
+
+	env.Append(LIBS = ['adchpp'])
+	if 'Bloom' in dev.env['plugins']:
+		env.Append(LIBS = ['bloom'])
+
 	env.Append(CPPPATH=['#'])
 	
 	# We assume the lua from the script plugin will be used...
