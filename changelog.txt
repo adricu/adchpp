@@ -1,3 +1,10 @@
+* Make -Wl,--no-undefined conditional as required by the Bloom plugin API
+* Add an API to the bloom manager for notifying when the filters get updated
+* Add an API to the bloom manager allowing to make requests to the user's filter
+* Add an API to the bloom manager allowing to export the filter stats
+* Allow usage of the system's Boost Libraries
+* Allow usage of the system's Lua Libraries
+* Allow specifying the path to the system lua binary
 * Improve Lua scripts
 * [L#1118699] Normalize per-entity data storage from Lua
 * Update Boost to version 1.53
