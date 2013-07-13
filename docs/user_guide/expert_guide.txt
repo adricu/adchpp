@@ -2,7 +2,7 @@
 Created by the DC++ team
 Document Version 0.4.3
 :toc:
-This version of the guide corresponds with ADCH++ version: *2.9.x*
+This version of the guide corresponds with ADCH++ versions *2.9.x* and later.
 
 == Introduction
 
