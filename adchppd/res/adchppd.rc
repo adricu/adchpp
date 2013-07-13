@@ -1,8 +1,8 @@
 0 ICON "adchppd.ico"
 
 1 VERSIONINFO
- FILEVERSION 2,9,1,0
- PRODUCTVERSION 2,9,1,0
+ FILEVERSION 2,10,0,0
+ PRODUCTVERSION 2,10,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -19,12 +19,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "http://adchpp.sourceforge.net"
             VALUE "FileDescription", "ADCH++"
-            VALUE "FileVersion", "2, 9, 1, 0"
+            VALUE "FileVersion", "2, 10, 0, 0"
             VALUE "InternalName", "ADCH++"
             VALUE "LegalCopyright", "Copyright 2006-2013 Jacek Sieka"
             VALUE "OriginalFilename", "adchppd.exe"
             VALUE "ProductName", "ADCH++"
-            VALUE "ProductVersion", "2, 9, 1, 0"
+            VALUE "ProductVersion", "2, 10, 0, 0"
         END
     END
     BLOCK "VarFileInfo"

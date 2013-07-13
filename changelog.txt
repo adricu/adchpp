@@ -1,3 +1,4 @@
+-- 2.10.0 2013-07-13 --
 * Make -Wl,--no-undefined conditional as required by the Bloom plugin API
 * Add an API to the bloom manager for notifying when the filters get updated
 * Add an API to the bloom manager allowing to make requests to the user's filter
