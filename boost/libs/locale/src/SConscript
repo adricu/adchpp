@@ -1,0 +1,18 @@
+Import('dev source_path')
+
+env, target, sources = dev.prepare_build(source_path, 'aboost_locale', '*/*.cpp')
+
+to_remove = 'posix' if dev.is_win32() else 'win32'
+sources = [source for source in sources if to_remove + '/' not in source and to_remove + '\\' not in source]
+
+if dev.is_win32():
+	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_POSIX_BACKEND=1'])
+else:
+	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_WINAPI_BACKEND=1'])
+
+if '-fvisibility=hidden' in env['CCFLAGS']:
+	env['CCFLAGS'].remove('-fvisibility=hidden')
+
+ret = env.SharedLibrary(target, [sources, dev.boost_system])
+
+Return('ret')
