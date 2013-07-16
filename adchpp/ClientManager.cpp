@@ -31,6 +31,7 @@
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/address_v6.hpp>
+#include <boost/locale.hpp>
 
 namespace adchpp {
 
@@ -455,8 +456,19 @@ bool ClientManager::verifyCID(Entity& c, AdcCommand& cmd) throw() {
 
 namespace {
 bool validateNickF(wchar_t c) { /// @todo lambda
-	static std::locale loc("C");
-	return c == L'\u00AD' /* soft hyphen */ || !std::isprint(c, loc);
+
+	// the following are explicitly allowed (isprint sometimes differs)
+	if(c >= L'\u2100' && c <= L'\u214F' /* letter-like symbols */) {
+		return false;
+	}
+
+	// the following are explicitly disallowed (isprint sometimes differs)
+	if(c == L'\u00AD' /* soft hyphen */) {
+		return true;
+	}
+
+	static std::locale loc = boost::locale::generator().generate("");
+	return !std::isprint(c, loc);
 }
 
 bool validateNick(const string& nick) {
@@ -465,7 +477,8 @@ bool validateNick(const string& nick) {
 	}
 
 	// avoid impersonators
-	if(std::find_if(nick.begin(), nick.end(), validateNickF) != nick.end()) {
+	std::wstring nickW = boost::locale::conv::utf_to_utf<wchar_t>(nick);
+	if(std::find_if(nickW.begin(), nickW.end(), validateNickF) != nickW.end()) {
 		return false;
 	}
 
