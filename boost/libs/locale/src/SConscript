@@ -10,9 +10,12 @@ if dev.is_win32():
 else:
 	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_WINAPI_BACKEND=1'])
 
+env.Append(LIBS = ['aboost_system'])
+env.Depends(target, dev.boost_system)
+
 if '-fvisibility=hidden' in env['CCFLAGS']:
 	env['CCFLAGS'].remove('-fvisibility=hidden')
 
-ret = env.SharedLibrary(target, [sources, dev.boost_system])
+ret = env.SharedLibrary(target, sources)
 
 Return('ret')
