@@ -184,6 +184,9 @@ public:
 	void setOverflowTimeout(size_t timeout);
 	size_t getOverflowTimeout() const;
 
+    void setDisconnectTimeout(size_t timeout);
+	size_t getDisconnectTimeout() const;
+
 	void setServers(const ServerInfoList& servers_);
 
 	SocketStats &getStats();

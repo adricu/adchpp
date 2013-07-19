@@ -83,6 +83,9 @@ public:
 	void setOverflowTimeout(size_t timeout) { overflowTimeout = timeout; }
 	size_t getOverflowTimeout() const { return overflowTimeout; }
 
+	void setDisconnectTimeout(size_t timeout) { disconnectTimeout = timeout; }
+	size_t getDisconnectTimeout() const { return disconnectTimeout; }
+
 	SocketStats &getStats() { return stats; }
 
 	Core &getCore() { return core; }
@@ -108,6 +111,7 @@ private:
 	size_t bufferSize; /// Default buffer size used for SO_RCVBUF/SO_SNDBUF
 	size_t maxBufferSize; /// Max allowed write buffer size for each socket
 	size_t overflowTimeout;
+	size_t disconnectTimeout;
 
 	static const std::string className;
 

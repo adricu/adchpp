@@ -47,9 +47,7 @@
 
 		<!-- Timeout (ms) before ADCH++ stops trying to empty its send buffer for a user
 			 (to send a kick message for example), and disconnects him/her. -->
-		<!-- TODO this setting is currently ignored.
-		<DisconnectTimeout>5000</DisconnectTimeout>
-		-->
+		<DisconnectTimeout>10000</DisconnectTimeout>
 
 		<!-- Timeout (ms) before disconnecting users whose login process is taking too long. -->
 		<LogTimeout>10000</LogTimeout>

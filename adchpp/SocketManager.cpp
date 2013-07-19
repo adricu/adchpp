@@ -46,7 +46,8 @@ SocketManager::SocketManager(Core &core) :
 core(core),
 bufferSize(1024),
 maxBufferSize(16 * 1024),
-overflowTimeout(60 * 1000)
+overflowTimeout(60 * 1000),
+disconnectTimeout(10 * 1000)
 {
 }
 

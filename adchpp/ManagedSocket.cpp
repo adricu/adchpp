@@ -63,7 +63,7 @@ void ManagedSocket::write(const BufferPtr& buf, bool lowPrio /* = false */) thro
 		if(lowPrio) {
 			return;
 		} else if(!overflow.is_not_a_date_time() && overflow + time::millisec(sm.getOverflowTimeout()) < time::now()) {
-			disconnect(5000, Util::REASON_WRITE_OVERFLOW);
+			disconnect(Util::REASON_WRITE_OVERFLOW);
 			return;
 		} else {
 			overflow = time::now();
@@ -113,7 +113,7 @@ void ManagedSocket::prepareWrite() throw() {
 			sock->write(outBuf, Handler<&ManagedSocket::completeWrite>(shared_from_this()));
 		}
 	} else if(time::now() > lastWrite + time::seconds(60)) {
-		disconnect(5000, Util::REASON_WRITE_TIMEOUT);
+		disconnect(Util::REASON_WRITE_TIMEOUT);
 	}
 }
 
@@ -251,10 +251,12 @@ struct Reporter {
 	std::string info;
 };
 
-void ManagedSocket::disconnect(size_t timeout, Util::Reason reason, const std::string &info) throw() {
+void ManagedSocket::disconnect(Util::Reason reason, const std::string &info) throw() {
 	if(disconnecting()) {
 		return;
 	}
+
+	const auto timeout = sm.getDisconnectTimeout();
 
 	disc = time::now() + time::millisec(timeout);
 

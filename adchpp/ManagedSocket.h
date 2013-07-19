@@ -43,8 +43,9 @@ public:
 	/** Returns the number of bytes in the output buffer; buffers must be locked */
 	ADCHPP_DLL size_t getQueuedBytes() const;
 
-	/** Asynchronous disconnect. Pending data will be written, but no more data will be read. */
-	ADCHPP_DLL void disconnect(size_t timeout, Util::Reason reason, const std::string &info = Util::emptyString) throw();
+	/** Asynchronous disconnect. Pending data will be written within the limits of the
+	 * DisconnectTimeout setting, but no more data will be read. */
+	ADCHPP_DLL void disconnect(Util::Reason reason, const std::string &info = Util::emptyString) throw();
 
 	const std::string& getIp() const { return ip; }
 	void setIp(const std::string& ip_) { ip = ip_; }

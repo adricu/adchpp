@@ -1,3 +1,6 @@
+-- 2.11.0 2013-07-19 --
+* Reinstate the DisconnectTimeout setting, increase its default from 5 to 10 ms
+
 -- 2.10.1 2013-07-17 --
 * Improve nick validation (speak up if you think it's not optimal)
 

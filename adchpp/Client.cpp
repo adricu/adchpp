@@ -162,7 +162,7 @@ void Client::disconnect(Util::Reason reason, const std::string &info) throw() {
 	if(!disconnecting) {
 		dcdebug("%s disconnecting because %d\n", AdcCommand::fromSID(getSID()).c_str(), reason);
 		disconnecting = true;
-		socket->disconnect(5000, reason, info);
+		socket->disconnect(reason, info);
 	}
 }
 

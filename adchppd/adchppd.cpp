@@ -68,6 +68,8 @@ void loadXML(Core &core, const string& aFileName)
 						core.getSocketManager().setMaxBufferSize(Util::toInt(xml.getChildData()));
 					} else if(xml.getChildName() == "OverflowTimeout") {
 						core.getSocketManager().setOverflowTimeout(Util::toInt(xml.getChildData()));
+					} else if(xml.getChildName() == "DisconnectTimeout") {
+						core.getSocketManager().setDisconnectTimeout(Util::toInt(xml.getChildData()));
 					} else if(xml.getChildName() == "LogTimeout") {
 						core.getClientManager().setLogTimeout(Util::toInt(xml.getChildData()));
 					}
