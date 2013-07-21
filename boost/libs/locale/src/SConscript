@@ -2,13 +2,14 @@ Import('dev source_path')
 
 env, target, sources = dev.prepare_build(source_path, 'aboost_locale', '*/*.cpp')
 
-to_remove = 'posix' if dev.is_win32() else 'win32'
+if dev.is_win32(): to_remove = 'posix'
+else: to_remove = 'win32'
 sources = [source for source in sources if to_remove + '/' not in source and to_remove + '\\' not in source]
 
 if dev.is_win32():
-	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_POSIX_BACKEND=1'])
+	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_POSIX_BACKEND'])
 else:
-	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_WINAPI_BACKEND=1'])
+	env.Append(CPPDEFINES = ['BOOST_LOCALE_NO_WINAPI_BACKEND', 'BOOST_LOCALE_WITH_ICONV'])
 
 env.Append(LIBS = ['aboost_system'])
 env.Depends(target, dev.boost_system)
