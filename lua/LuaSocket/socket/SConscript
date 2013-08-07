@@ -2,6 +2,7 @@ Import('dev source_path setLuaEnv')
 
 env, target, sources = dev.prepare_build(source_path, 'core', source_glob = '*.c', in_bin = False)
 env['SHLIBPREFIX'] = ''
+env['CYGDLLPREFIX'] = ''
 
 if dev.is_win32():
 	env.Append(CPPDEFINES = ['LUASOCKET_API="__declspec(dllexport)"'])

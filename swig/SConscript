@@ -140,8 +140,8 @@ def buildLuaModule(lib,mod,plugin):
 	env.Append(SWIGFLAGS=['-c++','-Wall','-lua'])
 
 	env.Append(LIBS = ['adchpp'])
-	if dev.is_win32() and 'Bloom' in dev.env['plugins']:
-		env.Append(LIBS = ['bloom'])
+	if (dev.is_win32() or env['PLATFORM'] == 'cygwin') and 'Bloom' in dev.env['plugins']:
+		env.Append(LIBS = ['Bloom'])
 
 	env.Append(CPPPATH=['#'])
 	
