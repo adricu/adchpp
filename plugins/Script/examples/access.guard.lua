@@ -1283,7 +1283,7 @@ end
 local function dump_dropped(c, msg)
 	local str = "You are disconnected."
 	if msg then
-		str = " Reason: " .. msg
+		str = str .. " Reason: " .. msg
 	end
 	autil.dump(c, adchpp.AdcCommand_ERROR_BANNED_GENERIC, function(cmd)
 		cmd:addParam("MS" .. str)

@@ -154,10 +154,11 @@ def buildLuaModule(lib,mod,plugin):
 		env.Append(CPPDEFINES=['LUA_USE_LINUX=1'])
 	
 	# on x64, SWIG includes some unsafe pointer conversions that the compiler of course disallows...
-	if 'gcc' in env['TOOLS'] and env['arch'] != 'x86':
+	if 'gcc' in env['TOOLS'] and env['arch'] == 'x64':
 		env.Append(CPPFLAGS = ['-fpermissive'])
-		if plugin:
-			env.Replace(UNDEF = '')
+
+	if plugin:
+		env.Replace(UNDEF = '')
 
 	luadchpp = env.SharedLibrary(target, sources, SHLIBPREFIX='')
 	targets.append(luadchpp)
