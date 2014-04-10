@@ -1,4 +1,6 @@
+-- 2.11.1 2014-04-10 --
 * Improve Lua scripts
+* Update OpenSSL to version 1.0.1g - notably fixes the TLS heartbeat attack
 
 -- 2.11.0 2013-07-19 --
 * Reinstate the DisconnectTimeout setting, increase its default from 5 to 10 ms
