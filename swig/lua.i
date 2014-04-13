@@ -12,8 +12,8 @@ before a script is being loaded or unloaded. return true to discard further proc
 
 %inline %{
 /* Deleter for per-entity objects */
-static void free_lua_ref(void *data) {
-	SWIGLUA_REF *ref = reinterpret_cast<SWIGLUA_REF*> (data);
+static void free_lua_ref(void* data) {
+	SWIGLUA_REF* ref = reinterpret_cast<SWIGLUA_REF*>(data);
 	swiglua_ref_clear(ref);
 	delete ref;
 }
@@ -327,6 +327,10 @@ uint32_t, const uint32_t&
 
 	void setPluginData(const PluginDataHandle& handle, SWIGLUA_REF data) {
 		$self->setPluginData(handle, reinterpret_cast<void*>(new SWIGLUA_REF(data)));
+	}
+
+    void clearPluginData(const PluginDataHandle& handle) {
+		$self->clearPluginData(handle);
 	}
 }
 

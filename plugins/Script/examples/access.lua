@@ -104,8 +104,8 @@ local lm = adchpp.getLM()
 local pm = adchpp.getPM()
 local sm = adchpp.getSM()
 
-local saltsHandle = pm:registerPluginData()
 local levelHandle = pm:registerPluginData()
+local saltsHandle = pm:registerPluginData()
 
 -- forward declarations.
 local cut_str,
@@ -1782,3 +1782,15 @@ save_users_timer = sm:addTimedJob(900000, maybe_save_users)
 autil.on_unloading(_NAME, save_users_timer)
 
 autil.on_unloading(_NAME, maybe_save_users)
+
+-- Clear plugin data registered by this script when it goes off.
+autil.on_unloading(_NAME, function()
+	local entities = cm:getEntities()
+	local size = entities:size()
+	if size > 0 then
+		for i = 0, size - 1 do
+			entities[i]:clearPluginData(levelHandle)
+			entities[i]:clearPluginData(saltsHandle)
+		end
+	end
+end)
