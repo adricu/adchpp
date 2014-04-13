@@ -1,4 +1,5 @@
 * [L#1206293] Fix crashes after calling +reload
+* [L#1206293] Fix commands that output entity info
 
 -- 2.11.1 2014-04-10 --
 * Improve Lua scripts

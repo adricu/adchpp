@@ -903,8 +903,13 @@ local function data_info_string_entity(info)
 	if info.su then
 		str = str .. "\n\tSupports:\t\t\t\t" .. info.su
 	end
-	str = str .. "\n\tCurrent Level:\t\t\t\t" .. access.get_level(info)
-	local user = access.get_user_c(info)
+
+	local c = cm:findByCID(adchpp.CID(info.cid))
+	if c then
+		str = str .. "\n\tCurrent Level:\t\t\t\t" .. access.get_level(c)
+	end
+
+	local user = access.get_user(info.cid, nil)
 	if not user.is_default then
 		if user.level then
 			str = str .. "\n\tEntity Regged:\t\t\t\tLevel: " .. user.level .. "  "
