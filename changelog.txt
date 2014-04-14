@@ -1,3 +1,4 @@
+-- 2.11.2 2014-04-14 --
 * [L#1206293] Fix crashes after calling +reload
 * [L#1206293] Fix commands that output entity info
 
