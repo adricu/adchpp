@@ -8,13 +8,13 @@ echo.
 set SSL=C:\OpenSSL-Win32\bin\openssl.exe
 set OPENSSL_CONF=C:\OpenSSL-Win32\bin\openssl.cfg
 
-if not exist "%SSL%" (
+if not exist %SSL% (
    echo OpenSSL isn't found in %SSL%
-   set SSL=%PROGRAMFILES%\OpenSSL\bin\openssl.exe
-   set OPENSSL_CONF=%PROGRAMFILES%\OpenSSL\bin\openssl.cfg
+   set SSL="%PROGRAMFILES%\OpenSSL\bin\openssl.exe"
+   set OPENSSL_CONF="%PROGRAMFILES%\OpenSSL\bin\openssl.cfg"
 )
 
-if not exist "%SSL%" (
+if not exist %SSL% (
    echo.
    echo OpenSSL isn't found in %SSL%, exiting...
    pause
