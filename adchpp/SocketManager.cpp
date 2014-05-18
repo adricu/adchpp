@@ -213,7 +213,7 @@ public:
 #ifdef HAVE_OPENSSL
 		if(info.secure()) {
 		    context.reset(new ssl::context(sm.io, ssl::context::sslv23_server));
-		    context->set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3 | ssl::context::single_dh_use | ssl::context::no_compression);
+		    context->set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3 | ssl::context::single_dh_use);
 		    //context->set_password_callback(boost::bind(&server::get_password, this));
 		    context->use_certificate_chain_file(info.TLSParams.cert);
 		    context->use_private_key_file(info.TLSParams.pkey, ssl::context::pem);
