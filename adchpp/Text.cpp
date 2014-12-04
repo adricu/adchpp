@@ -41,11 +41,41 @@ int Text::utf8ToWc(const char* str, wchar_t& c) {
 							}
 							n = -6;
 						}
+						int i = -1;
+						while(i > n && (str[abs(i)] & 0x80) == 0x80)
+							--i;
+						return i;
+					} else {		// 1111xxxx
+						uint8_t c1 = (uint8_t)str[1];
+						if((c1 & (0x80 | 0x40)) != 0x80)
+							return -1;
+
+						uint8_t c2 = (uint8_t)str[2];
+						if((c2 & (0x80 | 0x40)) != 0x80)
+							return -2;
+
+						uint8_t c3 = (uint8_t)str[3];
+						if((c2 & (0x80 | 0x40)) != 0x80)
+							return -3;
+
+						// Overlong encoding
+						if(c0 == (0x80 | 0x40 | 0x20) && (c1 & (0x80 | 0x40 | 0x20)) == 0x80)
+							return -4;
+
+						c = (((wchar_t)c0 & 0x0f) << 18) |
+							(((wchar_t)c1 & 0x3f) << 12) |
+							(((wchar_t)c2 & 0x3f) << 6) |
+							((wchar_t)c3 & 0x3f);
+
+						// Invalid UTF-8 code point
+						if(c > 0x10ffff) {
+							// REPLACEMENT CHARACTER: http://www.fileformat.info/info/unicode/char/0fffd/index.htm
+							c = 0xfffd;
+							return -4;
+						}
+
+						return 4;
 					}
-					int i = -1;
-					while(i > n && (str[abs(i)] & 0x80) == 0x80)
-						--i;
-					return i;
 				} else {		// 1110xxxx
 					uint8_t c1 = (uint8_t)str[1];
 					if((c1 & (0x80 | 0x40)) != 0x80)
@@ -54,10 +84,6 @@ int Text::utf8ToWc(const char* str, wchar_t& c) {
 					uint8_t c2 = (uint8_t)str[2];
 					if((c2 & (0x80 | 0x40)) != 0x80)
 						return -2;
-
-					// Ugly utf-16 surrogate catch
-					if((c0 & 0x0f) == 0x0d && (c1 & 0x3c) >= (0x08 << 2))
-						return -3;
 
 					// Overlong encoding
 					if(c0 == (0x80 | 0x40 | 0x20) && (c1 & (0x80 | 0x40 | 0x20)) == 0x80)
@@ -93,7 +119,17 @@ int Text::utf8ToWc(const char* str, wchar_t& c) {
 }
 
 void Text::wcToUtf8(wchar_t c, string& str) {
-	if(c >= 0x0800) {
+	// "UTF-8 definition": https://tools.ietf.org/html/rfc3629#section-3
+	if(c > 0x10ffff) {
+		// Invalid UTF-8 code point
+		// REPLACEMENT CHARACTER: http://www.fileformat.info/info/unicode/char/0fffd/index.htm
+		wcToUtf8(0xfffd, str);
+	} else if(c >= 0x10000) {
+		str += (char)(0x80 | 0x40 | 0x20 | 0x10 | (c >> 18));
+		str += (char)(0x80 | ((c >> 12) & 0x3f));
+		str += (char)(0x80 | ((c >> 6) & 0x3f));
+		str += (char)(0x80 | (c & 0x3f));
+	} else if(c >= 0x0800) {
 		str += (char)(0x80 | 0x40 | 0x20 | (c >> 12));
 		str += (char)(0x80 | ((c >> 6) & 0x3f));
 		str += (char)(0x80 | (c & 0x3f));
