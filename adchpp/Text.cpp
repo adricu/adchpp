@@ -120,7 +120,7 @@ int Text::utf8ToWc(const char* str, wchar_t& c) {
 
 void Text::wcToUtf8(wchar_t c, string& str) {
 	// "UTF-8 definition": https://tools.ietf.org/html/rfc3629#section-3
-	if(c > 0x10ffff) {
+	if(c > 0x10ffff || (c >= 0xd800 && c <= 0xdfff)) {
 		// Invalid UTF-8 code point
 		// REPLACEMENT CHARACTER: http://www.fileformat.info/info/unicode/char/0fffd/index.htm
 		wcToUtf8(0xfffd, str);
