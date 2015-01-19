@@ -1,0 +1,15 @@
+^doc$
+^logs$
+^build$
+^custom\.py$
+^openssl$
+\.pdb$
+\.gch$
+\.pot$
+\.pyc$
+\.csettings$
+\.sconsign\.dblite$
+^php/include/
+^php/lib/
+^php/x64/include/
+^php/x64/lib/

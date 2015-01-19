@@ -2,27 +2,14 @@
 
 def getRevision(env):
 	try:
-		import bzrlib
-		import bzrlib.builtins
-
-		tree = bzrlib.builtins.WorkingTree.open_containing(env.Dir("#").abspath)[0]
-
-		return tree.branch.revision_id_to_revno(tree.last_revision())
-
+		import subprocess
+		ret = subprocess.check_output('hg identify -i', shell=True)
+		if ret:
+			return ret[:-1]  # Remove the trailing line-ending char. @todo: This returns a 2 byte line-ending when compiled on Win so there's some cruft in the end of the generated revno string on Win builds...
 	except:
-		f = None
-		try:
-			f = open(env.Dir("#").abspath+"/.bzr/branch/last-revision",'r')
-			line = f.read()
-			pos = line.find(' ')
-			if pos > 0:
-				return int(line[:pos])
-		except:
-			pass
-		if f:
-			f.close()
+		pass
 
-	return 0
+	return '[unknown]'
 
  
 Import('dev source_path')
@@ -62,7 +49,7 @@ if 'HAVE_OPENSSL' in env['CPPDEFINES']:
 
 for i, source in enumerate(sources):
 	if source.find("version.cpp") != -1:
-		rev = ['ADCHPP_REVISION=' + str(getRevision(env))]
+		rev = ['ADCHPP_REVISION=' + getRevision(env)]
 		sources[i] = env.SharedObject(source, CPPDEFINES=env['CPPDEFINES'] + rev)
 
 headers=dev.get_sources(source_path, "*.h")
