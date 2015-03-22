@@ -571,7 +571,7 @@ These are the minimum versions of tools required to compile ADCH++:
     
 	* GCC 4.4 (for Windows: <http://www.mingw.org>), Microsoft Visual C++ 10 (2010), Clang 3.0
     * SCons 1.2.0 or later http://www.scons.org
-    * SWIG 1.3.40 or later http://www.swig.org
+    * SWIG 1.3.40 or later (2.0.12 or later if GCC 4.9 or newer used for compiling) http://www.swig.org 
     * Optional: Python 2.4.x or later (32 bit version only) http://www.python.org
 	* Optional: Ruby 1.9.2 (http://www.ruby-lang.org)
 	* Optional: PHP 5 (http://www.php.net/)
