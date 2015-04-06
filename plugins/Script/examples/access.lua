@@ -184,7 +184,7 @@ local function recheck_info()
 end
 
 settings.address = {
-	alias = { host = true, dns = true, hubaddress = true },
+	alias = { host = true, hubaddress = true },
 
 	help = "complete hub address (adc[s]://[DNS or IP]:[port number])",
 
