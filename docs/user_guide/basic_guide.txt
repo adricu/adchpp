@@ -108,7 +108,7 @@ This part focuses to the basic configuration of the hub describing how to manage
 ADCH\++ is configurable using an XML settings file as are the standard plugins. In Linux, the default location for configuration files is "/etc/adchpp/". In Windows, it is a directory named "config" under the program directory.
 All ADCH++ settings are stored in a file called adchpp.xml. The default packaged file contains lots of comments to help you get started. Open up adchpp.xml in a text editor (such as Notepad under Windows) and start changing the values as you wish. 
 
-CAUTION: Editing the values incorrectly can lead to problems so be careful what you're doing. If the settings file doesn't meet the XML standards it may won't be processed correctly.
+CAUTION: Editing the values incorrectly can lead to problems so be careful what you're doing. If the settings file doesn't meet the XML standards it may won't be processed correctly. If you encounter errors try to validate the settings file syntax with an XML validator such as http://www.xmlvalidation.com 
 
 .Main parts of the ADCH++ configuration file
 [width="100%",options="header"]
@@ -121,7 +121,7 @@ CAUTION: Editing the values incorrectly can lead to problems so be careful what 
 | Plugin			| List of plugin engines
 |==============================================
 
-TIP: Linux users should uncomment the following line in adchpp.xml <!--Plugins Path="/home/arnetheduck/adchpp/lib/adchpp/"--> by removing !-- and -- from the line and must modify the path to the actual adchpp directory. Under Linux, as like in each and every path setting in ADCH++, you must specify _absolute path_.
+TIP: The default settings.xml file contains two <Plugins> opening tags, one for Linux (commented out, with path specification example) and another for Windows (default). Linux users should uncomment <!--Plugins Path="~/adchpp/"--> by removing !-- and -- from the line and must modify the path to the actual plugins directory and _remove or uncomment_ the standalone <Plugins> tag. Under Linux, just like for every ADCH++ path setting, you must specify _absolute path_.
 
 === Setting up ports
 
@@ -488,6 +488,6 @@ Changelog:
 0.3.3: Updated according the changes of the guard script addition (emtee)
 0.3.4: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 0.3.5: Make the basic adchpp.xml and secure hub setup part more understandable; remove individual credits and their emails (emtee)
-0.3.6: Hub address setting changes mandated by ADC-EXT 1.0.9. (emtee)
+0.3.6: Hub address setting changes mandated by ADC-EXT 1.0.9.; clarify plugins path XML setting configuration more (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
