@@ -53,7 +53,7 @@ void Core::init() {
 	pm.reset(new PluginManager(*this));
 
 	sm->setIncomingHandler(std::bind(&ClientManager::handleIncoming, cm.get(), std::placeholders::_1));
-	lm->log("core", "Core initialized");
+	//lm->log("core", "Core initialized"); @todo logfile path setting isn't processed yet so this may litter log files to unwanted places, see L#907372
 }
 
 void Core::run() {
