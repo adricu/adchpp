@@ -54,6 +54,8 @@ void Core::init() {
 
 	sm->setIncomingHandler(std::bind(&ClientManager::handleIncoming, cm.get(), std::placeholders::_1));
 	//lm->log("core", "Core initialized"); @todo logfile path setting isn't processed yet so this may litter log files to unwanted places, see L#907372
+	printf("\nCore initialized\n"); // Console print only for now...
+
 }
 
 void Core::run() {
