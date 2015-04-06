@@ -184,9 +184,9 @@ local function recheck_info()
 end
 
 settings.address = {
-	alias = { host = true, dns = true },
+	alias = { host = true, dns = true, hubaddress = true },
 
-	help = "host address (DNS or IP) followed by :portnumber",
+	help = "complete hub address (adc[s]://[DNS or IP]:[port number])",
 
 	value = adchpp.Util_getLocalIp()
 }
@@ -1576,7 +1576,12 @@ commands.regnick = {
 
 		register_user(cid, nick, password, level, c:getField("NI"))
 
-		autil.reply(c, "\n\tYou have successfully registered:\n\n\t\tNick:\t" .. nick .. "\n\t\tPassword:\t" .. password .. "\n")
+		local msg = "\n\tYou have successfully registered:\n\n\t\tNick:\t" .. nick .. "\n\t\tPassword:\t" .. password .. "\n"
+		local address = settings.address.value
+		if (address and address:len() > 0) then
+			msg = msg .. "\t\tHub address:\t" .. address .. "\n"
+		end
+		autil.reply(c, msg)
 
 		if other then
 			set_level(other, level) -- Automatically set the new level

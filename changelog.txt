@@ -1,4 +1,7 @@
-* [L#1317710] Support TLS versions 1.1, 1.2, and newer
+* [L#1440795] Show hub address in the user registration confirmation message (if available) (emtee)
+* Apply hub address format for pingers changes mandated by ADC-EXT 1.0.9. (emtee)
+* Improve UTF-8 RFC-3629 compliance (cologic) 
+* [L#1317710] Support TLS versions 1.1, 1.2, and newer (cologic)
 
 -- 2.11.2 2014-04-14 --
 * [L#1206293] Fix crashes after calling +reload

@@ -1,8 +1,8 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.5
+Document Version 0.3.6
 :toc:
-This version of the guide corresponds with ADCH++ versions *2.9.x* and later.
+This version of the guide corresponds with ADCH++ versions *2.12.0* and later.
 
 == Introduction
 
@@ -372,7 +372,7 @@ To change a basic hub setting you must use:
 [width="100%",options="header"]
 |==============================================
 | Setting					| Purpose
-| address 					| Your hub address without port number (for hublist pingers)
+| address 					| Complete address of your hub with protocol URI and port number in adc[s]://[DNS or IP]:[port number] format (for hublist pingers)
 | allownickchange	 		| Authorize registered users to connect with a different nick, 1 = allow, 0 = disallow
 | allowreg					| Authorize un-regged users to register themselves with +mypass (otherwise, they'll have to ask an operator), 1 = allow, 0 = disallow 
 | botcid					| CID of the hub bot, restart the hub after the change (in most cases you don't need to change this)
@@ -488,5 +488,6 @@ Changelog:
 0.3.3: Updated according the changes of the guard script addition (emtee)
 0.3.4: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 0.3.5: Make the basic adchpp.xml and secure hub setup part more understandable; remove individual credits and their emails (emtee)
+0.3.6: Hub address setting changes mandated by ADC-EXT 1.0.9. (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
