@@ -280,7 +280,7 @@ Directory of c:\users\username\adchpp\Scripts
 2010-05-03  22:58             3 699 example.lua
 2010-05-03  22:58             3 003 history.lua
 2010-05-03  22:58            15 808 json.lua
-2010-05-03  22:58               742 motd.lua
+2010-05-03  22:58               742 texts.lua
 2010-05-27  18:01    <DIR>          px
                8 File(s)        117 544 bytes
 

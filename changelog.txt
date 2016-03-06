@@ -1,3 +1,6 @@
+* Move the MOTD example Lua script to a more general script that supports
+multiple texts
+
 -- 2.12.0 2015-04-06 --
 * [L#907372] Fix wrong log file placement
 * [L#1440795] Show hub address in the user registration confirmation message (if available) (emtee)

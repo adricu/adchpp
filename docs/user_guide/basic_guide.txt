@@ -186,7 +186,7 @@ Above the basic functions provided by the core ADCH\++ relies on scripts perform
 
 The LUA scripts shipped with ADCH++ are configured to run by default. They should be always properly loaded to get the functionality described in the rest of this guide. If you want to use additional scripts then locate the Script.xml file and ensure that the scripts that you want to run are properly _added_ to the existing ones.
 
-.Example: Default Script.xml, it loads the core LUA scripts, a chat history script and a MOTD script.
+.Example: Default Script.xml, it loads the core LUA scripts, a chat history script and a "texts" script.
 ---------------------------------------------------------------------
 [source,xml]
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
@@ -198,14 +198,14 @@ The LUA scripts shipped with ADCH++ are configured to run by default. They shoul
 		<Script>access.op.lua</Script>
 		<Script>access.bot.lua</Script>
 		<Script>history.lua</Script>
-		<Script>motd.lua</Script>
+		<Script>texts.lua</Script>
 	</Engine>
 </ScriptPlugin>
 ---------------------------------------------------------------------
 
 Here's how to disable a script in scripts.xml using the xml comment syntax:
 
-.Example: scripts.xml, we want to remove the MOTD script
+.Example: scripts.xml, we want to remove the "texts" script
 ---------------------------------------------------------------------
 [source,xml]
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
@@ -218,7 +218,7 @@ Here's how to disable a script in scripts.xml using the xml comment syntax:
 		<Script>access.bot.lua</Script>
 		<Script>adchpp-ptokax.lua</Script>
 		<Script>history.lua</Script>
-		<Script>motd.lua</Script>
+		<Script>texts.lua</Script>
 	</Engine>
 </ScriptPlugin>
 ---------------------------------------------------------------------
@@ -236,7 +236,7 @@ Change to :
 		<Script>access.bot.lua</Script>
 		<Script>adchpp-ptokax.lua</Script>
 		<Script>history.lua</Script>
-		<!--Script>motd.lua</Script-->
+		<!--Script>texts.lua</Script-->
 	</Engine>
 </ScriptPlugin>
 ---------------------------------------------------------------------
@@ -245,9 +245,18 @@ IMPORTANT: Linux users should use absolute paths pointing to the script folder i
 
 You have to use the +reload command or restart the hub to changes take effect.
 
-=== Setting up MOTD (Message of the day)
+=== Setting up texts for "about" / "message of the day" / "rules"
 
-MOTD is a message that appears for every user in the main chat after a successful login. If you want to show something to your users then ensure that motd.lua is added to scripts.xml. The actual MOTD is stored in a file called motd.txt in the configuration folder. If the file doesn't exist then just create a text file called motd.txt in that folder and add your content.
+Texts registered within the "texts.lua" script can:
+- Appear when users connect.
+- Be accessed via user commands (contextual menu or "+commands" such as "+rules").
+
+To make them work, you will need the following files in your configuration folder:
+- about.txt
+- motd.txt (for "message of the day")
+- rules.txt
+
+Their contents are the texts shown to users.
 
 == Additional configuration
 
