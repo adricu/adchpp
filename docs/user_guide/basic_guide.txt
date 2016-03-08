@@ -1,8 +1,8 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.6
+Document Version 0.3.7
 :toc:
-This version of the guide corresponds with ADCH++ versions *2.12.0* and later.
+This version of the guide corresponds with ADCH++ versions *2.12.1* and later.
 
 == Introduction
 
@@ -498,5 +498,6 @@ Changelog:
 0.3.4: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 0.3.5: Make the basic adchpp.xml and secure hub setup part more understandable; remove individual credits and their emails (emtee)
 0.3.6: Hub address setting changes mandated by ADC-EXT 1.0.9.; clarify plugins path XML setting configuration more (emtee)
+0.3.7: Switch MOTD script usage description to general texting script texts.lua (poy)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
