@@ -248,10 +248,12 @@ You have to use the +reload command or restart the hub to changes take effect.
 === Setting up texts for "about" / "message of the day" / "rules"
 
 Texts registered within the "texts.lua" script can:
+
 - Appear when users connect.
 - Be accessed via user commands (contextual menu or "+commands" such as "+rules").
 
 To make them work, you will need the following files in your configuration folder:
+
 - about.txt
 - motd.txt (for "message of the day")
 - rules.txt
@@ -473,7 +475,7 @@ If you want to know more about ADCH++
 == Appendix
 This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
 
-Copyright (c) 2010-2013 Jacek Sieka
+Copyright (c) 2010-2016 Jacek Sieka
 
 
 Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at http://www.gnu.org/copyleft/fdl.html 

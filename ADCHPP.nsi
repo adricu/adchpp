@@ -107,7 +107,7 @@ Section "MainSection" SEC01
   File "Scripts\example.lua"
   File "Scripts\history.lua"
   File "Scripts\json.lua"
-  File "Scripts\motd.lua"
+  File "Scripts\texts.lua"
   File "Scripts\checkemptyinbloom.lua"
   CreateDirectory $INSTDIR\Scripts\FL_Database
   SetOutPath "$INSTDIR\Docs"
@@ -121,6 +121,8 @@ Section "MainSection" SEC01
   SetOverwrite off
   SetOutPath "$INSTDIR\config"
   File "config\motd.txt"
+  File "config\rules.txt"
+  File "config\about.txt"
   File "config\adchpp.xml"
   File "config\Script.xml"
 SectionEnd
