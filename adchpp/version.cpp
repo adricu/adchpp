@@ -26,6 +26,8 @@
 #define xstrver(s) strver(s)
 #define strver(s) #s
 
+// Version numbers follow Semantic Versioning 2.0.0 <https://semver.org>.
+
 // don't forget to also update the .rc file of adchppd!
 #define APPNAME "ADCH++"
 #define VERSIONSTRING "3.0.0 (r\"" xstrver(ADCHPP_REVISION) "\")"
