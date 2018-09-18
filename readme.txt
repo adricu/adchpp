@@ -17,8 +17,8 @@ must be released under a license compatible with the GPL.
 == Download
 
 The latest released version of ADCH++ can be downloaded from
-http://sourceforge.net/projects/adchpp/[SourceForge]. The source code resides
-in the http://code.launchpad.net/adchpp/[BZR] repository.
+https://sourceforge.net/projects/adchpp[SourceForge]. The source code resides
+in the https://sourceforge.net/p/adchpp/code[Mercurial] repository.
 
 == Documentation
 
@@ -31,7 +31,7 @@ http://adchpp.sourceforge.net/user_guide/expert_guide.html
 
 The latest revision of these documentation is available under the "docs" 
 folder in the ADCH++ release packages as well as in the ADCH++ repository at
-http://code.launchpad.net/adchpp/
+https://sourceforge.net/p/adchpp/code
 
 == Donations
 

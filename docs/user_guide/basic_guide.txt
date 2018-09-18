@@ -1,6 +1,6 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.7
+Document Version 0.3.8
 :toc:
 This version of the guide corresponds with ADCH++ versions *2.12.1* and later.
 
@@ -70,7 +70,7 @@ You need a Linux distribution with at least 2.6-based kernel to run ADCH\+\+. Th
 | swig 				| 
 | ruby (optional)	|(needs to be version 1.9.2 or higher)
 | python (optional)	|(version 2.4.x ... 2.7.x, 32 bit versions - even on 64 bit systems)
-| scons				|(version 1.2.0 or higher)
+| scons				|(version 2.5.0 or higher)
 | gcc-c++			|(version 4.4.x or higher)
 | libstdc++-devel	|(redhat resource)
 | readline-devel	|(redhat resource)
@@ -501,5 +501,6 @@ Changelog:
 0.3.5: Make the basic adchpp.xml and secure hub setup part more understandable; remove individual credits and their emails (emtee)
 0.3.6: Hub address setting changes mandated by ADC-EXT 1.0.9.; clarify plugins path XML setting configuration more (emtee)
 0.3.7: Switch MOTD script usage description to general texting script texts.lua (poy)
+0.3.8: Update build tools (poy)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

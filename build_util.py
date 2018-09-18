@@ -75,6 +75,8 @@ class Dev:
 
 	def prepare_build(self, source_path, name, source_glob = '*.cpp', in_bin = True,
 			precompiled_header = None, shared_precompiled_header = None):
+		"""create a build environment and set up sources and targets."""
+
 		build_path = self.get_build_path(source_path)
 		env = self.env.Clone()
 		env.VariantDir(build_path, '.', duplicate = 0)
@@ -115,10 +117,14 @@ class Dev:
 		return (env, self.get_target(source_path, name, in_bin), sources)
 
 	def build(self, source_path, local_env = None):
+		"""execute the SConscript file in the specified sub-directory."""
+
 		if not local_env:
 			local_env = self.env
-		full_path = local_env.Dir('.').path + '/' + source_path	
-		return local_env.SConscript(source_path + 'SConscript', exports={'dev' : self, 'source_path' : full_path })
+		return local_env.SConscript(
+			source_path + 'SConscript',
+			exports={'dev': self, 'source_path': source_path},
+		)
 
 	def i18n (self, source_path, buildenv, sources, name):
 		if not self.env['i18n']:

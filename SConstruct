@@ -1,6 +1,6 @@
 # vim: set filetype: py
 
-EnsureSConsVersion(1, 2)
+EnsureSConsVersion(2, 5, 0)
 
 import os,sys
 from build_util import Dev
@@ -81,7 +81,12 @@ gcc_defs = {
 
 import os,sys,distutils.sysconfig
 
-plugins = filter(lambda x: os.path.isfile(os.path.join('plugins', x, 'SConscript')), os.listdir('plugins'))
+# Plugins we can build have an "src/SConscript" file.
+plugins = [
+	plugin for plugin in os.listdir('plugins')
+	if os.path.isfile(os.path.join('plugins', plugin, 'src', 'SConscript'))
+]
+
 langs = ['lua', 'python', 'ruby']
 
 defEnv = Environment(ENV = os.environ)
@@ -270,7 +275,7 @@ dev.build('swig/')
 
 # Plugins
 for plugin in env['plugins']:
-	dev.build('plugins/' + plugin + '/')
+	dev.build('plugins/' + plugin + '/src/')
 
 if env['docs']:
 	asciidoc_cmd = dev.get_asciidoc()

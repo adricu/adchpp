@@ -81,6 +81,10 @@ def buildRbModule():
 	targets.append(rb)
 
 def buildPyModule():
+
+	print('swig/SConscript > buildPyModule needs updates -> disabled for now.')
+	return
+
 	import sys
 
 	env, target, sources = dev.prepare_build(source_path, '_pyadchpp', 'python.i')

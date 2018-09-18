@@ -1,6 +1,6 @@
 = ADCH++  Expert User Guide
 Created by the DC++ team
-Document Version 0.4.3
+Document Version 0.4.4
 :toc:
 This version of the guide corresponds with ADCH++ versions *2.9.x* and later.
 
@@ -569,14 +569,19 @@ The current version of ADCH++ supports the following http://adc.sourceforge.net/
 
 These are the minimum versions of tools required to compile ADCH++:
     
-	* GCC 4.4 (for Windows: <http://www.mingw.org>), Microsoft Visual C++ 10 (2010), Clang 3.0
-    * SCons 1.2.0 or later http://www.scons.org
+	* Compiler: One of: GCC 4.4 (MinGW for Windows - links below) / Microsoft Visual C++ 10 (2010) / Clang 3.0
+    * SCons 2.5.0 or later https://scons.org
     * SWIG 1.3.40 or later (2.0.12 or later if GCC 4.9 or newer used for compiling) http://www.swig.org 
     * Optional: Python 2.4.x or later (32 bit version only) http://www.python.org
 	* Optional: Ruby 1.9.2 (http://www.ruby-lang.org)
 	* Optional: PHP 5 (http://www.php.net/)
     * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
     * Optional: AsciiDoc http://www.methods.co.nz/asciidoc/ (to build the documentation)
+
+MinGW packages by the MinGW-w64 project are preferred:
+
+    * 64-bit: <https://sf.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.3.0/threads-win32/seh/x86_64-6.3.0-release-win32-seh-rt_v5-rev2.7z>
+    * 32-bit: <https://sf.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/6.3.0/threads-win32/dwarf/i686-6.3.0-release-win32-dwarf-rt_v5-rev2.7z>
 
 === Building ADCH++
 To build ADCH++ from source you have to:
@@ -643,5 +648,6 @@ Changelog:
 0.4.1: Added compile instructions for Clang (poy)
 0.4.2: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 0.4.3: Update LUASockets info (emtee)
+0.4.4: Update build tools (poy)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
