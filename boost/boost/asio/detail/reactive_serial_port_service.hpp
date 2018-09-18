@@ -2,7 +2,7 @@
 // detail/reactive_serial_port_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -19,11 +19,11 @@
 #include <boost/asio/detail/config.hpp>
 
 #if defined(BOOST_ASIO_HAS_SERIAL_PORT)
-#if !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#if !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 
 #include <string>
 #include <boost/asio/error.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/serial_port_base.hpp>
 #include <boost/asio/detail/descriptor_ops.hpp>
 #include <boost/asio/detail/reactive_descriptor_service.hpp>
@@ -35,7 +35,8 @@ namespace asio {
 namespace detail {
 
 // Extend reactive_descriptor_service to provide serial port support.
-class reactive_serial_port_service
+class reactive_serial_port_service :
+  public service_base<reactive_serial_port_service>
 {
 public:
   // The native type of a serial port.
@@ -45,10 +46,10 @@ public:
   typedef reactive_descriptor_service::implementation_type implementation_type;
 
   BOOST_ASIO_DECL reactive_serial_port_service(
-      boost::asio::io_service& io_service);
+      boost::asio::io_context& io_context);
 
   // Destroy all user-defined handler objects owned by the service.
-  BOOST_ASIO_DECL void shutdown_service();
+  BOOST_ASIO_DECL void shutdown();
 
   // Construct a new serial port implementation.
   void construct(implementation_type& impl)
@@ -158,7 +159,7 @@ public:
   // lifetime of the asynchronous operation.
   template <typename ConstBufferSequence, typename Handler>
   void async_write_some(implementation_type& impl,
-      const ConstBufferSequence& buffers, Handler handler)
+      const ConstBufferSequence& buffers, Handler& handler)
   {
     descriptor_service_.async_write_some(impl, buffers, handler);
   }
@@ -175,7 +176,7 @@ public:
   // valid for the lifetime of the asynchronous operation.
   template <typename MutableBufferSequence, typename Handler>
   void async_read_some(implementation_type& impl,
-      const MutableBufferSequence& buffers, Handler handler)
+      const MutableBufferSequence& buffers, Handler& handler)
   {
     descriptor_service_.async_read_some(impl, buffers, handler);
   }
@@ -190,8 +191,8 @@ private:
   static boost::system::error_code store_option(const void* option,
       termios& storage, boost::system::error_code& ec)
   {
-    return static_cast<const SettableSerialPortOption*>(option)->store(
-        storage, ec);
+    static_cast<const SettableSerialPortOption*>(option)->store(storage, ec);
+    return ec;
   }
 
   // Helper function to set a serial port option.
@@ -208,7 +209,8 @@ private:
   static boost::system::error_code load_option(void* option,
       const termios& storage, boost::system::error_code& ec)
   {
-    return static_cast<GettableSerialPortOption*>(option)->load(storage, ec);
+    static_cast<GettableSerialPortOption*>(option)->load(storage, ec);
+    return ec;
   }
 
   // Helper function to get a serial port option.
@@ -230,7 +232,7 @@ private:
 # include <boost/asio/detail/impl/reactive_serial_port_service.ipp>
 #endif // defined(BOOST_ASIO_HEADER_ONLY)
 
-#endif // !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#endif // !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 #endif // defined(BOOST_ASIO_HAS_SERIAL_PORT)
 
 #endif // BOOST_ASIO_DETAIL_REACTIVE_SERIAL_PORT_SERVICE_HPP

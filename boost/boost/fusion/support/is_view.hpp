@@ -7,8 +7,8 @@
 #if !defined(FUSION_IS_VIEW_03202006_0015)
 #define FUSION_IS_VIEW_03202006_0015
 
+#include <boost/fusion/support/config.hpp>
 #include <boost/mpl/bool.hpp>
-#include <boost/fusion/support/detail/is_view.hpp>
 #include <boost/fusion/support/tag_of.hpp>
 
 namespace boost { namespace fusion
@@ -27,8 +27,9 @@ namespace boost { namespace fusion
         {
             template <typename T>
             struct apply
-                : detail::fusion_is_view<T>
-            {};
+            {
+                typedef typename T::is_view type;
+            };
         };
 
         template <>

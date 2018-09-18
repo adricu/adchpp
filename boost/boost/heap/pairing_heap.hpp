@@ -21,6 +21,11 @@
 #include <boost/heap/detail/stable_heap.hpp>
 #include <boost/heap/detail/tree_iterator.hpp>
 
+#ifdef BOOST_HAS_PRAGMA_ONCE
+#pragma once
+#endif
+
+
 #ifndef BOOST_DOXYGEN_INVOKED
 #ifdef BOOST_HEAP_SANITYCHECKS
 #define BOOST_HEAP_ASSERT BOOST_ASSERT
@@ -375,7 +380,7 @@ public:
 
         node_pointer n = allocator_type::allocate(1);
 
-        new(n) node(super_t::make_node(std::forward<T>(args)...));
+        new(n) node(super_t::make_node(std::forward<Args>(args)...));
 
         merge_node(n);
         return handle_type(n);
@@ -535,7 +540,7 @@ public:
     /// \copydoc boost::heap::priority_queue::end
     iterator end(void) const
     {
-        return iterator();
+        return iterator(super_t::value_comp());
     }
 
     /// \copydoc boost::heap::fibonacci_heap::ordered_begin

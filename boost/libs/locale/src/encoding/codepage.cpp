@@ -23,6 +23,7 @@
 #endif
 
 #include <boost/locale/encoding.hpp>
+#include <boost/locale/hold_ptr.hpp>
 
 #include <string>
 #include <cstring>
@@ -39,7 +40,7 @@ namespace boost {
                                             char const *from_charset,
                                             method_type how)
                 {
-                    std::auto_ptr<converter_between> cvt;
+                    hold_ptr<converter_between> cvt;
                     #ifdef BOOST_LOCALE_WITH_ICONV
                     cvt.reset(new iconv_between());
                     if(cvt->open(to_charset,from_charset,how))
@@ -65,7 +66,7 @@ namespace boost {
                                         char const *charset,
                                         method_type how)
                 {
-                    std::auto_ptr<converter_to_utf<CharType> > cvt;
+                    hold_ptr<converter_to_utf<CharType> > cvt;
                     #ifdef BOOST_LOCALE_WITH_ICONV
                     cvt.reset(new iconv_to_utf<CharType>());
                     if(cvt->open(charset,how))
@@ -91,7 +92,7 @@ namespace boost {
                                         char const *charset,
                                         method_type how)
                 {
-                    std::auto_ptr<converter_from_utf<CharType> > cvt;
+                    hold_ptr<converter_from_utf<CharType> > cvt;
                     #ifdef BOOST_LOCALE_WITH_ICONV
                     cvt.reset(new iconv_from_utf<CharType>());
                     if(cvt->open(charset,how))
@@ -161,7 +162,7 @@ namespace boost {
                 return convert_from<wchar_t>(begin,end,charset.c_str(),how);
             }
 
-            #ifdef BOOST_HAS_CHAR16_T
+            #ifdef BOOST_LOCALE_ENABLE_CHAR16_T
             template<>
             std::basic_string<char16_t> to_utf(char const *begin,char const *end,std::string const &charset,method_type how)
             {
@@ -175,7 +176,7 @@ namespace boost {
             }
             #endif
 
-            #ifdef BOOST_HAS_CHAR32_T
+            #ifdef BOOST_LOCALE_ENABLE_CHAR32_T
             template<>
             std::basic_string<char32_t> to_utf(char const *begin,char const *end,std::string const &charset,method_type how)
             {

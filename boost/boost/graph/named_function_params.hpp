@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <vector>
+#include <boost/limits.hpp>
 #include <boost/ref.hpp>
 #include <boost/utility/result_of.hpp>
 #include <boost/preprocessor.hpp>
@@ -63,6 +64,7 @@ namespace boost {
     BOOST_BGL_ONE_PARAM_CREF(weight_map, edge_weight) \
     BOOST_BGL_ONE_PARAM_CREF(weight_map2, edge_weight2) \
     BOOST_BGL_ONE_PARAM_CREF(distance_map, vertex_distance) \
+    BOOST_BGL_ONE_PARAM_CREF(distance_map2, vertex_distance2) \
     BOOST_BGL_ONE_PARAM_CREF(predecessor_map, vertex_predecessor) \
     BOOST_BGL_ONE_PARAM_CREF(rank_map, vertex_rank) \
     BOOST_BGL_ONE_PARAM_CREF(root_map, vertex_root) \
@@ -226,6 +228,7 @@ BOOST_BGL_DECLARE_NAMED_PARAMS
   };
 
   struct param_not_found {};
+  static param_not_found g_param_not_found;
 
   template <typename Tag, typename Args>
   struct get_param_type: 
@@ -235,7 +238,7 @@ BOOST_BGL_DECLARE_NAMED_PARAMS
   inline
   const typename lookup_named_param_def<Tag, Args, param_not_found>::type&
   get_param(const Args& p, Tag) {
-    return lookup_named_param_def<Tag, Args, param_not_found>::get(p, param_not_found());
+    return lookup_named_param_def<Tag, Args, param_not_found>::get(p, g_param_not_found);
   }
 
   template <class P, class Default> 
@@ -321,8 +324,16 @@ BOOST_BGL_DECLARE_NAMED_PARAMS
     struct edge_capacity_value
     {
       typedef bgl_named_params<P, T, R> Params;
-      typedef typename detail::choose_impl_result<boost::mpl::true_, Graph, typename get_param_type<Params, edge_capacity_t>::type, edge_capacity_t>::type CapacityEdgeMap;
+      typedef typename detail::choose_impl_result<boost::mpl::true_, Graph, typename get_param_type<edge_capacity_t, Params>::type, edge_capacity_t>::type CapacityEdgeMap;
       typedef typename property_traits<CapacityEdgeMap>::value_type type;
+    };
+    // used in the max-flow algorithms
+    template <class Graph, class P, class T, class R>
+    struct edge_weight_value
+    {
+      typedef bgl_named_params<P, T, R> Params;
+      typedef typename detail::choose_impl_result<boost::mpl::true_, Graph, typename get_param_type<edge_weight_t, Params>::type, edge_weight_t>::type WeightMap;
+      typedef typename property_traits<WeightMap>::value_type type;
     };
 
   }
@@ -716,6 +727,15 @@ BOOST_BGL_DECLARE_NAMED_PARAMS
       const G& g;
       get_default_starting_vertex_t(const G& g): g(g) {}
       result_type operator()() const {return get_default_starting_vertex(g);}
+    };
+
+    // Wrapper to avoid instantiating numeric_limits when users provide distance_inf value manually
+    template <typename T>
+    struct get_max {
+      T operator()() const {
+        return (std::numeric_limits<T>::max)();
+      }
+      typedef T result_type;
     };
 
   } // namespace detail

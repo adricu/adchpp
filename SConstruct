@@ -11,8 +11,7 @@ gcc_flags = {
 		'-Wall', '-Wextra', '-Wno-unused-parameter', '-Wno-unused-value',
 		'-Wno-missing-field-initializers', '-Wno-address',
 		'-Wno-unknown-pragmas',
-		'-Wno-deprecated-declarations',  # TODO remove after boost update
-		'-Wno-unused-local-typedefs',  # TODO remove after boost update
+		'-Wno-deprecated-declarations',  # TODO re-eval on boost updates
 		'-fexceptions',
 	],
 	'debug': [], 

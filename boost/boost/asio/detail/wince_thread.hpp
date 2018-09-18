@@ -2,7 +2,7 @@
 // detail/wince_thread.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,10 +17,10 @@
 
 #include <boost/asio/detail/config.hpp>
 
-#if defined(BOOST_WINDOWS) && defined(UNDER_CE)
+#if defined(BOOST_ASIO_WINDOWS) && defined(UNDER_CE)
 
-#include <memory>
 #include <boost/asio/detail/noncopyable.hpp>
+#include <boost/asio/detail/scoped_ptr.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/asio/detail/throw_error.hpp>
 #include <boost/asio/error.hpp>
@@ -41,7 +41,7 @@ public:
   template <typename Function>
   wince_thread(Function f, unsigned int = 0)
   {
-    std::auto_ptr<func_base> arg(new func<Function>(f));
+    scoped_ptr<func_base> arg(new func<Function>(f));
     DWORD thread_id = 0;
     thread_ = ::CreateThread(0, 0, wince_thread_function,
         arg.get(), 0, &thread_id);
@@ -65,6 +65,14 @@ public:
   void join()
   {
     ::WaitForSingleObject(thread_, INFINITE);
+  }
+
+  // Get number of CPUs.
+  static std::size_t hardware_concurrency()
+  {
+    SYSTEM_INFO system_info;
+    ::GetSystemInfo(&system_info);
+    return system_info.dwNumberOfProcessors;
   }
 
 private:
@@ -101,7 +109,7 @@ private:
 
 inline DWORD WINAPI wince_thread_function(LPVOID arg)
 {
-  std::auto_ptr<wince_thread::func_base> func(
+  scoped_ptr<wince_thread::func_base> func(
       static_cast<wince_thread::func_base*>(arg));
   func->run();
   return 0;
@@ -113,6 +121,6 @@ inline DWORD WINAPI wince_thread_function(LPVOID arg)
 
 #include <boost/asio/detail/pop_options.hpp>
 
-#endif // defined(BOOST_WINDOWS) && defined(UNDER_CE)
+#endif // defined(BOOST_ASIO_WINDOWS) && defined(UNDER_CE)
 
 #endif // BOOST_ASIO_DETAIL_WINCE_THREAD_HPP

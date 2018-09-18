@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 
 namespace boost {
@@ -86,7 +87,7 @@ namespace boost {
         void generator::set_default_messages_domain(std::string const &domain)
         {
             std::vector<std::string>::iterator p;
-            if((p=std::find(d->domains.begin(),d->domains.end(),domain)) == d->domains.end()) {
+            if((p=std::find(d->domains.begin(),d->domains.end(),domain)) != d->domains.end()) {
                 d->domains.erase(p);
             }
             d->domains.insert(d->domains.begin(),domain);
@@ -125,7 +126,7 @@ namespace boost {
                     return p->second;
                 }
             }
-            shared_ptr<localization_backend> backend(d->backend_manager.get());
+            shared_ptr<localization_backend> backend(d->backend_manager.create());
             set_all_options(backend,id);
 
             std::locale result = base;

@@ -2,7 +2,7 @@
 // detail/impl/posix_event.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,7 @@
 
 #include <boost/asio/detail/config.hpp>
 
-#if defined(BOOST_HAS_PTHREADS) && !defined(BOOST_ASIO_DISABLE_THREADS)
+#if defined(BOOST_ASIO_HAS_PTHREADS)
 
 #include <boost/asio/detail/posix_event.hpp>
 #include <boost/asio/detail/throw_error.hpp>
@@ -30,9 +30,21 @@ namespace asio {
 namespace detail {
 
 posix_event::posix_event()
-  : signalled_(false)
+  : state_(0)
 {
+#if (defined(__MACH__) && defined(__APPLE__)) \
+      || (defined(__ANDROID__) && (__ANDROID_API__ < 21))
   int error = ::pthread_cond_init(&cond_, 0);
+#else // (defined(__MACH__) && defined(__APPLE__))
+      // || (defined(__ANDROID__) && (__ANDROID_API__ < 21))
+  ::pthread_condattr_t attr;
+  ::pthread_condattr_init(&attr);
+  int error = ::pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+  if (error == 0)
+    error = ::pthread_cond_init(&cond_, &attr);
+#endif // (defined(__MACH__) && defined(__APPLE__))
+       // || (defined(__ANDROID__) && (__ANDROID_API__ < 21))
+
   boost::system::error_code ec(error,
       boost::asio::error::get_system_category());
   boost::asio::detail::throw_error(ec, "event");
@@ -44,6 +56,6 @@ posix_event::posix_event()
 
 #include <boost/asio/detail/pop_options.hpp>
 
-#endif // defined(BOOST_HAS_PTHREADS) && !defined(BOOST_ASIO_DISABLE_THREADS)
+#endif // defined(BOOST_ASIO_HAS_PTHREADS)
 
 #endif // BOOST_ASIO_DETAIL_IMPL_POSIX_EVENT_IPP

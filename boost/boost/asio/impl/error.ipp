@@ -2,7 +2,7 @@
 // impl/error.ipp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,6 +16,7 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <boost/asio/detail/config.hpp>
+#include <string>
 #include <boost/asio/error.hpp>
 
 #include <boost/asio/detail/push_options.hpp>
@@ -24,7 +25,7 @@ namespace boost {
 namespace asio {
 namespace error {
 
-#if !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#if !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 
 namespace detail {
 
@@ -86,7 +87,7 @@ const boost::system::error_category& get_addrinfo_category()
   return instance;
 }
 
-#endif // !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#endif // !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 
 namespace detail {
 

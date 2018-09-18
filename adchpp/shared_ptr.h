@@ -34,19 +34,20 @@ semaphores, so we prefer boost's one. see <http://gcc.gnu.org/bugzilla/show_bug.
 #include <boost/make_shared.hpp>
 
 #define SHARED_PTR_NS boost
+#define make_shared boost::make_shared
 
 #else
 
 #include <memory>
 
 #define SHARED_PTR_NS std
+#define make_shared std::make_shared
 
 #endif
 
 namespace adchpp {
 
 using SHARED_PTR_NS::shared_ptr;
-using SHARED_PTR_NS::make_shared;
 using SHARED_PTR_NS::enable_shared_from_this;
 using SHARED_PTR_NS::static_pointer_cast;
 using SHARED_PTR_NS::dynamic_pointer_cast;

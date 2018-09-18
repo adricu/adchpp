@@ -1,15 +1,18 @@
 //
-//  Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
+//  Copyright (c) 2009-2015 Artyom Beilis (Tonkikh)
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 //
 #define BOOST_LOCALE_SOURCE
+#define BOOST_DETAIL_NO_CONTAINER_FWD
 #include <boost/config.hpp>
+#include <boost/version.hpp>
 #include <boost/locale/message.hpp>
 #include <boost/locale/gnu_gettext.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/locale/hold_ptr.hpp>
 #include <boost/locale/encoding.hpp>
 #ifdef BOOST_MSVC
 #  pragma warning(disable : 4996)
@@ -436,8 +439,8 @@ namespace boost {
                         while(*e)
                             e++;
                         state = pj_winberger_hash::update_state(state,
-                                    static_cast<char const *>(p),
-                                    static_cast<char const *>(e));
+                                    reinterpret_cast<char const *>(p),
+                                    reinterpret_cast<char const *>(e));
                         state = pj_winberger_hash::update_state(state,'\4');
                     }
                     p = msg.key();
@@ -445,8 +448,8 @@ namespace boost {
                     while(*e)
                         e++;
                     state = pj_winberger_hash::update_state(state,
-                                static_cast<char const *>(p),
-                                static_cast<char const *>(e));
+                                reinterpret_cast<char const *>(p),
+                                reinterpret_cast<char const *>(e));
                     return state;
                 }
             };
@@ -625,7 +628,7 @@ namespace boost {
                     key_conversion_required_ =  sizeof(CharType) == 1 
                                                 && compare_encodings(locale_encoding,key_encoding)!=0;
 
-                    std::auto_ptr<mo_file> mo;
+                    boost::shared_ptr<mo_file> mo;
 
                     if(callback) {
                         std::vector<char> vfile = callback(file_name,locale_encoding);
@@ -649,8 +652,7 @@ namespace boost {
                         throw std::runtime_error("Invalid mo-format, encoding is not specified");
 
                     if(!plural.empty()) {
-                        std::auto_ptr<lambda::plural> ptr=lambda::compile(plural.c_str());
-                        plural_forms_[id] = ptr;
+                        plural_forms_[id] = lambda::compile(plural.c_str());;
                     }
 
                     if( mo_useable_directly(mo_encoding,*mo) )
@@ -686,9 +688,9 @@ namespace boost {
                         return false;
                     if(!mo.has_hash())
                         return false;
-                    if(compare_encodings(mo_encoding.c_str(),locale_encoding_.c_str())!=0)
+                    if(compare_encodings(mo_encoding,locale_encoding_)!=0)
                         return false;
-                    if(compare_encodings(mo_encoding.c_str(),key_encoding_.c_str())==0) {
+                    if(compare_encodings(mo_encoding,key_encoding_)==0) {
                         return true;
                     }
                     for(unsigned i=0;i<mo.size();i++) {
@@ -755,7 +757,7 @@ namespace boost {
                 return new mo_message<wchar_t>(info);
             }
             
-            #ifdef BOOST_HAS_CHAR16_T
+            #ifdef BOOST_LOCALE_ENABLE_CHAR16_T
 
             template<>
             message_format<char16_t> *create_messages_facet(messages_info const &info)
@@ -764,7 +766,7 @@ namespace boost {
             }
             #endif
             
-            #ifdef BOOST_HAS_CHAR32_T
+            #ifdef BOOST_LOCALE_ENABLE_CHAR32_T
 
             template<>
             message_format<char32_t> *create_messages_facet(messages_info const &info)

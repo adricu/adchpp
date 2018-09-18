@@ -11,22 +11,23 @@
 #ifndef BOOST_RANGE_DISTANCE_HPP
 #define BOOST_RANGE_DISTANCE_HPP
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1200)
+#if defined(_MSC_VER)
 # pragma once
 #endif
 
+#include <boost/iterator/distance.hpp>
 #include <boost/range/begin.hpp>
 #include <boost/range/end.hpp>
 #include <boost/range/difference_type.hpp>
 
-namespace boost 
+namespace boost
 {
 
     template< class T >
-    inline BOOST_DEDUCED_TYPENAME range_difference<T>::type 
+    inline BOOST_CXX14_CONSTEXPR BOOST_DEDUCED_TYPENAME range_difference<T>::type
     distance( const T& r )
     {
-        return std::distance( boost::begin( r ), boost::end( r ) );
+        return boost::distance( boost::begin( r ), boost::end( r ) );
     }
 
 } // namespace 'boost'

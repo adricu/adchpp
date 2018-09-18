@@ -8,6 +8,7 @@
 #define BOOST_LOCALE_SOURCE
 #include <boost/locale/encoding.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/locale/hold_ptr.hpp>
 #include "../encoding/conv.hpp"
 #include <boost/locale/util.hpp>
 #include "all_generator.hpp"
@@ -211,37 +212,37 @@ namespace impl_posix {
         iconv_t from_utf_;
     };
 
-    std::auto_ptr<util::base_converter> create_iconv_converter(std::string const &encoding)
+    util::base_converter *create_iconv_converter(std::string const &encoding)
     {
-        std::auto_ptr<util::base_converter> cvt;
+        hold_ptr<util::base_converter> cvt;
         try {
             cvt.reset(new mb2_iconv_converter(encoding));
         }
         catch(std::exception const &e) {
             // Nothing to do, just retrun empty cvt
         }
-        return cvt;
+        return cvt.release();
     }
 
 #else // no iconv
-    std::auto_ptr<util::base_converter> create_iconv_converter(std::string const &/*encoding*/)
+    util::base_converter *create_iconv_converter(std::string const &/*encoding*/)
     {
-        std::auto_ptr<util::base_converter> cvt;
-        return cvt;
+        return 0;
     }
 #endif
 
     std::locale create_codecvt(std::locale const &in,std::string const &encoding,character_facet_type type)
     {
-        std::auto_ptr<util::base_converter> cvt;
         if(conv::impl::normalize_encoding(encoding.c_str())=="utf8")
-            cvt = util::create_utf8_converter(); 
-        else {
-            cvt = util::create_simple_converter(encoding);
-            if(!cvt.get())
-                cvt = create_iconv_converter(encoding);
+            return util::create_utf8_codecvt(in,type);
+
+        try {
+            return util::create_simple_codecvt(in,encoding,type);
         }
-        return util::create_codecvt(in,cvt,type);
+        catch(conv::invalid_charset_error const &) {
+            util::base_converter *cvt = create_iconv_converter(encoding);
+            return util::create_codecvt_from_pointer(in,cvt,type);
+        }
     }
 
 } // impl_posix

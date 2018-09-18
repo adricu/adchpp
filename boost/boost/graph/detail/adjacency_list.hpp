@@ -17,6 +17,7 @@
 #include <boost/detail/workaround.hpp>
 #include <boost/operators.hpp>
 #include <boost/property_map/property_map.hpp>
+#include <boost/pending/container_traits.hpp>
 #include <boost/range/irange.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <memory>
@@ -36,6 +37,13 @@
 #include <boost/graph/adjacency_iterator.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/assert.hpp>
+
+#ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
+#define BOOST_GRAPH_MOVE_IF_POSSIBLE(x) (x)
+#else
+#include <utility>
+#define BOOST_GRAPH_MOVE_IF_POSSIBLE(x) (std::move((x)))
+#endif
 
 /*
   Outline for this file:
@@ -229,12 +237,6 @@ namespace boost {
       inline stored_edge() { }
       inline stored_edge(Vertex target, const no_property& = no_property())
         : m_target(target) { }
-      // Need to write this explicitly so stored_edge_property can
-      // invoke Base::operator= (at least, for SGI MIPSPro compiler)
-      inline stored_edge& operator=(const stored_edge& x) {
-        m_target = x.m_target;
-        return *this;
-      }
       inline Vertex& get_target() const { return m_target; }
       inline const no_property& get_property() const { return s_prop; }
       inline bool operator==(const stored_edge& x) const
@@ -250,6 +252,7 @@ namespace boost {
     template <class Vertex>
     no_property stored_edge<Vertex>::s_prop;
 
+#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || defined(BOOST_NO_CXX11_SMART_PTR)
     template <class Vertex, class Property>
     class stored_edge_property : public stored_edge<Vertex> {
       typedef stored_edge_property self;
@@ -261,12 +264,24 @@ namespace boost {
                                   const Property& p = Property())
         : stored_edge<Vertex>(target), m_property(new Property(p)) { }
       stored_edge_property(const self& x)
-        : Base(x), m_property(const_cast<self&>(x).m_property) { }
+        : Base(static_cast< Base const& >(x)), m_property(const_cast<self&>(x).m_property) { }
       self& operator=(const self& x) {
-        Base::operator=(x);
+        // NOTE: avoid 'Base::operator=(x);' broken on SGI MIPSpro (bug 55771 of Mozilla).
+        static_cast<Base&>(*this) = static_cast< Base const& >(x); 
         m_property = const_cast<self&>(x).m_property;
         return *this;
       }
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+      // NOTE Don't rely on default operators, their behavior is broken on several compilers (GCC 4.6).
+      stored_edge_property(self&& x)
+        : Base(static_cast< Base&& >(x)), m_property(std::move(x.m_property)) { }
+      self& operator=(self&& x) {
+        // NOTE: avoid 'Base::operator=(x);' broken on SGI MIPSpro (bug 55771 of Mozilla).
+        static_cast<Base&>(*this) = static_cast< Base&& >(x); 
+        m_property = std::move(x.m_property);
+        return *this;
+      }
+#endif
       inline Property& get_property() { return *m_property; }
       inline const Property& get_property() const { return *m_property; }
     protected:
@@ -274,8 +289,45 @@ namespace boost {
       // invalidation for add_edge() with EdgeList=vecS. Instead we
       // hold a pointer to the property. std::auto_ptr is not
       // a perfect fit for the job, but it is darn close.
+#ifdef BOOST_NO_AUTO_PTR
+      std::unique_ptr<Property> m_property;
+#else
       std::auto_ptr<Property> m_property;
+#endif
     };
+#else
+    template <class Vertex, class Property>
+    class stored_edge_property : public stored_edge<Vertex> {
+      typedef stored_edge_property self;
+      typedef stored_edge<Vertex> Base;
+    public:
+      typedef Property property_type;
+      inline stored_edge_property() { }
+      inline stored_edge_property(Vertex target,
+                                  const Property& p = Property())
+        : stored_edge<Vertex>(target), m_property(new Property(p)) { }
+      stored_edge_property(self&& x) : Base(static_cast< Base&& >(x)),
+          m_property(std::move(x.m_property)) { }
+      stored_edge_property(self const& x) : Base(static_cast< Base const& >(x)),
+          m_property(std::move(const_cast<self&>(x).m_property)) { }
+      self& operator=(self&& x) {
+        // NOTE: avoid 'Base::operator=(x);' broken on SGI MIPSpro (bug 55771 of Mozilla).
+        static_cast<Base&>(*this) = static_cast< Base&& >(x);
+        m_property = std::move(x.m_property);
+        return *this;
+      }
+      self& operator=(self const& x) {
+        // NOTE: avoid 'Base::operator=(x);' broken on SGI MIPSpro (bug 55771 of Mozilla).
+        static_cast<Base&>(*this) = static_cast< Base const& >(x);
+        m_property = std::move(const_cast<self&>(x).m_property);
+        return *this;
+      }
+      inline Property& get_property() { return *m_property; }
+      inline const Property& get_property() const { return *m_property; }
+    protected:
+      std::unique_ptr<Property> m_property;
+    };
+#endif
 
 
     template <class Vertex, class Iter, class Property>
@@ -383,7 +435,7 @@ namespace boost {
         if (first != last)
           for (++i; i != last; ++i)
             if (!pred(*i)) {
-              *first.base() = *i.base();
+              *first.base() = BOOST_GRAPH_MOVE_IF_POSSIBLE(*i.base());
               ++first;
             }
         el.erase(first.base(), el.end());
@@ -431,7 +483,7 @@ namespace boost {
               self_loop_removed = false;
             }
             else if (!pred(*i)) {
-              *first.base() = *i.base();
+              *first.base() = BOOST_GRAPH_MOVE_IF_POSSIBLE(*i.base());
               ++first;
             } else {
               if (source(*i, g) == target(*i, g)) self_loop_removed = true;
@@ -634,7 +686,6 @@ namespace boost {
                     directed_graph_helper<Config>& g_)
     {
       typedef typename Config::graph_type graph_type;
-      typedef typename Config::edge_parallel_category Cat;
       graph_type& g = static_cast<graph_type&>(g_);
       g.out_edge_list(u).clear();
       // clear() should be a req of Sequence and AssociativeContainer,
@@ -781,7 +832,6 @@ namespace boost {
         typedef typename Graph::global_edgelist_selector EdgeListS;
         BOOST_STATIC_ASSERT((!is_same<EdgeListS, vecS>::value));
 
-        typedef typename EdgeList::value_type StoredEdge;
         typename EdgeList::iterator i = el.begin(), end = el.end();
         for (; i != end; ++i) {
           if ((*i).get_target() == v) {
@@ -807,7 +857,6 @@ namespace boost {
 
         typedef typename EdgeList::value_type StoredEdge;
         typename EdgeList::iterator i = el.find(StoredEdge(v)), end = el.end();
-        BOOST_ASSERT ((i != end));
         if (i != end) {
           g.m_edges.erase((*i).get_iter());
           el.erase(i);
@@ -986,7 +1035,6 @@ namespace boost {
       BOOST_STATIC_ASSERT((!is_same<EdgeListS, vecS>::value));
 
       typedef typename Config::graph_type graph_type;
-      typedef typename Config::edge_parallel_category Cat;
       graph_type& g = static_cast<graph_type&>(g_);
       while (true) {
         typename Config::out_edge_iterator ei, ei_end;
@@ -1588,7 +1636,6 @@ namespace boost {
       typedef typename Config::graph_type Graph;
       typedef typename Config::StoredEdge StoredEdge;
       const Graph& cg = static_cast<const Graph&>(g_);
-      typedef typename Config::out_edge_iterator out_edge_iterator;
       const typename Config::OutEdgeList& el = cg.out_edge_list(u);
       typename Config::OutEdgeList::const_iterator it = graph_detail::
         find(el, StoredEdge(v));
@@ -1614,8 +1661,7 @@ namespace boost {
       typename Config::OutEdgeList::iterator first, last;
       typename Config::EdgeContainer fake_edge_container;
       boost::tie(first, last) = graph_detail::
-        equal_range(el, StoredEdge(v, fake_edge_container.end(),
-                                   &fake_edge_container));
+        equal_range(el, StoredEdge(v));
       return std::make_pair(out_edge_iterator(first, u),
                             out_edge_iterator(last, u));
     }
@@ -1903,7 +1949,7 @@ namespace boost {
     {
       typedef typename Config::stored_vertex stored_vertex;
       Derived& g = static_cast<Derived&>(g_);
-      g.removing_vertex(u);
+      g.removing_vertex(u, boost::graph_detail::iterator_stability(g_.m_vertices));
       stored_vertex* su = (stored_vertex*)u;
       g.m_vertices.erase(su->m_position);
       delete su;
@@ -2203,7 +2249,7 @@ namespace boost {
     {
       typedef typename Config::directed_category Cat;
       Graph& g = static_cast<Graph&>(g_);
-      g.removing_vertex(v);
+      g.removing_vertex(v, boost::graph_detail::iterator_stability(g_.m_vertices));
       detail::remove_vertex_dispatch(g, v, Cat());
     }
     // O(1)
@@ -2726,7 +2772,6 @@ namespace boost {
 
 } // namespace boost
 
-#if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 namespace boost {
 
   template <typename V>
@@ -2760,7 +2805,6 @@ namespace boost {
   };
 
 }
-#endif
 
 
 #endif // BOOST_GRAPH_DETAIL_DETAIL_ADJACENCY_LIST_CCT

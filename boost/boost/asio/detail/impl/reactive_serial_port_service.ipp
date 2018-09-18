@@ -2,7 +2,7 @@
 // detail/impl/reactive_serial_port_service.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -19,7 +19,7 @@
 #include <boost/asio/detail/config.hpp>
 
 #if defined(BOOST_ASIO_HAS_SERIAL_PORT)
-#if !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#if !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 
 #include <cstring>
 #include <boost/asio/detail/reactive_serial_port_service.hpp>
@@ -31,14 +31,15 @@ namespace asio {
 namespace detail {
 
 reactive_serial_port_service::reactive_serial_port_service(
-    boost::asio::io_service& io_service)
-  : descriptor_service_(io_service)
+    boost::asio::io_context& io_context)
+  : service_base<reactive_serial_port_service>(io_context),
+    descriptor_service_(io_context)
 {
 }
 
-void reactive_serial_port_service::shutdown_service()
+void reactive_serial_port_service::shutdown()
 {
-  descriptor_service_.shutdown_service();
+  descriptor_service_.shutdown();
 }
 
 boost::system::error_code reactive_serial_port_service::open(
@@ -73,7 +74,7 @@ boost::system::error_code reactive_serial_port_service::open(
   s = descriptor_ops::error_wrapper(::tcgetattr(fd, &ios), ec);
   if (s >= 0)
   {
-#if defined(_BSD_SOURCE)
+#if defined(_BSD_SOURCE) || defined(_DEFAULT_SOURCE)
     ::cfmakeraw(&ios);
 #else
     ios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK
@@ -147,7 +148,7 @@ boost::system::error_code reactive_serial_port_service::do_get_option(
 
 #include <boost/asio/detail/pop_options.hpp>
 
-#endif // !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#endif // !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 #endif // defined(BOOST_ASIO_HAS_SERIAL_PORT)
 
 #endif // BOOST_ASIO_DETAIL_IMPL_REACTIVE_SERIAL_PORT_SERVICE_IPP

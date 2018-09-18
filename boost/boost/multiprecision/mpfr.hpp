@@ -7,6 +7,7 @@
 #define BOOST_MATH_BN_MPFR_HPP
 
 #include <boost/multiprecision/number.hpp>
+#include <boost/multiprecision/debug_adaptor.hpp>
 #include <boost/multiprecision/gmp.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/cstdint.hpp>
@@ -15,6 +16,10 @@
 #include <mpfr.h>
 #include <cmath>
 #include <algorithm>
+
+#ifndef BOOST_MULTIPRECISION_MPFR_DEFAULT_PRECISION
+#  define BOOST_MULTIPRECISION_MPFR_DEFAULT_PRECISION 20
+#endif
 
 namespace boost{
 namespace multiprecision{
@@ -30,6 +35,9 @@ namespace backends{
 template <unsigned digits10, mpfr_allocation_type AllocationType = allocate_dynamic>
 struct mpfr_float_backend;
 
+template <>
+struct mpfr_float_backend<0, allocate_stack>;
+
 } // namespace backends
 
 template <unsigned digits10, mpfr_allocation_type AllocationType>
@@ -39,7 +47,22 @@ namespace backends{
 
 namespace detail{
 
-inline long get_default_precision() { return 50; }
+template <bool b>
+struct mpfr_cleanup
+{
+   struct initializer
+   {
+      initializer() {}
+      ~initializer(){ mpfr_free_cache(); }
+      void force_instantiate()const {}
+   };
+   static const initializer init;
+   static void force_instantiate() { init.force_instantiate(); }
+};
+
+template <bool b>
+typename mpfr_cleanup<b>::initializer const mpfr_cleanup<b>::init;
+
 
 template <unsigned digits10, mpfr_allocation_type AllocationType>
 struct mpfr_float_imp;
@@ -47,18 +70,25 @@ struct mpfr_float_imp;
 template <unsigned digits10>
 struct mpfr_float_imp<digits10, allocate_dynamic>
 {
-   typedef mpl::list<long, long long>                     signed_types;
-   typedef mpl::list<unsigned long, unsigned long long>   unsigned_types;
+#ifdef BOOST_HAS_LONG_LONG
+   typedef mpl::list<long, boost::long_long_type>                     signed_types;
+   typedef mpl::list<unsigned long, boost::ulong_long_type>   unsigned_types;
+#else
+   typedef mpl::list<long>                                signed_types;
+   typedef mpl::list<unsigned long>                       unsigned_types;
+#endif
    typedef mpl::list<double, long double>                 float_types;
    typedef long                                           exponent_type;
 
    mpfr_float_imp()
    {
       mpfr_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
+      mpfr_set_ui(m_data, 0u, GMP_RNDN);
    }
    mpfr_float_imp(unsigned prec)
    {
       mpfr_init2(m_data, prec);
+      mpfr_set_ui(m_data, 0u, GMP_RNDN);
    }
 
    mpfr_float_imp(const mpfr_float_imp& o)
@@ -89,15 +119,16 @@ struct mpfr_float_imp<digits10, allocate_dynamic>
       return *this;
    }
 #endif
+#ifdef BOOST_HAS_LONG_LONG
 #ifdef _MPFR_H_HAVE_INTMAX_T
-   mpfr_float_imp& operator = (unsigned long long i)
+   mpfr_float_imp& operator = (boost::ulong_long_type i)
    {
       if(m_data[0]._mpfr_d == 0)
          mpfr_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
       mpfr_set_uj(m_data, i, GMP_RNDN);
       return *this;
    }
-   mpfr_float_imp& operator = (long long i)
+   mpfr_float_imp& operator = (boost::long_long_type i)
    {
       if(m_data[0]._mpfr_d == 0)
          mpfr_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
@@ -105,38 +136,38 @@ struct mpfr_float_imp<digits10, allocate_dynamic>
       return *this;
    }
 #else
-   mpfr_float_imp& operator = (unsigned long long i)
+   mpfr_float_imp& operator = (boost::ulong_long_type i)
    {
       if(m_data[0]._mpfr_d == 0)
          mpfr_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
-      unsigned long long mask = ((1uLL << std::numeric_limits<unsigned>::digits) - 1);
+      boost::ulong_long_type mask = ((((1uLL << (std::numeric_limits<unsigned long>::digits - 1)) - 1) << 1) | 1uLL);
       unsigned shift = 0;
       mpfr_t t;
-      mpfr_init2(t, (std::max)(static_cast<unsigned>(std::numeric_limits<unsigned long long>::digits), static_cast<unsigned>(multiprecision::detail::digits10_2_2(digits10))));
+      mpfr_init2(t, (std::max)(static_cast<unsigned long>(std::numeric_limits<boost::ulong_long_type>::digits), static_cast<unsigned long>(multiprecision::detail::digits10_2_2(digits10))));
       mpfr_set_ui(m_data, 0, GMP_RNDN);
       while(i)
       {
-         mpfr_set_ui(t, static_cast<unsigned>(i & mask), GMP_RNDN);
+         mpfr_set_ui(t, static_cast<unsigned long>(i & mask), GMP_RNDN);
          if(shift)
             mpfr_mul_2exp(t, t, shift, GMP_RNDN);
          mpfr_add(m_data, m_data, t, GMP_RNDN);
-         shift += std::numeric_limits<unsigned>::digits;
-         i >>= std::numeric_limits<unsigned>::digits;
+         shift += std::numeric_limits<unsigned long>::digits;
+         i >>= std::numeric_limits<unsigned long>::digits;
       }
       mpfr_clear(t);
       return *this;
    }
-   mpfr_float_imp& operator = (long long i)
+   mpfr_float_imp& operator = (boost::long_long_type i)
    {
-      BOOST_MP_USING_ABS
       if(m_data[0]._mpfr_d == 0)
          mpfr_init2(m_data, multiprecision::detail::digits10_2_2(digits10 ? digits10 : get_default_precision()));
       bool neg = i < 0;
-      *this = static_cast<unsigned long long>(abs(i));
+      *this = boost::multiprecision::detail::unsigned_abs(i);
       if(neg)
          mpfr_neg(m_data, m_data, GMP_RNDN);
       return *this;
    }
+#endif
 #endif
    mpfr_float_imp& operator = (unsigned long i)
    {
@@ -247,6 +278,7 @@ struct mpfr_float_imp<digits10, allocate_dynamic>
                         round_up = true;
                         break;
                      }
+                     ++i;
                   }
                   if(round_up)
                   {
@@ -289,8 +321,9 @@ struct mpfr_float_imp<digits10, allocate_dynamic>
    }
    ~mpfr_float_imp() BOOST_NOEXCEPT
    {
-      if(m_data[0]._mpfr_d)
+       if(m_data[0]._mpfr_d)
          mpfr_clear(m_data);
+      detail::mpfr_cleanup<true>::force_instantiate();
    }
    void negate() BOOST_NOEXCEPT
    {
@@ -334,7 +367,7 @@ protected:
    mpfr_t m_data;
    static unsigned& get_default_precision() BOOST_NOEXCEPT
    {
-      static unsigned val = 50;
+      static unsigned val = BOOST_MULTIPRECISION_MPFR_DEFAULT_PRECISION;
       return val;
    }
 };
@@ -347,18 +380,28 @@ protected:
 template <unsigned digits10>
 struct mpfr_float_imp<digits10, allocate_stack>
 {
-   typedef mpl::list<long, long long>                     signed_types;
-   typedef mpl::list<unsigned long, unsigned long long>   unsigned_types;
+#ifdef BOOST_HAS_LONG_LONG
+   typedef mpl::list<long, boost::long_long_type>                     signed_types;
+   typedef mpl::list<unsigned long, boost::ulong_long_type>   unsigned_types;
+#else
+   typedef mpl::list<long>                                signed_types;
+   typedef mpl::list<unsigned long>                       unsigned_types;
+#endif
    typedef mpl::list<double, long double>                 float_types;
    typedef long                                           exponent_type;
 
    static const unsigned digits2 = (digits10 * 1000uL) / 301uL + ((digits10 * 1000uL) % 301 ? 2u : 1u);
    static const unsigned limb_count = mpfr_custom_get_size(digits2) / sizeof(mp_limb_t);
 
+   ~mpfr_float_imp() BOOST_NOEXCEPT
+   {
+      detail::mpfr_cleanup<true>::force_instantiate();
+   }
    mpfr_float_imp()
    {
       mpfr_custom_init(m_buffer, digits2);
       mpfr_custom_init_set(m_data, MPFR_NAN_KIND, 0, digits2, m_buffer);
+      mpfr_set_ui(m_data, 0u, GMP_RNDN);
    }
 
    mpfr_float_imp(const mpfr_float_imp& o)
@@ -372,21 +415,22 @@ struct mpfr_float_imp<digits10, allocate_stack>
       mpfr_set(m_data, o.m_data, GMP_RNDN);
       return *this;
    }
+#ifdef BOOST_HAS_LONG_LONG
 #ifdef _MPFR_H_HAVE_INTMAX_T
-   mpfr_float_imp& operator = (unsigned long long i)
+   mpfr_float_imp& operator = (boost::ulong_long_type i)
    {
       mpfr_set_uj(m_data, i, GMP_RNDN);
       return *this;
    }
-   mpfr_float_imp& operator = (long long i)
+   mpfr_float_imp& operator = (boost::long_long_type i)
    {
       mpfr_set_sj(m_data, i, GMP_RNDN);
       return *this;
    }
 #else
-   mpfr_float_imp& operator = (unsigned long long i)
+   mpfr_float_imp& operator = (boost::ulong_long_type i)
    {
-      unsigned long long mask = ((1uLL << std::numeric_limits<unsigned>::digits) - 1);
+      boost::ulong_long_type mask = ((((1uLL << (std::numeric_limits<unsigned long>::digits - 1)) - 1) << 1) | 1uL);
       unsigned shift = 0;
       mpfr_t t;
       mp_limb_t t_limbs[limb_count];
@@ -395,24 +439,24 @@ struct mpfr_float_imp<digits10, allocate_stack>
       mpfr_set_ui(m_data, 0, GMP_RNDN);
       while(i)
       {
-         mpfr_set_ui(t, static_cast<unsigned>(i & mask), GMP_RNDN);
+         mpfr_set_ui(t, static_cast<unsigned long>(i & mask), GMP_RNDN);
          if(shift)
             mpfr_mul_2exp(t, t, shift, GMP_RNDN);
          mpfr_add(m_data, m_data, t, GMP_RNDN);
-         shift += std::numeric_limits<unsigned>::digits;
-         i >>= std::numeric_limits<unsigned>::digits;
+         shift += std::numeric_limits<unsigned long>::digits;
+         i >>= std::numeric_limits<unsigned long>::digits;
       }
       return *this;
    }
-   mpfr_float_imp& operator = (long long i)
+   mpfr_float_imp& operator = (boost::long_long_type i)
    {
-      BOOST_MP_USING_ABS
       bool neg = i < 0;
-      *this = static_cast<unsigned long long>(abs(i));
+      *this = boost::multiprecision::detail::unsigned_abs(i);
       if(neg)
          mpfr_neg(m_data, m_data, GMP_RNDN);
       return *this;
    }
+#endif
 #endif
    mpfr_float_imp& operator = (unsigned long i)
    {
@@ -605,7 +649,7 @@ struct mpfr_float_backend : public detail::mpfr_float_imp<digits10, AllocationTy
    mpfr_float_backend() : detail::mpfr_float_imp<digits10, AllocationType>() {}
    mpfr_float_backend(const mpfr_float_backend& o) : detail::mpfr_float_imp<digits10, AllocationType>(o) {}
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-   mpfr_float_backend(mpfr_float_backend&& o) : detail::mpfr_float_imp<digits10, AllocationType>(static_cast<detail::mpfr_float_imp<digits10, AllocationType>&&>(o)) {}
+   mpfr_float_backend(mpfr_float_backend&& o) BOOST_NOEXCEPT : detail::mpfr_float_imp<digits10, AllocationType>(static_cast<detail::mpfr_float_imp<digits10, AllocationType>&&>(o)) {}
 #endif
    template <unsigned D, mpfr_allocation_type AT>
    mpfr_float_backend(const mpfr_float_backend<D, AT>& val, typename enable_if_c<D <= digits10>::type* = 0)
@@ -681,21 +725,29 @@ struct mpfr_float_backend : public detail::mpfr_float_imp<digits10, AllocationTy
    }
    mpfr_float_backend& operator=(const mpfr_t val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set(this->m_data, val, GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const mpf_t val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set_f(this->m_data, val, GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const mpz_t val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set_z(this->m_data, val, GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const mpq_t val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set_q(this->m_data, val, GMP_RNDN);
       return *this;
    }
@@ -703,22 +755,30 @@ struct mpfr_float_backend : public detail::mpfr_float_imp<digits10, AllocationTy
    template <unsigned D, mpfr_allocation_type AT>
    mpfr_float_backend& operator=(const mpfr_float_backend<D, AT>& val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
    template <unsigned D>
    mpfr_float_backend& operator=(const gmp_float<D>& val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set_f(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const gmp_int& val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set_z(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const gmp_rational& val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(digits10));
       mpfr_set_q(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
@@ -782,8 +842,14 @@ struct mpfr_float_backend<0, allocate_dynamic> : public detail::mpfr_float_imp<0
 
    mpfr_float_backend& operator=(const mpfr_float_backend& o)
    {
-      mpfr_set_prec(this->m_data, mpfr_get_prec(o.data()));
-      mpfr_set(this->m_data, o.data(), GMP_RNDN);
+      if(this != &o)
+      {
+         if(this->m_data[0]._mpfr_d == 0)
+            mpfr_init2(this->m_data, mpfr_get_prec(o.data()));
+         else
+            mpfr_set_prec(this->m_data, mpfr_get_prec(o.data()));
+         mpfr_set(this->m_data, o.data(), GMP_RNDN);
+      }
       return *this;
    }
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -801,47 +867,67 @@ struct mpfr_float_backend<0, allocate_dynamic> : public detail::mpfr_float_imp<0
    }
    mpfr_float_backend& operator=(const mpfr_t val)
    {
-      mpfr_set_prec(this->m_data, mpfr_get_prec(val));
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, mpfr_get_prec(val));
+      else
+         mpfr_set_prec(this->m_data, mpfr_get_prec(val));
       mpfr_set(this->m_data, val, GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const mpf_t val)
    {
-      mpfr_set_prec(this->m_data, mpf_get_prec(val));
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, mpf_get_prec(val));
+      else
+         mpfr_set_prec(this->m_data, mpf_get_prec(val));
       mpfr_set_f(this->m_data, val, GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const mpz_t val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(get_default_precision()));
       mpfr_set_z(this->m_data, val, GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const mpq_t val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(get_default_precision()));
       mpfr_set_q(this->m_data, val, GMP_RNDN);
       return *this;
    }
    template <unsigned D>
    mpfr_float_backend& operator=(const mpfr_float_backend<D>& val)
    {
-      mpfr_set_prec(this->m_data, mpfr_get_prec(val.data()));
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, mpfr_get_prec(val.data()));
+      else
+         mpfr_set_prec(this->m_data, mpfr_get_prec(val.data()));
       mpfr_set(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
    template <unsigned D>
    mpfr_float_backend& operator=(const gmp_float<D>& val)
    {
-      mpfr_set_prec(this->m_data, mpf_get_prec(val.data()));
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, mpf_get_prec(val.data()));
+      else
+         mpfr_set_prec(this->m_data, mpf_get_prec(val.data()));
       mpfr_set_f(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const gmp_int& val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(get_default_precision()));
       mpfr_set_z(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
    mpfr_float_backend& operator=(const gmp_rational& val)
    {
+      if(this->m_data[0]._mpfr_d == 0)
+         mpfr_init2(this->m_data, multiprecision::detail::digits10_2_2(get_default_precision()));
       mpfr_set_q(this->m_data, val.data(), GMP_RNDN);
       return *this;
    }
@@ -859,7 +945,7 @@ struct mpfr_float_backend<0, allocate_dynamic> : public detail::mpfr_float_imp<0
    }
    void precision(unsigned digits10) BOOST_NOEXCEPT
    {
-      mpfr_set_prec(this->m_data, multiprecision::detail::digits2_2_10((digits10)));
+      mpfr_prec_round(this->m_data, multiprecision::detail::digits10_2_2((digits10)), GMP_RNDN);
    }
 };
 
@@ -892,7 +978,10 @@ inline void eval_subtract(mpfr_float_backend<D1, A1>& result, const mpfr_float_b
 template <unsigned D1, unsigned D2, mpfr_allocation_type A1, mpfr_allocation_type A2>
 inline void eval_multiply(mpfr_float_backend<D1, A1>& result, const mpfr_float_backend<D2, A2>& o)
 {
-   mpfr_mul(result.data(), result.data(), o.data(), GMP_RNDN);
+   if((void*)&o == (void*)&result)
+      mpfr_sqr(result.data(), o.data(), GMP_RNDN);
+   else
+      mpfr_mul(result.data(), result.data(), o.data(), GMP_RNDN);
 }
 template <unsigned D1, unsigned D2, mpfr_allocation_type A1, mpfr_allocation_type A2>
 inline void eval_divide(mpfr_float_backend<D1, A1>& result, const mpfr_float_backend<D2, A2>& o)
@@ -925,7 +1014,7 @@ inline void eval_add(mpfr_float_backend<digits10, AllocationType>& result, long 
    if(i > 0)
       mpfr_add_ui(result.data(), result.data(), i, GMP_RNDN);
    else
-      mpfr_sub_ui(result.data(), result.data(), std::abs(i), GMP_RNDN);
+      mpfr_sub_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i), GMP_RNDN);
 }
 template <unsigned digits10, mpfr_allocation_type AllocationType>
 inline void eval_subtract(mpfr_float_backend<digits10, AllocationType>& result, long i)
@@ -933,19 +1022,19 @@ inline void eval_subtract(mpfr_float_backend<digits10, AllocationType>& result, 
    if(i > 0)
       mpfr_sub_ui(result.data(), result.data(), i, GMP_RNDN);
    else
-      mpfr_add_ui(result.data(), result.data(), std::abs(i), GMP_RNDN);
+      mpfr_add_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i), GMP_RNDN);
 }
 template <unsigned digits10, mpfr_allocation_type AllocationType>
 inline void eval_multiply(mpfr_float_backend<digits10, AllocationType>& result, long i)
 {
-   mpfr_mul_ui(result.data(), result.data(), std::abs(i), GMP_RNDN);
+   mpfr_mul_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i), GMP_RNDN);
    if(i < 0)
       mpfr_neg(result.data(), result.data(), GMP_RNDN);
 }
 template <unsigned digits10, mpfr_allocation_type AllocationType>
 inline void eval_divide(mpfr_float_backend<digits10, AllocationType>& result, long i)
 {
-   mpfr_div_ui(result.data(), result.data(), std::abs(i), GMP_RNDN);
+   mpfr_div_ui(result.data(), result.data(), boost::multiprecision::detail::unsigned_abs(i), GMP_RNDN);
    if(i < 0)
       mpfr_neg(result.data(), result.data(), GMP_RNDN);
 }
@@ -966,7 +1055,7 @@ template <unsigned D1, unsigned D2, mpfr_allocation_type A1, mpfr_allocation_typ
 inline void eval_add(mpfr_float_backend<D1, A1>& a, const mpfr_float_backend<D2, A2>& x, long y)
 {
    if(y < 0)
-      mpfr_sub_ui(a.data(), x.data(), -y, GMP_RNDN);
+      mpfr_sub_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y), GMP_RNDN);
    else
       mpfr_add_ui(a.data(), x.data(), y, GMP_RNDN);
 }
@@ -980,7 +1069,7 @@ inline void eval_add(mpfr_float_backend<D1, A1>& a, long x, const mpfr_float_bac
 {
    if(x < 0)
    {
-      mpfr_ui_sub(a.data(), -x, y.data(), GMP_RNDN);
+      mpfr_ui_sub(a.data(), boost::multiprecision::detail::unsigned_abs(x), y.data(), GMP_RNDN);
       mpfr_neg(a.data(), a.data(), GMP_RNDN);
    }
    else
@@ -1000,7 +1089,7 @@ template <unsigned D1, unsigned D2, mpfr_allocation_type A1, mpfr_allocation_typ
 inline void eval_subtract(mpfr_float_backend<D1, A1>& a, const mpfr_float_backend<D2, A2>& x, long y)
 {
    if(y < 0)
-      mpfr_add_ui(a.data(), x.data(), -y, GMP_RNDN);
+      mpfr_add_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y), GMP_RNDN);
    else
       mpfr_sub_ui(a.data(), x.data(), y, GMP_RNDN);
 }
@@ -1014,7 +1103,7 @@ inline void eval_subtract(mpfr_float_backend<D1, A1>& a, long x, const mpfr_floa
 {
    if(x < 0)
    {
-      mpfr_add_ui(a.data(), y.data(), -x, GMP_RNDN);
+      mpfr_add_ui(a.data(), y.data(), boost::multiprecision::detail::unsigned_abs(x), GMP_RNDN);
       mpfr_neg(a.data(), a.data(), GMP_RNDN);
    }
    else
@@ -1024,7 +1113,10 @@ inline void eval_subtract(mpfr_float_backend<D1, A1>& a, long x, const mpfr_floa
 template <unsigned D1, unsigned D2, mpfr_allocation_type A1, mpfr_allocation_type A2, unsigned D3>
 inline void eval_multiply(mpfr_float_backend<D1, A1>& a, const mpfr_float_backend<D2, A2>& x, const mpfr_float_backend<D3>& y)
 {
-   mpfr_mul(a.data(), x.data(), y.data(), GMP_RNDN);
+   if((void*)&x == (void*)&y)
+      mpfr_sqr(a.data(), x.data(), GMP_RNDN);
+   else
+      mpfr_mul(a.data(), x.data(), y.data(), GMP_RNDN);
 }
 template <unsigned D1, unsigned D2, mpfr_allocation_type A1, mpfr_allocation_type A2>
 inline void eval_multiply(mpfr_float_backend<D1, A1>& a, const mpfr_float_backend<D2, A2>& x, unsigned long y)
@@ -1036,7 +1128,7 @@ inline void eval_multiply(mpfr_float_backend<D1, A1>& a, const mpfr_float_backen
 {
    if(y < 0)
    {
-      mpfr_mul_ui(a.data(), x.data(), -y, GMP_RNDN);
+      mpfr_mul_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y), GMP_RNDN);
       a.negate();
    }
    else
@@ -1052,7 +1144,7 @@ inline void eval_multiply(mpfr_float_backend<D1, A1>& a, long x, const mpfr_floa
 {
    if(x < 0)
    {
-      mpfr_mul_ui(a.data(), y.data(), -x, GMP_RNDN);
+      mpfr_mul_ui(a.data(), y.data(), boost::multiprecision::detail::unsigned_abs(x), GMP_RNDN);
       mpfr_neg(a.data(), a.data(), GMP_RNDN);
    }
    else
@@ -1074,7 +1166,7 @@ inline void eval_divide(mpfr_float_backend<D1, A1>& a, const mpfr_float_backend<
 {
    if(y < 0)
    {
-      mpfr_div_ui(a.data(), x.data(), -y, GMP_RNDN);
+      mpfr_div_ui(a.data(), x.data(), boost::multiprecision::detail::unsigned_abs(y), GMP_RNDN);
       a.negate();
    }
    else
@@ -1090,7 +1182,7 @@ inline void eval_divide(mpfr_float_backend<D1, A1>& a, long x, const mpfr_float_
 {
    if(x < 0)
    {
-      mpfr_ui_div(a.data(), -x, y.data(), GMP_RNDN);
+      mpfr_ui_div(a.data(), boost::multiprecision::detail::unsigned_abs(x), y.data(), GMP_RNDN);
       mpfr_neg(a.data(), a.data(), GMP_RNDN);
    }
    else
@@ -1115,7 +1207,7 @@ inline void eval_convert_to(unsigned long* result, const mpfr_float_backend<digi
    {
       BOOST_THROW_EXCEPTION(std::runtime_error("Could not convert NaN to integer."));
    }
-   *result = mpfr_get_ui(val.data(), GMP_RNDN);
+   *result = mpfr_get_ui(val.data(), GMP_RNDZ);
 }
 template <unsigned digits10, mpfr_allocation_type AllocationType>
 inline void eval_convert_to(long* result, const mpfr_float_backend<digits10, AllocationType>& val)
@@ -1124,28 +1216,33 @@ inline void eval_convert_to(long* result, const mpfr_float_backend<digits10, All
    {
       BOOST_THROW_EXCEPTION(std::runtime_error("Could not convert NaN to integer."));
    }
-   *result = mpfr_get_si(val.data(), GMP_RNDN);
+   *result = mpfr_get_si(val.data(), GMP_RNDZ);
 }
 #ifdef _MPFR_H_HAVE_INTMAX_T
 template <unsigned digits10, mpfr_allocation_type AllocationType>
-inline void eval_convert_to(unsigned long long* result, const mpfr_float_backend<digits10, AllocationType>& val)
+inline void eval_convert_to(boost::ulong_long_type* result, const mpfr_float_backend<digits10, AllocationType>& val)
 {
    if(mpfr_nan_p(val.data()))
    {
       BOOST_THROW_EXCEPTION(std::runtime_error("Could not convert NaN to integer."));
    }
-   *result = mpfr_get_uj(val.data(), GMP_RNDN);
+   *result = mpfr_get_uj(val.data(), GMP_RNDZ);
 }
 template <unsigned digits10, mpfr_allocation_type AllocationType>
-inline void eval_convert_to(long long* result, const mpfr_float_backend<digits10, AllocationType>& val)
+inline void eval_convert_to(boost::long_long_type* result, const mpfr_float_backend<digits10, AllocationType>& val)
 {
    if(mpfr_nan_p(val.data()))
    {
       BOOST_THROW_EXCEPTION(std::runtime_error("Could not convert NaN to integer."));
    }
-   *result = mpfr_get_sj(val.data(), GMP_RNDN);
+   *result = mpfr_get_sj(val.data(), GMP_RNDZ);
 }
 #endif
+template <unsigned digits10, mpfr_allocation_type AllocationType>
+inline void eval_convert_to(float* result, const mpfr_float_backend<digits10, AllocationType>& val) BOOST_NOEXCEPT
+{
+   *result = mpfr_get_flt(val.data(), GMP_RNDN);
+}
 template <unsigned digits10, mpfr_allocation_type AllocationType>
 inline void eval_convert_to(double* result, const mpfr_float_backend<digits10, AllocationType>& val) BOOST_NOEXCEPT
 {
@@ -1190,11 +1287,6 @@ inline void eval_floor(mpfr_float_backend<Digits10, AllocateType>& result, const
 template <unsigned Digits10, mpfr_allocation_type AllocateType>
 inline void eval_trunc(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& val)
 {
-   if(0 == mpfr_number_p(val.data()))
-   {
-      result = boost::math::policies::raise_rounding_error("boost::multiprecision::trunc<%1%>(%1%)", 0, number<mpfr_float_backend<Digits10, AllocateType> >(val), 0, boost::math::policies::policy<>()).backend();
-      return;
-   }
    mpfr_trunc(result.data(), val.data());
 }
 template <unsigned Digits10, mpfr_allocation_type AllocateType>
@@ -1231,7 +1323,12 @@ inline int eval_fpclassify(const mpfr_float_backend<Digits10, AllocateType>& val
 template <unsigned Digits10, mpfr_allocation_type AllocateType>
 inline void eval_pow(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& b, const mpfr_float_backend<Digits10, AllocateType>& e)
 {
-   mpfr_pow(result.data(), b.data(), e.data(), GMP_RNDN);
+   if(mpfr_zero_p(b.data()) && mpfr_integer_p(e.data()) && (mpfr_signbit(e.data()) == 0) && mpfr_fits_ulong_p(e.data(), GMP_RNDN) && (mpfr_get_ui(e.data(), GMP_RNDN) & 1))
+   {
+      mpfr_set(result.data(), b.data(), GMP_RNDN);
+   }
+   else
+      mpfr_pow(result.data(), b.data(), e.data(), GMP_RNDN);
 }
 
 #ifdef BOOST_MSVC
@@ -1246,14 +1343,14 @@ inline void eval_pow(mpfr_float_backend<Digits10, AllocateType>& result, const m
 #endif
 
 template <unsigned Digits10, mpfr_allocation_type AllocateType, class Integer>
-inline typename enable_if<mpl::and_<is_signed<Integer>, mpl::bool_<BOOST_MP_ENABLE_IF_WORKAROUND (sizeof(Integer) <= sizeof(long))> > >::type 
+inline typename enable_if<mpl::and_<is_signed<Integer>, mpl::bool_<BOOST_MP_ENABLE_IF_WORKAROUND (sizeof(Integer) <= sizeof(long))> > >::type
    eval_pow(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& b, const Integer& e)
 {
    mpfr_pow_si(result.data(), b.data(), e, GMP_RNDN);
 }
 
 template <unsigned Digits10, mpfr_allocation_type AllocateType, class Integer>
-inline typename enable_if<mpl::and_<is_unsigned<Integer>, mpl::bool_<BOOST_MP_ENABLE_IF_WORKAROUND (sizeof(Integer) <= sizeof(long))> > >::type 
+inline typename enable_if<mpl::and_<is_unsigned<Integer>, mpl::bool_<BOOST_MP_ENABLE_IF_WORKAROUND (sizeof(Integer) <= sizeof(long))> > >::type
    eval_pow(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& b, const Integer& e)
 {
    mpfr_pow_ui(result.data(), b.data(), e, GMP_RNDN);
@@ -1265,6 +1362,12 @@ template <unsigned Digits10, mpfr_allocation_type AllocateType>
 inline void eval_exp(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& arg)
 {
    mpfr_exp(result.data(), arg.data(), GMP_RNDN);
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_exp2(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& arg)
+{
+   mpfr_exp2(result.data(), arg.data(), GMP_RNDN);
 }
 
 template <unsigned Digits10, mpfr_allocation_type AllocateType>
@@ -1339,6 +1442,89 @@ inline void eval_tanh(mpfr_float_backend<Digits10, AllocateType>& result, const 
    mpfr_tanh(result.data(), arg.data(), GMP_RNDN);
 }
 
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_log2(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& arg)
+{
+   mpfr_log2(result.data(), arg.data(), GMP_RNDN);
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_modf(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& arg, mpfr_float_backend<Digits10, AllocateType>* pipart)
+{
+   if(0 == pipart)
+   {
+      mpfr_float_backend<Digits10, AllocateType> ipart;
+      mpfr_modf(ipart.data(), result.data(), arg.data(), GMP_RNDN);
+   }
+   else
+   {
+      mpfr_modf(pipart->data(), result.data(), arg.data(), GMP_RNDN);
+   }
+}
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_remainder(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b)
+{
+   mpfr_remainder(result.data(), a.data(), b.data(), GMP_RNDN);
+}
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_remquo(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b, int* pi)
+{
+   long l;
+   mpfr_remquo(result.data(), &l, a.data(), b.data(), GMP_RNDN);
+   if(pi) *pi = l;
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_fmod(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b)
+{
+   mpfr_fmod(result.data(), a.data(), b.data(), GMP_RNDN);
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_multiply_add(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b)
+{
+   mpfr_fma(result.data(), a.data(), b.data(), result.data(), GMP_RNDN);
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_multiply_add(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b, const mpfr_float_backend<Digits10, AllocateType>& c)
+{
+   mpfr_fma(result.data(), a.data(), b.data(), c.data(), GMP_RNDN);
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_multiply_subtract(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b)
+{
+   mpfr_fms(result.data(), a.data(), b.data(), result.data(), GMP_RNDN);
+   result.negate();
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline void eval_multiply_subtract(mpfr_float_backend<Digits10, AllocateType>& result, const mpfr_float_backend<Digits10, AllocateType>& a, const mpfr_float_backend<Digits10, AllocateType>& b, const mpfr_float_backend<Digits10, AllocateType>& c)
+{
+   mpfr_fms(result.data(), a.data(), b.data(), c.data(), GMP_RNDN);
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline int eval_signbit BOOST_PREVENT_MACRO_SUBSTITUTION(const mpfr_float_backend<Digits10, AllocateType>& arg)
+{
+   return (arg.data()[0]._mpfr_sign < 0) ? 1 : 0;
+}
+
+template <unsigned Digits10, mpfr_allocation_type AllocateType>
+inline std::size_t hash_value(const mpfr_float_backend<Digits10, AllocateType>& val)
+{
+   std::size_t result = 0;
+   std::size_t len = val.data()[0]._mpfr_prec / mp_bits_per_limb;
+   if(val.data()[0]._mpfr_prec % mp_bits_per_limb)
+      ++len;
+   for(std::size_t i = 0; i < len; ++i)
+      boost::hash_combine(result, val.data()[0]._mpfr_d[i]);
+   boost::hash_combine(result, val.data()[0]._mpfr_exp);
+   boost::hash_combine(result, val.data()[0]._mpfr_sign);
+   return result;
+}
+
 } // namespace backends
 
 #ifdef BOOST_NO_SFINAE_EXPR
@@ -1366,21 +1552,127 @@ typedef number<mpfr_float_backend<0> >     mpfr_float;
 typedef number<mpfr_float_backend<50, allocate_stack> >    static_mpfr_float_50;
 typedef number<mpfr_float_backend<100, allocate_stack> >   static_mpfr_float_100;
 
+template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> copysign BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& a, const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& b)
+{
+   return (boost::multiprecision::signbit)(a) != (boost::multiprecision::signbit)(b) ? boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>(-a) : a;
+}
+
+template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+inline boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> copysign BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates>& a, const boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates>& b)
+{
+   return (boost::multiprecision::signbit)(a) != (boost::multiprecision::signbit)(b) ? boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates>(-a) : a;
+}
+
 } // namespace multiprecision
 
 namespace math{
+
+   using boost::multiprecision::signbit;
+   using boost::multiprecision::copysign;
 
 namespace tools{
 
 template <>
 inline int digits<boost::multiprecision::mpfr_float>()
+#ifdef BOOST_MATH_NOEXCEPT
+   BOOST_NOEXCEPT
+#endif
 {
-   return boost::multiprecision::backends::detail::get_default_precision();
+   return multiprecision::detail::digits10_2_2(boost::multiprecision::mpfr_float::default_precision());
 }
 template <>
 inline int digits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off> >()
+#ifdef BOOST_MATH_NOEXCEPT
+   BOOST_NOEXCEPT
+#endif
 {
-   return boost::multiprecision::backends::detail::get_default_precision();
+   return multiprecision::detail::digits10_2_2(boost::multiprecision::mpfr_float::default_precision());
+}
+
+template <>
+inline boost::multiprecision::mpfr_float
+   max_value<boost::multiprecision::mpfr_float>()
+{
+   boost::multiprecision::mpfr_float result(0.5);
+   mpfr_mul_2exp(result.backend().data(), result.backend().data(), mpfr_get_emax(), GMP_RNDN);
+   BOOST_ASSERT(mpfr_number_p(result.backend().data()));
+   return result;
+}
+
+template <>
+inline boost::multiprecision::mpfr_float
+   min_value<boost::multiprecision::mpfr_float>()
+{
+   boost::multiprecision::mpfr_float result(0.5);
+   mpfr_div_2exp(result.backend().data(), result.backend().data(), -mpfr_get_emin(), GMP_RNDN);
+   BOOST_ASSERT(mpfr_number_p(result.backend().data()));
+   return result;
+}
+
+template <>
+inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off> 
+   max_value<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off> >()
+{
+   boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off> result(0.5);
+   mpfr_mul_2exp(result.backend().data(), result.backend().data(), mpfr_get_emax(), GMP_RNDN);
+   BOOST_ASSERT(mpfr_number_p(result.backend().data()));
+   return result;
+}
+
+template <>
+inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off>
+   min_value<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off> >()
+{
+   boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, boost::multiprecision::et_off> result(0.5);
+   mpfr_div_2exp(result.backend().data(), result.backend().data(), -mpfr_get_emin(), GMP_RNDN);
+   BOOST_ASSERT(mpfr_number_p(result.backend().data()));
+   return result;
+}
+
+template <>
+inline int digits<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> > >()
+#ifdef BOOST_MATH_NOEXCEPT
+BOOST_NOEXCEPT
+#endif
+{
+   return multiprecision::detail::digits10_2_2(boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> >::default_precision());
+}
+template <>
+inline int digits<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<0> >, boost::multiprecision::et_off> >()
+#ifdef BOOST_MATH_NOEXCEPT
+BOOST_NOEXCEPT
+#endif
+{
+   return multiprecision::detail::digits10_2_2(boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> >::default_precision());
+}
+
+template <>
+inline boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> >
+max_value<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> > >()
+{
+   return max_value<boost::multiprecision::mpfr_float>().backend();
+}
+
+template <>
+inline boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> >
+min_value<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float::backend_type> > >()
+{
+   return min_value<boost::multiprecision::mpfr_float>().backend();
+}
+
+template <>
+inline boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<0> >, boost::multiprecision::et_off>
+max_value<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<0> >, boost::multiprecision::et_off> >()
+{
+   return max_value<boost::multiprecision::mpfr_float>().backend();
+}
+
+template <>
+inline boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<0> >, boost::multiprecision::et_off>
+min_value<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<0> >, boost::multiprecision::et_off> >()
+{
+   return min_value<boost::multiprecision::mpfr_float>().backend();
 }
 
 } // namespace tools
@@ -1392,12 +1684,50 @@ template <class T> struct constant_ln_two;
 template <class T> struct constant_euler;
 template <class T> struct constant_catalan;
 
+namespace detail{
+
+   template <class T, int N>
+   struct mpfr_constant_initializer
+   {
+      static void force_instantiate()
+      {
+         init.force_instantiate();
+      }
+   private:
+      struct initializer
+      {
+         initializer()
+         {
+            T::get(mpl::int_<N>());
+         }
+         void force_instantiate()const{}
+      };
+      static const initializer init;
+   };
+
+   template <class T, int N>
+   typename mpfr_constant_initializer<T, N>::initializer const mpfr_constant_initializer<T, N>::init;
+
+}
+
 template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
 struct constant_pi<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> >
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_pi<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool has_init = false;
+      if(!has_init)
+      {
+         mpfr_const_pi(result.backend().data(), GMP_RNDN);
+         has_init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
    {
       result_type result;
       mpfr_const_pi(result.backend().data(), GMP_RNDN);
@@ -1409,7 +1739,19 @@ struct constant_ln_two<boost::multiprecision::number<boost::multiprecision::mpfr
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_ln_two<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool init = false;
+      if(!init)
+      {
+         mpfr_const_log2(result.backend().data(), GMP_RNDN);
+         init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
    {
       result_type result;
       mpfr_const_log2(result.backend().data(), GMP_RNDN);
@@ -1421,7 +1763,19 @@ struct constant_euler<boost::multiprecision::number<boost::multiprecision::mpfr_
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_euler<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool init = false;
+      if(!init)
+      {
+         mpfr_const_euler(result.backend().data(), GMP_RNDN);
+         init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
    {
       result_type result;
       mpfr_const_euler(result.backend().data(), GMP_RNDN);
@@ -1433,7 +1787,19 @@ struct constant_catalan<boost::multiprecision::number<boost::multiprecision::mpf
 {
    typedef boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result_type;
    template<int N>
-   static inline result_type get(const mpl::int_<N>&)
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_catalan<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool init = false;
+      if(!init)
+      {
+         mpfr_const_catalan(result.backend().data(), GMP_RNDN);
+         init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
    {
       result_type result;
       mpfr_const_catalan(result.backend().data(), GMP_RNDN);
@@ -1441,9 +1807,185 @@ struct constant_catalan<boost::multiprecision::number<boost::multiprecision::mpf
    }
 };
 
+template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+struct constant_pi<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >
+{
+   typedef boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> result_type;
+   template<int N>
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_pi<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool has_init = false;
+      if(!has_init)
+      {
+         mpfr_const_pi(result.backend().value().data(), GMP_RNDN);
+         has_init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
+   {
+      result_type result;
+      mpfr_const_pi(result.backend().value().data(), GMP_RNDN);
+      return result;
+   }
+};
+template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+struct constant_ln_two<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >
+{
+   typedef boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> result_type;
+   template<int N>
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_ln_two<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool init = false;
+      if(!init)
+      {
+         mpfr_const_log2(result.backend().value().data(), GMP_RNDN);
+         init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
+   {
+      result_type result;
+      mpfr_const_log2(result.backend().value().data(), GMP_RNDN);
+      return result;
+   }
+};
+template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+struct constant_euler<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >
+{
+   typedef boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> result_type;
+   template<int N>
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_euler<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool init = false;
+      if(!init)
+      {
+         mpfr_const_euler(result.backend().value().data(), GMP_RNDN);
+         init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
+   {
+      result_type result;
+      mpfr_const_euler(result.backend().value().data(), GMP_RNDN);
+      return result;
+   }
+};
+template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+struct constant_catalan<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >
+{
+   typedef boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> result_type;
+   template<int N>
+   static inline const result_type& get(const mpl::int_<N>&)
+   {
+      detail::mpfr_constant_initializer<constant_catalan<boost::multiprecision::number<boost::multiprecision::debug_adaptor<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType> >, ExpressionTemplates> >, N>::force_instantiate();
+      static result_type result;
+      static bool init = false;
+      if(!init)
+      {
+         mpfr_const_catalan(result.backend().value().data(), GMP_RNDN);
+         init = true;
+      }
+      return result;
+   }
+   static inline const result_type get(const mpl::int_<0>&)
+   {
+      result_type result;
+      mpfr_const_catalan(result.backend().value().data(), GMP_RNDN);
+      return result;
+   }
+};
+
 }} // namespaces
 
-}}  // namespaces
+} // namespace multiprecision
+
+namespace multiprecision {
+   //
+   // Overloaded special functions which call native mpfr routines:
+   //
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> asinh BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_asinh(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> acosh BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_acosh(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> atanh BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_atanh(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> cbrt BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_cbrt(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> erf BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_erf(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> erfc BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_erfc(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> expm1 BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_expm1(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> lgamma BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_lngamma(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> tgamma BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_gamma(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+   template<unsigned Digits10, boost::multiprecision::mpfr_allocation_type AllocateType, boost::multiprecision::expression_template_option ExpressionTemplates>
+   inline boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> log1p BOOST_PREVENT_MACRO_SUBSTITUTION(const boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates>& arg)
+   {
+      boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<Digits10, AllocateType>, ExpressionTemplates> result;
+      mpfr_log1p(result.backend().data(), arg.backend().data(), GMP_RNDN);
+      return BOOST_MP_MOVE(result);
+   }
+
+}
+
+}  // namespace boost
 
 namespace std{
 
@@ -1487,7 +2029,7 @@ public:
    BOOST_STATIC_CONSTEXPR int digits = static_cast<int>((Digits10 * 1000L) / 301L + ((Digits10 * 1000L) % 301 ? 2 : 1));
    BOOST_STATIC_CONSTEXPR int digits10 = Digits10;
    // Is this really correct???
-   BOOST_STATIC_CONSTEXPR int max_digits10 = Digits10 + 2;
+   BOOST_STATIC_CONSTEXPR int max_digits10 = Digits10 + 3;
    BOOST_STATIC_CONSTEXPR bool is_signed = true;
    BOOST_STATIC_CONSTEXPR bool is_integer = false;
    BOOST_STATIC_CONSTEXPR bool is_exact = false;
@@ -1514,7 +2056,7 @@ public:
       {
          value.first = true;
          value.second = 1;
-         mpfr_div_2exp(value.second.backend().data(), value.second.backend().data(), digits, GMP_RNDN);
+         mpfr_div_2exp(value.second.backend().data(), value.second.backend().data(), 1, GMP_RNDN);
       }
       return value.second;
    }
@@ -1641,33 +2183,64 @@ class numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_f
    typedef boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> number_type;
 public:
    BOOST_STATIC_CONSTEXPR bool is_specialized = false;
-   static number_type (min)() { return number_type(0); }
-   static number_type (max)() { return number_type(0); }
-   static number_type lowest() { return number_type(0); }
-   BOOST_STATIC_CONSTEXPR int digits = 0;
-   BOOST_STATIC_CONSTEXPR int digits10 = 0;
-   BOOST_STATIC_CONSTEXPR int max_digits10 = 0;
-   BOOST_STATIC_CONSTEXPR bool is_signed = false;
+   static number_type(min)()
+   {
+      number_type value(0.5);
+      mpfr_div_2exp(value.backend().data(), value.backend().data(), -mpfr_get_emin(), GMP_RNDN);
+      return value;
+   }
+   static number_type(max)()
+   {
+      number_type value(0.5);
+      mpfr_mul_2exp(value.backend().data(), value.backend().data(), mpfr_get_emax(), GMP_RNDN);
+      return value;
+   }
+   static number_type lowest()
+   {
+      return -(max)();
+   }
+   BOOST_STATIC_CONSTEXPR int digits = INT_MAX;
+   BOOST_STATIC_CONSTEXPR int digits10 = INT_MAX;
+   BOOST_STATIC_CONSTEXPR int max_digits10 = INT_MAX;
+   BOOST_STATIC_CONSTEXPR bool is_signed = true;
    BOOST_STATIC_CONSTEXPR bool is_integer = false;
    BOOST_STATIC_CONSTEXPR bool is_exact = false;
-   BOOST_STATIC_CONSTEXPR int radix = 0;
-   static number_type epsilon() { return number_type(0); }
-   static number_type round_error() { return number_type(0); }
-   BOOST_STATIC_CONSTEXPR int min_exponent = 0;
-   BOOST_STATIC_CONSTEXPR int min_exponent10 = 0;
-   BOOST_STATIC_CONSTEXPR int max_exponent = 0;
-   BOOST_STATIC_CONSTEXPR int max_exponent10 = 0;
-   BOOST_STATIC_CONSTEXPR bool has_infinity = false;
-   BOOST_STATIC_CONSTEXPR bool has_quiet_NaN = false;
+   BOOST_STATIC_CONSTEXPR int radix = 2;
+   static number_type epsilon()
+   {
+      number_type value(1);
+      mpfr_div_2exp(value.backend().data(), value.backend().data(), boost::multiprecision::detail::digits10_2_2(number_type::default_precision()) - 1, GMP_RNDN);
+      return value;
+   }
+   static number_type round_error()
+   {
+      return epsilon() / 2;
+   }
+   BOOST_STATIC_CONSTEXPR long min_exponent = MPFR_EMIN_DEFAULT;
+   BOOST_STATIC_CONSTEXPR long min_exponent10 = (MPFR_EMIN_DEFAULT / 1000) * 301L;
+   BOOST_STATIC_CONSTEXPR long max_exponent = MPFR_EMAX_DEFAULT;
+   BOOST_STATIC_CONSTEXPR long max_exponent10 = (MPFR_EMAX_DEFAULT / 1000) * 301L;
+   BOOST_STATIC_CONSTEXPR bool has_infinity = true;
+   BOOST_STATIC_CONSTEXPR bool has_quiet_NaN = true;
    BOOST_STATIC_CONSTEXPR bool has_signaling_NaN = false;
    BOOST_STATIC_CONSTEXPR float_denorm_style has_denorm = denorm_absent;
    BOOST_STATIC_CONSTEXPR bool has_denorm_loss = false;
-   static number_type infinity() { return number_type(0); }
-   static number_type quiet_NaN() { return number_type(0); }
+   static number_type infinity()
+   {
+      number_type value;
+      mpfr_set_inf(value.backend().data(), 1);
+      return value;
+   }
+   static number_type quiet_NaN()
+   {
+      number_type value;
+      mpfr_set_nan(value.backend().data());
+      return value;
+   }
    static number_type signaling_NaN() { return number_type(0); }
    static number_type denorm_min() { return number_type(0); }
    BOOST_STATIC_CONSTEXPR bool is_iec559 = false;
-   BOOST_STATIC_CONSTEXPR bool is_bounded = false;
+   BOOST_STATIC_CONSTEXPR bool is_bounded = true;
    BOOST_STATIC_CONSTEXPR bool is_modulo = false;
    BOOST_STATIC_CONSTEXPR bool traps = false;
    BOOST_STATIC_CONSTEXPR bool tinyness_before = false;
@@ -1691,13 +2264,13 @@ BOOST_CONSTEXPR_OR_CONST bool numeric_limits<boost::multiprecision::number<boost
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
 BOOST_CONSTEXPR_OR_CONST int numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::radix;
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
-BOOST_CONSTEXPR_OR_CONST int numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::min_exponent;
+BOOST_CONSTEXPR_OR_CONST long numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::min_exponent;
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
-BOOST_CONSTEXPR_OR_CONST int numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::min_exponent10;
+BOOST_CONSTEXPR_OR_CONST long numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::min_exponent10;
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
-BOOST_CONSTEXPR_OR_CONST int numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::max_exponent;
+BOOST_CONSTEXPR_OR_CONST long numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::max_exponent;
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
-BOOST_CONSTEXPR_OR_CONST int numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::max_exponent10;
+BOOST_CONSTEXPR_OR_CONST long numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::max_exponent10;
 template <boost::multiprecision::expression_template_option ExpressionTemplates>
 BOOST_CONSTEXPR_OR_CONST bool numeric_limits<boost::multiprecision::number<boost::multiprecision::mpfr_float_backend<0>, ExpressionTemplates> >::has_infinity;
 template <boost::multiprecision::expression_template_option ExpressionTemplates>

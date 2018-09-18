@@ -2,7 +2,7 @@
 // serial_port_base.hpp
 // ~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -21,17 +21,16 @@
 #if defined(BOOST_ASIO_HAS_SERIAL_PORT) \
   || defined(GENERATING_DOCUMENTATION)
 
-#if !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#if !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 # include <termios.h>
-#endif // !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#endif // !defined(BOOST_ASIO_WINDOWS) && !defined(__CYGWIN__)
 
-#include <boost/detail/workaround.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/system/error_code.hpp>
 
 #if defined(GENERATING_DOCUMENTATION)
 # define BOOST_ASIO_OPTION_STORAGE implementation_defined
-#elif defined(BOOST_WINDOWS) || defined(__CYGWIN__)
+#elif defined(BOOST_ASIO_WINDOWS) || defined(__CYGWIN__)
 # define BOOST_ASIO_OPTION_STORAGE DCB
 #else
 # define BOOST_ASIO_OPTION_STORAGE termios
@@ -56,10 +55,10 @@ public:
   public:
     explicit baud_rate(unsigned int rate = 0);
     unsigned int value() const;
-    BOOST_ASIO_DECL boost::system::error_code store(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID store(
         BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec) const;
-    BOOST_ASIO_DECL boost::system::error_code load(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID load(
         const BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec);
   private:
@@ -76,10 +75,10 @@ public:
     enum type { none, software, hardware };
     BOOST_ASIO_DECL explicit flow_control(type t = none);
     type value() const;
-    BOOST_ASIO_DECL boost::system::error_code store(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID store(
         BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec) const;
-    BOOST_ASIO_DECL boost::system::error_code load(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID load(
         const BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec);
   private:
@@ -96,10 +95,10 @@ public:
     enum type { none, odd, even };
     BOOST_ASIO_DECL explicit parity(type t = none);
     type value() const;
-    BOOST_ASIO_DECL boost::system::error_code store(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID store(
         BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec) const;
-    BOOST_ASIO_DECL boost::system::error_code load(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID load(
         const BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec);
   private:
@@ -116,10 +115,10 @@ public:
     enum type { one, onepointfive, two };
     BOOST_ASIO_DECL explicit stop_bits(type t = one);
     type value() const;
-    BOOST_ASIO_DECL boost::system::error_code store(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID store(
         BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec) const;
-    BOOST_ASIO_DECL boost::system::error_code load(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID load(
         const BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec);
   private:
@@ -135,10 +134,10 @@ public:
   public:
     BOOST_ASIO_DECL explicit character_size(unsigned int t = 8);
     unsigned int value() const;
-    BOOST_ASIO_DECL boost::system::error_code store(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID store(
         BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec) const;
-    BOOST_ASIO_DECL boost::system::error_code load(
+    BOOST_ASIO_DECL BOOST_ASIO_SYNC_OP_VOID load(
         const BOOST_ASIO_OPTION_STORAGE& storage,
         boost::system::error_code& ec);
   private:
@@ -150,12 +149,6 @@ protected:
   ~serial_port_base()
   {
   }
-
-#if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-private:
-  // Workaround to enable the empty base optimisation with Borland C++.
-  char dummy_;
-#endif
 };
 
 } // namespace asio

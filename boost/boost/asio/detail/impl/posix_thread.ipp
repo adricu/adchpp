@@ -2,7 +2,7 @@
 // detail/impl/posix_thread.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,7 @@
 
 #include <boost/asio/detail/config.hpp>
 
-#if defined(BOOST_HAS_PTHREADS) && !defined(BOOST_ASIO_DISABLE_THREADS)
+#if defined(BOOST_ASIO_HAS_PTHREADS)
 
 #include <boost/asio/detail/posix_thread.hpp>
 #include <boost/asio/detail/throw_error.hpp>
@@ -42,6 +42,16 @@ void posix_thread::join()
     ::pthread_join(thread_, 0);
     joined_ = true;
   }
+}
+
+std::size_t posix_thread::hardware_concurrency()
+{
+#if defined(_SC_NPROCESSORS_ONLN)
+  long result = sysconf(_SC_NPROCESSORS_ONLN);
+  if (result > 0)
+    return result;
+#endif // defined(_SC_NPROCESSORS_ONLN)
+  return 0;
 }
 
 void posix_thread::start_thread(func_base* arg)
@@ -71,6 +81,6 @@ void* boost_asio_detail_posix_thread_function(void* arg)
 
 #include <boost/asio/detail/pop_options.hpp>
 
-#endif // defined(BOOST_HAS_PTHREADS) && !defined(BOOST_ASIO_DISABLE_THREADS)
+#endif // defined(BOOST_ASIO_HAS_PTHREADS)
 
 #endif // BOOST_ASIO_DETAIL_IMPL_POSIX_THREAD_IPP

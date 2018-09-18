@@ -2,7 +2,7 @@
 // ip/address_v6.hpp
 // ~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2012 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,19 +19,22 @@
 #include <string>
 #include <boost/asio/detail/array.hpp>
 #include <boost/asio/detail/socket_types.hpp>
+#include <boost/asio/detail/string_view.hpp>
 #include <boost/asio/detail/winsock_init.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 
-#if !defined(BOOST_NO_IOSTREAM)
+#if !defined(BOOST_ASIO_NO_IOSTREAM)
 # include <iosfwd>
-#endif // !defined(BOOST_NO_IOSTREAM)
+#endif // !defined(BOOST_ASIO_NO_IOSTREAM)
 
 #include <boost/asio/detail/push_options.hpp>
 
 namespace boost {
 namespace asio {
 namespace ip {
+
+template <typename> class basic_address_iterator;
 
 /// Implements IP version 6 style addresses.
 /**
@@ -103,25 +106,32 @@ public:
   /// Get the address as a string.
   BOOST_ASIO_DECL std::string to_string() const;
 
-  /// Get the address as a string.
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use other overload.) Get the address as a string.
   BOOST_ASIO_DECL std::string to_string(boost::system::error_code& ec) const;
 
-  /// Create an address from an IP address string.
-  BOOST_ASIO_DECL static address_v6 from_string(const char* str);
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(const char* str);
 
-  /// Create an address from an IP address string.
-  BOOST_ASIO_DECL static address_v6 from_string(
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(
       const char* str, boost::system::error_code& ec);
 
-  /// Create an address from an IP address string.
-  BOOST_ASIO_DECL static address_v6 from_string(const std::string& str);
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(const std::string& str);
 
-  /// Create an address from an IP address string.
-  BOOST_ASIO_DECL static address_v6 from_string(
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(
       const std::string& str, boost::system::error_code& ec);
 
-  /// Converts an IPv4-mapped or IPv4-compatible address to an IPv4 address.
+  /// (Deprecated: Use make_address_v4().) Converts an IPv4-mapped or
+  /// IPv4-compatible address to an IPv4 address.
   BOOST_ASIO_DECL address_v4 to_v4() const;
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
   /// Determine whether the address is a loopback address.
   BOOST_ASIO_DECL bool is_loopback() const;
@@ -138,8 +148,11 @@ public:
   /// Determine whether the address is a mapped IPv4 address.
   BOOST_ASIO_DECL bool is_v4_mapped() const;
 
-  /// Determine whether the address is an IPv4-compatible address.
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: No replacement.) Determine whether the address is an
+  /// IPv4-compatible address.
   BOOST_ASIO_DECL bool is_v4_compatible() const;
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
   /// Determine whether the address is a multicast address.
   BOOST_ASIO_DECL bool is_multicast() const;
@@ -200,13 +213,17 @@ public:
   /// Obtain an address object that represents the loopback address.
   BOOST_ASIO_DECL static address_v6 loopback();
 
-  /// Create an IPv4-mapped IPv6 address.
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use make_address_v6().) Create an IPv4-mapped IPv6 address.
   BOOST_ASIO_DECL static address_v6 v4_mapped(const address_v4& addr);
 
-  /// Create an IPv4-compatible IPv6 address.
+  /// (Deprecated: No replacement.) Create an IPv4-compatible IPv6 address.
   BOOST_ASIO_DECL static address_v6 v4_compatible(const address_v4& addr);
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
 private:
+  friend class basic_address_iterator<address_v6>;
+
   // The underlying IPv6 address.
   boost::asio::detail::in6_addr_type addr_;
 
@@ -214,7 +231,80 @@ private:
   unsigned long scope_id_;
 };
 
-#if !defined(BOOST_NO_IOSTREAM)
+/// Create an IPv6 address from raw bytes and scope ID.
+/**
+ * @relates address_v6
+ */
+inline address_v6 make_address_v6(const address_v6::bytes_type& bytes,
+    unsigned long scope_id = 0)
+{
+  return address_v6(bytes, scope_id);
+}
+
+/// Create an IPv6 address from an IP address string.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(const char* str);
+
+/// Create an IPv6 address from an IP address string.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    const char* str, boost::system::error_code& ec);
+
+/// Createan IPv6 address from an IP address string.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(const std::string& str);
+
+/// Create an IPv6 address from an IP address string.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    const std::string& str, boost::system::error_code& ec);
+
+#if defined(BOOST_ASIO_HAS_STRING_VIEW) \
+  || defined(GENERATING_DOCUMENTATION)
+
+/// Create an IPv6 address from an IP address string.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(string_view str);
+
+/// Create an IPv6 address from an IP address string.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    string_view str, boost::system::error_code& ec);
+
+#endif // defined(BOOST_ASIO_HAS_STRING_VIEW)
+       //  || defined(GENERATING_DOCUMENTATION)
+
+/// Tag type used for distinguishing overloads that deal in IPv4-mapped IPv6
+/// addresses.
+enum v4_mapped_t { v4_mapped };
+
+/// Create an IPv4 address from a IPv4-mapped IPv6 address.
+/**
+ * @relates address_v4
+ */
+BOOST_ASIO_DECL address_v4 make_address_v4(
+    v4_mapped_t, const address_v6& v6_addr);
+
+/// Create an IPv4-mapped IPv6 address from an IPv4 address.
+/**
+ * @relates address_v6
+ */
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    v4_mapped_t, const address_v4& v4_addr);
+
+#if !defined(BOOST_ASIO_NO_IOSTREAM)
 
 /// Output an address as a string.
 /**
@@ -232,7 +322,7 @@ template <typename Elem, typename Traits>
 std::basic_ostream<Elem, Traits>& operator<<(
     std::basic_ostream<Elem, Traits>& os, const address_v6& addr);
 
-#endif // !defined(BOOST_NO_IOSTREAM)
+#endif // !defined(BOOST_ASIO_NO_IOSTREAM)
 
 } // namespace ip
 } // namespace asio
