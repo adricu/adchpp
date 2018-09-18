@@ -6,7 +6,15 @@ import os,sys
 from build_util import Dev
 
 gcc_flags = {
-	'common': ['-g', '-Wall', '-Wextra', '-Wno-unused-parameter', '-Wno-unused-value', '-Wno-missing-field-initializers', '-Wno-address', '-Wno-unknown-pragmas', '-fexceptions'],
+	'common': [
+		'-g',
+		'-Wall', '-Wextra', '-Wno-unused-parameter', '-Wno-unused-value',
+		'-Wno-missing-field-initializers', '-Wno-address',
+		'-Wno-unknown-pragmas',
+		'-Wno-deprecated-declarations',  # TODO remove after boost update
+		'-Wno-unused-local-typedefs',  # TODO remove after boost update
+		'-fexceptions',
+	],
 	'debug': [], 
 	'release' : ['-O3', '-fno-ipa-cp-clone']
 }
