@@ -21,7 +21,7 @@ BEGIN
             VALUE "FileDescription", "ADCH++"
             VALUE "FileVersion", "3, 0, 0, 0"
             VALUE "InternalName", "ADCH++"
-            VALUE "LegalCopyright", "Copyright 2006-2014 Jacek Sieka"
+            VALUE "LegalCopyright", "Copyright 2006-2018 Jacek Sieka"
             VALUE "OriginalFilename", "adchppd.exe"
             VALUE "ProductName", "ADCH++"
             VALUE "ProductVersion", "3, 0, 0, 0"
