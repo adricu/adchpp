@@ -1,6 +1,6 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.8
+Document Version 0.3.9
 :toc:
 This version of the guide corresponds with ADCH++ versions *2.12.1* and later.
 
@@ -19,7 +19,7 @@ This basic guide shows you how to do the minimum configuration, setup and admini
 This part describes the installation procedure of ADCH++ under Linux and Windows.
 
 === Installing on Windows
-ADCH++ needs Windows XP SP3 or later to run.
+ADCH++ needs Windows 7 SP1 / 2008 Server or later to run.
 
 Before you go on you have to decide whether you want to run a debug or a release build of ADCH\+\+. For normal usage the best choice is the release build which is available prepackaged for download in the official ADCH++ home page.
 
@@ -49,7 +49,7 @@ The easiest choice is the executable installer, when you start the installation 
 . Welcome Screen
 . Set up the installation Path: 
 
-CAUTION: on Windows Vista and Windows 7 you should install ADCH\++ to the Program files / Program files(x86) directory only if you familiar with UAC Data Redirection and its effects and how to store configuration files in the user profile path's specified by the http://vistaonwindows.com/environment_variables.html[windows environment variables]. If you don't want to be bothered with this then the best choice is to install/unpack ADCH++ files to another folder outside of Program Files where UAC rules don't apply. A good alternative path is: _c:\Users\<Your Username>\_
+CAUTION: on Windows you should install ADCH\++ to the Program files / Program files(x86) directory only if you familiar with https://blogs.msdn.microsoft.com/patricka/2009/12/14/tales-of-application-compatibility-weirdness-demystifying-uac-virtualization/[UAC Data Redirection and its effects]. If you don't want to be bothered with this then the best choice is to install/unpack ADCH++ files to another folder outside of Program Files where UAC rules don't apply. A good alternative path is: _c:\Users\<Your Username>\_
 
 As the last step of the installation procedure you'll be asked if you want to install ADCH\++ as a service or not. The main difference between installing ADCH\++ as an applciation or as a service is that in application mode the ADCH\++ console window will be always visible. This can be an advantage as you always able to ensure the hub is there, up and running and you can easily stop the hub anytime. On the contrary, as the console window cannot be closed (only minimized) it will always reside on your taskbar which can be annoying for some users. If ADCH\++ is running in service mode then you won't see any opened console window and outputs will go to the log file only. In this mode you can start and stop the hub in the Windows Service Management Console or using the appropriate shell commands. You can find more detailed information about running ADCH++ in service mode in the http://adchpp.sourceforge.net/user_guide/expert_guide.html[Expert User Guide].
 
@@ -59,7 +59,7 @@ The source code is available via Sourceforge (official releases) or from our Baz
 
 Source code download: https://sourceforge.net/projects/adchpp/files/
 
-Launchpad repository: https://code.launchpad.net/adchpp
+Mercurial repository: https://sourceforge.net/p/adchpp/code/ci/default/tree/
 
 You need a Linux distribution with at least 2.6-based kernel to run ADCH\+\+. The following tools needed to compile and install ADCH++ on a Linux/Unix machine.
 
@@ -69,7 +69,7 @@ You need a Linux distribution with at least 2.6-based kernel to run ADCH\+\+. Th
 | Application		| Notes
 | swig 				| 
 | ruby (optional)	|(needs to be version 1.9.2 or higher)
-| python (optional)	|(version 2.4.x ... 2.7.x, 32 bit versions - even on 64 bit systems)
+| python 			|(version 2.4.x ... 2.7.x, 32 bit versions - even on 64 bit systems)
 | scons				|(version 2.5.0 or higher)
 | gcc-c++			|(version 4.4.x or higher)
 | libstdc++-devel	|(redhat resource)
@@ -80,7 +80,7 @@ You need a Linux distribution with at least 2.6-based kernel to run ADCH\+\+. Th
 | libssl-dev		|(debian resource)
 |==============================================
 
-If you have downloaded any of the zip archives then unpack the source to a folder. If you used Bazaar to fetch the source then navigate to the root folder of your local branch or checkout. After you have installed the tools necessary to compile, perform these actions in a command prompt or save the it as a shell script (<file.sh>) and run it as sh <file.sh>.
+If you have downloaded any of the zip archives then unpack the source to a folder. If you used Mercurial to fetch the source then navigate to the root folder of your local branch or checkout. After you have installed the tools necessary to compile, perform these actions in a command prompt or save the it as a shell script (<file.sh>) and run it as sh <file.sh>.
 
 ---------------------------------------------------------------------
 [source,bat]
@@ -108,7 +108,7 @@ This part focuses to the basic configuration of the hub describing how to manage
 ADCH\++ is configurable using an XML settings file as are the standard plugins. In Linux, the default location for configuration files is "/etc/adchpp/". In Windows, it is a directory named "config" under the program directory.
 All ADCH++ settings are stored in a file called adchpp.xml. The default packaged file contains lots of comments to help you get started. Open up adchpp.xml in a text editor (such as Notepad under Windows) and start changing the values as you wish. 
 
-CAUTION: Editing the values incorrectly can lead to problems so be careful what you're doing. If the settings file doesn't meet the XML standards it may won't be processed correctly. If you encounter errors try to validate the settings file syntax with an XML validator such as http://www.xmlvalidation.com 
+CAUTION: Editing the values incorrectly can lead to problems so be careful what you're doing. If the settings file doesn't meet the XML standards it may won't be processed correctly. If you encounter errors try to validate the settings file syntax with an XML validator such as https://www.xmlvalidation.com 
 
 .Main parts of the ADCH++ configuration file
 [width="100%",options="header"]
@@ -158,16 +158,16 @@ To make the SSL encrypted connectivity possible you must generate three security
 [width="100%",options="header"]
 |==============================================
 | Distribution		| Command
-| Windows			| http://www.slproweb.com/products/Win32OpenSSL.html[OpenSSL for Windows]
+| Windows			| https://www.slproweb.com/products/Win32OpenSSL.html[OpenSSL for Windows]
 | Debian 			| sudo install apt-get openssl
 | Redhat	 		| yum install openssl
 |==============================================
 
-To automatically generate files and place them to the deafult path you can use the certificate files generator script (generate_certs.cmd/sh) provided in the ADCH\++ release package. Alternatively you can download the script corresponding to your operating system (http://bazaar.launchpad.net/\~dcplusplus-team/adchpp/trunk/files/head:/windows/[Windows] or http://bazaar.launchpad.net/~dcplusplus-team/adchpp/trunk/files/head:/linux/[Linux]) from the ADCH++ code repository as well.
+To automatically generate files and place them to the deafult path you can use the certificate files generator script (generate_certs.cmd/sh) provided in the ADCH\++ release package. Alternatively you can download the script corresponding to your operating system (https://sourceforge.net/p/adchpp/code/ci/tip/tree/windows/Generate_certs.cmd[Windows] or https://sourceforge.net/p/adchpp/code/ci/tip/tree/linux/generate_certs.sh[Linux]) from the ADCH++ code repository as well.
 
 The script will create and automatically place the generated certificate files to a folder named 'certs' under the ADCH++ program folder.
 
-IMPORTANT: If you run the certificate files generator script under Windows it is recommended to install OpenSSL to its default folder (or into C:\Program Files\OpenSSL) and run the script in elevated mode (as Administrator) on Vista and later.
+IMPORTANT: If you run the certificate files generator script under Windows it is recommended to install OpenSSL to its default folder (or into C:\Program Files\OpenSSL) and run the script in elevated mode (as Administrator).
 
 Alternatively you can generate the .pem files manually using the following commands:
 
@@ -468,17 +468,17 @@ You simply re-register the user with the new password and user level. You must s
 
 If you want to know more about ADCH++
 
-. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\++ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at http://code.launchpad.net/adchpp/
-. You can get support for ADCH++ at the project's official Answers tracker at http://answers.launchpad.net/adchpp/[Launchpad].
-. You can get more information or discuss topics about ADCH++ at the http://dcbase.org[DCBase.org community portal] forums.
+. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\++ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at https://sourceforge.net/p/adchpp/code/ci/default/tree/
+. You can get support for ADCH++ at the project's official Answers tracker at https://answers.launchpad.net/adchpp/[Launchpad].
+. You can get more information or discuss topics about ADCH++ at the https://dcbase.org[DCBase.org community portal] forums.
 
 == Appendix
-This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
+This document is published under https://www.gnu.org/copyleft/fdl.html[GNU FDL]
 
 Copyright (c) 2010-2018 Jacek Sieka
 
 
-Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at http://www.gnu.org/copyleft/fdl.html 
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at https://www.gnu.org/copyleft/fdl.html 
 
 ////////////////////////////////////////////////////////////////
 Changelog: 
@@ -502,5 +502,6 @@ Changelog:
 0.3.6: Hub address setting changes mandated by ADC-EXT 1.0.9.; clarify plugins path XML setting configuration more (emtee)
 0.3.7: Switch MOTD script usage description to general texting script texts.lua (poy)
 0.3.8: Update build tools (poy)
+0.3.9: Update supported OSes; httpsify feasible links; fix broken links; change links from BZR to the Mercurial repository (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

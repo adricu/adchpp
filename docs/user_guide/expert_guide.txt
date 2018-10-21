@@ -1,12 +1,12 @@
 = ADCH++  Expert User Guide
 Created by the DC++ team
-Document Version 0.4.4
+Document Version 0.4.5
 :toc:
 This version of the guide corresponds with ADCH++ versions *2.9.x* and later.
 
 == Introduction
 
-ADCH++ is a hub server software for the ADC network. It implements the http://dcplusplus.sf.net/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins.
+ADCH++ is a hub server software for the ADC network. It implements the https://adc.sourceforge.io/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins.
 Among the standard plugins there is a scripting plugin that allows hub owners to further customize the hub using the Lua scripting language. 
 The core is also exposed as a Python and a Ruby module, thus it is possible to use it within a Python or Ruby application.
 
@@ -24,9 +24,9 @@ IMPORTANT: The prepackaged LUA scripts should be properly loaded to get the func
 
 +banxxxre commands are very powerful tools for getting rid of unwanted text showing in mainchat or private message as well as for blocking searches containing keywords which treated malicious. These commands use LUA pattern matching method which is similar to the popular regular expressions. Usage of the commands to detect the unwanted content requires knowledge of how to construct a regular expression like filter.
 
-TIP: For basic information about regular expressions visit: http://www.regular-expressions.info 
+TIP: For basic information about regular expressions visit: https://www.regular-expressions.info 
 
-A quick tutorial about LUA patterns, their usage and differences to regular expressions is avalilable at http://www.wowpedia.org/Pattern_matching#.22Regexes.22_.28patterns.29_in_Lua[Wowpedia].
+A quick tutorial about LUA patterns, their usage and differences to regular expressions is avalilable at https://www.wowpedia.org/Pattern_matching#.22Regexes.22_.28patterns.29_in_Lua[Wowpedia].
 
 .List of +banre commands
 [width="100%",options="header"]
@@ -459,13 +459,13 @@ Usage: adchpp [[-c <configdir>] [-d]] | [-v] | [-h]
 
 == Running ADCH++ as a service module
 
-Installing ADCH++ as a service requires to be run in an elevated state in Windows 7 or Vista as UAC will interfere with the process if its not executed as an administrator. 
+Installing ADCH++ as a service requires to be run in an elevated state in Windows as UAC will interfere with the process if its not executed as an administrator. 
 
 This is how it looks in case of problems:
 
 image:images/img_adch_elevated_fail.png["ADCH++ elevation fails"]
 
-You elevate adchpp.exe in Windows 7/Vista in the following way:
+You elevate adchpp.exe in Windows in the following way:
 
 * Right click on the application's icon
 * Choose 'Properties'
@@ -491,7 +491,7 @@ TIP: You can set up to automatically restart the hub service in case of a crash 
 == Issues and problems
 
 Like any other software ADCH\++ can have flaws or bugs, can preform weird or contain unwanted features. It's important to make the developers aware of such problems. If you want to help improving ADCH\++ you can give feedback to the developers about found bugs, helping them to recreate and fix the problems. 
-Many times, to be able to help solving issues, you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from the http://builds.dcbase.org/?dir=adchpp/[DCBase Builds Archive].
+Many times, to be able to help solving issues, you must run a debug build of ADCH+\+. If you cannot compile ADCH++ in debug mode you can download nightly debug builds from the _adchpp_ folder at https://builds.dcbase.org/[DCBase Builds Archive].
 
 === Crashes and getting backtrace logs
 
@@ -557,7 +557,7 @@ TIP: In case of other scripts, its best to report the errors to their respective
 
 == Extension Support
 
-The current version of ADCH++ supports the following http://adc.sourceforge.net/ADC-EXT.html[ADC protocol extensions]:
+The current version of ADCH++ supports the following https://adc.sourceforge.io/ADC-EXT.html[ADC protocol extensions]:
 
 *BLOM* - this extension that allows hub software to create a map (bloom filter) of the shared files on the hub, but with minimal effort, e.g. the hub doesn't keep a list of files, but a filter that never produces false negatives but only possible false positives. This can potentially save bandwidth and effort on the client side. +
 *UCMD* - User commands are used to send hub-specific commands to the client which provide useful shortcuts for the user. +
@@ -572,11 +572,11 @@ These are the minimum versions of tools required to compile ADCH++:
 	* Compiler: One of: GCC 4.4 (MinGW for Windows - links below) / Microsoft Visual C++ 10 (2010) / Clang 3.0
     * SCons 2.5.0 or later https://scons.org
     * SWIG 1.3.40 or later (2.0.12 or later if GCC 4.9 or newer used for compiling) http://www.swig.org 
-    * Optional: Python 2.4.x or later (32 bit version only) http://www.python.org
-	* Optional: Ruby 1.9.2 (http://www.ruby-lang.org)
-	* Optional: PHP 5 (http://www.php.net/)
-    * Optional: OpenSSL http://www.openssl.org (to have support for secure connections)
-    * Optional: AsciiDoc http://www.methods.co.nz/asciidoc/ (to build the documentation)
+    * Python 2.4.x or later (32 bit version only) https://www.python.org
+	* Optional: Ruby 1.9.2 (https://www.ruby-lang.org)
+	* Optional: PHP 5 (https://www.php.net/)
+    * Optional: OpenSSL https://www.openssl.org (to have support for secure connections)
+    * Optional: AsciiDoc https://www.methods.co.nz/asciidoc/ (to build the documentation)
 
 MinGW packages by the MinGW-w64 project are preferred:
 
@@ -633,11 +633,11 @@ The author do accept patches in general for every part of the application, but i
 
 == Appendix
 
-This document is published under http://www.gnu.org/copyleft/fdl.html[GNU FDL]
+This document is published under https://www.gnu.org/copyleft/fdl.html[GNU FDL]
 
 Copyright (C) 2010-2018 Jacek Sieka
 
-Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at http://www.gnu.org/copyleft/fdl.html 
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. A copy of the license is available at https://www.gnu.org/copyleft/fdl.html 
 
 ////////////////////////////////////////////////////////////////
 Changelog: 
@@ -649,5 +649,6 @@ Changelog:
 0.4.2: Updated corresponding to ADCH++ version 2.9.0 (emtee)
 0.4.3: Update LUASockets info (emtee)
 0.4.4: Update build tools (poy)
+0.4.5: Update supported OSes; httpsify feasible links; fix broken links; change links from BZR to the Mercurial repository (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
