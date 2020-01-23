@@ -1,3 +1,5 @@
+-- 3.0.0 2020-xx-xx --
+* Fix certificate generation on Windows (emtee)
 * Increase the default DH key value to 2048 in response to https://weakdh.org (thanks kcchouette)
 * Update Boost to version 1.68
 * Update OpenSSL to version 1.1.1, with TLS 1.3 support
