@@ -1,3 +1,4 @@
+* Increase the default DH key value to 2048 in response to https://weakdh.org (thanks kcchouette)
 * Update Boost to version 1.68
 * Update OpenSSL to version 1.1.1, with TLS 1.3 support
 * [L#880488] Remove an obsolete pinger workaround

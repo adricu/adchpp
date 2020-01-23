@@ -176,7 +176,7 @@ Alternatively you can generate the .pem files manually using the following comma
 [source,bat]
 openssl genrsa -out privkey.pem 2048
 openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
-openssl dhparam -outform PEM -out dhparam.pem 1024
+openssl dhparam -outform PEM -out dhparam.pem 2048
 ---------------------------------------------------------------------
 
 TIP: Remember if you have specified TLS=1 in the server configuration, all users must connect to your hub using the prefix adcs:// added to the hub address (adcs://yourdomain:port). You can open more than one ports for your hub by adding more <Server/> entries. You can even mix secure and unsecure (non-TLS) port connections by adding TLS=1 parameter to a particular <Server/> entry only.

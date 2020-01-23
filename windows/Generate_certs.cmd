@@ -36,7 +36,7 @@ goto end
 echo Proceeding with key generation
 call "%SSL%" genrsa -out privkey.pem 2048
 cls
-call "%SSL%" dhparam -outform PEM -out dhparam.pem 1024
+call "%SSL%" dhparam -outform PEM -out dhparam.pem 2048
 cls
 call "%SSL%" req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 cls
