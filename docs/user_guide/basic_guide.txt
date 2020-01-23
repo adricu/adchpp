@@ -1,8 +1,8 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.9
+Document Version 0.3.10
 :toc:
-This version of the guide corresponds with ADCH++ versions *2.12.1* and later.
+This version of the guide corresponds with ADCH++ versions *3.0.0* and later.
 
 == Introduction
 
@@ -167,7 +167,7 @@ To automatically generate files and place them to the deafult path you can use t
 
 The script will create and automatically place the generated certificate files to a folder named 'certs' under the ADCH++ program folder.
 
-IMPORTANT: If you run the certificate files generator script under Windows it is recommended to install OpenSSL to its default folder (or into C:\Program Files\OpenSSL) and run the script in elevated mode (as Administrator).
+IMPORTANT: If you run the certificate files generator script under Windows it is recommended to install OpenSSL to its default folder and run the script in elevated mode (as Administrator).
 
 Alternatively you can generate the .pem files manually using the following commands:
 
@@ -503,5 +503,6 @@ Changelog:
 0.3.7: Switch MOTD script usage description to general texting script texts.lua (poy)
 0.3.8: Update build tools (poy)
 0.3.9: Update supported OSes; httpsify feasible links; fix broken links; change links from BZR to the Mercurial repository (emtee)
+0.3.10: Update certification generation info (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
