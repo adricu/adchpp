@@ -1013,7 +1013,7 @@ local function gen_cfg_list()
 end
 
 commands.cfg = {
-	alias = { changecfg = true, changeconfig = true, config = true, var = true, changevar = true, setvar = true, setcfg = true, setconfig = true },
+	alias = { changecfg = true, changeconfig = true, config = true, var = true, changevar = true, setvar = true, setcfg = true, setconfig = true, setting = true },
 
 	command = function(c, parameters)
 		if not commands.cfg.protected(c) then
