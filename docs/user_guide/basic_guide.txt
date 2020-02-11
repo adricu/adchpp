@@ -1,6 +1,6 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.10
+Document Version 0.3.11
 :toc:
 This version of the guide corresponds with ADCH++ versions *3.0.0* and later.
 
@@ -398,8 +398,9 @@ To change a basic hub setting you must use:
 | history_prefix			| Format of the timestamp to put before every message in the history. For the avaliable formatting parameters check the General time format variables in the Logs part of the DC++ help file or the same document online at http://dcplusplus.sourceforge.net/webhelp/settings_logs.html
 | maxusers 					| Maximum number of non-registered users to log in, -1 = no limit, 0 = no unregistered users allowed (private hub)
 | menuname					| Name of the main user menu for the hub's user commands (displayed in the clients)
-| minchatlevel 				| Minimum user level to be able to chat, 0 = disabled (hub restart recommended after change)
+| minchatlevel 				| Minimum user level to be able to chat, 0 = disabled (hub restart recommended after change) - see also minmainchatlevel
 | mindownloadlevel			| Minimum user level to be able download, 0 = disabled (hub restart recommended after change)
+| minmainchatlevel 			| Minimum user level to be able to chat except for PMs, 0 = disabled - see also minchatlevel
 | minsearchlevel			| Minimum user level to be able to search, 0 = disabled (hub restart recommended after change)
 | name 						| Name of the hub (for hublist pingers)
 | network					| Name of the network the hub belongs to (for hublist pingers)
@@ -448,11 +449,13 @@ Since ADCH++ version 2.5.1 setting up download/chat/search rules is pretty easy.
 --------------------------------------
 +cfg minchatlevel <value>
 +cfg mindownloadlevel <value>
++cfg minmainchatlevel <value>
 +cfg minsearchlevel <value>
 --------------------------------------
 
-* minchatlevel - minimum level to chat - hub restart recommended
+* minchatlevel - minimum level to chat - hub restart recommended - see also minmainchatlevel
 * mindownloadlevel - minimum level to download - hub restart recommended (aliases: mindllevel, mintransferlevel)
+* minmainchatlevel - minimum level to chat except for PMs - see also minchatlevel
 * minsearchlevel - minimum level to search - hub restart recommended
 
 ==== How can I modify the password and user level of an already registered user?
@@ -504,5 +507,6 @@ Changelog:
 0.3.8: Update build tools (poy)
 0.3.9: Update supported OSes; httpsify feasible links; fix broken links; change links from BZR to the Mercurial repository (emtee)
 0.3.10: Update certification generation info (emtee)
+0.3.11: Document +cfg minmainchatlevel (poy)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

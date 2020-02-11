@@ -276,7 +276,7 @@ settings.minchatlevel = {
 		restricted_commands[adchpp.AdcCommand_CMD_MSG] = { level = settings.minchatlevel.value, str = "chat" }
 	end,
 
-	help = "minimum level to chat - hub restart recommended",
+	help = "minimum level to chat/PM - hub restart recommended - see also minmainchatlevel",
 
 	level = true,
 
@@ -292,6 +292,14 @@ settings.mindownloadlevel = {
 	end,
 
 	help = "minimum level to download - hub restart recommended",
+
+	level = true,
+
+	value = 0
+}
+
+settings.minmainchatlevel = {
+	help = "minimum level to chat except for PMs - see also minchatlevel",
 
 	level = true,
 
@@ -1651,6 +1659,15 @@ local function onMSG(c, cmd)
 
 	if not autil.reply_from then
 		if handle_plus_command(c, msg) then
+			return false
+		end
+
+		local minmainchatlevel = settings.minmainchatlevel.value
+		if minmainchatlevel > 0 and get_level(c) < minmainchatlevel then
+			c:send(adchpp.AdcCommand(adchpp.AdcCommand_CMD_STA, adchpp.AdcCommand_TYPE_INFO, adchpp.AdcCommand_HUB_SID)
+			:addParam(adchpp.AdcCommand_SEV_RECOVERABLE .. adchpp.AdcCommand_ERROR_COMMAND_ACCESS)
+			:addParam("Chatting is restricted to registered users; please send an operator a private message asking him to run the following command (with your desired password of course):\n+regnick " .. c:getField("NI") .. " PASSWORD " .. minmainchatlevel)
+			:addParam("FC" .. cmd:getFourCC()))
 			return false
 		end
 	end
