@@ -1,8 +1,8 @@
-= ADCH++ LUA API
+= ADCH++ Lua API
 Author: Thor
 Document Version 0.2
 
-NOTE: This is an inital release of the LUA API for ADCH++ the information here is not completly done so check the source for inital API calls.
+NOTE: This is an inital release of the Lua API for ADCH++ the information here is not completly done so check the source for inital API calls.
 
 == API Calls
 

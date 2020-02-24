@@ -1,12 +1,12 @@
 = ADCH++ Basic User Guide
 Created by the DC++ team
-Document Version 0.3.11
+Document Version 0.3.12
 :toc:
 This version of the guide corresponds with ADCH++ versions *3.0.0* and later.
 
 == Introduction
 
-ADCH++ is a hub server software for the ADC network. It implements the http://dcplusplus.sf.net/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins.
+ADCH++ is a hub server software for the ADC network. It implements the https://adc.sourceforge.io/ADC.html[ADC protocol]. The core application is very simple, but extensible using plugins.
 Among the standard plugins there is a scripting plugin that allows hub owners to further customize the hub using the Lua scripting language. 
 The core is also exposed as a Python and a Ruby module, thus it is possible to use it within a Python or Ruby application.
 
@@ -37,7 +37,7 @@ _This is how the console output of a release build looks_
 
 image:images/img_adchpp_release_build.png["ADCH++ release build"]
 
-ADCH\++ release packages are available to download at the official home page at SourceForge (http://sourceforge.net/projects/adchpp). 
+ADCH\++ release packages are available to download at the official home page at SourceForge (https://sourceforge.net/projects/adchpp/files). 
 At the download page you can find the three ADCH++ distribution files:
 
     * Windows installer - a complete installer EXE file for Windows with uninstaller option.
@@ -51,7 +51,7 @@ The easiest choice is the executable installer, when you start the installation 
 
 CAUTION: on Windows you should install ADCH\++ to the Program files / Program files(x86) directory only if you familiar with https://blogs.msdn.microsoft.com/patricka/2009/12/14/tales-of-application-compatibility-weirdness-demystifying-uac-virtualization/[UAC Data Redirection and its effects]. If you don't want to be bothered with this then the best choice is to install/unpack ADCH++ files to another folder outside of Program Files where UAC rules don't apply. A good alternative path is: _c:\Users\<Your Username>\_
 
-As the last step of the installation procedure you'll be asked if you want to install ADCH\++ as a service or not. The main difference between installing ADCH\++ as an applciation or as a service is that in application mode the ADCH\++ console window will be always visible. This can be an advantage as you always able to ensure the hub is there, up and running and you can easily stop the hub anytime. On the contrary, as the console window cannot be closed (only minimized) it will always reside on your taskbar which can be annoying for some users. If ADCH\++ is running in service mode then you won't see any opened console window and outputs will go to the log file only. In this mode you can start and stop the hub in the Windows Service Management Console or using the appropriate shell commands. You can find more detailed information about running ADCH++ in service mode in the http://adchpp.sourceforge.net/user_guide/expert_guide.html[Expert User Guide].
+As the last step of the installation procedure you'll be asked if you want to install ADCH\++ as a service or not. The main difference between installing ADCH\++ as an applciation or as a service is that in application mode the ADCH\++ console window will be always visible. This can be an advantage as you always able to ensure the hub is there, up and running and you can easily stop the hub anytime. On the contrary, as the console window cannot be closed (only minimized) it will always reside on your taskbar which can be annoying for some users. If ADCH\++ is running in service mode then you won't see any opened console window and outputs will go to the log file only. In this mode you can start and stop the hub in the Windows Service Management Console or using the appropriate shell commands. You can find more detailed information about running ADCH++ in service mode in the https://adchpp.sourceforge.io/user_guide/expert_guide.html[Expert User Guide].
 
 === Installing on Linux
 Installing on Linux/Unix operating systems requires the source code for ADCH++ since we don't provide any prepackaged binaries for Unix/Linux distributions.
@@ -182,11 +182,11 @@ openssl dhparam -outform PEM -out dhparam.pem 2048
 TIP: Remember if you have specified TLS=1 in the server configuration, all users must connect to your hub using the prefix adcs:// added to the hub address (adcs://yourdomain:port). You can open more than one ports for your hub by adding more <Server/> entries. You can even mix secure and unsecure (non-TLS) port connections by adding TLS=1 parameter to a particular <Server/> entry only.
 
 === Script Management
-Above the basic functions provided by the core ADCH\++ relies on scripts performing various extended functions and commands (like handling registered users, login procedure, etc...). The hub software comes with prepackaged LUA scripts for handling basic hub functions and more. These (and any other) scripts can be configured using the Script.xml file located in the configuration folder of ADCH++.
+Above the basic functions provided by the core ADCH\++ relies on scripts performing various extended functions and commands (like handling registered users, login procedure, etc...). The hub software comes with prepackaged Lua scripts for handling basic hub functions and more. These (and any other) scripts can be configured using the Script.xml file located in the configuration folder of ADCH++.
 
-The LUA scripts shipped with ADCH++ are configured to run by default. They should be always properly loaded to get the functionality described in the rest of this guide. If you want to use additional scripts then locate the Script.xml file and ensure that the scripts that you want to run are properly _added_ to the existing ones.
+The Lua scripts shipped with ADCH++ are configured to run by default. They should be always properly loaded to get the functionality described in the rest of this guide. If you want to use additional scripts then locate the Script.xml file and ensure that the scripts that you want to run are properly _added_ to the existing ones.
 
-.Example: Default Script.xml, it loads the core LUA scripts, a chat history script and a "texts" script.
+.Example: Default Script.xml, it loads the core Lua scripts, a chat history script and a "texts" script.
 ---------------------------------------------------------------------
 [source,xml]
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
@@ -267,7 +267,7 @@ There are additional settings and rules that can only be altered using hub comma
 === Account Creation
 Registered users information are stored in a file called users.txt in your ADCH\++ configuration folder. Ensure that this file can be read/write accessed by ADCH++. Now you can create your first admin account for your own hub.
 
-The LUA scripts shipped with ADCH++ use numbers to specify user profile levels. The available profile level range is from 1 to infinite. By default level 3 and higher users are operators so you have to choose at least level 3 or higher for your own administrator account. If you want to build a bigger user/operator hiearchy then make sure you choose high enough level (eg. 10) for your admin account.
+The Lua scripts shipped with ADCH++ use numbers to specify user profile levels. The available profile level range is from 1 to infinite. By default level 3 and higher users are operators so you have to choose at least level 3 or higher for your own administrator account. If you want to build a bigger user/operator hiearchy then make sure you choose high enough level (eg. 10) for your admin account.
 
 There are two possible ways to create the first administrator account:
 
@@ -364,7 +364,7 @@ Most commands are also available in the user menu of the connected ADC clients p
 |+topic topic										| Change the hub topic (shortcut to +cfg topic).
 |==============================================
 
-The above list contains the basic hub commands only. Many additional commands not listed here belong to the advanced hub security and discussed in the http://adchpp.sourceforge.net/user_guide/expert_guide.html[Expert guide] in detail.
+The above list contains the basic hub commands only. Many additional commands not listed here belong to the advanced hub security and discussed in the https://adchpp.sourceforge.io/user_guide/expert_guide.html[Expert guide] in detail.
 
 ==== Basic hub settings
 To see what basic configuration parameters are available for your hub and what are their current values you should enter:
@@ -395,7 +395,7 @@ To change a basic hub setting you must use:
 | history_default			| How much lines of the main chat history the hub displays for the +history command
 | history_max				| Maximum amount of last main chat history lines that the hub saves
 | history_method			| Strategy used by the \+history command to record messages, restart the hub after the change, 1 = use a hidden bot, 0 = direct ADCH++ interface
-| history_prefix			| Format of the timestamp to put before every message in the history. For the avaliable formatting parameters check the General time format variables in the Logs part of the DC++ help file or the same document online at http://dcplusplus.sourceforge.net/webhelp/settings_logs.html
+| history_prefix			| Format of the timestamp to put before every message in the history. For the avaliable formatting parameters check the General time format variables in the Logs part of the DC++ help file or the same document online at https://dcplusplus.sourceforge.io/webhelp/settings_logs.html
 | maxusers 					| Maximum number of non-registered users to log in, -1 = no limit, 0 = no unregistered users allowed (private hub)
 | menuname					| Name of the main user menu for the hub's user commands (displayed in the clients)
 | minchatlevel 				| Minimum user level to be able to chat, 0 = disabled (hub restart recommended after change) - see also minmainchatlevel
@@ -471,7 +471,7 @@ You simply re-register the user with the new password and user level. You must s
 
 If you want to know more about ADCH++
 
-. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\++ project. The Expert Guide is available at http://adchpp.sourceforge.net/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at https://sourceforge.net/p/adchpp/code/ci/default/tree/
+. There is an expert user guide available for advanced/expert users. It contains information about advanced scripting, extended hub security settings as well as topics about compiling, testing, bug reporting or contributing to the ADCH\++ project. The Expert Guide is available at https://adchpp.sourceforge.io/user_guide/expert_guide.html The latest revisions of both user guides (corresponding to the current development revision) are also available in the ADCH++ repository at https://sourceforge.net/p/adchpp/code/ci/default/tree/
 . You can get support for ADCH++ at the project's official Answers tracker at https://answers.launchpad.net/adchpp/[Launchpad].
 . You can get more information or discuss topics about ADCH++ at the https://dcbase.org[DCBase.org community portal] forums.
 
@@ -508,5 +508,6 @@ Changelog:
 0.3.9: Update supported OSes; httpsify feasible links; fix broken links; change links from BZR to the Mercurial repository (emtee)
 0.3.10: Update certification generation info (emtee)
 0.3.11: Document +cfg minmainchatlevel (poy)
+0.3.12: Httpsify feasible links (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:

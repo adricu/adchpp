@@ -1,6 +1,6 @@
 = ADCH++  Expert User Guide
 Created by the DC++ team
-Document Version 0.4.5
+Document Version 0.4.6
 :toc:
 This version of the guide corresponds with ADCH++ versions *2.9.x* and later.
 
@@ -18,26 +18,26 @@ This guide is intended for novice or expert users. It focuses on various scripti
 
 This part shows how to achieve spam, badword or badsearch protection as well as how to protect the hub's normal operation from malicious or accidental flooding or misuse.
 
-IMPORTANT: The prepackaged LUA scripts should be properly loaded to get the functionality described in this chapter.
+IMPORTANT: The prepackaged Lua scripts should be properly loaded to get the functionality described in this chapter.
 
 === Automatic spam, badword and badsearch protection: working with the banre commands
 
-+banxxxre commands are very powerful tools for getting rid of unwanted text showing in mainchat or private message as well as for blocking searches containing keywords which treated malicious. These commands use LUA pattern matching method which is similar to the popular regular expressions. Usage of the commands to detect the unwanted content requires knowledge of how to construct a regular expression like filter.
++banxxxre commands are very powerful tools for getting rid of unwanted text showing in mainchat or private message as well as for blocking searches containing keywords which treated malicious. These commands use Lua pattern matching method which is similar to the popular regular expressions. Usage of the commands to detect the unwanted content requires knowledge of how to construct a regular expression like filter.
 
 TIP: For basic information about regular expressions visit: https://www.regular-expressions.info 
 
-A quick tutorial about LUA patterns, their usage and differences to regular expressions is avalilable at https://www.wowpedia.org/Pattern_matching#.22Regexes.22_.28patterns.29_in_Lua[Wowpedia].
+A quick tutorial about Lua patterns, their usage and differences to regular expressions is avalilable at https://www.wowpedia.org/Pattern_matching#.22Regexes.22_.28patterns.29_in_Lua[Wowpedia].
 
 .List of +banre commands
 [width="100%",options="header"]
 |==============================================
 | Command													| Purpose
-|+banmsgre [action] <chat-reg-exp> [reason] [expiration]	| Block chatmessages that match the given LUA pattern
-|+bannickre [action] <nick-reg-exp> [reason] [expiration]	| Block nicks that match the given LUA pattern
-|+banschre [action] <search-reg-exp> [reason] [expiration]	| Block searches that match the given LUA pattern
+|+banmsgre [action] <chat-reg-exp> [reason] [expiration]	| Block chatmessages that match the given Lua pattern
+|+bannickre [action] <nick-reg-exp> [reason] [expiration]	| Block nicks that match the given Lua pattern
+|+banschre [action] <search-reg-exp> [reason] [expiration]	| Block searches that match the given Lua pattern
 |==============================================
 
-Using the +banre commands the LUA pattern must be specified within '<' and '>' brackets. The action parameter is optional, you can skip it to achieve a simple block or set it to -1 to permanetly ban the user; any other positive number means how many minutes you want to tempban the user for. The expiration parameter is also optional, it defines when this particular rule expires (in minutes). Skipping [expiraton] results a permanent rule while specifying 0 allows you to remove this banre rule.
+Using the +banre commands the Lua pattern must be specified within '<' and '>' brackets. The action parameter is optional, you can skip it to achieve a simple block or set it to -1 to permanetly ban the user; any other positive number means how many minutes you want to tempban the user for. The expiration parameter is also optional, it defines when this particular rule expires (in minutes). Skipping [expiraton] results a permanent rule while specifying 0 allows you to remove this banre rule.
 
 IMPORTANT: Removing a banre rule does NOT automatically remove the already (temp)banned users!
 
@@ -259,7 +259,7 @@ TIP: All statistics, traces and logs are saved so in case of a clean hub restart
 
 == PtokaX API2 bridge for ADCH++
 
-It's possible to create or use existing PtokaX API2 LUA scripts in your hub using the ADCHPP-PtokaX bridge script. The bridge is separately maintained and available to download at https://launchpad.net/adchpp-ptokax[its home page]. Before you go on make sure you read the documentation (README.txt) provided in the ADCHPP-PtokaX package.
+It's possible to create or use existing PtokaX API2 Lua scripts in your hub using the ADCHPP-PtokaX bridge script. The bridge is separately maintained and available to download at https://launchpad.net/adchpp-ptokax[its home page]. Before you go on make sure you read the documentation (README.txt) provided in the ADCHPP-PtokaX package.
 
 CAUTION: To avoid problems make sure you use the revision of PtokaX bridge script corresponding to the ADCH++ version you run.
 
@@ -318,7 +318,7 @@ px\px_clock.lua
 px\px_badsearch.lua
 --------------------------------------
 
-Some of the PtokaX scripts (like FreshStuff or Feedwatch) may require LUA filesystem or socket library. Since version 2.9.0 the ADCH++ repository contains these libraries and the Windows binary distributions include the compiled libraries as .dll's. 
+Some of the PtokaX scripts (like FreshStuff or Feedwatch) may require Lua filesystem or socket library. Since version 2.9.0 the ADCH++ repository contains these libraries and the Windows binary distributions include the compiled libraries as .dll's. 
 
 CAUTION: Sometimes the libraries (.dll's in Windows) have to be copied to the appropriate place when a PtokaX scripts search for them in esoteric paths (for example lv/libs for Leviathan). You can get more information from the README file that comes with ADCHPP-PtokaX package.
 
@@ -404,15 +404,15 @@ Directory of c:\users\username\adchpp\Scripts\px
 
 ADCH++ core is exposed to various scripting languages that either has direct access to the core or can use it as a plugin.
 
-=== LUA Interface
+=== Lua Interface
 
-By default ADCH\++ comes with prepackaged LUA scripts to handle the basic hub functions. These scripts themselves are very good examples of how to use the ADCH++ LUA API. You can also use following examlpe file to learn the basics:
+By default ADCH\++ comes with prepackaged Lua scripts to handle the basic hub functions. These scripts themselves are very good examples of how to use the ADCH++ Lua API. You can also use following examlpe file to learn the basics:
 ---------------------------------------------------------------------
 [source,lua]
 include::../../plugins/Script/examples/example.lua[]
 ---------------------------------------------------------------------
 
-The complete list of of the ADCH\++ LUA API functions are available both in the Docs folder in the ADCH\++ repository or at the http://adchpp.sourceforge.net/doc/lua_api.html[ADCH++ home page].
+The complete list of of the ADCH\++ Lua API functions are available both in the Docs folder in the ADCH\++ repository or at the https://adchpp.sourceforge.io/doc/lua_api.html[ADCH++ home page].
 
 === Ruby Interface
 
@@ -540,9 +540,9 @@ TIP: The above procedure is for Windows but you must be able to get backtraces u
 You should have Microsoft Visual C\++ installed and you have to use a debug build of ADCH++ compiled with MSVC. MSVC should already be registered as a JIT debugger on your system.
 When a crash occurs, just click "debug" on the standard crash dialog and your debugger will handle unwinding the stack, opening the correct file and showing the offending line and instructions.
 
-=== LUA errors
+=== Lua errors
 
-It's possible that you get errors from the running LUA scripts as well. They will show up in the console window of ADCH++ while its running. Example:
+It's possible that you get errors from the running Lua scripts as well. They will show up in the console window of ADCH++ while its running. Example:
 
 	access.lua:491: attempt to concatenate global 'reason' (a nil value)
 	stack traceback:
@@ -551,7 +551,7 @@ It's possible that you get errors from the running LUA scripts as well. They wil
 	(tail call): ?
 	access.lua:1652: in function <access.lua:1651>
 
-If you get errors from the core LUA scripts packaged with ADCH++, please report them to the official bug tracker at Launchpad: https://bugs.launchpad.net/adchpp 
+If you get errors from the core Lua scripts packaged with ADCH++, please report them to the official bug tracker at Launchpad: https://bugs.launchpad.net/adchpp 
 
 TIP: In case of other scripts, its best to report the errors to their respective authors if they're indentifyable
 
@@ -647,8 +647,9 @@ Changelog:
 0.4.0: Added the Advanced hub security (guard) section (emtee, pirre)
 0.4.1: Added compile instructions for Clang (poy)
 0.4.2: Updated corresponding to ADCH++ version 2.9.0 (emtee)
-0.4.3: Update LUASockets info (emtee)
+0.4.3: Update LuaSockets info (emtee)
 0.4.4: Update build tools (poy)
 0.4.5: Update supported OSes; httpsify feasible links; fix broken links; change links from BZR to the Mercurial repository (emtee)
+0.4.6: Httpsify feasible links (emtee)
 ////////////////////////////////////////////////////////////////
 // vim: set syntax=asciidoc:
