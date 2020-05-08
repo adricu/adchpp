@@ -1,0 +1,11 @@
+version: "3"
+services:
+  airdcpp:
+    image: adricu/adchpp
+    volumes:
+      - data:/data
+    ports:
+      - 2780:2780
+volumes:
+  data:
+    driver: local
